@@ -4,7 +4,7 @@
   "type": "module",
   "description": "DokTool V1 monorepo — NestJS API, Admin Web (Next.js), Flutter mobile, shared contracts.",
   "engines": {
-    "node": ">=24"
+    "node": ">=24.15"
   },
   "workspaces": [
     "apps/api",
@@ -22,5 +22,11 @@
   },
   "devDependencies": {
     "prettier": "3.9.9"
+  },
+  "allowScripts": {
+    "@prisma/engines@7.10.0": true,
+    "prisma@7.10.0": true,
+    "@swc/core@1.16.2": true,
+    "@scarf/scarf": false
   }
 }
