@@ -1,6 +1,300 @@
 {
   "components": {
     "schemas": {
+      "AdminChallengeKind": {
+        "enum": [
+          "TOTP_VERIFY",
+          "TOTP_ENROLL"
+        ],
+        "type": "string"
+      },
+      "AdminMeDto": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "grants": {
+            "description": "Effective (non-expired) grants.",
+            "items": {
+              "enum": [
+                "users.read",
+                "users.write",
+                "users.suspend",
+                "verification.queue.read",
+                "verification.review",
+                "verification.documents.view",
+                "verification.appeal.decide",
+                "library.read",
+                "library.write",
+                "library.disable",
+                "calculators.read",
+                "calculators.draft",
+                "calculators.review",
+                "calculators.publish",
+                "calculators.retire",
+                "subscriptions.read",
+                "subscriptions.plans.write",
+                "transactions.read",
+                "transactions.adjustment.request",
+                "transactions.adjustment.approve",
+                "finance.read",
+                "finance.expenses.write",
+                "finance.reports.export",
+                "analytics.read",
+                "analytics.export",
+                "audit.read",
+                "audit.export",
+                "system.roles.write",
+                "system.settings.write",
+                "system.notifications.send",
+                "system.demo.configure"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "fullName",
+          "grants"
+        ],
+        "type": "object"
+      },
+      "AdminSignInDto": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object"
+      },
+      "AdminSignInStepDto": {
+        "properties": {
+          "challengeToken": {
+            "description": "Send back with the TOTP code; valid 5 minutes.",
+            "type": "string"
+          },
+          "enrollment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TotpEnrollmentDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "next": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminChallengeKind"
+              }
+            ]
+          }
+        },
+        "required": [
+          "next",
+          "challengeToken",
+          "expiresAt",
+          "enrollment"
+        ],
+        "type": "object"
+      },
+      "AdminTotpDto": {
+        "properties": {
+          "challengeToken": {
+            "type": "string"
+          },
+          "code": {
+            "example": "123456",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challengeToken",
+          "code"
+        ],
+        "type": "object"
+      },
+      "AuthTokensDto": {
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "accessTokenExpiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "refreshToken": {
+            "description": "Store in secure storage; single use (rotated on refresh).",
+            "type": "string"
+          },
+          "refreshTokenExpiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "sessionId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sessionId",
+          "accessToken",
+          "accessTokenExpiresAt",
+          "refreshToken",
+          "refreshTokenExpiresAt"
+        ],
+        "type": "object"
+      },
+      "ConfirmSignUpDto": {
+        "properties": {
+          "challengeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "code": {
+            "example": "123456",
+            "type": "string"
+          },
+          "device": {
+            "$ref": "#/components/schemas/DeviceDto"
+          }
+        },
+        "required": [
+          "challengeId",
+          "code",
+          "device"
+        ],
+        "type": "object"
+      },
+      "DeviceDto": {
+        "properties": {
+          "id": {
+            "description": "Installation id generated by the app and kept in secure storage.",
+            "type": "string"
+          },
+          "name": {
+            "example": "Pixel 8",
+            "type": "string"
+          },
+          "platform": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DevicePlatform"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "platform"
+        ],
+        "type": "object"
+      },
+      "DevicePlatform": {
+        "enum": [
+          "IOS",
+          "ANDROID"
+        ],
+        "type": "string"
+      },
+      "ErrorBody": {
+        "properties": {
+          "code": {
+            "enum": [
+              "VALIDATION_FAILED",
+              "UNAUTHENTICATED",
+              "INVALID_CREDENTIALS",
+              "SESSION_INVALID",
+              "FORBIDDEN",
+              "ACCOUNT_SUSPENDED",
+              "IDENTIFIER_NOT_CONFIRMED",
+              "ORIGIN_NOT_ALLOWED",
+              "NOT_FOUND",
+              "ACCOUNT_EXISTS",
+              "PROFILE_ALREADY_SET",
+              "OTP_INVALID",
+              "OTP_EXPIRED",
+              "TOTP_INVALID",
+              "CHALLENGE_INVALID",
+              "ACCOUNT_LOCKED",
+              "OTP_LOCKED",
+              "OTP_RESEND_TOO_SOON",
+              "OTP_SEND_LIMIT",
+              "RATE_LIMITED",
+              "CHANNEL_UNAVAILABLE"
+            ],
+            "type": "string"
+          },
+          "details": {
+            "$ref": "#/components/schemas/ErrorDetailsBody"
+          },
+          "message": {
+            "description": "For developers and logs; clients display their own translation.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "details"
+        ],
+        "type": "object"
+      },
+      "ErrorDetailsBody": {
+        "properties": {
+          "attemptsRemaining": {
+            "type": "number"
+          },
+          "fields": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object"
+          },
+          "retryAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "type": "object"
+      },
       "HealthResponse": {
         "properties": {
           "checkedAt": {
@@ -29,17 +323,979 @@
           "checkedAt"
         ],
         "type": "object"
+      },
+      "Language": {
+        "enum": [
+          "FR",
+          "EN"
+        ],
+        "type": "string"
+      },
+      "MeDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "email": {
+            "nullable": true,
+            "type": "string"
+          },
+          "emailConfirmed": {
+            "type": "boolean"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "phone": {
+            "description": "E.164",
+            "nullable": true,
+            "type": "string"
+          },
+          "phoneConfirmed": {
+            "type": "boolean"
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/PreferencesDto"
+          },
+          "professionalProfile": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfessionalProfileDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "wilaya": {
+            "$ref": "#/components/schemas/WilayaDto"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "email",
+          "phone",
+          "emailConfirmed",
+          "phoneConfirmed",
+          "wilaya",
+          "professionalProfile",
+          "preferences",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "OtpChallengeDto": {
+        "properties": {
+          "challengeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "channel": {
+            "enum": [
+              "EMAIL",
+              "SMS"
+            ],
+            "type": "string"
+          },
+          "destinationHint": {
+            "example": "a•••@example.dz",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "resendAvailableAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challengeId",
+          "channel",
+          "destinationHint",
+          "expiresAt",
+          "resendAvailableAt"
+        ],
+        "type": "object"
+      },
+      "PasswordResetConfirmDto": {
+        "properties": {
+          "challengeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "code": {
+            "example": "123456",
+            "type": "string"
+          },
+          "newPassword": {
+            "maxLength": 128,
+            "minLength": 8,
+            "type": "string"
+          }
+        },
+        "required": [
+          "challengeId",
+          "code",
+          "newPassword"
+        ],
+        "type": "object"
+      },
+      "PasswordResetRequestDto": {
+        "properties": {
+          "identifier": {
+            "description": "E-mail address or mobile number.",
+            "type": "string"
+          },
+          "language": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Language"
+              }
+            ],
+            "default": "FR"
+          }
+        },
+        "required": [
+          "identifier"
+        ],
+        "type": "object"
+      },
+      "PreferencesDto": {
+        "properties": {
+          "language": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Language"
+              }
+            ]
+          },
+          "theme": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThemePreference"
+              }
+            ]
+          },
+          "weightUnitDefault": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WeightUnit"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "language",
+          "theme",
+          "weightUnitDefault"
+        ],
+        "type": "object"
+      },
+      "ProfessionalProfileDto": {
+        "properties": {
+          "academicYear": {
+            "maximum": 7,
+            "minimum": 1,
+            "nullable": true,
+            "type": "number"
+          },
+          "institutionId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "professionalType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfessionalType"
+              }
+            ]
+          },
+          "residencyYear": {
+            "minimum": 1,
+            "nullable": true,
+            "type": "number"
+          },
+          "specialtyId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "universityId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "professionalType",
+          "specialtyId",
+          "institutionId",
+          "universityId",
+          "academicYear",
+          "residencyYear"
+        ],
+        "type": "object"
+      },
+      "ProfessionalType": {
+        "enum": [
+          "DOCTOR",
+          "RESIDENT",
+          "STUDENT"
+        ],
+        "type": "string"
+      },
+      "RefreshDto": {
+        "properties": {
+          "deviceId": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "refreshToken",
+          "deviceId"
+        ],
+        "type": "object"
+      },
+      "ResendCodeDto": {
+        "properties": {
+          "challengeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "language": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Language"
+              }
+            ],
+            "default": "FR"
+          }
+        },
+        "required": [
+          "challengeId"
+        ],
+        "type": "object"
+      },
+      "SessionDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "current": {
+            "description": "True for the session making this request.",
+            "type": "boolean"
+          },
+          "deviceName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastUsedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "platform": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DevicePlatform"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "deviceName",
+          "platform",
+          "createdAt",
+          "lastUsedAt",
+          "current"
+        ],
+        "type": "object"
+      },
+      "SetProfessionalProfileDto": {
+        "properties": {
+          "academicYear": {
+            "description": "Medical students only.",
+            "maximum": 7,
+            "minimum": 1,
+            "type": "number"
+          },
+          "institutionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "professionalType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfessionalType"
+              }
+            ]
+          },
+          "residencyYear": {
+            "description": "Residents only.",
+            "minimum": 1,
+            "type": "number"
+          },
+          "specialtyId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "universityId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "professionalType"
+        ],
+        "type": "object"
+      },
+      "SignInDto": {
+        "properties": {
+          "device": {
+            "$ref": "#/components/schemas/DeviceDto"
+          },
+          "identifier": {
+            "description": "E-mail address or mobile number.",
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "identifier",
+          "password",
+          "device"
+        ],
+        "type": "object"
+      },
+      "SignUpDto": {
+        "properties": {
+          "acceptTerms": {
+            "description": "Must be true: the person accepted the terms shown.",
+            "type": "boolean"
+          },
+          "firstName": {
+            "maxLength": 80,
+            "type": "string"
+          },
+          "identifier": {
+            "description": "E-mail address or mobile number.",
+            "example": "amina@example.dz",
+            "type": "string"
+          },
+          "language": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Language"
+              }
+            ],
+            "default": "FR"
+          },
+          "lastName": {
+            "maxLength": 80,
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 128,
+            "minLength": 8,
+            "type": "string"
+          },
+          "termsVersion": {
+            "description": "Version of the terms the app displayed.",
+            "type": "string"
+          },
+          "wilayaCode": {
+            "example": 16,
+            "type": "number"
+          }
+        },
+        "required": [
+          "identifier",
+          "password",
+          "firstName",
+          "lastName",
+          "wilayaCode",
+          "acceptTerms",
+          "termsVersion"
+        ],
+        "type": "object"
+      },
+      "ThemePreference": {
+        "enum": [
+          "LIGHT",
+          "DARK",
+          "SYSTEM"
+        ],
+        "type": "string"
+      },
+      "TotpEnrollmentDto": {
+        "properties": {
+          "otpauthUri": {
+            "description": "otpauth:// URI, to render as a QR code.",
+            "type": "string"
+          },
+          "secretBase32": {
+            "description": "Base32 secret, for manual entry in an authenticator app.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "secretBase32",
+          "otpauthUri"
+        ],
+        "type": "object"
+      },
+      "UpdatePreferencesDto": {
+        "properties": {
+          "language": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Language"
+              }
+            ]
+          },
+          "theme": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThemePreference"
+              }
+            ]
+          },
+          "weightUnitDefault": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WeightUnit"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "type": "object"
+      },
+      "WeightUnit": {
+        "enum": [
+          "KG",
+          "LB"
+        ],
+        "type": "string"
+      },
+      "WilayaDto": {
+        "properties": {
+          "code": {
+            "example": 16,
+            "type": "number"
+          },
+          "name": {
+            "example": "Alger",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "admin": {
+        "in": "cookie",
+        "name": "__Host-doktool_admin",
+        "type": "apiKey"
+      },
+      "user": {
+        "bearerFormat": "JWT",
+        "scheme": "bearer",
+        "type": "http"
       }
     }
   },
   "info": {
     "contact": {},
-    "description": "Backend of DokTool V1. User API under /v1 (Flutter app), admin API under /admin/v1 (Admin Web). The backend decides every rule; clients render its decisions.",
+    "description": "Backend of DokTool V1. User API under /v1 (Flutter app), admin API under /admin/v1 (Admin Web). The backend decides every rule; clients render its decisions. Every error is `{ error: { code, message, details } }`; clients translate `code`.",
     "title": "DokTool API",
     "version": "1.0.0"
   },
   "openapi": "3.0.0",
   "paths": {
+    "/admin/v1/auth/sign-in": {
+      "post": {
+        "operationId": "AdminAuthController_signIn",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminSignInDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSignInStepDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "tags": [
+          "admin-auth"
+        ]
+      }
+    },
+    "/admin/v1/auth/sign-out": {
+      "post": {
+        "operationId": "AdminAuthController_signOut",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-auth"
+        ]
+      }
+    },
+    "/admin/v1/auth/totp": {
+      "post": {
+        "operationId": "AdminAuthController_totp",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminTotpDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminMeDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "tags": [
+          "admin-auth"
+        ]
+      }
+    },
+    "/admin/v1/me": {
+      "get": {
+        "operationId": "AdminAuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminMeDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-auth"
+        ]
+      }
+    },
+    "/v1/auth/codes/resend": {
+      "post": {
+        "operationId": "AuthController_resend",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OtpChallengeDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/password-reset": {
+      "post": {
+        "operationId": "AuthController_requestPasswordReset",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OtpChallengeDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/password-reset/confirm": {
+      "post": {
+        "operationId": "AuthController_confirmPasswordReset",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetConfirmDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokensDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/sign-in": {
+      "post": {
+        "operationId": "AuthController_signIn",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignInDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokensDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/sign-out": {
+      "post": {
+        "operationId": "AuthController_signOut",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/sign-up": {
+      "post": {
+        "operationId": "AuthController_signUp",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignUpDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OtpChallengeDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/sign-up/confirm": {
+      "post": {
+        "operationId": "AuthController_confirmSignUp",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmSignUpDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokensDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/v1/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -68,6 +1324,215 @@
         },
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "operationId": "UsersController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/v1/me/preferences": {
+      "patch": {
+        "operationId": "UsersController_updatePreferences",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePreferencesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/v1/me/professional-profile": {
+      "post": {
+        "operationId": "UsersController_setProfessionalProfile",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetProfessionalProfileDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "PROFILE_ALREADY_SET"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/v1/me/sessions": {
+      "get": {
+        "operationId": "SessionsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SessionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/me/sessions/{sessionId}": {
+      "delete": {
+        "operationId": "SessionsController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/wilayas": {
+      "get": {
+        "operationId": "UsersController_listWilayas",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WilayaDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "account"
         ]
       }
     }

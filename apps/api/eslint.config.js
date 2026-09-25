@@ -30,6 +30,17 @@ export default tseslint.config(
     rules: { '@typescript-eslint/consistent-type-imports': 'off' },
   },
 
+  // Tests assert on untyped JSON response bodies; `expect` checks their shape instead.
+  {
+    files: ['test/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+    },
+  },
+
   {
     files: ['**/*.{js,mjs}'],
     languageOptions: { globals: { process: 'readonly', console: 'readonly' } },

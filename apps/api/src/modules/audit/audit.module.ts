@@ -1,10 +1,14 @@
 import { Module } from '@nestjs/common';
+import { AuditService } from './audit.service.js';
 
 /**
- * The append-only audit log written on every admin mutation.
+ * The append-only audit log written on every admin mutation and on admin sign-in events.
  *
  * Owns: `audit_log_entries`.
- * Built in Phase 16 of docs/ARCHITECTURE-AUDIT.md §15.2. Other modules reach it only through ./index.ts.
+ * Other modules reach it only through ./index.ts.
  */
-@Module({})
+@Module({
+  providers: [AuditService],
+  exports: [AuditService],
+})
 export class AuditModule {}

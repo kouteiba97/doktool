@@ -257,6 +257,45 @@ enum ClientPlatform {
   @@map("client_platform")
 }
 
+enum DevicePlatform {
+  IOS
+  ANDROID
+
+  @@map("device_platform")
+}
+
+enum OtpPurpose {
+  SIGN_UP
+  PASSWORD_RESET
+
+  @@map("otp_purpose")
+}
+
+enum MessageChannel {
+  EMAIL
+  SMS
+
+  @@map("message_channel")
+}
+
+enum SessionRevocationReason {
+  SIGN_OUT
+  USER_REVOKED
+  PASSWORD_RESET
+  REFRESH_REUSE
+  DEVICE_MISMATCH
+  ACCOUNT_SUSPENDED
+
+  @@map("session_revocation_reason")
+}
+
+enum AdminChallengeKind {
+  TOTP_VERIFY
+  TOTP_ENROLL
+
+  @@map("admin_challenge_kind")
+}
+
 enum AuditActorType {
   ADMIN
   SYSTEM
@@ -276,9 +315,9 @@ enum AdminStatus {
 
 model Wilaya {
   /// Official wilaya number.
-  code         Int                   @id
+  code         Int           @id
   name         String
-  profiles     ProfessionalProfile[]
+  users        User[]
   institutions Institution[]
   universities University[]
 
@@ -327,20 +366,30 @@ model University {
 
 /// One per real person. Never a Demo. E-mail or phone is required (CHECK).
 model User {
-  id               String     @id @default(uuid(7)) @db.Uuid
+  id                String     @id @default(uuid(7)) @db.Uuid
   /// Stored lower-case (CHECK).
-  email            String?    @unique
+  email             String?    @unique
   /// E.164 (CHECK).
-  phone            String?    @unique
-  passwordHash     String     @map("password_hash")
-  firstName        String     @map("first_name")
-  lastName         String     @map("last_name")
-  avatarStorageKey String?    @map("avatar_storage_key")
-  bio              String?    @db.VarChar(280)
-  status           UserStatus @default(ACTIVE)
-  lastSeenAt       DateTime?  @map("last_seen_at") @db.Timestamptz(3)
-  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt        DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  phone             String?    @unique
+  passwordHash      String     @map("password_hash")
+  firstName         String     @map("first_name")
+  lastName          String     @map("last_name")
+  avatarStorageKey  String?    @map("avatar_storage_key")
+  bio               String?    @db.VarChar(280)
+  status            UserStatus @default(ACTIVE)
+  /// Collected at sign-up, before the role is chosen (ADR-009).
+  wilayaCode        Int        @map("wilaya_code")
+  wilaya            Wilaya     @relation(fields: [wilayaCode], references: [code])
+  /// Set by OTP confirmation; signing in needs the identifier used to be confirmed.
+  emailConfirmedAt  DateTime?  @map("email_confirmed_at") @db.Timestamptz(3)
+  phoneConfirmedAt  DateTime?  @map("phone_confirmed_at") @db.Timestamptz(3)
+  termsVersion      String     @map("terms_version")
+  termsAcceptedAt   DateTime   @map("terms_accepted_at") @db.Timestamptz(3)
+  failedSignInCount Int        @default(0) @map("failed_sign_in_count")
+  lockedUntil       DateTime?  @map("locked_until") @db.Timestamptz(3)
+  lastSeenAt        DateTime?  @map("last_seen_at") @db.Timestamptz(3)
+  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   professionalProfile ProfessionalProfile?
   preference          UserPreference?
@@ -351,6 +400,8 @@ model User {
   recentActivities    RecentActivity[]
   notifications       Notification[]
   convertedDemos      DemoSession[]
+  sessions            UserSession[]
+  otpChallenges       OtpChallenge[]
 
   @@map("users")
 }
@@ -370,8 +421,6 @@ model ProfessionalProfile {
   academicYear      Int?             @map("academic_year") @db.SmallInt
   /// Residents only, ≥ 1 (CHECK).
   residencyYear     Int?             @map("residency_year") @db.SmallInt
-  wilayaCode        Int              @map("wilaya_code")
-  wilaya            Wilaya           @relation(fields: [wilayaCode], references: [code])
   orderNumberMasked String?          @map("order_number_masked")
   createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -721,6 +770,70 @@ model RecentActivity {
   @@map("recent_activities")
 }
 
+// ───────────────────────────────── [auth] ─────────────────────────────────
+
+/// One device sign-in. Revoked on sign-out, user revocation, password reset or refresh-token reuse.
+model UserSession {
+  id            String                   @id @default(uuid(7)) @db.Uuid
+  userId        String                   @map("user_id") @db.Uuid
+  user          User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// App-generated installation id; refresh tokens only work from this device.
+  deviceId      String                   @map("device_id") @db.VarChar(128)
+  deviceName    String?                  @map("device_name") @db.VarChar(120)
+  platform      DevicePlatform
+  ip            String?                  @db.Inet
+  userAgent     String?                  @map("user_agent") @db.VarChar(512)
+  createdAt     DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastUsedAt    DateTime                 @default(now()) @map("last_used_at") @db.Timestamptz(3)
+  /// Absolute end of the session, whatever the refreshes (ADR-009: 180 days).
+  expiresAt     DateTime                 @map("expires_at") @db.Timestamptz(3)
+  revokedAt     DateTime?                @map("revoked_at") @db.Timestamptz(3)
+  revokedReason SessionRevocationReason? @map("revoked_reason")
+  refreshTokens RefreshToken[]
+
+  @@index([userId, revokedAt])
+  @@map("user_sessions")
+}
+
+/// Rotating refresh token, stored as SHA-256. A used token presented again revokes its session.
+model RefreshToken {
+  id        String      @id @default(uuid(7)) @db.Uuid
+  sessionId String      @map("session_id") @db.Uuid
+  session   UserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  tokenHash String      @unique @map("token_hash") @db.Char(64)
+  expiresAt DateTime    @map("expires_at") @db.Timestamptz(3)
+  usedAt    DateTime?   @map("used_at") @db.Timestamptz(3)
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([sessionId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+/// One-time code sent by e-mail or SMS. The code is stored as an HMAC, never in clear.
+/// A password-reset challenge for an unknown identifier has no user and can never succeed.
+model OtpChallenge {
+  id             String         @id @default(uuid(7)) @db.Uuid
+  purpose        OtpPurpose
+  channel        MessageChannel
+  /// E-mail or E.164 phone the code was sent to.
+  destination    String
+  userId         String?        @map("user_id") @db.Uuid
+  user           User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash       String         @map("code_hash") @db.Char(64)
+  expiresAt      DateTime       @map("expires_at") @db.Timestamptz(3)
+  failedAttempts Int            @default(0) @map("failed_attempts")
+  lockedUntil    DateTime?      @map("locked_until") @db.Timestamptz(3)
+  sendCount      Int            @default(1) @map("send_count")
+  lastSentAt     DateTime       @default(now()) @map("last_sent_at") @db.Timestamptz(3)
+  consumedAt     DateTime?      @map("consumed_at") @db.Timestamptz(3)
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([destination, purpose])
+  @@index([expiresAt])
+  @@map("otp_challenges")
+}
+
 // ──────────────────────────── [notifications] ────────────────────────────
 
 /// Rendered in the user's language from catalogue keys.
@@ -824,11 +937,17 @@ model AdminAccount {
   /// Encrypted TOTP secret; null until enrolment, and login is refused without it.
   totpSecretEncrypted Bytes?      @map("totp_secret_encrypted")
   status              AdminStatus @default(ACTIVE)
+  /// Last TOTP time step accepted; a code is never accepted twice.
+  totpLastUsedStep    BigInt?     @map("totp_last_used_step")
+  failedSignInCount   Int         @default(0) @map("failed_sign_in_count")
+  lockedUntil         DateTime?   @map("locked_until") @db.Timestamptz(3)
   lastLoginAt         DateTime?   @map("last_login_at") @db.Timestamptz(3)
   createdAt           DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt           DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   grants                     AdminGrant[]            @relation("AdminGrantHolder")
+  sessions                   AdminSession[]
+  authChallenges             AdminAuthChallenge[]
   grantsGiven                AdminGrant[]            @relation("AdminGrantGrantor")
   verificationReviews        VerificationCase[]      @relation("VerificationReviewer")
   adjustmentsRequested       TransactionAdjustment[] @relation("AdjustmentRequester")
@@ -855,4 +974,52 @@ model AdminGrant {
 
   @@unique([adminId, grant])
   @@map("admin_grants")
+}
+
+/// Admin Web session behind the `__Host-doktool_admin` cookie (token stored as SHA-256).
+/// Idle timeout 30 min, absolute 12 h (ADR-009).
+model AdminSession {
+  id         String       @id @default(uuid(7)) @db.Uuid
+  adminId    String       @map("admin_id") @db.Uuid
+  admin      AdminAccount @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  tokenHash  String       @unique @map("token_hash") @db.Char(64)
+  ip         String?      @db.Inet
+  userAgent  String?      @map("user_agent") @db.VarChar(512)
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastSeenAt DateTime     @default(now()) @map("last_seen_at") @db.Timestamptz(3)
+  expiresAt  DateTime     @map("expires_at") @db.Timestamptz(3)
+  revokedAt  DateTime?    @map("revoked_at") @db.Timestamptz(3)
+
+  @@index([adminId])
+  @@map("admin_sessions")
+}
+
+/// Pending second step of an admin login: TOTP verification, or first-time enrolment carrying
+/// the encrypted secret being enrolled.
+model AdminAuthChallenge {
+  id                     String             @id @default(uuid(7)) @db.Uuid
+  adminId                String             @map("admin_id") @db.Uuid
+  admin                  AdminAccount       @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  kind                   AdminChallengeKind
+  tokenHash              String             @unique @map("token_hash") @db.Char(64)
+  pendingSecretEncrypted Bytes?             @map("pending_secret_encrypted")
+  failedAttempts         Int                @default(0) @map("failed_attempts")
+  expiresAt              DateTime           @map("expires_at") @db.Timestamptz(3)
+  consumedAt             DateTime?          @map("consumed_at") @db.Timestamptz(3)
+  createdAt              DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([expiresAt])
+  @@map("admin_auth_challenges")
+}
+
+// ─────────────────────── Rate limiting [infrastructure] ───────────────────────
+
+/// Fixed-window counter, one row per key (e.g. "sign-in:ip:203.0.113.7"). ADR-007, ADR-009.
+model RateLimitCounter {
+  key       String   @id @db.VarChar(200)
+  hits      Int
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+
+  @@index([expiresAt])
+  @@map("rate_limit_counters")
 }

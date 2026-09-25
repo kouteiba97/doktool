@@ -1,3 +1,7 @@
 {
-  "common.appName": "DokTool"
+  "common.appName": "DokTool",
+  "server.otp.signUp.subject": "Votre code de confirmation DokTool",
+  "server.otp.signUp.text": "Votre code DokTool : {code}. Il expire dans {minutes} minutes. Ne le communiquez à personne.",
+  "server.otp.passwordReset.subject": "Réinitialisation de votre mot de passe DokTool",
+  "server.otp.passwordReset.text": "Votre code de réinitialisation DokTool : {code}. Il expire dans {minutes} minutes. Si vous n’avez rien demandé, ignorez ce message."
 }

@@ -1,5 +1,5 @@
-// ADR-001: every table has exactly one owning module, named in its schema.prisma section header,
-// and that module exists and is registered in the application.
+// ADR-001: every table has exactly one owner, named in its schema.prisma section header: a domain
+// module that exists and is registered, or shared infrastructure (e.g. rate-limit counters).
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -52,6 +52,6 @@ describe('table ownership', () => {
 
   it.each([...owners.entries()])('%s is owned by an existing module', (_model, owner) => {
     expect(owner).not.toBeNull();
-    expect(moduleDirectories).toContain(owner);
+    expect([...moduleDirectories, 'infrastructure']).toContain(owner);
   });
 });

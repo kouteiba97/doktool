@@ -20,7 +20,7 @@ describe('validateCatalogue', () => {
     assert.deepEqual(validateCatalogue('fr', { 'common.appName': 'DokTool' }), []);
   });
 
-  it('rejects keys outside the common/mobile/admin namespaces', () => {
+  it('rejects keys outside the common/mobile/admin/server namespaces', () => {
     const problems = validateCatalogue('fr', { 'web.title': 'x', 'mobile.Home': 'y' });
     assert.equal(problems.length, 2);
   });

@@ -27,11 +27,20 @@ function sortKeys(value: unknown): unknown {
 }
 
 // Preview mode resolves the module graph and controller metadata without instantiating providers,
-// so no database connection is attempted and the URL below is never used.
+// so no database connection is attempted and the values below (never secrets) are never used.
 const env: Env = {
   NODE_ENV: 'production',
   PORT: 0,
   DATABASE_URL: 'postgresql://openapi-generation.invalid/doktool',
+  TRUST_PROXY_HOPS: 0,
+  USER_JWT_SECRET: 'openapi-generation-placeholder-secret-000000',
+  OTP_HMAC_SECRET: 'openapi-generation-placeholder-secret-000000',
+  ADMIN_TOTP_ENCRYPTION_KEY: Buffer.alloc(32).toString('base64'),
+  ADMIN_WEB_ORIGIN: 'https://admin.invalid',
+  TERMS_VERSION: 'openapi',
+  SMTP_URL: undefined,
+  MAIL_FROM: undefined,
+  JOBS_ENABLED: false,
 };
 const app = await NestFactory.create(AppModule.forRoot(env), { preview: true, logger: false });
 const document = buildOpenApiDocument(app);

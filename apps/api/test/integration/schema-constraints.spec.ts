@@ -16,8 +16,8 @@ const admin = (email: string) =>
 
 const user = (email: string | null, phone: string | null = null) =>
   db.insertId(
-    `INSERT INTO users (id, email, phone, password_hash, first_name, last_name, updated_at)
-     VALUES (gen_random_uuid(), $1, $2, 'hash', 'Amina', 'Test', now()) RETURNING id`,
+    `INSERT INTO users (id, email, phone, password_hash, first_name, last_name, wilaya_code, terms_version, terms_accepted_at, updated_at)
+     VALUES (gen_random_uuid(), $1, $2, 'hash', 'Amina', 'Test', 16, 't1', now(), now()) RETURNING id`,
     [email, phone],
   );
 
@@ -111,8 +111,8 @@ const publish = (versionId: string, reviewerId: string, testRun = '{"passed": tr
 describe('users and profiles', () => {
   it('requires an e-mail or a phone number', async () => {
     await db.expectRejection(
-      `INSERT INTO users (id, password_hash, first_name, last_name, updated_at)
-       VALUES (gen_random_uuid(), 'h', 'A', 'B', now())`,
+      `INSERT INTO users (id, password_hash, first_name, last_name, wilaya_code, terms_version, terms_accepted_at, updated_at)
+       VALUES (gen_random_uuid(), 'h', 'A', 'B', 16, 't1', now(), now())`,
       [],
       /users_email_or_phone_chk/,
     );
@@ -121,14 +121,14 @@ describe('users and profiles', () => {
 
   it('stores e-mails lower-case and phones in E.164', async () => {
     await db.expectRejection(
-      `INSERT INTO users (id, email, password_hash, first_name, last_name, updated_at)
-       VALUES (gen_random_uuid(), 'Dr@Example.dz', 'h', 'A', 'B', now())`,
+      `INSERT INTO users (id, email, password_hash, first_name, last_name, wilaya_code, terms_version, terms_accepted_at, updated_at)
+       VALUES (gen_random_uuid(), 'Dr@Example.dz', 'h', 'A', 'B', 16, 't1', now(), now())`,
       [],
       /users_email_lowercase_chk/,
     );
     await db.expectRejection(
-      `INSERT INTO users (id, phone, password_hash, first_name, last_name, updated_at)
-       VALUES (gen_random_uuid(), '0550 00 00 00', 'h', 'A', 'B', now())`,
+      `INSERT INTO users (id, phone, password_hash, first_name, last_name, wilaya_code, terms_version, terms_accepted_at, updated_at)
+       VALUES (gen_random_uuid(), '0550 00 00 00', 'h', 'A', 'B', 16, 't1', now(), now())`,
       [],
       /users_phone_e164_chk/,
     );
@@ -142,11 +142,10 @@ describe('users and profiles', () => {
   });
 
   it('keeps academic year for students (1–7) and residency year for residents', async () => {
-    await db.query(`INSERT INTO wilayas (code, name) VALUES (16, 'Alger')`);
     const userId = await user('student@example.dz');
     const insertProfile = (type: string, academic: number | null, residency: number | null) =>
-      `INSERT INTO professional_profiles (user_id, professional_type, academic_year, residency_year, wilaya_code, updated_at)
-       VALUES ('${userId}', '${type}', ${academic ?? 'NULL'}, ${residency ?? 'NULL'}, 16, now())`;
+      `INSERT INTO professional_profiles (user_id, professional_type, academic_year, residency_year, updated_at)
+       VALUES ('${userId}', '${type}', ${academic ?? 'NULL'}, ${residency ?? 'NULL'}, now())`;
     await db.expectRejection(insertProfile('DOCTOR', 3, null), [], /academic_year_chk/);
     await db.expectRejection(insertProfile('STUDENT', 8, null), [], /academic_year_chk/);
     await db.expectRejection(insertProfile('STUDENT', 3, 2), [], /residency_year_chk/);
@@ -535,5 +534,50 @@ describe('admin grants', () => {
       [holder],
       /no_self_grant_chk/,
     );
+  });
+});
+
+describe('authentication tables (ADR-009)', () => {
+  it('only confirms an identifier the account has', async () => {
+    await db.expectRejection(
+      `INSERT INTO users (id, email, password_hash, first_name, last_name, wilaya_code, terms_version,
+         terms_accepted_at, phone_confirmed_at, updated_at)
+       VALUES (gen_random_uuid(), 'nophone@example.dz', 'h', 'A', 'B', 16, 't1', now(), now(), now())`,
+      [],
+      /users_phone_confirmation_chk/,
+    );
+  });
+
+  it('ties every sign-up code to an account and records why a session ended', async () => {
+    await db.expectRejection(
+      `INSERT INTO otp_challenges (id, purpose, channel, destination, code_hash, expires_at)
+       VALUES (gen_random_uuid(), 'SIGN_UP', 'EMAIL', 'x@example.dz', repeat('a', 64), now())`,
+      [],
+      /otp_challenges_signup_user_chk/,
+    );
+    const userId = await user('sessions@example.dz');
+    await db.expectRejection(
+      `INSERT INTO user_sessions (id, user_id, device_id, platform, expires_at, revoked_at)
+       VALUES (gen_random_uuid(), $1, 'device-1', 'IOS', now() + interval '1 day', now())`,
+      [userId],
+      /user_sessions_revocation_chk/,
+    );
+  });
+
+  it('carries a pending TOTP secret only on enrolment challenges', async () => {
+    const adminId = await admin('totp@doktool.dz');
+    await db.expectRejection(
+      `INSERT INTO admin_auth_challenges (id, admin_id, kind, token_hash, expires_at)
+       VALUES (gen_random_uuid(), $1, 'TOTP_ENROLL', repeat('b', 64), now())`,
+      [adminId],
+      /admin_auth_challenges_enrol_secret_chk/,
+    );
+  });
+
+  it('seeds the 58 wilayas', async () => {
+    const { rows } = await db.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM wilayas`,
+    );
+    expect(rows[0]?.count).toBe('58');
   });
 });

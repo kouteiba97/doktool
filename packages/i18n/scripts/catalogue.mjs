@@ -1,8 +1,8 @@
 // Pure validation logic for the FR/EN catalogues. Used by check-parity.mjs and its tests.
 import { parse, TYPE } from '@formatjs/icu-messageformat-parser';
 
-/** Keys must live in one of the three namespaces, dot-separated camelCase segments. */
-export const KEY_PATTERN = /^(common|mobile|admin)(\.[a-z][A-Za-z0-9]*)+$/;
+/** Keys live in one namespace (common, mobile, admin, server), dot-separated camelCase segments. */
+export const KEY_PATTERN = /^(common|mobile|admin|server)(\.[a-z][A-Za-z0-9]*)+$/;
 
 const NAMED_TYPES = new Set([
   TYPE.argument,

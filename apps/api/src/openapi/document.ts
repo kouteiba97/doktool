@@ -10,9 +10,12 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
     .setTitle(OPENAPI_TITLE)
     .setDescription(
       'Backend of DokTool V1. User API under /v1 (Flutter app), admin API under /admin/v1 (Admin Web). ' +
-        'The backend decides every rule; clients render its decisions.',
+        'The backend decides every rule; clients render its decisions. ' +
+        'Every error is `{ error: { code, message, details } }`; clients translate `code`.',
     )
     .setVersion(OPENAPI_VERSION)
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'user')
+    .addCookieAuth('__Host-doktool_admin', { type: 'apiKey', in: 'cookie' }, 'admin')
     .build();
   return SwaggerModule.createDocument(app, config);
 }
