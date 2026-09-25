@@ -856,16 +856,18 @@ model Notification {
 /// No name, e-mail or phone, ever. Separate from User; nothing a demo does lands in user tables.
 /// expiresAt is null by default: a demo has no time limit (ADR-006 Q5). An admin can end it (EXPIRED).
 model DemoSession {
-  id              String            @id @default(uuid(7)) @db.Uuid
-  deviceIdHash    String            @map("device_id_hash") @db.Char(64)
-  demoContext     DemoContext       @map("demo_context")
-  status          DemoSessionStatus @default(ACTIVE)
-  startedAt       DateTime          @default(now()) @map("started_at") @db.Timestamptz(3)
-  expiresAt       DateTime?         @map("expires_at") @db.Timestamptz(3)
-  lastSeenAt      DateTime          @default(now()) @map("last_seen_at") @db.Timestamptz(3)
+  id               String            @id @default(uuid(7)) @db.Uuid
+  deviceIdHash     String            @map("device_id_hash") @db.Char(64)
+  demoContext      DemoContext       @map("demo_context")
+  status           DemoSessionStatus @default(ACTIVE)
+  startedAt        DateTime          @default(now()) @map("started_at") @db.Timestamptz(3)
+  expiresAt        DateTime?         @map("expires_at") @db.Timestamptz(3)
+  lastSeenAt       DateTime          @default(now()) @map("last_seen_at") @db.Timestamptz(3)
+  /// SHA-256 of the renewal token that trades for new 1-hour demo access tokens (ADR-010).
+  renewalTokenHash String            @unique @map("renewal_token_hash") @db.Char(64)
   /// Set on conversion, for funnel analytics only (CHECK: iff CONVERTED).
-  convertedUserId String?           @map("converted_user_id") @db.Uuid
-  convertedUser   User?             @relation(fields: [convertedUserId], references: [id], onDelete: SetNull)
+  convertedUserId  String?           @map("converted_user_id") @db.Uuid
+  convertedUser    User?             @relation(fields: [convertedUserId], references: [id], onDelete: SetNull)
 
   @@index([deviceIdHash])
   @@map("demo_sessions")

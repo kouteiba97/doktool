@@ -13,6 +13,12 @@ export class ErrorDetailsBody {
     additionalProperties: { type: 'array', items: { type: 'string' } },
   })
   fields?: Record<string, string[]>;
+
+  @ApiPropertyOptional({ description: 'FEATURE_LOCKED only.' })
+  lockReason?: string;
+
+  @ApiPropertyOptional({ type: String, nullable: true, description: 'FEATURE_LOCKED only.' })
+  unlockPath?: string | null;
 }
 
 export class ErrorBody {

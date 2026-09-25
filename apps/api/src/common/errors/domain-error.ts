@@ -13,6 +13,7 @@ export const ErrorCode = {
   ACCOUNT_SUSPENDED: HttpStatus.FORBIDDEN,
   IDENTIFIER_NOT_CONFIRMED: HttpStatus.FORBIDDEN,
   ORIGIN_NOT_ALLOWED: HttpStatus.FORBIDDEN,
+  FEATURE_LOCKED: HttpStatus.FORBIDDEN,
   NOT_FOUND: HttpStatus.NOT_FOUND,
   ACCOUNT_EXISTS: HttpStatus.CONFLICT,
   PROFILE_ALREADY_SET: HttpStatus.CONFLICT,
@@ -35,6 +36,9 @@ export interface ErrorDetails {
   retryAt?: string;
   attemptsRemaining?: number;
   fields?: Record<string, string[]>;
+  /** FEATURE_LOCKED: the entitlement lock to render (ADR-010). */
+  lockReason?: string;
+  unlockPath?: string | null;
 }
 
 /** An expected, client-facing failure. Anything else is a 500. */

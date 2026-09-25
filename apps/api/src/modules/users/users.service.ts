@@ -34,6 +34,12 @@ export interface SignInCandidate {
   lockedUntil: Date | null;
 }
 
+export interface AccessFacts {
+  status: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
+  professionalType: ProfessionalType | null;
+  academicYear: number | null;
+}
+
 export interface ProfessionalProfileInput {
   professionalType: ProfessionalType;
   specialtyId?: string;
@@ -167,6 +173,23 @@ export class UsersService {
       identifierConfirmed:
         (identifier.channel === 'EMAIL' ? user.emailConfirmedAt : user.phoneConfirmedAt) !== null,
       lockedUntil: user.lockedUntil,
+    };
+  }
+
+  /** What the access policy needs to know about an account (ADR-010). */
+  async getAccessFacts(userId: string): Promise<AccessFacts | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        status: true,
+        professionalProfile: { select: { professionalType: true, academicYear: true } },
+      },
+    });
+    if (!user) return null;
+    return {
+      status: user.status,
+      professionalType: user.professionalProfile?.professionalType ?? null,
+      academicYear: user.professionalProfile?.academicYear ?? null,
     };
   }
 

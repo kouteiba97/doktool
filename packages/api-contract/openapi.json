@@ -1,6 +1,64 @@
 {
   "components": {
     "schemas": {
+      "AccessContext": {
+        "enum": [
+          "AUTHENTICATED",
+          "DEMO"
+        ],
+        "type": "string"
+      },
+      "AccessProfileDto": {
+        "properties": {
+          "accessContext": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessContext"
+              }
+            ]
+          },
+          "computedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "content": {
+            "$ref": "#/components/schemas/ContentRulesDto"
+          },
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/FeatureDecisionDto"
+            },
+            "type": "array"
+          },
+          "policyVersion": {
+            "example": "2026-09-25.1",
+            "type": "string"
+          },
+          "tier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntitlementTier"
+              }
+            ]
+          }
+        },
+        "required": [
+          "accessContext",
+          "tier",
+          "features",
+          "content",
+          "computedAt",
+          "policyVersion"
+        ],
+        "type": "object"
+      },
+      "AccessState": {
+        "enum": [
+          "AVAILABLE",
+          "LOCKED"
+        ],
+        "type": "string"
+      },
       "AdminChallengeKind": {
         "enum": [
           "TOTP_VERIFY",
@@ -189,6 +247,122 @@
         ],
         "type": "object"
       },
+      "ContentRuleDto": {
+        "properties": {
+          "lockReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LockReason"
+              }
+            ]
+          },
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContentScope"
+              }
+            ]
+          },
+          "unlockPath": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnlockPath"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "scope",
+          "lockReason",
+          "unlockPath"
+        ],
+        "type": "object"
+      },
+      "ContentRulesDto": {
+        "properties": {
+          "calculators": {
+            "$ref": "#/components/schemas/ContentRuleDto"
+          },
+          "referenceDocuments": {
+            "$ref": "#/components/schemas/ContentRuleDto"
+          }
+        },
+        "required": [
+          "calculators",
+          "referenceDocuments"
+        ],
+        "type": "object"
+      },
+      "ContentScope": {
+        "enum": [
+          "ALL",
+          "STUDENT_TIER",
+          "DEMO_SAMPLE",
+          "NONE"
+        ],
+        "type": "string"
+      },
+      "DemoContext": {
+        "description": "Médecin or Résident.",
+        "enum": [
+          "DOCTOR",
+          "RESIDENT"
+        ],
+        "type": "string"
+      },
+      "DemoSessionDto": {
+        "properties": {
+          "accessToken": {
+            "description": "Demo access token (audience doktool-demo), valid 1 hour.",
+            "type": "string"
+          },
+          "accessTokenExpiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "demoContext": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DemoContext"
+              }
+            ]
+          },
+          "demoSessionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "renewalToken": {
+            "description": "Keep in secure storage; trades for new access tokens from this device.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessToken",
+          "accessTokenExpiresAt",
+          "demoSessionId",
+          "demoContext",
+          "renewalToken"
+        ],
+        "type": "object"
+      },
+      "DemoTokenDto": {
+        "properties": {
+          "accessToken": {
+            "description": "Demo access token (audience doktool-demo), valid 1 hour.",
+            "type": "string"
+          },
+          "accessTokenExpiresAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessToken",
+          "accessTokenExpiresAt"
+        ],
+        "type": "object"
+      },
       "DeviceDto": {
         "properties": {
           "id": {
@@ -220,6 +394,16 @@
         ],
         "type": "string"
       },
+      "EntitlementTier": {
+        "enum": [
+          "DEMO",
+          "STUDENT",
+          "PROFESSIONAL_UNPAID",
+          "PROFESSIONAL",
+          "RESTRICTED"
+        ],
+        "type": "string"
+      },
       "ErrorBody": {
         "properties": {
           "code": {
@@ -232,6 +416,7 @@
               "ACCOUNT_SUSPENDED",
               "IDENTIFIER_NOT_CONFIRMED",
               "ORIGIN_NOT_ALLOWED",
+              "FEATURE_LOCKED",
               "NOT_FOUND",
               "ACCOUNT_EXISTS",
               "PROFILE_ALREADY_SET",
@@ -277,8 +462,17 @@
             },
             "type": "object"
           },
+          "lockReason": {
+            "description": "FEATURE_LOCKED only.",
+            "type": "string"
+          },
           "retryAt": {
             "format": "date-time",
+            "type": "string"
+          },
+          "unlockPath": {
+            "description": "FEATURE_LOCKED only.",
+            "nullable": true,
             "type": "string"
           }
         },
@@ -294,6 +488,65 @@
           "error"
         ],
         "type": "object"
+      },
+      "FeatureDecisionDto": {
+        "properties": {
+          "key": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FeatureKey"
+              }
+            ]
+          },
+          "lockReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LockReason"
+              }
+            ],
+            "nullable": true
+          },
+          "readOnly": {
+            "description": "Available for reading only.",
+            "type": "boolean"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessState"
+              }
+            ]
+          },
+          "unlockPath": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnlockPath"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "key",
+          "state",
+          "lockReason",
+          "unlockPath",
+          "readOnly"
+        ],
+        "type": "object"
+      },
+      "FeatureKey": {
+        "enum": [
+          "search",
+          "reference.view",
+          "calculator.use",
+          "favorites",
+          "activity.history",
+          "offline.sync",
+          "subscription.purchase",
+          "profile.edit"
+        ],
+        "type": "string"
       },
       "HealthResponse": {
         "properties": {
@@ -328,6 +581,19 @@
         "enum": [
           "FR",
           "EN"
+        ],
+        "type": "string"
+      },
+      "LockReason": {
+        "enum": [
+          "DEMO_LIMIT",
+          "PROFESSIONAL_ONLY",
+          "SUBSCRIPTION_REQUIRED",
+          "VERIFICATION_REQUIRED",
+          "VERIFICATION_PENDING",
+          "ACCOUNT_SUSPENDED",
+          "OFFLINE_UNAVAILABLE",
+          "NO_LONGER_AVAILABLE"
         ],
         "type": "string"
       },
@@ -572,6 +838,21 @@
         ],
         "type": "object"
       },
+      "RenewDemoTokenDto": {
+        "properties": {
+          "deviceId": {
+            "type": "string"
+          },
+          "renewalToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "renewalToken",
+          "deviceId"
+        ],
+        "type": "object"
+      },
       "ResendCodeDto": {
         "properties": {
           "challengeId": {
@@ -742,6 +1023,27 @@
         ],
         "type": "object"
       },
+      "StartDemoDto": {
+        "properties": {
+          "demoContext": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DemoContext"
+              }
+            ],
+            "description": "Médecin or Résident."
+          },
+          "deviceId": {
+            "description": "Installation id generated by the app (stored hashed).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "demoContext",
+          "deviceId"
+        ],
+        "type": "object"
+      },
       "ThemePreference": {
         "enum": [
           "LIGHT",
@@ -766,6 +1068,16 @@
           "otpauthUri"
         ],
         "type": "object"
+      },
+      "UnlockPath": {
+        "enum": [
+          "auth.sign-up",
+          "subscription.plans",
+          "onboarding.role",
+          "verification.start",
+          "verification.status"
+        ],
+        "type": "string"
       },
       "UpdatePreferencesDto": {
         "properties": {
@@ -824,6 +1136,12 @@
         "in": "cookie",
         "name": "__Host-doktool_admin",
         "type": "apiKey"
+      },
+      "demo": {
+        "bearerFormat": "JWT",
+        "description": "Demo token (audience doktool-demo)",
+        "scheme": "bearer",
+        "type": "http"
       },
       "user": {
         "bearerFormat": "JWT",
@@ -1296,6 +1614,88 @@
         ]
       }
     },
+    "/v1/demo/sessions": {
+      "post": {
+        "operationId": "DemoController_start",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartDemoDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoSessionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "tags": [
+          "demo"
+        ]
+      }
+    },
+    "/v1/demo/sessions/token": {
+      "post": {
+        "operationId": "DemoController_renew",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenewDemoTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoTokenDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "tags": [
+          "demo"
+        ]
+      }
+    },
     "/v1/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -1360,6 +1760,45 @@
         ],
         "tags": [
           "account"
+        ]
+      }
+    },
+    "/v1/me/access": {
+      "get": {
+        "operationId": "AccessController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessProfileDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "demo": []
+          },
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "access"
         ]
       }
     },

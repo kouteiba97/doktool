@@ -13,5 +13,6 @@ One file per decision, numbered, never rewritten after acceptance — a changed 
 | [007](ADR-007-jobs-pg-boss.md) | Background jobs on pg-boss (no Redis in V1) | Accepted |
 | [008](ADR-008-repository-toolchain.md) | Repository toolchain | Accepted |
 | [009](ADR-009-authentication.md) | Authentication (users and admins) | Accepted |
+| [010](ADR-010-entitlements-implementation.md) | Entitlements implementation | Accepted |
 
 Source of the architecture: [`docs/ARCHITECTURE-AUDIT.md`](../ARCHITECTURE-AUDIT.md). Where an ADR and the design system disagree, the ADR wins; where ADR-006 and the audit disagree, ADR-006 wins.

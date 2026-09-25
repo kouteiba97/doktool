@@ -471,8 +471,8 @@ describe('privacy and demo (Lock L42, ADR-006 Q5)', () => {
 
   it('starts demo sessions without a time limit or any contact field', async () => {
     const { rows } = await db.query<{ expires_at: Date | null }>(
-      `INSERT INTO demo_sessions (id, device_id_hash, demo_context)
-       VALUES (gen_random_uuid(), repeat('c', 64), 'DOCTOR') RETURNING expires_at`,
+      `INSERT INTO demo_sessions (id, device_id_hash, demo_context, renewal_token_hash)
+       VALUES (gen_random_uuid(), repeat('c', 64), 'DOCTOR', repeat('e', 64)) RETURNING expires_at`,
     );
     expect(rows[0]?.expires_at).toBeNull();
     const columns = await db.query<{ column_name: string }>(

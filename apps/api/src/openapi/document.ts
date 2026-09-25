@@ -15,6 +15,15 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
     )
     .setVersion(OPENAPI_VERSION)
     .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'user')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Demo token (audience doktool-demo)',
+      },
+      'demo',
+    )
     .addCookieAuth('__Host-doktool_admin', { type: 'apiKey', in: 'cookie' }, 'admin')
     .build();
   return SwaggerModule.createDocument(app, config);
