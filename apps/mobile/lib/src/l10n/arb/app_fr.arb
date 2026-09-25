@@ -4,6 +4,57 @@
   "@appName": {
     "description": "common.appName"
   },
+  "notificationsEmpty": "Aucune notification pour le moment.",
+  "@notificationsEmpty": {
+    "description": "mobile.notifications.empty"
+  },
+  "notificationsMarkAllRead": "Tout marquer comme lu",
+  "@notificationsMarkAllRead": {
+    "description": "mobile.notifications.markAllRead"
+  },
+  "notificationsTitle": "Notifications",
+  "@notificationsTitle": {
+    "description": "mobile.notifications.title"
+  },
+  "notificationsVerificationApproved": "{caseType, select, IDENTITY {Votre identité est vérifiée.} PROFESSIONAL_STATUS {Votre statut professionnel est vérifié.} other {Votre statut d’étudiant est vérifié.}}",
+  "@notificationsVerificationApproved": {
+    "description": "mobile.notifications.verificationApproved",
+    "placeholders": {
+      "caseType": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsVerificationExpired": "{caseType, select, IDENTITY {Votre vérification d’identité} PROFESSIONAL_STATUS {Votre vérification professionnelle} other {Votre vérification d’étudiant}} a expiré. Renouvelez-la depuis le statut de vérification.",
+  "@notificationsVerificationExpired": {
+    "description": "mobile.notifications.verificationExpired",
+    "placeholders": {
+      "caseType": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsVerificationExpiring": "{caseType, select, IDENTITY {Votre vérification d’identité} PROFESSIONAL_STATUS {Votre vérification professionnelle} other {Votre vérification d’étudiant}} expire dans {days} jours. Vous pourrez la renouveler depuis le statut de vérification.",
+  "@notificationsVerificationExpiring": {
+    "description": "mobile.notifications.verificationExpiring",
+    "placeholders": {
+      "caseType": {
+        "type": "String"
+      },
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsVerificationRejected": "{caseType, select, IDENTITY {La vérification de votre identité} PROFESSIONAL_STATUS {La vérification de votre statut professionnel} other {La vérification de votre statut d’étudiant}} n’a pas abouti. Ouvrez le statut pour voir la raison et corriger.",
+  "@notificationsVerificationRejected": {
+    "description": "mobile.notifications.verificationRejected",
+    "placeholders": {
+      "caseType": {
+        "type": "String"
+      }
+    }
+  },
   "settingsAppearanceDark": "Sombre",
   "@settingsAppearanceDark": {
     "description": "mobile.settings.appearance.dark"

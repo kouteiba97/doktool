@@ -65,4 +65,15 @@ export class AdminAccountsService {
       .filter(isGrant)
       .sort();
   }
+
+  /** Full names shown in review trails, by admin id. */
+  async names(ids: string[]): Promise<Map<string, string>> {
+    const unique = [...new Set(ids)];
+    if (unique.length === 0) return new Map();
+    const rows = await this.prisma.adminAccount.findMany({
+      where: { id: { in: unique } },
+      select: { id: true, fullName: true },
+    });
+    return new Map(rows.map((row) => [row.id, row.fullName]));
+  }
 }

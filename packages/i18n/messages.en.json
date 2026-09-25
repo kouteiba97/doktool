@@ -1,5 +1,12 @@
 {
   "common.appName": "DokTool",
+  "mobile.notifications.empty": "No notifications yet.",
+  "mobile.notifications.markAllRead": "Mark all as read",
+  "mobile.notifications.title": "Notifications",
+  "mobile.notifications.verificationApproved": "{caseType, select, IDENTITY {Your identity is verified.} PROFESSIONAL_STATUS {Your professional status is verified.} other {Your student status is verified.}}",
+  "mobile.notifications.verificationExpired": "{caseType, select, IDENTITY {Your identity verification} PROFESSIONAL_STATUS {Your professional verification} other {Your student verification}} has expired. Renew it from the verification status.",
+  "mobile.notifications.verificationExpiring": "{caseType, select, IDENTITY {Your identity verification} PROFESSIONAL_STATUS {Your professional verification} other {Your student verification}} expires in {days} days. You can renew it from the verification status.",
+  "mobile.notifications.verificationRejected": "{caseType, select, IDENTITY {Your identity verification} PROFESSIONAL_STATUS {Your professional status verification} other {Your student status verification}} was not approved. Open the status to see why and correct it.",
   "mobile.settings.appearance.dark": "Dark",
   "mobile.settings.appearance.light": "Light",
   "mobile.settings.appearance.system": "Device",

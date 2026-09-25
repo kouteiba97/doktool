@@ -359,6 +359,22 @@
         ],
         "type": "object"
       },
+      "AdminNameDto": {
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ],
+        "type": "object"
+      },
       "AdminRefDto": {
         "properties": {
           "fullName": {
@@ -641,6 +657,218 @@
         ],
         "type": "object"
       },
+      "AdminVerificationCaseDto": {
+        "properties": {
+          "appealedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "details": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationDeclaredDetailsDto"
+              }
+            ],
+            "description": "As declared (Ordre number in full)."
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/AdminVerificationDocumentDto"
+            },
+            "type": "array"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "history": {
+            "description": "Earlier cases of the same type.",
+            "items": {
+              "$ref": "#/components/schemas/VerificationHistoryItemDto"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "person": {
+            "$ref": "#/components/schemas/VerificationPersonDto"
+          },
+          "references": {
+            "$ref": "#/components/schemas/VerificationReferencesDto"
+          },
+          "rejectedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminNameDto"
+              }
+            ],
+            "description": "Reviewer whose rejection is appealed.",
+            "nullable": true,
+            "type": "object"
+          },
+          "rejection": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationRejectionDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "reviewer": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminNameDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationStatus"
+              }
+            ]
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/VerificationStepDto"
+            },
+            "type": "array"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "status",
+          "details",
+          "references",
+          "steps",
+          "documents",
+          "person",
+          "history"
+        ],
+        "type": "object"
+      },
+      "AdminVerificationDocumentDto": {
+        "properties": {
+          "contentType": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "purgeAfter": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "stepType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationStepType"
+              }
+            ]
+          },
+          "uploadedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "stepType",
+          "contentType",
+          "sizeBytes",
+          "uploadedAt"
+        ],
+        "type": "object"
+      },
+      "AdminVerificationQueueItemDto": {
+        "properties": {
+          "appealedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "professionalType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfessionalType"
+              }
+            ],
+            "nullable": true
+          },
+          "reviewer": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminNameDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationStatus"
+              }
+            ]
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationType"
+              }
+            ]
+          },
+          "user": {
+            "$ref": "#/components/schemas/VerificationPersonNameDto"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "status",
+          "user"
+        ],
+        "type": "object"
+      },
       "AdminVersionDto": {
         "properties": {
           "authoredBy": {
@@ -734,6 +962,51 @@
           "sources",
           "testCases",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "ApproveVerificationDto": {
+        "properties": {
+          "expiresAt": {
+            "description": "When the verification expires (e.g. the end of validity of the document).",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Recorded in the audit log.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
+      "AttachVerificationDocumentDto": {
+        "properties": {
+          "documentId": {
+            "description": "The id returned with the upload.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "intentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "stepType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationStepType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "intentId",
+          "documentId",
+          "stepType"
         ],
         "type": "object"
       },
@@ -1080,6 +1353,27 @@
         ],
         "type": "object"
       },
+      "CreatePlaceDto": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "wilayaCode": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "reason",
+          "name",
+          "wilayaCode"
+        ],
+        "type": "object"
+      },
       "CreateReferenceDocumentDto": {
         "properties": {
           "demoSample": {
@@ -1135,6 +1429,32 @@
           "titleFr",
           "demoSample",
           "status"
+        ],
+        "type": "object"
+      },
+      "CreateSpecialtyDto": {
+        "properties": {
+          "code": {
+            "example": "CARDIOLOGY",
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "nameFr": {
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "code",
+          "nameFr",
+          "nameEn"
         ],
         "type": "object"
       },
@@ -1856,6 +2176,65 @@
         ],
         "type": "object"
       },
+      "NotificationDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "messageKey": {
+            "description": "Catalogue key the app renders.",
+            "example": "mobile.notifications.verificationApproved",
+            "type": "string"
+          },
+          "params": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Values of the message placeholders (strings or numbers).",
+            "type": "object"
+          },
+          "readAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "example": "verification.decided",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "messageKey",
+          "params",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "NotificationPageDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationDto"
+            },
+            "type": "array"
+          },
+          "unreadCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "unreadCount"
+        ],
+        "type": "object"
+      },
       "OfflineManifestDto": {
         "properties": {
           "calculators": {
@@ -1978,6 +2357,26 @@
         "required": [
           "id",
           "fullName"
+        ],
+        "type": "object"
+      },
+      "PlaceDto": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "wilayaCode": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "wilayaCode"
         ],
         "type": "object"
       },
@@ -2220,6 +2619,33 @@
         "required": [
           "refreshToken",
           "deviceId"
+        ],
+        "type": "object"
+      },
+      "RejectVerificationDto": {
+        "properties": {
+          "note": {
+            "description": "Shown to the person with the reason: which step to redo and why, in plain words.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Recorded in the audit log.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "reasonCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationRejectionReason"
+              }
+            ]
+          }
+        },
+        "required": [
+          "reason",
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -2585,6 +3011,30 @@
         ],
         "type": "object"
       },
+      "SpecialtyDto": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "nameFr": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nameFr",
+          "nameEn"
+        ],
+        "type": "object"
+      },
       "StartDemoDto": {
         "properties": {
           "demoContext": {
@@ -2603,6 +3053,29 @@
         "required": [
           "demoContext",
           "deviceId"
+        ],
+        "type": "object"
+      },
+      "StartVerificationDto": {
+        "properties": {
+          "professionalType": {
+            "description": "Professional status only: the role to prove. Defaults to the current role; a higher role is a role transition.",
+            "enum": [
+              "DOCTOR",
+              "RESIDENT"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type"
         ],
         "type": "object"
       },
@@ -2783,6 +3256,652 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/UploadHeadersDto"
+              }
+            ],
+            "description": "Send exactly these headers."
+          },
+          "intentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "PUT"
+            ],
+            "type": "string"
+          },
+          "url": {
+            "description": "Signed URL, valid 15 minutes.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "intentId",
+          "method",
+          "url",
+          "headers",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "VerificationCaseDto": {
+        "properties": {
+          "appealedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "canAppeal": {
+            "description": "An appeal is possible (after a second rejection).",
+            "type": "boolean"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "details": {
+            "$ref": "#/components/schemas/VerificationDeclaredDetailsDto"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/VerificationDocumentDto"
+            },
+            "type": "array"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "rejection": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationRejectionDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationStatus"
+              }
+            ]
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/VerificationStepDto"
+            },
+            "type": "array"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "status",
+          "details",
+          "steps",
+          "documents",
+          "canAppeal"
+        ],
+        "type": "object"
+      },
+      "VerificationDeclaredDetailsDto": {
+        "properties": {
+          "academicYear": {
+            "type": "number"
+          },
+          "documentKind": {
+            "enum": [
+              "NATIONAL_ID",
+              "PASSPORT",
+              "STUDENT_CARD"
+            ],
+            "type": "string"
+          },
+          "institutionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "orderNumber": {
+            "description": "Masked once the case is sent.",
+            "type": "string"
+          },
+          "professionalType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfessionalType"
+              }
+            ]
+          },
+          "residencyYear": {
+            "type": "number"
+          },
+          "specialtyId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "universityId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "VerificationDetailsDto": {
+        "properties": {
+          "academicYear": {
+            "description": "Students.",
+            "maximum": 7,
+            "minimum": 1,
+            "type": "number"
+          },
+          "documentKind": {
+            "description": "Identity cases.",
+            "enum": [
+              "NATIONAL_ID",
+              "PASSPORT",
+              "STUDENT_CARD"
+            ],
+            "type": "string"
+          },
+          "institutionId": {
+            "description": "Residents.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "orderNumber": {
+            "description": "Doctors: N° d’inscription à l’Ordre.",
+            "maxLength": 30,
+            "type": "string"
+          },
+          "residencyYear": {
+            "description": "Residents.",
+            "maximum": 10,
+            "minimum": 1,
+            "type": "number"
+          },
+          "specialtyId": {
+            "description": "Doctors and residents.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "universityId": {
+            "description": "Students.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "VerificationDocumentDto": {
+        "properties": {
+          "contentType": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "stepType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationStepType"
+              }
+            ]
+          },
+          "uploadedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "stepType",
+          "contentType",
+          "sizeBytes",
+          "uploadedAt"
+        ],
+        "type": "object"
+      },
+      "VerificationDocumentUrlDto": {
+        "properties": {
+          "contentType": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "url": {
+            "description": "Signed URL, valid 60 seconds. Render in the restricted viewer only.",
+            "type": "string"
+          },
+          "watermark": {
+            "description": "Overlay this text on the document (reviewer identity and time).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "expiresAt",
+          "contentType",
+          "watermark"
+        ],
+        "type": "object"
+      },
+      "VerificationHistoryItemDto": {
+        "properties": {
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "rejectionReasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationStatus"
+              }
+            ]
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ],
+        "type": "object"
+      },
+      "VerificationOverviewDto": {
+        "properties": {
+          "professionalType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfessionalType"
+              }
+            ],
+            "nullable": true
+          },
+          "types": {
+            "items": {
+              "$ref": "#/components/schemas/VerificationTypeStateDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "types"
+        ],
+        "type": "object"
+      },
+      "VerificationPersonDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "email": {
+            "nullable": true,
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "phone": {
+            "nullable": true,
+            "type": "string"
+          },
+          "profile": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationPersonProfileDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "type": "string"
+          },
+          "wilaya": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "status",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "VerificationPersonNameDto": {
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName"
+        ],
+        "type": "object"
+      },
+      "VerificationPersonProfileDto": {
+        "properties": {
+          "academicYear": {
+            "nullable": true,
+            "type": "number"
+          },
+          "institution": {
+            "nullable": true,
+            "type": "string"
+          },
+          "orderNumberMasked": {
+            "nullable": true,
+            "type": "string"
+          },
+          "professionalType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfessionalType"
+              }
+            ]
+          },
+          "residencyYear": {
+            "nullable": true,
+            "type": "number"
+          },
+          "specialty": {
+            "nullable": true,
+            "type": "string"
+          },
+          "university": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "professionalType"
+        ],
+        "type": "object"
+      },
+      "VerificationReasonDto": {
+        "properties": {
+          "reason": {
+            "description": "Recorded in the audit log.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
+      "VerificationReferencesDto": {
+        "properties": {
+          "institution": {
+            "nullable": true,
+            "type": "string"
+          },
+          "specialty": {
+            "nullable": true,
+            "type": "string"
+          },
+          "university": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "VerificationRejectionDto": {
+        "properties": {
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationRejectionReason"
+              }
+            ]
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "VerificationRejectionReason": {
+        "enum": [
+          "ILLEGIBLE",
+          "DOCUMENT_EXPIRED",
+          "NAME_MISMATCH",
+          "WRONG_DOCUMENT",
+          "INFORMATION_MISMATCH",
+          "OTHER"
+        ],
+        "type": "string"
+      },
+      "VerificationStatus": {
+        "enum": [
+          "NOT_STARTED",
+          "SUBMITTED",
+          "IN_REVIEW",
+          "VERIFIED",
+          "REJECTED",
+          "EXPIRED",
+          "APPEALED"
+        ],
+        "type": "string"
+      },
+      "VerificationStepDto": {
+        "properties": {
+          "provided": {
+            "type": "boolean"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "stepType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationStepType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "stepType",
+          "required",
+          "provided"
+        ],
+        "type": "object"
+      },
+      "VerificationStepType": {
+        "enum": [
+          "IDENTITY_FRONT",
+          "IDENTITY_BACK",
+          "ORDER_PROOF",
+          "RESIDENCY_ATTESTATION",
+          "STUDENT_PROOF"
+        ],
+        "type": "string"
+      },
+      "VerificationType": {
+        "enum": [
+          "IDENTITY",
+          "PROFESSIONAL_STATUS",
+          "STUDENT_STATUS"
+        ],
+        "type": "string"
+      },
+      "VerificationTypeStateDto": {
+        "properties": {
+          "canStart": {
+            "description": "A new case of this type can be started now.",
+            "type": "boolean"
+          },
+          "latest": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationCaseDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "canStart"
+        ],
+        "type": "object"
+      },
+      "VerificationUploadHeadersDto": {
+        "properties": {
+          "Content-Length": {
+            "type": "string"
+          },
+          "Content-Type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "Content-Type",
+          "Content-Length"
+        ],
+        "type": "object"
+      },
+      "VerificationUploadRequestDto": {
+        "properties": {
+          "contentType": {
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "application/pdf"
+            ],
+            "type": "string"
+          },
+          "sha256": {
+            "description": "Lower-case hex SHA-256 of the file.",
+            "type": "string"
+          },
+          "sizeBytes": {
+            "description": "Exact size in bytes (at most 10 MB).",
+            "type": "number"
+          },
+          "stepType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationStepType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "stepType",
+          "contentType",
+          "sizeBytes",
+          "sha256"
+        ],
+        "type": "object"
+      },
+      "VerificationUploadStartDto": {
+        "properties": {
+          "documentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "stepType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationStepType"
+              }
+            ]
+          },
+          "upload": {
+            "$ref": "#/components/schemas/VerificationUploadTicketDto"
+          }
+        },
+        "required": [
+          "documentId",
+          "stepType",
+          "upload"
+        ],
+        "type": "object"
+      },
+      "VerificationUploadTicketDto": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "headers": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationUploadHeadersDto"
               }
             ],
             "description": "Send exactly these headers."
@@ -3908,6 +5027,144 @@
         ]
       }
     },
+    "/admin/v1/reference-data/institutions": {
+      "post": {
+        "operationId": "ReferenceDataAdminController_createInstitution",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlaceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaceDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-data"
+        ]
+      }
+    },
+    "/admin/v1/reference-data/specialties": {
+      "post": {
+        "operationId": "ReferenceDataAdminController_createSpecialty",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSpecialtyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpecialtyDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-data"
+        ]
+      }
+    },
+    "/admin/v1/reference-data/universities": {
+      "post": {
+        "operationId": "ReferenceDataAdminController_createUniversity",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlaceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaceDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-data"
+        ]
+      }
+    },
     "/admin/v1/reference-documents": {
       "get": {
         "operationId": "ReferenceLibraryAdminController_list",
@@ -4536,6 +5793,372 @@
         ]
       }
     },
+    "/admin/v1/verification/cases": {
+      "get": {
+        "operationId": "VerificationAdminController_queue",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/VerificationStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/VerificationType"
+            }
+          },
+          {
+            "description": "Id of the last case of the previous page.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminVerificationQueueItemDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-verification"
+        ]
+      }
+    },
+    "/admin/v1/verification/cases/{id}": {
+      "get": {
+        "operationId": "VerificationAdminController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVerificationCaseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-verification"
+        ]
+      }
+    },
+    "/admin/v1/verification/cases/{id}/approve": {
+      "post": {
+        "operationId": "VerificationAdminController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveVerificationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVerificationCaseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-verification"
+        ]
+      }
+    },
+    "/admin/v1/verification/cases/{id}/claim": {
+      "post": {
+        "operationId": "VerificationAdminController_claim",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVerificationCaseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-verification"
+        ]
+      }
+    },
+    "/admin/v1/verification/cases/{id}/reject": {
+      "post": {
+        "operationId": "VerificationAdminController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectVerificationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVerificationCaseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-verification"
+        ]
+      }
+    },
+    "/admin/v1/verification/cases/{id}/release": {
+      "post": {
+        "operationId": "VerificationAdminController_release",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVerificationCaseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-verification"
+        ]
+      }
+    },
+    "/admin/v1/verification/documents/{id}/view": {
+      "post": {
+        "operationId": "VerificationAdminController_viewDocument",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationDocumentUrlDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-verification"
+        ]
+      }
+    },
     "/v1/auth/codes/resend": {
       "post": {
         "operationId": "AuthController_resend",
@@ -5124,6 +6747,40 @@
         ]
       }
     },
+    "/v1/institutions": {
+      "get": {
+        "operationId": "ReferenceDataController_institutions",
+        "parameters": [
+          {
+            "description": "Only the institutions of this wilaya.",
+            "in": "query",
+            "name": "wilayaCode",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlaceDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "account"
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "operationId": "UsersController_me",
@@ -5196,6 +6853,120 @@
         ],
         "tags": [
           "access"
+        ]
+      }
+    },
+    "/v1/me/notifications": {
+      "get": {
+        "operationId": "NotificationsController_list",
+        "parameters": [
+          {
+            "description": "Only notifications created before this instant (paging).",
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPageDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/v1/me/notifications/read-all": {
+      "post": {
+        "operationId": "NotificationsController_markAllRead",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/v1/me/notifications/{id}/read": {
+      "post": {
+        "operationId": "NotificationsController_markRead",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "notifications"
         ]
       }
     },
@@ -5345,6 +7116,441 @@
         ],
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/v1/me/verification": {
+      "get": {
+        "operationId": "VerificationController_overview",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationOverviewDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "verification"
+        ]
+      }
+    },
+    "/v1/me/verification/cases": {
+      "post": {
+        "operationId": "VerificationController_start",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartVerificationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationCaseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "verification"
+        ]
+      }
+    },
+    "/v1/me/verification/cases/{id}/appeal": {
+      "post": {
+        "operationId": "VerificationController_appeal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationCaseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "verification"
+        ]
+      }
+    },
+    "/v1/me/verification/cases/{id}/details": {
+      "put": {
+        "operationId": "VerificationController_saveDetails",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationDetailsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationCaseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "verification"
+        ]
+      }
+    },
+    "/v1/me/verification/cases/{id}/documents": {
+      "post": {
+        "operationId": "VerificationController_attach",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachVerificationDocumentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationCaseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "verification"
+        ]
+      }
+    },
+    "/v1/me/verification/cases/{id}/documents/{documentId}": {
+      "delete": {
+        "operationId": "VerificationController_removeDocument",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationCaseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "verification"
+        ]
+      }
+    },
+    "/v1/me/verification/cases/{id}/erase": {
+      "post": {
+        "operationId": "VerificationController_erase",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationCaseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "verification"
+        ]
+      }
+    },
+    "/v1/me/verification/cases/{id}/submit": {
+      "post": {
+        "operationId": "VerificationController_submit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationCaseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "verification"
+        ]
+      }
+    },
+    "/v1/me/verification/cases/{id}/uploads": {
+      "post": {
+        "operationId": "VerificationController_requestUpload",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationUploadRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationUploadStartDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "verification"
         ]
       }
     },
@@ -5541,6 +7747,54 @@
         ],
         "tags": [
           "reference-library"
+        ]
+      }
+    },
+    "/v1/specialties": {
+      "get": {
+        "operationId": "ReferenceDataController_specialties",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SpecialtyDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/v1/universities": {
+      "get": {
+        "operationId": "ReferenceDataController_universities",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlaceDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "account"
         ]
       }
     },

@@ -1,5 +1,12 @@
 {
   "common.appName": "DokTool",
+  "mobile.notifications.empty": "Aucune notification pour le moment.",
+  "mobile.notifications.markAllRead": "Tout marquer comme lu",
+  "mobile.notifications.title": "Notifications",
+  "mobile.notifications.verificationApproved": "{caseType, select, IDENTITY {Votre identité est vérifiée.} PROFESSIONAL_STATUS {Votre statut professionnel est vérifié.} other {Votre statut d’étudiant est vérifié.}}",
+  "mobile.notifications.verificationExpired": "{caseType, select, IDENTITY {Votre vérification d’identité} PROFESSIONAL_STATUS {Votre vérification professionnelle} other {Votre vérification d’étudiant}} a expiré. Renouvelez-la depuis le statut de vérification.",
+  "mobile.notifications.verificationExpiring": "{caseType, select, IDENTITY {Votre vérification d’identité} PROFESSIONAL_STATUS {Votre vérification professionnelle} other {Votre vérification d’étudiant}} expire dans {days} jours. Vous pourrez la renouveler depuis le statut de vérification.",
+  "mobile.notifications.verificationRejected": "{caseType, select, IDENTITY {La vérification de votre identité} PROFESSIONAL_STATUS {La vérification de votre statut professionnel} other {La vérification de votre statut d’étudiant}} n’a pas abouti. Ouvrez le statut pour voir la raison et corriger.",
   "mobile.settings.appearance.dark": "Sombre",
   "mobile.settings.appearance.light": "Clair",
   "mobile.settings.appearance.system": "Appareil",

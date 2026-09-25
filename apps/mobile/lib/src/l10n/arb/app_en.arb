@@ -4,6 +4,57 @@
   "@appName": {
     "description": "common.appName"
   },
+  "notificationsEmpty": "No notifications yet.",
+  "@notificationsEmpty": {
+    "description": "mobile.notifications.empty"
+  },
+  "notificationsMarkAllRead": "Mark all as read",
+  "@notificationsMarkAllRead": {
+    "description": "mobile.notifications.markAllRead"
+  },
+  "notificationsTitle": "Notifications",
+  "@notificationsTitle": {
+    "description": "mobile.notifications.title"
+  },
+  "notificationsVerificationApproved": "{caseType, select, IDENTITY {Your identity is verified.} PROFESSIONAL_STATUS {Your professional status is verified.} other {Your student status is verified.}}",
+  "@notificationsVerificationApproved": {
+    "description": "mobile.notifications.verificationApproved",
+    "placeholders": {
+      "caseType": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsVerificationExpired": "{caseType, select, IDENTITY {Your identity verification} PROFESSIONAL_STATUS {Your professional verification} other {Your student verification}} has expired. Renew it from the verification status.",
+  "@notificationsVerificationExpired": {
+    "description": "mobile.notifications.verificationExpired",
+    "placeholders": {
+      "caseType": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsVerificationExpiring": "{caseType, select, IDENTITY {Your identity verification} PROFESSIONAL_STATUS {Your professional verification} other {Your student verification}} expires in {days} days. You can renew it from the verification status.",
+  "@notificationsVerificationExpiring": {
+    "description": "mobile.notifications.verificationExpiring",
+    "placeholders": {
+      "caseType": {
+        "type": "String"
+      },
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsVerificationRejected": "{caseType, select, IDENTITY {Your identity verification} PROFESSIONAL_STATUS {Your professional status verification} other {Your student status verification}} was not approved. Open the status to see why and correct it.",
+  "@notificationsVerificationRejected": {
+    "description": "mobile.notifications.verificationRejected",
+    "placeholders": {
+      "caseType": {
+        "type": "String"
+      }
+    }
+  },
   "settingsAppearanceDark": "Dark",
   "@settingsAppearanceDark": {
     "description": "mobile.settings.appearance.dark"

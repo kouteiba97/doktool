@@ -468,6 +468,14 @@ model VerificationCase {
   expiresAt           DateTime?              @map("expires_at") @db.Timestamptz(3)
   rejectionReasonCode String?                @map("rejection_reason_code")
   rejectionNote       String?                @map("rejection_note")
+  /// What the person declared for this case (e.g. Ordre number, residency year). Reviewer-only;
+  /// purged with the documents. The profile keeps only a masked number.
+  declaredDetails     Json                   @default("{}") @map("declared_details")
+  /// Set when a second rejection is appealed; a different reviewer must decide.
+  appealedAt          DateTime?              @map("appealed_at") @db.Timestamptz(3)
+  /// The reviewer whose rejection was appealed (may not decide the appeal).
+  rejectedById        String?                @map("rejected_by_id") @db.Uuid
+  rejectedBy          AdminAccount?          @relation("VerificationRejecter", fields: [rejectedById], references: [id], onDelete: Restrict)
   documents           VerificationDocument[]
   createdAt           DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt           DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -490,7 +498,7 @@ model VerificationDocument {
   uploadedAt DateTime         @default(now()) @map("uploaded_at") @db.Timestamptz(3)
   purgeAfter DateTime?        @map("purge_after") @db.Timestamptz(3)
 
-  @@index([caseId])
+  @@unique([caseId, stepType], map: "verification_documents_case_step_key")
   @@index([purgeAfter])
   @@map("verification_documents")
 }
@@ -969,6 +977,7 @@ model AdminAccount {
   authChallenges             AdminAuthChallenge[]
   grantsGiven                AdminGrant[]            @relation("AdminGrantGrantor")
   verificationReviews        VerificationCase[]      @relation("VerificationReviewer")
+  appealedRejections         VerificationCase[]      @relation("VerificationRejecter")
   adjustmentsRequested       TransactionAdjustment[] @relation("AdjustmentRequester")
   adjustmentsApproved        TransactionAdjustment[] @relation("AdjustmentApprover")
   referenceDocumentsCreated  ReferenceDocument[]     @relation("ReferenceDocumentCreator")

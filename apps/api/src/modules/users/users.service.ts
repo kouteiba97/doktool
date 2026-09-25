@@ -282,6 +282,186 @@ export class UsersService {
     return this.getMe(userId);
   }
 
+  /** Current professional type, or null before « Qui êtes-vous ? ». */
+  async professionalTypeOf(userId: string): Promise<ProfessionalType | null> {
+    const profile = await this.prisma.professionalProfile.findUnique({
+      where: { userId },
+      select: { professionalType: true },
+    });
+    return profile?.professionalType ?? null;
+  }
+
+  /** Checks that the pickers referenced by declared details exist (VALIDATION_FAILED otherwise). */
+  async assertProfessionalReferences(input: ProfessionalProfileInput): Promise<void> {
+    const fields: Record<string, string[]> = {};
+    await this.assertReferencesExist(input, fields);
+    if (Object.keys(fields).length > 0) {
+      throw new DomainError('VALIDATION_FAILED', 'Invalid professional details.', { fields });
+    }
+  }
+
+  /** Display names of picker references, for a reviewer reading declared details. */
+  async describeReferences(ids: {
+    specialtyId?: string;
+    institutionId?: string;
+    universityId?: string;
+  }): Promise<{ specialty: string | null; institution: string | null; university: string | null }> {
+    const specialty = ids.specialtyId
+      ? await this.prisma.specialty.findUnique({
+          where: { id: ids.specialtyId },
+          select: { nameFr: true },
+        })
+      : null;
+    const institution = ids.institutionId
+      ? await this.prisma.institution.findUnique({
+          where: { id: ids.institutionId },
+          select: { name: true },
+        })
+      : null;
+    const university = ids.universityId
+      ? await this.prisma.university.findUnique({
+          where: { id: ids.universityId },
+          select: { name: true },
+        })
+      : null;
+    return {
+      specialty: specialty?.nameFr ?? null,
+      institution: institution?.name ?? null,
+      university: university?.name ?? null,
+    };
+  }
+
+  /**
+   * Applies a verified status case to the profile: the proved type and its details replace the
+   * previous ones (a role transition keeps favorites, activity and preferences). The profile keeps
+   * only a masked Ordre number.
+   */
+  async applyVerifiedStatus(
+    userId: string,
+    input: ProfessionalProfileInput & { orderNumberMasked?: string },
+  ): Promise<void> {
+    const data = {
+      professionalType: input.professionalType,
+      specialtyId: input.specialtyId ?? null,
+      institutionId: input.institutionId ?? null,
+      universityId: input.universityId ?? null,
+      academicYear: input.professionalType === 'STUDENT' ? (input.academicYear ?? null) : null,
+      residencyYear: input.professionalType === 'RESIDENT' ? (input.residencyYear ?? null) : null,
+      orderNumberMasked: input.orderNumberMasked ?? null,
+    };
+    await this.prisma.professionalProfile.upsert({
+      where: { userId },
+      create: { userId, ...data },
+      update: data,
+    });
+  }
+
+  /** First and last names by user id, for admin lists. */
+  async names(ids: string[]): Promise<Map<string, { firstName: string; lastName: string }>> {
+    const unique = [...new Set(ids)];
+    if (unique.length === 0) return new Map();
+    const rows = await this.prisma.user.findMany({
+      where: { id: { in: unique } },
+      select: { id: true, firstName: true, lastName: true },
+    });
+    return new Map(
+      rows.map((row) => [row.id, { firstName: row.firstName, lastName: row.lastName }]),
+    );
+  }
+
+  /** What a verification reviewer sees about the person (never the password or tokens). */
+  async reviewSummary(userId: string) {
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        status: true,
+        createdAt: true,
+        wilaya: { select: { code: true, name: true } },
+        professionalProfile: {
+          select: {
+            professionalType: true,
+            academicYear: true,
+            residencyYear: true,
+            orderNumberMasked: true,
+            specialty: { select: { id: true, nameFr: true, nameEn: true } },
+            institution: { select: { id: true, name: true } },
+            university: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+  }
+
+  // ─────────────── reference pickers (specialties, institutions, universities) ───────────────
+
+  listSpecialties() {
+    return this.prisma.specialty.findMany({
+      orderBy: { nameFr: 'asc' },
+      select: { id: true, code: true, nameFr: true, nameEn: true },
+    });
+  }
+
+  listInstitutions(wilayaCode?: number) {
+    return this.prisma.institution.findMany({
+      where: wilayaCode ? { wilayaCode } : {},
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, wilayaCode: true },
+    });
+  }
+
+  listUniversities() {
+    return this.prisma.university.findMany({
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, wilayaCode: true },
+    });
+  }
+
+  async createSpecialty(input: { code: string; nameFr: string; nameEn: string }) {
+    try {
+      return await this.prisma.specialty.create({
+        data: input,
+        select: { id: true, code: true, nameFr: true, nameEn: true },
+      });
+    } catch (error) {
+      throw this.conflict(error, 'A specialty already uses this code.');
+    }
+  }
+
+  async createInstitution(input: { name: string; wilayaCode: number }) {
+    await this.assertWilaya(input.wilayaCode);
+    try {
+      return await this.prisma.institution.create({
+        data: input,
+        select: { id: true, name: true, wilayaCode: true },
+      });
+    } catch (error) {
+      throw this.conflict(error, 'This institution already exists in this wilaya.');
+    }
+  }
+
+  async createUniversity(input: { name: string; wilayaCode: number }) {
+    await this.assertWilaya(input.wilayaCode);
+    try {
+      return await this.prisma.university.create({
+        data: input,
+        select: { id: true, name: true, wilayaCode: true },
+      });
+    } catch (error) {
+      throw this.conflict(error, 'This university already exists in this wilaya.');
+    }
+  }
+
+  private conflict(error: unknown, message: string): unknown {
+    return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002'
+      ? new DomainError('VERSION_CONFLICT', message)
+      : error;
+  }
+
   listWilayas(): Promise<{ code: number; name: string }[]> {
     return this.prisma.wilaya.findMany({
       orderBy: { code: 'asc' },

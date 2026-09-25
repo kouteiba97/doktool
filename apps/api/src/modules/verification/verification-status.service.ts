@@ -13,7 +13,7 @@ export type VerificationSnapshot = Record<VerificationType, CaseSnapshot>;
 
 const NOT_STARTED: CaseSnapshot = { status: 'NOT_STARTED', submittedAt: null, expiresAt: null };
 
-/** Read side of verification used by the access policy (cases are written in Phase 9). */
+/** Read side of verification used by the access policy. */
 @Injectable()
 export class VerificationStatusService {
   constructor(private readonly prisma: PrismaService) {}
