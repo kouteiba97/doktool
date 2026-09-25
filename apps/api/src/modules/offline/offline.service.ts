@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import type { Viewer } from '../../infrastructure/security/viewer-auth.guard.js';
+import {
+  CalculatorsService,
+  type PublishedTestCase,
+  type PublishedVersion,
+} from '../calculators/index.js';
 import { type ReferenceItem, ReferenceDocumentsService } from '../reference-library/index.js';
 
 export interface ManifestReference {
@@ -15,44 +20,76 @@ export interface ManifestReference {
   updatedAt: Date;
 }
 
+export interface ManifestCalculator {
+  id: string;
+  slug: string;
+  nameFr: string;
+  nameEn: string;
+  category: string | null;
+  published: PublishedVersion;
+  /** Run by the device before first use of this version (ADR-003). */
+  testCases: PublishedTestCase[];
+}
+
 export interface OfflineManifest {
   generatedAt: Date;
-  /** Changes whenever any entitled file changes; the app compares it to show "update available". */
+  /** Changes whenever any entitled file or calculator version changes ("update available"). */
   dataVersion: string;
   referenceDocuments: ManifestReference[];
+  calculators: ManifestCalculator[];
 }
 
 /**
- * What an account may keep on its device (audit Appendix A, Lock L44): the reference PDFs its
- * profile opens. Calculator versions join in Phase 7. The app diff-syncs against this list and
+ * What an account may keep on its device (audit Appendix A, Lock L44): the reference PDFs and the
+ * published calculator versions its profile opens. The app diff-syncs against this list and
  * deletes anything no longer listed.
  */
 @Injectable()
 export class OfflineService {
-  constructor(private readonly references: ReferenceDocumentsService) {}
+  constructor(
+    private readonly references: ReferenceDocumentsService,
+    private readonly calculators: CalculatorsService,
+  ) {}
 
   async manifest(viewer: Viewer): Promise<OfflineManifest> {
-    const referenceDocuments = (await this.references.openable(viewer)).map(
-      (item): ManifestReference => ({
-        id: item.id,
-        type: item.type,
-        titleFr: item.titleFr,
-        titleEn: item.titleEn,
-        fileVersion: item.fileVersion,
-        sha256: item.sha256,
-        sizeBytes: item.sizeBytes,
-        pageCount: item.pageCount,
-        updatedAt: item.fileDate,
-      }),
-    );
-    const fingerprint = referenceDocuments
-      .map((entry) => `${entry.id}:${entry.fileVersion}:${entry.sha256}`)
+    const [referenceItems, calculatorItems] = await Promise.all([
+      this.references.openable(viewer),
+      this.calculators.openable(viewer),
+    ]);
+    const referenceDocuments = referenceItems.map((item): ManifestReference => ({
+      id: item.id,
+      type: item.type,
+      titleFr: item.titleFr,
+      titleEn: item.titleEn,
+      fileVersion: item.fileVersion,
+      sha256: item.sha256,
+      sizeBytes: item.sizeBytes,
+      pageCount: item.pageCount,
+      updatedAt: item.fileDate,
+    }));
+    const calculators = calculatorItems.map((item): ManifestCalculator => ({
+      id: item.id,
+      slug: item.slug,
+      nameFr: item.nameFr,
+      nameEn: item.nameEn,
+      category: item.category,
+      published: item.published,
+      testCases: item.testCases,
+    }));
+    const fingerprint = [
+      ...referenceDocuments.map((entry) => `ref:${entry.id}:${entry.fileVersion}:${entry.sha256}`),
+      ...calculators.map(
+        (entry) =>
+          `calc:${entry.id}:${entry.published.version}:${entry.published.definitionSha256}`,
+      ),
+    ]
       .sort()
       .join('\n');
     return {
       generatedAt: new Date(),
       dataVersion: createHash('sha256').update(fingerprint).digest('hex').slice(0, 16),
       referenceDocuments,
+      calculators,
     };
   }
 }

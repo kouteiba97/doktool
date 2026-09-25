@@ -1,0 +1,159 @@
+{
+  "suite": "units",
+  "groups": [
+    {
+      "name": "conversion-to-canonical",
+      "description": "Inputs are converted to the canonical unit before evaluation, and every conversion is reported",
+      "definition": {
+        "schemaVersion": 1,
+        "inputs": [
+          {
+            "kind": "NUMBER",
+            "key": "length",
+            "label": {
+              "fr": "Valeur length",
+              "en": "Value length"
+            },
+            "required": true,
+            "quantity": "LENGTH",
+            "canonicalUnit": "m",
+            "units": [
+              {
+                "code": "cm",
+                "factorToCanonical": 0.01,
+                "source": "SI prefix definition"
+              },
+              {
+                "code": "km",
+                "factorToCanonical": 1000,
+                "source": "SI prefix definition"
+              }
+            ]
+          }
+        ],
+        "formula": {
+          "op": "mul",
+          "args": [
+            {
+              "input": "length"
+            },
+            {
+              "num": 2
+            }
+          ]
+        },
+        "result": {
+          "unit": "m",
+          "decimals": 2,
+          "label": {
+            "fr": "Double",
+            "en": "Double"
+          }
+        },
+        "limitations": {
+          "fr": "Vecteur de test, sans usage clinique.",
+          "en": "Test vector, no clinical use."
+        }
+      },
+      "cases": [
+        {
+          "name": "150 cm",
+          "inputs": {
+            "length": {
+              "value": 150,
+              "unit": "cm"
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 3,
+            "tolerance": 1e-12,
+            "issues": [],
+            "conversions": [
+              {
+                "input": "length",
+                "from": {
+                  "value": 150,
+                  "unit": "cm"
+                },
+                "to": {
+                  "value": 1.5,
+                  "unit": "m"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "2 km",
+          "inputs": {
+            "length": {
+              "value": 2,
+              "unit": "km"
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 4000,
+            "issues": [],
+            "conversions": [
+              {
+                "input": "length",
+                "from": {
+                  "value": 2,
+                  "unit": "km"
+                },
+                "to": {
+                  "value": 2000,
+                  "unit": "m"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "canonical unit implied",
+          "inputs": {
+            "length": {
+              "value": 3
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 6,
+            "issues": [],
+            "conversions": []
+          }
+        },
+        {
+          "name": "explicit canonical unit",
+          "inputs": {
+            "length": {
+              "value": 3,
+              "unit": "m"
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 6,
+            "issues": [],
+            "conversions": []
+          }
+        },
+        {
+          "name": "undeclared unit",
+          "inputs": {
+            "length": {
+              "value": 1,
+              "unit": "in"
+            }
+          },
+          "expected": {
+            "outcome": "INVALID",
+            "issues": ["UNKNOWN_UNIT:length"]
+          }
+        }
+      ]
+    }
+  ]
+}

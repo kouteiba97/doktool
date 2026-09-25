@@ -59,6 +59,183 @@
         ],
         "type": "string"
       },
+      "AccessTier": {
+        "enum": [
+          "STUDENT",
+          "PROFESSIONAL"
+        ],
+        "type": "string"
+      },
+      "AddSourceDto": {
+        "properties": {
+          "accessedAt": {
+            "example": "2026-09-20",
+            "format": "date",
+            "type": "string"
+          },
+          "authors": {
+            "type": "string"
+          },
+          "doi": {
+            "nullable": true,
+            "type": "string"
+          },
+          "edition": {
+            "nullable": true,
+            "type": "string"
+          },
+          "formulaLocation": {
+            "description": "Page, table or equation where the formula (or factor) appears.",
+            "type": "string"
+          },
+          "publisher": {
+            "description": "Journal or publisher.",
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CalculatorSourceRole"
+              }
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "year": {
+            "maximum": 2100,
+            "minimum": 1800,
+            "type": "number"
+          }
+        },
+        "required": [
+          "role",
+          "authors",
+          "title",
+          "publisher",
+          "year",
+          "formulaLocation",
+          "accessedAt"
+        ],
+        "type": "object"
+      },
+      "AddTestCaseDto": {
+        "properties": {
+          "expectedBand": {
+            "description": "Expected interpretation band code.",
+            "nullable": true,
+            "type": "string"
+          },
+          "expectedOutcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CalculatorTestOutcome"
+              }
+            ]
+          },
+          "expectedValue": {
+            "description": "Required for RESULT.",
+            "nullable": true,
+            "type": "number"
+          },
+          "inputs": {
+            "additionalProperties": {
+              "type": "object"
+            },
+            "description": "Input key → { value: number | string | boolean, unit?: string } (units as declared).",
+            "example": {
+              "weight": {
+                "unit": "kg",
+                "value": 70
+              }
+            },
+            "type": "object"
+          },
+          "origin": {
+            "example": "Worked example, source p. 34",
+            "type": "string"
+          },
+          "tolerance": {
+            "description": "Required for RESULT.",
+            "minimum": 0,
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "inputs",
+          "expectedOutcome",
+          "origin"
+        ],
+        "type": "object"
+      },
+      "AdminCalculatorDto": {
+        "properties": {
+          "accessTier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessTier"
+              }
+            ]
+          },
+          "category": {
+            "nullable": true,
+            "type": "string"
+          },
+          "currentVersionId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "demoSample": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "nameFr": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CalculatorStatus"
+              }
+            ]
+          },
+          "versions": {
+            "description": "Version timeline, newest first.",
+            "items": {
+              "$ref": "#/components/schemas/AdminVersionDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "nameFr",
+          "nameEn",
+          "category",
+          "accessTier",
+          "demoSample",
+          "status",
+          "currentVersionId",
+          "versions"
+        ],
+        "type": "object"
+      },
       "AdminChallengeKind": {
         "enum": [
           "TOTP_VERIFY",
@@ -335,6 +512,119 @@
         ],
         "type": "object"
       },
+      "AdminSourceDto": {
+        "properties": {
+          "accessedAt": {
+            "format": "date",
+            "type": "string"
+          },
+          "authors": {
+            "type": "string"
+          },
+          "doi": {
+            "nullable": true,
+            "type": "string"
+          },
+          "edition": {
+            "nullable": true,
+            "type": "string"
+          },
+          "formulaLocation": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CalculatorSourceRole"
+              }
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "year": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "role",
+          "authors",
+          "title",
+          "publisher",
+          "year",
+          "doi",
+          "url",
+          "edition",
+          "formulaLocation",
+          "id",
+          "accessedAt"
+        ],
+        "type": "object"
+      },
+      "AdminTestCaseDto": {
+        "properties": {
+          "expectedBand": {
+            "nullable": true,
+            "type": "string"
+          },
+          "expectedOutcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CalculatorTestOutcome"
+              }
+            ]
+          },
+          "expectedValue": {
+            "nullable": true,
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "inputs": {
+            "additionalProperties": {
+              "type": "object"
+            },
+            "description": "Input key → { value: number | string | boolean, unit?: string } (units as declared).",
+            "example": {
+              "weight": {
+                "unit": "kg",
+                "value": 70
+              }
+            },
+            "type": "object"
+          },
+          "origin": {
+            "type": "string"
+          },
+          "tolerance": {
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "inputs",
+          "expectedOutcome",
+          "expectedValue",
+          "tolerance",
+          "expectedBand",
+          "origin"
+        ],
+        "type": "object"
+      },
       "AdminTotpDto": {
         "properties": {
           "challengeToken": {
@@ -348,6 +638,102 @@
         "required": [
           "challengeToken",
           "code"
+        ],
+        "type": "object"
+      },
+      "AdminVersionDto": {
+        "properties": {
+          "authoredBy": {
+            "$ref": "#/components/schemas/PersonRefDto"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "definition": {
+            "additionalProperties": true,
+            "description": "Calculator definition, schema version 1 (docs/adr/ADR-012-calculator-engine.md).",
+            "type": "object"
+          },
+          "definitionSha256": {
+            "type": "string"
+          },
+          "engineVersion": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewNote": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonRefDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/AdminSourceDto"
+            },
+            "type": "array"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CalculatorVersionStatus"
+              }
+            ]
+          },
+          "testCases": {
+            "items": {
+              "$ref": "#/components/schemas/AdminTestCaseDto"
+            },
+            "type": "array"
+          },
+          "testRun": {
+            "additionalProperties": true,
+            "description": "Last engine run: passed, total, failed, engineVersion, ranAt, results[] (expected vs engine).",
+            "nullable": true,
+            "type": "object"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "status",
+          "definition",
+          "definitionSha256",
+          "authoredBy",
+          "reviewedBy",
+          "reviewNote",
+          "reviewedAt",
+          "publishedAt",
+          "engineVersion",
+          "testRun",
+          "sources",
+          "testCases",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -381,6 +767,164 @@
           "refreshTokenExpiresAt"
         ],
         "type": "object"
+      },
+      "BandDto": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "$ref": "#/components/schemas/LocalizedTextDto"
+          },
+          "severity": {
+            "enum": [
+              "info",
+              "caution",
+              "warning",
+              "critical"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "severity",
+          "label"
+        ],
+        "type": "object"
+      },
+      "CalculatorDetailDto": {
+        "properties": {
+          "access": {
+            "$ref": "#/components/schemas/ItemAccessDto"
+          },
+          "category": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "nameFr": {
+            "type": "string"
+          },
+          "published": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublishedVersionDto"
+              }
+            ],
+            "description": "Only when access is AVAILABLE.",
+            "nullable": true,
+            "type": "object"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "version": {
+            "description": "Published version number (the \"v3\" chip).",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "nameFr",
+          "nameEn",
+          "category",
+          "version",
+          "access",
+          "published"
+        ],
+        "type": "object"
+      },
+      "CalculatorReasonDto": {
+        "properties": {
+          "reason": {
+            "description": "Recorded in the audit log.",
+            "maxLength": 1000,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
+      "CalculatorSourceRole": {
+        "enum": [
+          "PRIMARY",
+          "VALIDATION",
+          "UNIT_CONVERSION"
+        ],
+        "type": "string"
+      },
+      "CalculatorStatus": {
+        "enum": [
+          "ACTIVE",
+          "RETIRED"
+        ],
+        "type": "string"
+      },
+      "CalculatorSummaryDto": {
+        "properties": {
+          "access": {
+            "$ref": "#/components/schemas/ItemAccessDto"
+          },
+          "category": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "nameFr": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "version": {
+            "description": "Published version number (the \"v3\" chip).",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "nameFr",
+          "nameEn",
+          "category",
+          "version",
+          "access"
+        ],
+        "type": "object"
+      },
+      "CalculatorTestOutcome": {
+        "enum": [
+          "RESULT",
+          "INVALID",
+          "OUT_OF_VALIDATED_RANGE"
+        ],
+        "type": "string"
+      },
+      "CalculatorVersionStatus": {
+        "enum": [
+          "DRAFT",
+          "IN_REVIEW",
+          "PUBLISHED",
+          "RETIRED"
+        ],
+        "type": "string"
       },
       "ConfirmSignUpDto": {
         "properties": {
@@ -459,6 +1003,83 @@
         ],
         "type": "string"
       },
+      "ConversionDto": {
+        "properties": {
+          "from": {
+            "additionalProperties": true,
+            "example": {
+              "unit": "lb",
+              "value": 150
+            },
+            "type": "object"
+          },
+          "input": {
+            "type": "string"
+          },
+          "to": {
+            "additionalProperties": true,
+            "example": {
+              "unit": "kg",
+              "value": 68.04
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "input",
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "CreateCalculatorDto": {
+        "properties": {
+          "accessTier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessTier"
+              }
+            ],
+            "description": "STUDENT = students and professionals."
+          },
+          "category": {
+            "maxLength": 60,
+            "nullable": true,
+            "type": "string"
+          },
+          "demoSample": {
+            "type": "boolean"
+          },
+          "nameEn": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "nameFr": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Recorded in the audit log.",
+            "maxLength": 1000,
+            "minLength": 3,
+            "type": "string"
+          },
+          "slug": {
+            "description": "Stable identifier used in links and favorites.",
+            "example": "clairance-creatinine",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "slug",
+          "nameFr",
+          "nameEn",
+          "accessTier",
+          "demoSample"
+        ],
+        "type": "object"
+      },
       "CreateReferenceDocumentDto": {
         "properties": {
           "demoSample": {
@@ -515,6 +1136,20 @@
           "demoSample",
           "status"
         ],
+        "type": "object"
+      },
+      "CreateVersionDto": {
+        "properties": {
+          "copyFromVersion": {
+            "description": "Copy definition, sources and test cases of this version number.",
+            "type": "number"
+          },
+          "definition": {
+            "additionalProperties": true,
+            "description": "Calculator definition, schema version 1 (docs/adr/ADR-012-calculator-engine.md).",
+            "type": "object"
+          }
+        },
         "type": "object"
       },
       "DemoContext": {
@@ -708,6 +1343,115 @@
         ],
         "type": "object"
       },
+      "EvaluateDto": {
+        "properties": {
+          "inputs": {
+            "additionalProperties": {
+              "type": "object"
+            },
+            "description": "Input key → { value: number | string | boolean, unit?: string } (units as declared).",
+            "example": {
+              "weight": {
+                "unit": "kg",
+                "value": 70
+              }
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "inputs"
+        ],
+        "type": "object"
+      },
+      "EvaluationDto": {
+        "properties": {
+          "band": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BandDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "conversions": {
+            "description": "Every unit conversion applied (never silent).",
+            "items": {
+              "$ref": "#/components/schemas/ConversionDto"
+            },
+            "type": "array"
+          },
+          "decimals": {
+            "type": "number"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/IssueDto"
+            },
+            "type": "array"
+          },
+          "notes": {
+            "description": "Plausibility notes (RESULT only).",
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "outcome": {
+            "enum": [
+              "RESULT",
+              "INVALID",
+              "OUT_OF_VALIDATED_RANGE"
+            ],
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "value": {
+            "description": "RESULT only, unrounded (round at display with `decimals`).",
+            "type": "number"
+          }
+        },
+        "required": [
+          "outcome",
+          "conversions"
+        ],
+        "type": "object"
+      },
+      "EvaluationResponseDto": {
+        "properties": {
+          "computedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "definitionSha256": {
+            "type": "string"
+          },
+          "engine": {
+            "enum": [
+              "server"
+            ],
+            "type": "string"
+          },
+          "evaluation": {
+            "$ref": "#/components/schemas/EvaluationDto"
+          },
+          "versionId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evaluation",
+          "versionId",
+          "definitionSha256",
+          "engine",
+          "computedAt"
+        ],
+        "type": "object"
+      },
       "FeatureDecisionDto": {
         "properties": {
           "key": {
@@ -830,6 +1574,31 @@
         ],
         "type": "object"
       },
+      "IssueDto": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "input": {
+            "type": "string"
+          },
+          "message": {
+            "$ref": "#/components/schemas/LocalizedTextDto"
+          },
+          "range": {
+            "additionalProperties": true,
+            "description": "{ min?, max?, unit } in canonical units.",
+            "type": "object"
+          },
+          "ruleId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
       "ItemAccessDto": {
         "properties": {
           "lockReason": {
@@ -870,6 +1639,21 @@
         ],
         "type": "string"
       },
+      "LocalizedTextDto": {
+        "properties": {
+          "en": {
+            "type": "string"
+          },
+          "fr": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fr",
+          "en"
+        ],
+        "type": "object"
+      },
       "LockReason": {
         "enum": [
           "DEMO_LIMIT",
@@ -882,6 +1666,47 @@
           "NO_LONGER_AVAILABLE"
         ],
         "type": "string"
+      },
+      "ManifestCalculatorDto": {
+        "properties": {
+          "category": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "nameFr": {
+            "type": "string"
+          },
+          "published": {
+            "$ref": "#/components/schemas/PublishedVersionDto"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "testCases": {
+            "description": "Run on the device before first use.",
+            "items": {
+              "$ref": "#/components/schemas/ManifestTestCaseDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "nameFr",
+          "nameEn",
+          "category",
+          "published",
+          "testCases"
+        ],
+        "type": "object"
       },
       "ManifestReferenceDto": {
         "properties": {
@@ -930,6 +1755,42 @@
           "sizeBytes",
           "pageCount",
           "updatedAt"
+        ],
+        "type": "object"
+      },
+      "ManifestTestCaseDto": {
+        "properties": {
+          "expectedBand": {
+            "nullable": true,
+            "type": "string"
+          },
+          "expectedOutcome": {
+            "enum": [
+              "RESULT",
+              "INVALID",
+              "OUT_OF_VALIDATED_RANGE"
+            ],
+            "type": "string"
+          },
+          "expectedValue": {
+            "nullable": true,
+            "type": "number"
+          },
+          "inputs": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "tolerance": {
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "inputs",
+          "expectedOutcome",
+          "expectedValue",
+          "tolerance",
+          "expectedBand"
         ],
         "type": "object"
       },
@@ -997,6 +1858,12 @@
       },
       "OfflineManifestDto": {
         "properties": {
+          "calculators": {
+            "items": {
+              "$ref": "#/components/schemas/ManifestCalculatorDto"
+            },
+            "type": "array"
+          },
           "dataVersion": {
             "description": "Compare with the stored value to show \"update available\".",
             "type": "string"
@@ -1015,7 +1882,8 @@
         "required": [
           "generatedAt",
           "dataVersion",
-          "referenceDocuments"
+          "referenceDocuments",
+          "calculators"
         ],
         "type": "object"
       },
@@ -1094,6 +1962,22 @@
         },
         "required": [
           "identifier"
+        ],
+        "type": "object"
+      },
+      "PersonRefDto": {
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
         ],
         "type": "object"
       },
@@ -1182,6 +2066,66 @@
           "STUDENT"
         ],
         "type": "string"
+      },
+      "PublishDto": {
+        "properties": {
+          "reviewNote": {
+            "description": "Review note, shown in the governance view.",
+            "maxLength": 1000,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reviewNote"
+        ],
+        "type": "object"
+      },
+      "PublishedVersionDto": {
+        "properties": {
+          "definition": {
+            "additionalProperties": true,
+            "description": "Calculator definition, schema version 1 (docs/adr/ADR-012-calculator-engine.md).",
+            "type": "object"
+          },
+          "definitionSha256": {
+            "type": "string"
+          },
+          "engineVersion": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "review": {
+            "$ref": "#/components/schemas/ReviewDto"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceDto"
+            },
+            "type": "array"
+          },
+          "version": {
+            "type": "number"
+          },
+          "versionId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "versionId",
+          "version",
+          "definition",
+          "definitionSha256",
+          "engineVersion",
+          "publishedAt",
+          "review",
+          "sources"
+        ],
+        "type": "object"
       },
       "ReasonDto": {
         "properties": {
@@ -1391,6 +2335,39 @@
         ],
         "type": "object"
       },
+      "ReviewDto": {
+        "properties": {
+          "reviewedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reviewedBy": {
+            "type": "string"
+          },
+          "testsPassed": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "reviewedBy",
+          "reviewedAt",
+          "testsPassed"
+        ],
+        "type": "object"
+      },
+      "SaveDefinitionDto": {
+        "properties": {
+          "definition": {
+            "additionalProperties": true,
+            "description": "Calculator definition, schema version 1 (docs/adr/ADR-012-calculator-engine.md).",
+            "type": "object"
+          }
+        },
+        "required": [
+          "definition"
+        ],
+        "type": "object"
+      },
       "SessionDto": {
         "properties": {
           "createdAt": {
@@ -1558,6 +2535,56 @@
         ],
         "type": "object"
       },
+      "SourceDto": {
+        "properties": {
+          "authors": {
+            "type": "string"
+          },
+          "doi": {
+            "nullable": true,
+            "type": "string"
+          },
+          "edition": {
+            "nullable": true,
+            "type": "string"
+          },
+          "formulaLocation": {
+            "type": "string"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CalculatorSourceRole"
+              }
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "year": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "role",
+          "authors",
+          "title",
+          "publisher",
+          "year",
+          "doi",
+          "url",
+          "edition",
+          "formulaLocation"
+        ],
+        "type": "object"
+      },
       "StartDemoDto": {
         "properties": {
           "demoContext": {
@@ -1613,6 +2640,44 @@
           "verification.status"
         ],
         "type": "string"
+      },
+      "UpdateCalculatorDto": {
+        "properties": {
+          "accessTier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessTier"
+              }
+            ],
+            "description": "Needs calculators.publish."
+          },
+          "category": {
+            "nullable": true,
+            "type": "string"
+          },
+          "demoSample": {
+            "description": "Needs calculators.publish.",
+            "type": "boolean"
+          },
+          "nameEn": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "nameFr": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Recorded in the audit log.",
+            "maxLength": 1000,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
       },
       "UpdatePreferencesDto": {
         "properties": {
@@ -1906,6 +2971,904 @@
         },
         "tags": [
           "admin-auth"
+        ]
+      }
+    },
+    "/admin/v1/calculators": {
+      "get": {
+        "operationId": "CalculatorsAdminController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminCalculatorDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      },
+      "post": {
+        "operationId": "CalculatorsAdminController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCalculatorDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCalculatorDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      }
+    },
+    "/admin/v1/calculators/versions/{versionId}": {
+      "delete": {
+        "operationId": "CalculatorsAdminController_discard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      },
+      "get": {
+        "operationId": "CalculatorsAdminController_version",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      }
+    },
+    "/admin/v1/calculators/versions/{versionId}/definition": {
+      "put": {
+        "operationId": "CalculatorsAdminController_saveDefinition",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDefinitionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      }
+    },
+    "/admin/v1/calculators/versions/{versionId}/preview": {
+      "post": {
+        "operationId": "CalculatorsAdminController_preview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      }
+    },
+    "/admin/v1/calculators/versions/{versionId}/publish": {
+      "post": {
+        "operationId": "CalculatorsAdminController_publish",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      }
+    },
+    "/admin/v1/calculators/versions/{versionId}/retire": {
+      "post": {
+        "operationId": "CalculatorsAdminController_retire",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalculatorReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      }
+    },
+    "/admin/v1/calculators/versions/{versionId}/return": {
+      "post": {
+        "operationId": "CalculatorsAdminController_returnToDraft",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalculatorReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      }
+    },
+    "/admin/v1/calculators/versions/{versionId}/sources": {
+      "post": {
+        "operationId": "CalculatorsAdminController_addSource",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddSourceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      }
+    },
+    "/admin/v1/calculators/versions/{versionId}/sources/{sourceId}": {
+      "delete": {
+        "operationId": "CalculatorsAdminController_removeSource",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "sourceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      }
+    },
+    "/admin/v1/calculators/versions/{versionId}/submit": {
+      "post": {
+        "operationId": "CalculatorsAdminController_submit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      }
+    },
+    "/admin/v1/calculators/versions/{versionId}/test-cases": {
+      "post": {
+        "operationId": "CalculatorsAdminController_addTestCase",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTestCaseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      }
+    },
+    "/admin/v1/calculators/versions/{versionId}/test-cases/{testCaseId}": {
+      "delete": {
+        "operationId": "CalculatorsAdminController_removeTestCase",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "testCaseId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      }
+    },
+    "/admin/v1/calculators/versions/{versionId}/test-run": {
+      "post": {
+        "operationId": "CalculatorsAdminController_runTests",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      }
+    },
+    "/admin/v1/calculators/{id}": {
+      "get": {
+        "operationId": "CalculatorsAdminController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCalculatorDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      },
+      "patch": {
+        "operationId": "CalculatorsAdminController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCalculatorDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCalculatorDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
+        ]
+      }
+    },
+    "/admin/v1/calculators/{id}/versions": {
+      "post": {
+        "operationId": "CalculatorsAdminController_createVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVersionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-calculators"
         ]
       }
     },
@@ -2879,6 +4842,172 @@
         },
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/v1/calculators": {
+      "get": {
+        "operationId": "CalculatorsController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CalculatorSummaryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "demo": []
+          },
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "calculators"
+        ]
+      }
+    },
+    "/v1/calculators/{slug}": {
+      "get": {
+        "operationId": "CalculatorsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalculatorDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "demo": []
+          },
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "calculators"
+        ]
+      }
+    },
+    "/v1/calculators/{slug}/versions/{version}/evaluate": {
+      "post": {
+        "operationId": "CalculatorsController_evaluate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "demo": []
+          },
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "calculators"
         ]
       }
     },

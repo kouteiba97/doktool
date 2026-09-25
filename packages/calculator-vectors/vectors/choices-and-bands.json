@@ -1,0 +1,246 @@
+{
+  "suite": "choices-and-bands",
+  "groups": [
+    {
+      "name": "scored-choices-and-interpretation",
+      "description": "points of a scored choice, eq on a choice value, booleans, bands from ≤ value < to",
+      "definition": {
+        "schemaVersion": 1,
+        "inputs": [
+          {
+            "kind": "CHOICE",
+            "key": "level",
+            "label": {
+              "fr": "Niveau",
+              "en": "Level"
+            },
+            "required": true,
+            "choices": [
+              {
+                "value": "LOW",
+                "label": {
+                  "fr": "Bas",
+                  "en": "Low"
+                },
+                "points": 1
+              },
+              {
+                "value": "MID",
+                "label": {
+                  "fr": "Moyen",
+                  "en": "Mid"
+                },
+                "points": 2
+              },
+              {
+                "value": "HIGH",
+                "label": {
+                  "fr": "Haut",
+                  "en": "High"
+                },
+                "points": 4
+              }
+            ]
+          },
+          {
+            "kind": "BOOLEAN",
+            "key": "bonus",
+            "label": {
+              "fr": "Bonus",
+              "en": "Bonus"
+            },
+            "required": true
+          }
+        ],
+        "formula": {
+          "op": "sum",
+          "args": [
+            {
+              "points": "level"
+            },
+            {
+              "op": "if",
+              "args": [
+                {
+                  "input": "bonus"
+                },
+                {
+                  "num": 10
+                },
+                {
+                  "num": 0
+                }
+              ]
+            },
+            {
+              "op": "if",
+              "args": [
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "input": "level"
+                    },
+                    {
+                      "str": "HIGH"
+                    }
+                  ]
+                },
+                {
+                  "num": 0.5
+                },
+                {
+                  "num": 0
+                }
+              ]
+            }
+          ]
+        },
+        "result": {
+          "unit": "1",
+          "decimals": 2,
+          "label": {
+            "fr": "Résultat",
+            "en": "Result"
+          }
+        },
+        "limitations": {
+          "fr": "Vecteur de test, sans usage clinique.",
+          "en": "Test vector, no clinical use."
+        },
+        "interpretation": [
+          {
+            "code": "SMALL",
+            "to": 3,
+            "severity": "info",
+            "label": {
+              "fr": "Petit",
+              "en": "Small"
+            }
+          },
+          {
+            "code": "MEDIUM",
+            "from": 3,
+            "to": 10,
+            "severity": "caution",
+            "label": {
+              "fr": "Moyen",
+              "en": "Medium"
+            }
+          },
+          {
+            "code": "LARGE",
+            "from": 10,
+            "severity": "warning",
+            "label": {
+              "fr": "Grand",
+              "en": "Large"
+            }
+          }
+        ]
+      },
+      "cases": [
+        {
+          "name": "LOW, no bonus",
+          "inputs": {
+            "level": {
+              "value": "LOW"
+            },
+            "bonus": {
+              "value": false
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 1,
+            "issues": [],
+            "band": "SMALL"
+          }
+        },
+        {
+          "name": "MID, no bonus",
+          "inputs": {
+            "level": {
+              "value": "MID"
+            },
+            "bonus": {
+              "value": false
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 2,
+            "issues": [],
+            "band": "SMALL"
+          }
+        },
+        {
+          "name": "HIGH adds its equality bonus",
+          "inputs": {
+            "level": {
+              "value": "HIGH"
+            },
+            "bonus": {
+              "value": false
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 4.5,
+            "issues": [],
+            "band": "MEDIUM"
+          }
+        },
+        {
+          "name": "MID with bonus",
+          "inputs": {
+            "level": {
+              "value": "MID"
+            },
+            "bonus": {
+              "value": true
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 12,
+            "issues": [],
+            "band": "LARGE"
+          }
+        },
+        {
+          "name": "LOW with bonus",
+          "inputs": {
+            "level": {
+              "value": "LOW"
+            },
+            "bonus": {
+              "value": true
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 11,
+            "issues": [],
+            "band": "LARGE"
+          }
+        },
+        {
+          "name": "unknown choice",
+          "inputs": {
+            "level": {
+              "value": "NONE"
+            },
+            "bonus": {
+              "value": false
+            }
+          },
+          "expected": {
+            "outcome": "INVALID",
+            "issues": ["UNKNOWN_CHOICE:level"]
+          }
+        }
+      ]
+    }
+  ]
+}

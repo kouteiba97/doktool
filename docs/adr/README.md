@@ -15,5 +15,6 @@ One file per decision, numbered, never rewritten after acceptance — a changed 
 | [009](ADR-009-authentication.md) | Authentication (users and admins) | Accepted |
 | [010](ADR-010-entitlements-implementation.md) | Entitlements implementation | Accepted |
 | [011](ADR-011-storage-implementation.md) | Storage implementation (R2 + local driver) | Accepted |
+| [012](ADR-012-calculator-engine.md) | Calculator engine and governance | Accepted |
 
 Source of the architecture: [`docs/ARCHITECTURE-AUDIT.md`](../ARCHITECTURE-AUDIT.md). Where an ADR and the design system disagree, the ADR wins; where ADR-006 and the audit disagree, ADR-006 wins.

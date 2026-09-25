@@ -1,0 +1,337 @@
+{
+  "suite": "validation",
+  "groups": [
+    {
+      "name": "ranges-rules-and-types",
+      "description": "required, types, integer, hard range, cross-field rules, validated range, plausibility notes, optional inputs",
+      "definition": {
+        "schemaVersion": 1,
+        "inputs": [
+          {
+            "kind": "NUMBER",
+            "key": "x",
+            "label": {
+              "fr": "Valeur x",
+              "en": "Value x"
+            },
+            "required": true,
+            "quantity": "ABSTRACT",
+            "canonicalUnit": "1",
+            "hardRange": {
+              "min": 0,
+              "max": 1000
+            },
+            "validatedRange": {
+              "min": 10,
+              "max": 200
+            },
+            "plausibleRange": {
+              "min": 20,
+              "max": 150
+            }
+          },
+          {
+            "kind": "INTEGER",
+            "key": "y",
+            "label": {
+              "fr": "Entier y",
+              "en": "Integer y"
+            },
+            "required": false,
+            "quantity": "ABSTRACT",
+            "canonicalUnit": "1",
+            "hardRange": {
+              "min": 0,
+              "max": 10
+            }
+          },
+          {
+            "kind": "BOOLEAN",
+            "key": "flag",
+            "label": {
+              "fr": "Drapeau",
+              "en": "Flag"
+            },
+            "required": false
+          }
+        ],
+        "formula": {
+          "op": "if",
+          "args": [
+            {
+              "present": "y"
+            },
+            {
+              "op": "add",
+              "args": [
+                {
+                  "input": "x"
+                },
+                {
+                  "input": "y"
+                }
+              ]
+            },
+            {
+              "input": "x"
+            }
+          ]
+        },
+        "result": {
+          "unit": "1",
+          "decimals": 2,
+          "label": {
+            "fr": "Résultat",
+            "en": "Result"
+          }
+        },
+        "limitations": {
+          "fr": "Vecteur de test, sans usage clinique.",
+          "en": "Test vector, no clinical use."
+        },
+        "crossFieldRules": [
+          {
+            "id": "yNotAboveX",
+            "when": {
+              "op": "or",
+              "args": [
+                {
+                  "op": "not",
+                  "args": [
+                    {
+                      "present": "y"
+                    }
+                  ]
+                },
+                {
+                  "op": "le",
+                  "args": [
+                    {
+                      "input": "y"
+                    },
+                    {
+                      "input": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            "outcome": "INVALID",
+            "message": {
+              "fr": "y ≤ x",
+              "en": "y ≤ x"
+            }
+          },
+          {
+            "id": "xNotSeventySeven",
+            "when": {
+              "op": "ne",
+              "args": [
+                {
+                  "input": "x"
+                },
+                {
+                  "num": 77
+                }
+              ]
+            },
+            "outcome": "OUT_OF_VALIDATED_RANGE",
+            "message": {
+              "fr": "x ≠ 77",
+              "en": "x ≠ 77"
+            }
+          }
+        ]
+      },
+      "cases": [
+        {
+          "name": "inside every range",
+          "inputs": {
+            "x": {
+              "value": 50
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 50,
+            "issues": [],
+            "notes": []
+          }
+        },
+        {
+          "name": "implausible but validated: note, still computed",
+          "inputs": {
+            "x": {
+              "value": 160
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 160,
+            "issues": [],
+            "notes": ["x"]
+          }
+        },
+        {
+          "name": "outside the validated range: no number",
+          "inputs": {
+            "x": {
+              "value": 5
+            }
+          },
+          "expected": {
+            "outcome": "OUT_OF_VALIDATED_RANGE",
+            "issues": ["VALIDATED_RANGE:x"]
+          }
+        },
+        {
+          "name": "outside the hard range: invalid",
+          "inputs": {
+            "x": {
+              "value": -1
+            }
+          },
+          "expected": {
+            "outcome": "INVALID",
+            "issues": ["HARD_RANGE:x"]
+          }
+        },
+        {
+          "name": "required input missing",
+          "inputs": {},
+          "expected": {
+            "outcome": "INVALID",
+            "issues": ["REQUIRED:x"]
+          }
+        },
+        {
+          "name": "null counts as missing",
+          "inputs": {
+            "x": {
+              "value": null
+            }
+          },
+          "expected": {
+            "outcome": "INVALID",
+            "issues": ["REQUIRED:x"]
+          }
+        },
+        {
+          "name": "optional input used",
+          "inputs": {
+            "x": {
+              "value": 50
+            },
+            "y": {
+              "value": 3
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 53,
+            "issues": []
+          }
+        },
+        {
+          "name": "integer input with decimals",
+          "inputs": {
+            "x": {
+              "value": 50
+            },
+            "y": {
+              "value": 2.5
+            }
+          },
+          "expected": {
+            "outcome": "INVALID",
+            "issues": ["NOT_AN_INTEGER:y"]
+          }
+        },
+        {
+          "name": "wrong type",
+          "inputs": {
+            "x": {
+              "value": "50"
+            }
+          },
+          "expected": {
+            "outcome": "INVALID",
+            "issues": ["WRONG_TYPE:x"]
+          }
+        },
+        {
+          "name": "boolean of the wrong type",
+          "inputs": {
+            "x": {
+              "value": 50
+            },
+            "flag": {
+              "value": "yes"
+            }
+          },
+          "expected": {
+            "outcome": "INVALID",
+            "issues": ["WRONG_TYPE:flag"]
+          }
+        },
+        {
+          "name": "unknown input",
+          "inputs": {
+            "x": {
+              "value": 50
+            },
+            "z": {
+              "value": 1
+            }
+          },
+          "expected": {
+            "outcome": "INVALID",
+            "issues": ["UNKNOWN_INPUT:z"]
+          }
+        },
+        {
+          "name": "invalid cross-field rule, checked before the validated range",
+          "inputs": {
+            "x": {
+              "value": 5
+            },
+            "y": {
+              "value": 8
+            }
+          },
+          "expected": {
+            "outcome": "INVALID",
+            "issues": ["CROSS_FIELD:yNotAboveX"]
+          }
+        },
+        {
+          "name": "cross-field rule with the validated-range outcome",
+          "inputs": {
+            "x": {
+              "value": 77
+            }
+          },
+          "expected": {
+            "outcome": "OUT_OF_VALIDATED_RANGE",
+            "issues": ["CROSS_FIELD:xNotSeventySeven"]
+          }
+        },
+        {
+          "name": "several issues of one stage are all reported",
+          "inputs": {
+            "x": {
+              "value": -1
+            },
+            "y": {
+              "value": 11
+            }
+          },
+          "expected": {
+            "outcome": "INVALID",
+            "issues": ["HARD_RANGE:x", "HARD_RANGE:y"]
+          }
+        }
+      ]
+    }
+  ]
+}

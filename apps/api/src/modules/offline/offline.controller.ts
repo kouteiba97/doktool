@@ -5,6 +5,7 @@ import { ReferenceDocumentType } from '../../generated/prisma/enums.js';
 import { USER_API_PREFIX } from '../../http/api-prefix.js';
 import { CurrentViewer, type Viewer } from '../../infrastructure/security/viewer-auth.guard.js';
 import { RequireFeature } from '../access/index.js';
+import { PublishedVersionDto } from '../calculators/index.js';
 import { OfflineService } from './offline.service.js';
 
 export class ManifestReferenceDto {
@@ -36,6 +37,46 @@ export class ManifestReferenceDto {
   updatedAt!: string;
 }
 
+export class ManifestTestCaseDto {
+  @ApiProperty({ type: 'object', additionalProperties: true })
+  inputs!: Record<string, unknown>;
+
+  @ApiProperty({ enum: ['RESULT', 'INVALID', 'OUT_OF_VALIDATED_RANGE'] })
+  expectedOutcome!: string;
+
+  @ApiProperty({ type: Number, nullable: true })
+  expectedValue!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true })
+  tolerance!: number | null;
+
+  @ApiProperty({ type: String, nullable: true })
+  expectedBand!: string | null;
+}
+
+export class ManifestCalculatorDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty()
+  slug!: string;
+
+  @ApiProperty()
+  nameFr!: string;
+
+  @ApiProperty()
+  nameEn!: string;
+
+  @ApiProperty({ type: String, nullable: true })
+  category!: string | null;
+
+  @ApiProperty({ type: PublishedVersionDto })
+  published!: PublishedVersionDto;
+
+  @ApiProperty({ type: [ManifestTestCaseDto], description: 'Run on the device before first use.' })
+  testCases!: ManifestTestCaseDto[];
+}
+
 export class OfflineManifestDto {
   @ApiProperty({ format: 'date-time' })
   generatedAt!: string;
@@ -45,6 +86,9 @@ export class OfflineManifestDto {
 
   @ApiProperty({ type: [ManifestReferenceDto] })
   referenceDocuments!: ManifestReferenceDto[];
+
+  @ApiProperty({ type: [ManifestCalculatorDto] })
+  calculators!: ManifestCalculatorDto[];
 }
 
 @ApiTags('offline')
@@ -65,6 +109,14 @@ export class OfflineController {
       referenceDocuments: manifest.referenceDocuments.map((entry) => ({
         ...entry,
         updatedAt: entry.updatedAt.toISOString(),
+      })),
+      calculators: manifest.calculators.map((entry) => ({
+        ...entry,
+        published: PublishedVersionDto.from(entry.published),
+        testCases: entry.testCases.map((testCase) => ({
+          ...testCase,
+          inputs: testCase.inputs,
+        })),
       })),
     };
   }

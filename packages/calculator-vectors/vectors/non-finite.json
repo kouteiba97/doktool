@@ -1,0 +1,186 @@
+{
+  "suite": "non-finite",
+  "groups": [
+    {
+      "name": "division",
+      "description": "a / b: division by zero never yields a number",
+      "definition": {
+        "schemaVersion": 1,
+        "inputs": [
+          {
+            "kind": "NUMBER",
+            "key": "a",
+            "label": {
+              "fr": "Valeur a",
+              "en": "Value a"
+            },
+            "required": true,
+            "quantity": "ABSTRACT",
+            "canonicalUnit": "1"
+          },
+          {
+            "kind": "NUMBER",
+            "key": "b",
+            "label": {
+              "fr": "Valeur b",
+              "en": "Value b"
+            },
+            "required": true,
+            "quantity": "ABSTRACT",
+            "canonicalUnit": "1"
+          }
+        ],
+        "formula": {
+          "op": "div",
+          "args": [
+            {
+              "input": "a"
+            },
+            {
+              "input": "b"
+            }
+          ]
+        },
+        "result": {
+          "unit": "1",
+          "decimals": 2,
+          "label": {
+            "fr": "Résultat",
+            "en": "Result"
+          }
+        },
+        "limitations": {
+          "fr": "Vecteur de test, sans usage clinique.",
+          "en": "Test vector, no clinical use."
+        }
+      },
+      "cases": [
+        {
+          "name": "finite",
+          "inputs": {
+            "a": {
+              "value": 1
+            },
+            "b": {
+              "value": 4
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 0.25,
+            "issues": []
+          }
+        },
+        {
+          "name": "x / 0",
+          "inputs": {
+            "a": {
+              "value": 1
+            },
+            "b": {
+              "value": 0
+            }
+          },
+          "expected": {
+            "outcome": "INVALID",
+            "issues": ["NON_FINITE_RESULT"]
+          }
+        },
+        {
+          "name": "0 / 0",
+          "inputs": {
+            "a": {
+              "value": 0
+            },
+            "b": {
+              "value": 0
+            }
+          },
+          "expected": {
+            "outcome": "INVALID",
+            "issues": ["NON_FINITE_RESULT"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "logarithm",
+      "description": "ln(0) is −∞ and ln of a negative number is NaN: both invalid",
+      "definition": {
+        "schemaVersion": 1,
+        "inputs": [
+          {
+            "kind": "NUMBER",
+            "key": "a",
+            "label": {
+              "fr": "Valeur a",
+              "en": "Value a"
+            },
+            "required": true,
+            "quantity": "ABSTRACT",
+            "canonicalUnit": "1"
+          }
+        ],
+        "formula": {
+          "op": "ln",
+          "args": [
+            {
+              "input": "a"
+            }
+          ]
+        },
+        "result": {
+          "unit": "1",
+          "decimals": 2,
+          "label": {
+            "fr": "Résultat",
+            "en": "Result"
+          }
+        },
+        "limitations": {
+          "fr": "Vecteur de test, sans usage clinique.",
+          "en": "Test vector, no clinical use."
+        }
+      },
+      "cases": [
+        {
+          "name": "ln(1) = 0",
+          "inputs": {
+            "a": {
+              "value": 1
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 0,
+            "issues": []
+          }
+        },
+        {
+          "name": "ln(0)",
+          "inputs": {
+            "a": {
+              "value": 0
+            }
+          },
+          "expected": {
+            "outcome": "INVALID",
+            "issues": ["NON_FINITE_RESULT"]
+          }
+        },
+        {
+          "name": "ln(−1)",
+          "inputs": {
+            "a": {
+              "value": -1
+            }
+          },
+          "expected": {
+            "outcome": "INVALID",
+            "issues": ["NON_FINITE_RESULT"]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -22,20 +22,3 @@ export function suggestTitle(fileName: string): string {
     .trim()
     .slice(0, TITLE_MAX_LENGTH);
 }
-
-/** Accent- and case-insensitive form used for title matching ("Céphalée" ~ "cephalee"). */
-export function normaliseForSearch(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-const collator = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });
-
-/** A–Z order of the French display title (section 13). */
-export function compareTitles(a: { titleFr: string }, b: { titleFr: string }): number {
-  return collator.compare(a.titleFr, b.titleFr);
-}

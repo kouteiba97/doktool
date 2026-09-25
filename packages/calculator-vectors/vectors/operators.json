@@ -1,0 +1,801 @@
+{
+  "suite": "operators",
+  "groups": [
+    {
+      "name": "arithmetic",
+      "description": "add, sub, mul, div and n-ary sum: (a+b) + (a−b) + a·b + a/b",
+      "definition": {
+        "schemaVersion": 1,
+        "inputs": [
+          {
+            "kind": "NUMBER",
+            "key": "a",
+            "label": {
+              "fr": "Valeur a",
+              "en": "Value a"
+            },
+            "required": true,
+            "quantity": "ABSTRACT",
+            "canonicalUnit": "1"
+          },
+          {
+            "kind": "NUMBER",
+            "key": "b",
+            "label": {
+              "fr": "Valeur b",
+              "en": "Value b"
+            },
+            "required": true,
+            "quantity": "ABSTRACT",
+            "canonicalUnit": "1"
+          }
+        ],
+        "formula": {
+          "op": "sum",
+          "args": [
+            {
+              "op": "add",
+              "args": [
+                {
+                  "input": "a"
+                },
+                {
+                  "input": "b"
+                }
+              ]
+            },
+            {
+              "op": "sub",
+              "args": [
+                {
+                  "input": "a"
+                },
+                {
+                  "input": "b"
+                }
+              ]
+            },
+            {
+              "op": "mul",
+              "args": [
+                {
+                  "input": "a"
+                },
+                {
+                  "input": "b"
+                }
+              ]
+            },
+            {
+              "op": "div",
+              "args": [
+                {
+                  "input": "a"
+                },
+                {
+                  "input": "b"
+                }
+              ]
+            }
+          ]
+        },
+        "result": {
+          "unit": "1",
+          "decimals": 2,
+          "label": {
+            "fr": "Résultat",
+            "en": "Result"
+          }
+        },
+        "limitations": {
+          "fr": "Vecteur de test, sans usage clinique.",
+          "en": "Test vector, no clinical use."
+        }
+      },
+      "cases": [
+        {
+          "name": "positive operands",
+          "inputs": {
+            "a": {
+              "value": 6
+            },
+            "b": {
+              "value": 3
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 32,
+            "issues": []
+          }
+        },
+        {
+          "name": "negative operand",
+          "inputs": {
+            "a": {
+              "value": -2
+            },
+            "b": {
+              "value": 4
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": -12.5,
+            "issues": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "powers-and-logarithms",
+      "description": "pow, sqrt, exp, ln, log10: a^b + √a + ln(e^b) + log10(a)",
+      "definition": {
+        "schemaVersion": 1,
+        "inputs": [
+          {
+            "kind": "NUMBER",
+            "key": "a",
+            "label": {
+              "fr": "Valeur a",
+              "en": "Value a"
+            },
+            "required": true,
+            "quantity": "ABSTRACT",
+            "canonicalUnit": "1"
+          },
+          {
+            "kind": "NUMBER",
+            "key": "b",
+            "label": {
+              "fr": "Valeur b",
+              "en": "Value b"
+            },
+            "required": true,
+            "quantity": "ABSTRACT",
+            "canonicalUnit": "1"
+          }
+        ],
+        "formula": {
+          "op": "sum",
+          "args": [
+            {
+              "op": "pow",
+              "args": [
+                {
+                  "input": "a"
+                },
+                {
+                  "input": "b"
+                }
+              ]
+            },
+            {
+              "op": "sqrt",
+              "args": [
+                {
+                  "input": "a"
+                }
+              ]
+            },
+            {
+              "op": "ln",
+              "args": [
+                {
+                  "op": "exp",
+                  "args": [
+                    {
+                      "input": "b"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "log10",
+              "args": [
+                {
+                  "input": "a"
+                }
+              ]
+            }
+          ]
+        },
+        "result": {
+          "unit": "1",
+          "decimals": 2,
+          "label": {
+            "fr": "Résultat",
+            "en": "Result"
+          }
+        },
+        "limitations": {
+          "fr": "Vecteur de test, sans usage clinique.",
+          "en": "Test vector, no clinical use."
+        }
+      },
+      "cases": [
+        {
+          "name": "a=100, b=2",
+          "inputs": {
+            "a": {
+              "value": 100
+            },
+            "b": {
+              "value": 2
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 10014,
+            "tolerance": 1e-9,
+            "issues": []
+          }
+        },
+        {
+          "name": "a=4, b=0.5",
+          "inputs": {
+            "a": {
+              "value": 4
+            },
+            "b": {
+              "value": 0.5
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 5.1020599913279625,
+            "tolerance": 1e-12,
+            "issues": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "min-max",
+      "description": "n-ary min and max: max(a, b, 10) − min(a, b, −1)",
+      "definition": {
+        "schemaVersion": 1,
+        "inputs": [
+          {
+            "kind": "NUMBER",
+            "key": "a",
+            "label": {
+              "fr": "Valeur a",
+              "en": "Value a"
+            },
+            "required": true,
+            "quantity": "ABSTRACT",
+            "canonicalUnit": "1"
+          },
+          {
+            "kind": "NUMBER",
+            "key": "b",
+            "label": {
+              "fr": "Valeur b",
+              "en": "Value b"
+            },
+            "required": true,
+            "quantity": "ABSTRACT",
+            "canonicalUnit": "1"
+          }
+        ],
+        "formula": {
+          "op": "sub",
+          "args": [
+            {
+              "op": "max",
+              "args": [
+                {
+                  "input": "a"
+                },
+                {
+                  "input": "b"
+                },
+                {
+                  "num": 10
+                }
+              ]
+            },
+            {
+              "op": "min",
+              "args": [
+                {
+                  "input": "a"
+                },
+                {
+                  "input": "b"
+                },
+                {
+                  "num": -1
+                }
+              ]
+            }
+          ]
+        },
+        "result": {
+          "unit": "1",
+          "decimals": 2,
+          "label": {
+            "fr": "Résultat",
+            "en": "Result"
+          }
+        },
+        "limitations": {
+          "fr": "Vecteur de test, sans usage clinique.",
+          "en": "Test vector, no clinical use."
+        }
+      },
+      "cases": [
+        {
+          "name": "constants win",
+          "inputs": {
+            "a": {
+              "value": 3
+            },
+            "b": {
+              "value": 7
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 11,
+            "issues": []
+          }
+        },
+        {
+          "name": "inputs win",
+          "inputs": {
+            "a": {
+              "value": 12
+            },
+            "b": {
+              "value": -5
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 17,
+            "issues": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "round-0",
+      "description": "round half away from zero, 0 digits",
+      "definition": {
+        "schemaVersion": 1,
+        "inputs": [
+          {
+            "kind": "NUMBER",
+            "key": "a",
+            "label": {
+              "fr": "Valeur a",
+              "en": "Value a"
+            },
+            "required": true,
+            "quantity": "ABSTRACT",
+            "canonicalUnit": "1"
+          }
+        ],
+        "formula": {
+          "op": "round",
+          "digits": 0,
+          "args": [
+            {
+              "input": "a"
+            }
+          ]
+        },
+        "result": {
+          "unit": "1",
+          "decimals": 2,
+          "label": {
+            "fr": "Résultat",
+            "en": "Result"
+          }
+        },
+        "limitations": {
+          "fr": "Vecteur de test, sans usage clinique.",
+          "en": "Test vector, no clinical use."
+        }
+      },
+      "cases": [
+        {
+          "name": "2.5 → 3",
+          "inputs": {
+            "a": {
+              "value": 2.5
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 3,
+            "issues": []
+          }
+        },
+        {
+          "name": "−2.5 → −3",
+          "inputs": {
+            "a": {
+              "value": -2.5
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": -3,
+            "issues": []
+          }
+        },
+        {
+          "name": "2.4 → 2",
+          "inputs": {
+            "a": {
+              "value": 2.4
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 2,
+            "issues": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "round-2",
+      "description": "round on the decimal representation: 1.005 → 1.01",
+      "definition": {
+        "schemaVersion": 1,
+        "inputs": [
+          {
+            "kind": "NUMBER",
+            "key": "a",
+            "label": {
+              "fr": "Valeur a",
+              "en": "Value a"
+            },
+            "required": true,
+            "quantity": "ABSTRACT",
+            "canonicalUnit": "1"
+          }
+        ],
+        "formula": {
+          "op": "round",
+          "digits": 2,
+          "args": [
+            {
+              "input": "a"
+            }
+          ]
+        },
+        "result": {
+          "unit": "1",
+          "decimals": 2,
+          "label": {
+            "fr": "Résultat",
+            "en": "Result"
+          }
+        },
+        "limitations": {
+          "fr": "Vecteur de test, sans usage clinique.",
+          "en": "Test vector, no clinical use."
+        }
+      },
+      "cases": [
+        {
+          "name": "1.005 → 1.01",
+          "inputs": {
+            "a": {
+              "value": 1.005
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 1.01,
+            "issues": []
+          }
+        },
+        {
+          "name": "1.004 → 1",
+          "inputs": {
+            "a": {
+              "value": 1.004
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 1,
+            "issues": []
+          }
+        },
+        {
+          "name": "−1.005 → −1.01",
+          "inputs": {
+            "a": {
+              "value": -1.005
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": -1.01,
+            "issues": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "conditionals",
+      "description": "piecewise (first match), if, comparisons, and/or/not, eq/ne",
+      "definition": {
+        "schemaVersion": 1,
+        "inputs": [
+          {
+            "kind": "NUMBER",
+            "key": "a",
+            "label": {
+              "fr": "Valeur a",
+              "en": "Value a"
+            },
+            "required": true,
+            "quantity": "ABSTRACT",
+            "canonicalUnit": "1"
+          },
+          {
+            "kind": "NUMBER",
+            "key": "b",
+            "label": {
+              "fr": "Valeur b",
+              "en": "Value b"
+            },
+            "required": true,
+            "quantity": "ABSTRACT",
+            "canonicalUnit": "1"
+          }
+        ],
+        "formula": {
+          "op": "piecewise",
+          "cases": [
+            {
+              "when": {
+                "op": "lt",
+                "args": [
+                  {
+                    "input": "a"
+                  },
+                  {
+                    "num": 0
+                  }
+                ]
+              },
+              "then": {
+                "num": -1
+              }
+            },
+            {
+              "when": {
+                "op": "eq",
+                "args": [
+                  {
+                    "input": "a"
+                  },
+                  {
+                    "num": 0
+                  }
+                ]
+              },
+              "then": {
+                "num": 0
+              }
+            },
+            {
+              "when": {
+                "op": "or",
+                "args": [
+                  {
+                    "op": "eq",
+                    "args": [
+                      {
+                        "input": "a"
+                      },
+                      {
+                        "num": 7
+                      }
+                    ]
+                  },
+                  {
+                    "op": "ne",
+                    "args": [
+                      {
+                        "input": "b"
+                      },
+                      {
+                        "input": "b"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "num": 42
+              }
+            }
+          ],
+          "otherwise": {
+            "op": "if",
+            "args": [
+              {
+                "op": "and",
+                "args": [
+                  {
+                    "op": "gt",
+                    "args": [
+                      {
+                        "input": "a"
+                      },
+                      {
+                        "num": 10
+                      }
+                    ]
+                  },
+                  {
+                    "op": "not",
+                    "args": [
+                      {
+                        "op": "ge",
+                        "args": [
+                          {
+                            "input": "b"
+                          },
+                          {
+                            "num": 5
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "num": 100
+              },
+              {
+                "op": "if",
+                "args": [
+                  {
+                    "op": "le",
+                    "args": [
+                      {
+                        "input": "a"
+                      },
+                      {
+                        "num": 10
+                      }
+                    ]
+                  },
+                  {
+                    "num": 1
+                  },
+                  {
+                    "num": 2
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "result": {
+          "unit": "1",
+          "decimals": 2,
+          "label": {
+            "fr": "Résultat",
+            "en": "Result"
+          }
+        },
+        "limitations": {
+          "fr": "Vecteur de test, sans usage clinique.",
+          "en": "Test vector, no clinical use."
+        }
+      },
+      "cases": [
+        {
+          "name": "first case",
+          "inputs": {
+            "a": {
+              "value": -3
+            },
+            "b": {
+              "value": 0
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": -1,
+            "issues": []
+          }
+        },
+        {
+          "name": "equality case",
+          "inputs": {
+            "a": {
+              "value": 0
+            },
+            "b": {
+              "value": 9
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 0,
+            "issues": []
+          }
+        },
+        {
+          "name": "or case",
+          "inputs": {
+            "a": {
+              "value": 7
+            },
+            "b": {
+              "value": 9
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 42,
+            "issues": []
+          }
+        },
+        {
+          "name": "and/not true",
+          "inputs": {
+            "a": {
+              "value": 20
+            },
+            "b": {
+              "value": 1
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 100,
+            "issues": []
+          }
+        },
+        {
+          "name": "and/not false, a > 10",
+          "inputs": {
+            "a": {
+              "value": 20
+            },
+            "b": {
+              "value": 5
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 2,
+            "issues": []
+          }
+        },
+        {
+          "name": "a ≤ 10",
+          "inputs": {
+            "a": {
+              "value": 5
+            },
+            "b": {
+              "value": 1
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 1,
+            "issues": []
+          }
+        }
+      ]
+    }
+  ]
+}

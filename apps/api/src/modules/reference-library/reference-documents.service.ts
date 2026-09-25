@@ -5,7 +5,10 @@ import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 import type { Viewer } from '../../infrastructure/security/viewer-auth.guard.js';
 import { AccessService, type ItemAccess } from '../access/index.js';
 import { SIGNED_READ_TTL, StorageService } from '../storage/index.js';
-import { compareTitles, normaliseForSearch } from './reference-library.policy.js';
+import { compareFrench, matchesAllWords } from '../../common/text/search-text.js';
+
+const byTitle = (a: { titleFr: string }, b: { titleFr: string }) =>
+  compareFrench(a.titleFr, b.titleFr);
 
 export interface ReferenceItem {
   id: string;
@@ -78,16 +81,10 @@ export class ReferenceDocumentsService {
   ): Promise<ReferenceItem[]> {
     const rows = await this.published({ type });
     // Every word of the query must appear in one of the titles, in any order.
-    const words = query ? normaliseForSearch(query).split(' ').filter(Boolean) : [];
-    const matching = words.length
-      ? rows.filter((row) =>
-          [row.titleFr, row.titleEn ?? ''].some((title) => {
-            const haystack = normaliseForSearch(title);
-            return words.every((word) => haystack.includes(word));
-          }),
-        )
+    const matching = query
+      ? rows.filter((row) => matchesAllWords(query, [row.titleFr, row.titleEn]))
       : rows;
-    return (await this.withAccess(viewer, matching)).sort(compareTitles);
+    return (await this.withAccess(viewer, matching)).sort(byTitle);
   }
 
   async get(viewer: Viewer, id: string): Promise<ReferenceItem> {
@@ -136,7 +133,7 @@ export class ReferenceDocumentsService {
   /** Every model the viewer may open, for the offline manifest. */
   async openable(viewer: Viewer): Promise<ReferenceItem[]> {
     const items = await this.withAccess(viewer, await this.published({}));
-    return items.filter((item) => item.access.state === 'AVAILABLE').sort(compareTitles);
+    return items.filter((item) => item.access.state === 'AVAILABLE').sort(byTitle);
   }
 
   private async published(filter: { type?: ReferenceDocumentType }): Promise<PublishedRow[]> {

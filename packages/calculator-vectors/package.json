@@ -1,0 +1,10 @@
+{
+  "name": "@doktool/calculator-vectors",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Engine conformance vectors shared by the TypeScript (API) and Dart (mobile) calculator engines.",
+  "files": [
+    "vectors"
+  ]
+}

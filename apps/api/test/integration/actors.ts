@@ -12,6 +12,8 @@ export interface AdminActor {
   get: (path: string) => ReturnType<ReturnType<TestApp['http']>['get']>;
   post: (path: string) => ReturnType<ReturnType<TestApp['http']>['post']>;
   patch: (path: string) => ReturnType<ReturnType<TestApp['http']>['patch']>;
+  put: (path: string) => ReturnType<ReturnType<TestApp['http']>['put']>;
+  delete: (path: string) => ReturnType<ReturnType<TestApp['http']>['delete']>;
 }
 
 export async function adminActor(
@@ -46,6 +48,9 @@ export async function adminActor(
     get: (path) => app.http().get(path).set('Cookie', cookie),
     post: (path) => app.http().post(path).set('Cookie', cookie).set('Origin', TEST_ADMIN_ORIGIN),
     patch: (path) => app.http().patch(path).set('Cookie', cookie).set('Origin', TEST_ADMIN_ORIGIN),
+    put: (path) => app.http().put(path).set('Cookie', cookie).set('Origin', TEST_ADMIN_ORIGIN),
+    delete: (path) =>
+      app.http().delete(path).set('Cookie', cookie).set('Origin', TEST_ADMIN_ORIGIN),
   };
 }
 
