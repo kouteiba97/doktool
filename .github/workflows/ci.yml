@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typescript:
+    name: API, contracts, tokens, i18n
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: doktool
+          POSTGRES_PASSWORD: doktool
+          POSTGRES_DB: doktool_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U doktool -d doktool_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://doktool:doktool@localhost:5432/doktool_ci?schema=public
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Prisma schema is valid and migrations apply
+        run: |
+          npm run prisma:validate -w @doktool/api
+          npm run prisma:migrate:deploy -w @doktool/api
+
+      - name: Migrations match the schema (no drift)
+        working-directory: apps/api
+        run: npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+
+      - name: Format, lint, types, i18n parity, token drift, OpenAPI contract, tests
+        run: npm run ci

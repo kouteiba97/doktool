@@ -1,0 +1,11 @@
+{
+  "name": "@doktool/design-tokens",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Drift gate between design/system/tokens.json (the only source) and its CSS, Tailwind, TS and Dart outputs.",
+  "scripts": {
+    "check": "node scripts/check-drift.mjs",
+    "test": "node --test \"scripts/*.test.mjs\""
+  }
+}

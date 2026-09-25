@@ -1,0 +1,10 @@
+# Repository line endings are LF on every platform (ADR-008).
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.pdf binary
+*.woff2 binary
+*.ico binary

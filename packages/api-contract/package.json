@@ -1,0 +1,13 @@
+{
+  "name": "@doktool/api-contract",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "OpenAPI contract of the DokTool API, generated from apps/api. Source of the Dart (mobile) and TS (admin) clients.",
+  "exports": {
+    "./openapi.json": "./openapi.json"
+  },
+  "files": [
+    "openapi.json"
+  ]
+}

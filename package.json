@@ -1,0 +1,26 @@
+{
+  "name": "doktool",
+  "private": true,
+  "type": "module",
+  "description": "DokTool V1 monorepo — NestJS API, Admin Web (Next.js), Flutter mobile, shared contracts.",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "apps/api",
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "npm run lint --workspaces --if-present",
+    "format:check": "prettier --check .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "check:i18n": "npm run check --workspace @doktool/i18n",
+    "check:tokens": "npm run check --workspace @doktool/design-tokens",
+    "check:openapi": "npm run openapi:check --workspace @doktool/api",
+    "ci": "npm run format:check && npm run lint && npm run typecheck && npm run check:i18n && npm run check:tokens && npm run check:openapi && npm run test"
+  },
+  "devDependencies": {
+    "prettier": "3.9.9"
+  }
+}

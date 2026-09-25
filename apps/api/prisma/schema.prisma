@@ -1,0 +1,858 @@
+// DokTool V1 data model — docs/ARCHITECTURE-AUDIT.md §6, amended by docs/adr/ADR-006.
+//
+// Conventions
+// - Each section header names the module that owns its models, in [brackets]. A module is the only
+//   writer of its tables (ADR-001); test/unit/table-ownership.spec.ts keeps this list complete.
+// - Tables and columns are snake_case in PostgreSQL; models and fields are camelCase in Prisma.
+// - Money is integer minor units (DZD centimes) with an ISO 4217 currency code.
+// - Timestamps are timestamptz with millisecond precision.
+// - Invariants Prisma cannot express (CHECK constraints, append-only and immutability triggers) live in
+//   the SQL migrations and are covered by test/integration/schema-constraints.spec.ts.
+// - AccessProfile is derived by the access module and never stored.
+
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  moduleFormat           = "esm"
+  importFileExtension    = "js"
+  generatedFileExtension = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+
+  @@map("user_status")
+}
+
+/// What the person is. Never DEMO (Lock L37). PHARMACIST / OTHER_HCP are Future Roadmap and are not
+/// values of this enum (ADR-006 Q7).
+enum ProfessionalType {
+  DOCTOR
+  RESIDENT
+  STUDENT
+
+  @@map("professional_type")
+}
+
+enum Language {
+  FR
+  EN
+
+  @@map("language")
+}
+
+enum ThemePreference {
+  LIGHT
+  DARK
+  SYSTEM
+
+  @@map("theme_preference")
+}
+
+enum WeightUnit {
+  KG
+  LB
+
+  @@map("weight_unit")
+}
+
+enum VerificationType {
+  IDENTITY
+  PROFESSIONAL_STATUS
+  STUDENT_STATUS
+
+  @@map("verification_type")
+}
+
+enum VerificationStatus {
+  NOT_STARTED
+  SUBMITTED
+  IN_REVIEW
+  VERIFIED
+  REJECTED
+  EXPIRED
+  APPEALED
+
+  @@map("verification_status")
+}
+
+/// Content tier an item requires, and the tier a plan grants.
+enum AccessTier {
+  STUDENT
+  PROFESSIONAL
+
+  @@map("access_tier")
+}
+
+/// No TRIALING (Demo replaces trials) and no REFUNDED (ADR-005).
+enum SubscriptionStatus {
+  PENDING_PAYMENT
+  ACTIVE
+  GRACE
+  EXPIRED
+  CANCELED
+
+  @@map("subscription_status")
+}
+
+enum RenewalMode {
+  MANUAL
+
+  @@map("renewal_mode")
+}
+
+/// V1 providers (ADR-006 Q3): CIB and Edahabia through SATIM. No bank transfer; PayPal is Future Roadmap.
+enum PaymentProvider {
+  SATIM_CIB
+  SATIM_EDAHABIA
+
+  @@map("payment_provider")
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELED
+
+  @@map("transaction_status")
+}
+
+enum AdjustmentKind {
+  REVERSAL
+  CORRECTION
+
+  @@map("adjustment_kind")
+}
+
+enum ReferenceDocumentType {
+  ORDONNANCE
+  CERTIFICATE
+
+  @@map("reference_document_type")
+}
+
+enum ReferenceDocumentStatus {
+  PROCESSING
+  ENABLED
+  DISABLED
+  ARCHIVED
+
+  @@map("reference_document_status")
+}
+
+enum CalculatorStatus {
+  ACTIVE
+  RETIRED
+
+  @@map("calculator_status")
+}
+
+enum CalculatorVersionStatus {
+  DRAFT
+  IN_REVIEW
+  PUBLISHED
+  RETIRED
+
+  @@map("calculator_version_status")
+}
+
+enum CalculatorSourceRole {
+  PRIMARY
+  VALIDATION
+  UNIT_CONVERSION
+
+  @@map("calculator_source_role")
+}
+
+enum CalculatorTestOutcome {
+  RESULT
+  INVALID
+  OUT_OF_VALIDATED_RANGE
+
+  @@map("calculator_test_outcome")
+}
+
+enum FavoriteTargetType {
+  REFERENCE_DOCUMENT
+  CALCULATOR
+
+  @@map("favorite_target_type")
+}
+
+enum ActivityKind {
+  SEARCH
+  REFERENCE_VIEW
+  CALCULATOR_USE
+
+  @@map("activity_kind")
+}
+
+enum DemoContext {
+  DOCTOR
+  RESIDENT
+
+  @@map("demo_context")
+}
+
+enum DemoSessionStatus {
+  ACTIVE
+  EXPIRED
+  CONVERTED
+
+  @@map("demo_session_status")
+}
+
+enum AccessContext {
+  AUTHENTICATED
+  DEMO
+
+  @@map("access_context")
+}
+
+/// The single word of an AccessProfile (audit §7), recorded on analytics events.
+enum EntitlementTier {
+  DEMO
+  STUDENT
+  PROFESSIONAL_UNPAID
+  PROFESSIONAL
+  RESTRICTED
+
+  @@map("entitlement_tier")
+}
+
+/// V1 analytics vocabulary (audit Appendix B).
+enum AnalyticsEventType {
+  SEARCH_PERFORMED
+  REFERENCE_SEARCHED
+  REFERENCE_OPENED
+  REFERENCE_VIEWED
+  CALCULATOR_STARTED
+  CALCULATOR_COMPLETED
+  CALCULATOR_USED
+  FAVORITE_ADDED
+  FAVORITE_REMOVED
+  SUBSCRIPTION_VIEWED
+  SUBSCRIPTION_STARTED
+  SUBSCRIPTION_RENEWED
+  DEMO_STARTED
+  DEMO_FEATURE_VIEWED
+
+  @@map("analytics_event_type")
+}
+
+enum ClientPlatform {
+  IOS
+  ANDROID
+  SERVER
+
+  @@map("client_platform")
+}
+
+enum AuditActorType {
+  ADMIN
+  SYSTEM
+  USER
+
+  @@map("audit_actor_type")
+}
+
+enum AdminStatus {
+  ACTIVE
+  SUSPENDED
+
+  @@map("admin_status")
+}
+
+// ─────────────────────── Reference tables [users] ───────────────────────
+
+model Wilaya {
+  /// Official wilaya number.
+  code         Int                   @id
+  name         String
+  profiles     ProfessionalProfile[]
+  institutions Institution[]
+  universities University[]
+
+  @@map("wilayas")
+}
+
+model Specialty {
+  id        String                @id @default(uuid(7)) @db.Uuid
+  code      String                @unique
+  nameFr    String                @map("name_fr")
+  nameEn    String                @map("name_en")
+  profiles  ProfessionalProfile[]
+  createdAt DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("specialties")
+}
+
+model Institution {
+  id         String                @id @default(uuid(7)) @db.Uuid
+  name       String
+  wilayaCode Int                   @map("wilaya_code")
+  wilaya     Wilaya                @relation(fields: [wilayaCode], references: [code])
+  profiles   ProfessionalProfile[]
+  createdAt  DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([name, wilayaCode])
+  @@map("institutions")
+}
+
+model University {
+  id         String                @id @default(uuid(7)) @db.Uuid
+  name       String
+  wilayaCode Int                   @map("wilaya_code")
+  wilaya     Wilaya                @relation(fields: [wilayaCode], references: [code])
+  profiles   ProfessionalProfile[]
+  createdAt  DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([name, wilayaCode])
+  @@map("universities")
+}
+
+// ─────────────────────────── Accounts [users] ───────────────────────────
+
+/// One per real person. Never a Demo. E-mail or phone is required (CHECK).
+model User {
+  id               String     @id @default(uuid(7)) @db.Uuid
+  /// Stored lower-case (CHECK).
+  email            String?    @unique
+  /// E.164 (CHECK).
+  phone            String?    @unique
+  passwordHash     String     @map("password_hash")
+  firstName        String     @map("first_name")
+  lastName         String     @map("last_name")
+  avatarStorageKey String?    @map("avatar_storage_key")
+  bio              String?    @db.VarChar(280)
+  status           UserStatus @default(ACTIVE)
+  lastSeenAt       DateTime?  @map("last_seen_at") @db.Timestamptz(3)
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  professionalProfile ProfessionalProfile?
+  preference          UserPreference?
+  verificationCases   VerificationCase[]
+  subscriptions       Subscription[]
+  transactions        Transaction[]
+  favorites           Favorite[]
+  recentActivities    RecentActivity[]
+  notifications       Notification[]
+  convertedDemos      DemoSession[]
+
+  @@map("users")
+}
+
+/// What the person is. A type change is a re-verification on the same account.
+model ProfessionalProfile {
+  userId            String           @id @map("user_id") @db.Uuid
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  professionalType  ProfessionalType @map("professional_type")
+  specialtyId       String?          @map("specialty_id") @db.Uuid
+  specialty         Specialty?       @relation(fields: [specialtyId], references: [id])
+  institutionId     String?          @map("institution_id") @db.Uuid
+  institution       Institution?     @relation(fields: [institutionId], references: [id])
+  universityId      String?          @map("university_id") @db.Uuid
+  university        University?      @relation(fields: [universityId], references: [id])
+  /// Students only, 1–7 (CHECK).
+  academicYear      Int?             @map("academic_year") @db.SmallInt
+  /// Residents only, ≥ 1 (CHECK).
+  residencyYear     Int?             @map("residency_year") @db.SmallInt
+  wilayaCode        Int              @map("wilaya_code")
+  wilaya            Wilaya           @relation(fields: [wilayaCode], references: [code])
+  orderNumberMasked String?          @map("order_number_masked")
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([professionalType])
+  @@map("professional_profiles")
+}
+
+/// Synced across devices.
+model UserPreference {
+  userId            String          @id @map("user_id") @db.Uuid
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  language          Language        @default(FR)
+  theme             ThemePreference @default(SYSTEM)
+  notificationPrefs Json            @default("{}") @map("notification_prefs")
+  weightUnitDefault WeightUnit?     @map("weight_unit_default")
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("user_preferences")
+}
+
+// ───────────────────────────── [verification] ─────────────────────────────
+
+/// Identity and professional/student status are separate cases, decided and expiring independently.
+model VerificationCase {
+  id                  String                 @id @default(uuid(7)) @db.Uuid
+  userId              String                 @map("user_id") @db.Uuid
+  user                User                   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  type                VerificationType
+  status              VerificationStatus     @default(NOT_STARTED)
+  submittedAt         DateTime?              @map("submitted_at") @db.Timestamptz(3)
+  reviewerId          String?                @map("reviewer_id") @db.Uuid
+  reviewer            AdminAccount?          @relation("VerificationReviewer", fields: [reviewerId], references: [id], onDelete: Restrict)
+  decidedAt           DateTime?              @map("decided_at") @db.Timestamptz(3)
+  expiresAt           DateTime?              @map("expires_at") @db.Timestamptz(3)
+  rejectionReasonCode String?                @map("rejection_reason_code")
+  rejectionNote       String?                @map("rejection_note")
+  documents           VerificationDocument[]
+  createdAt           DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([userId, type])
+  @@index([status, submittedAt])
+  @@map("verification_cases")
+}
+
+/// Bytes live in the private R2 bucket; read only through the restricted viewer.
+model VerificationDocument {
+  id         String           @id @default(uuid(7)) @db.Uuid
+  caseId     String           @map("case_id") @db.Uuid
+  case       VerificationCase @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  stepType   String           @map("step_type")
+  storageKey String           @unique @map("storage_key")
+  mimeType   String           @map("mime_type")
+  sizeBytes  Int              @map("size_bytes")
+  sha256     String           @db.Char(64)
+  uploadedAt DateTime         @default(now()) @map("uploaded_at") @db.Timestamptz(3)
+  purgeAfter DateTime?        @map("purge_after") @db.Timestamptz(3)
+
+  @@index([caseId])
+  @@index([purgeAfter])
+  @@map("verification_documents")
+}
+
+// ─────────────────────────────── [billing] ───────────────────────────────
+
+/// One row per plan version; a price or inclusion change creates a new version (new row).
+/// Subscriptions and transactions reference the version row they bought.
+model SubscriptionPlan {
+  id              String             @id @default(uuid(7)) @db.Uuid
+  code            String
+  version         Int
+  /// Doctors and/or residents; never students (CHECK).
+  audience        ProfessionalType[]
+  nameFr          String             @map("name_fr")
+  nameEn          String             @map("name_en")
+  priceMinor      Int                @map("price_minor")
+  currency        String             @default("DZD") @db.Char(3)
+  durationDays    Int                @map("duration_days")
+  includesFr      String[]           @map("includes_fr")
+  includesEn      String[]           @map("includes_en")
+  excludesFr      String[]           @map("excludes_fr")
+  excludesEn      String[]           @map("excludes_en")
+  entitlementTier AccessTier         @default(PROFESSIONAL) @map("entitlement_tier")
+  isPurchasable   Boolean            @default(false) @map("is_purchasable")
+  subscriptions   Subscription[]
+  transactions    Transaction[]
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([code, version])
+  @@map("subscription_plans")
+}
+
+/// Students have no subscription (free access is an entitlement tier). At most one ACTIVE/GRACE
+/// subscription per user (partial unique index). Manual renewal adds a transaction to the same row.
+model Subscription {
+  id                 String             @id @default(uuid(7)) @db.Uuid
+  userId             String             @map("user_id") @db.Uuid
+  user               User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  planId             String             @map("plan_id") @db.Uuid
+  plan               SubscriptionPlan   @relation(fields: [planId], references: [id], onDelete: Restrict)
+  status             SubscriptionStatus @default(PENDING_PAYMENT)
+  currentPeriodStart DateTime?          @map("current_period_start") @db.Timestamptz(3)
+  currentPeriodEnd   DateTime?          @map("current_period_end") @db.Timestamptz(3)
+  renewalMode        RenewalMode        @default(MANUAL) @map("renewal_mode")
+  graceEndsAt        DateTime?          @map("grace_ends_at") @db.Timestamptz(3)
+  transactions       Transaction[]
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([userId, status])
+  @@index([status, currentPeriodEnd])
+  @@map("subscriptions")
+}
+
+/// One individual payment attempt. Immutable after SUCCEEDED except fee settlement (trigger); never
+/// deleted — failed attempts are kept for provider monitoring and excluded from revenue.
+model Transaction {
+  id                String                  @id @default(uuid(7)) @db.Uuid
+  /// Public identifier DT-YYYY-NNNNNN (CHECK).
+  transactionId     String                  @unique @map("transaction_id")
+  userId            String                  @map("user_id") @db.Uuid
+  user              User                    @relation(fields: [userId], references: [id], onDelete: Restrict)
+  subscriptionId    String                  @map("subscription_id") @db.Uuid
+  subscription      Subscription            @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  planId            String                  @map("plan_id") @db.Uuid
+  plan              SubscriptionPlan        @relation(fields: [planId], references: [id], onDelete: Restrict)
+  amountMinor       Int                     @map("amount_minor")
+  currency          String                  @db.Char(3)
+  paymentProvider   PaymentProvider         @map("payment_provider")
+  providerReference String?                 @map("provider_reference")
+  status            TransactionStatus       @default(PENDING)
+  paymentDate       DateTime?               @map("payment_date") @db.Timestamptz(3)
+  paymentFeesMinor  Int?                    @map("payment_fees_minor")
+  netAmountMinor    Int?                    @map("net_amount_minor")
+  metadata          Json                    @default("{}")
+  adjustments       TransactionAdjustment[]
+  createdAt         DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([paymentProvider, providerReference])
+  @@index([userId, createdAt])
+  @@index([status, paymentDate])
+  @@map("transactions")
+}
+
+// ─────────────────────────────── [finance] ───────────────────────────────
+
+/// The only place a reversal can exist (ADR-005). Created by a Super Admin, approved once by a
+/// different admin, then immutable (trigger). Counted in revenue only when approved.
+model TransactionAdjustment {
+  id            String         @id @default(uuid(7)) @db.Uuid
+  transactionId String         @map("transaction_id") @db.Uuid
+  transaction   Transaction    @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  kind          AdjustmentKind
+  /// Signed amount in minor units; never zero (CHECK).
+  amountMinor   Int            @map("amount_minor")
+  reasonCode    String         @map("reason_code")
+  reasonNote    String         @map("reason_note")
+  requestedById String         @map("requested_by_id") @db.Uuid
+  requestedBy   AdminAccount   @relation("AdjustmentRequester", fields: [requestedById], references: [id], onDelete: Restrict)
+  approvedById  String?        @map("approved_by_id") @db.Uuid
+  approvedBy    AdminAccount?  @relation("AdjustmentApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+  approvedAt    DateTime?      @map("approved_at") @db.Timestamptz(3)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([transactionId])
+  @@index([approvedAt])
+  @@map("transaction_adjustments")
+}
+
+// ─────────────────────────── [reference-library] ───────────────────────────
+
+/// Read-only reference PDF. Minimal metadata; no per-document access tier (ADR-006 D3).
+model ReferenceDocument {
+  id            String                  @id @default(uuid(7)) @db.Uuid
+  type          ReferenceDocumentType
+  /// Required display title, pre-filled from the file name.
+  titleFr       String                  @map("title_fr")
+  /// Optional; falls back to titleFr.
+  titleEn       String?                 @map("title_en")
+  demoSample    Boolean                 @default(false) @map("demo_sample")
+  status        ReferenceDocumentStatus @default(PROCESSING)
+  currentFileId String?                 @unique @map("current_file_id") @db.Uuid
+  currentFile   ReferenceDocumentFile?  @relation("ReferenceDocumentCurrentFile", fields: [currentFileId], references: [id], onDelete: Restrict)
+  files         ReferenceDocumentFile[] @relation("ReferenceDocumentFiles")
+  createdById   String                  @map("created_by_id") @db.Uuid
+  createdBy     AdminAccount            @relation("ReferenceDocumentCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedById   String                  @map("updated_by_id") @db.Uuid
+  updatedBy     AdminAccount            @relation("ReferenceDocumentUpdater", fields: [updatedById], references: [id], onDelete: Restrict)
+  createdAt     DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([type, status, titleFr])
+  @@map("reference_documents")
+}
+
+/// Every uploaded version is kept. Identity columns are immutable and rows are never deleted
+/// (trigger). sha256 and pageCount are filled by the processing job.
+model ReferenceDocumentFile {
+  id           String             @id @default(uuid(7)) @db.Uuid
+  documentId   String             @map("document_id") @db.Uuid
+  document     ReferenceDocument  @relation("ReferenceDocumentFiles", fields: [documentId], references: [id], onDelete: Restrict)
+  currentOf    ReferenceDocument? @relation("ReferenceDocumentCurrentFile")
+  version      Int
+  storageKey   String             @unique @map("storage_key")
+  sha256       String?            @db.Char(64)
+  sizeBytes    Int                @map("size_bytes")
+  pageCount    Int?               @map("page_count")
+  mimeType     String             @default("application/pdf") @map("mime_type")
+  uploadedById String             @map("uploaded_by_id") @db.Uuid
+  uploadedBy   AdminAccount       @relation("ReferenceDocumentFileUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+  uploadedAt   DateTime           @default(now()) @map("uploaded_at") @db.Timestamptz(3)
+
+  @@unique([documentId, version])
+  @@map("reference_document_files")
+}
+
+// ───────────────────────────── [calculators] ─────────────────────────────
+
+/// Stable identity for favorites and deep links.
+model Calculator {
+  id               String              @id @default(uuid(7)) @db.Uuid
+  slug             String              @unique
+  nameFr           String              @map("name_fr")
+  nameEn           String              @map("name_en")
+  category         String?
+  /// STUDENT = open to students and professionals (every V1 calculator, ADR-006 Q2).
+  accessTier       AccessTier          @default(STUDENT) @map("access_tier")
+  demoSample       Boolean             @default(false) @map("demo_sample")
+  status           CalculatorStatus    @default(ACTIVE)
+  currentVersionId String?             @unique @map("current_version_id") @db.Uuid
+  currentVersion   CalculatorVersion?  @relation("CalculatorCurrentVersion", fields: [currentVersionId], references: [id], onDelete: Restrict)
+  versions         CalculatorVersion[] @relation("CalculatorVersions")
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("calculators")
+}
+
+/// Declarative, versioned definition (ADR-003). Author ≠ reviewer (CHECK). Publishing requires a
+/// primary source, test cases and a passing backend test run (trigger). Immutable once PUBLISHED;
+/// the only allowed change is PUBLISHED → RETIRED.
+model CalculatorVersion {
+  id               String                  @id @default(uuid(7)) @db.Uuid
+  calculatorId     String                  @map("calculator_id") @db.Uuid
+  calculator       Calculator              @relation("CalculatorVersions", fields: [calculatorId], references: [id], onDelete: Restrict)
+  currentOf        Calculator?             @relation("CalculatorCurrentVersion")
+  version          Int
+  /// inputs, units, validation rules, formula AST, interpretation bands, limitations (audit §9).
+  definition       Json
+  definitionSha256 String                  @map("definition_sha256") @db.Char(64)
+  status           CalculatorVersionStatus @default(DRAFT)
+  authoredById     String                  @map("authored_by_id") @db.Uuid
+  authoredBy       AdminAccount            @relation("CalculatorVersionAuthor", fields: [authoredById], references: [id], onDelete: Restrict)
+  reviewedById     String?                 @map("reviewed_by_id") @db.Uuid
+  reviewedBy       AdminAccount?           @relation("CalculatorVersionReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+  reviewNote       String?                 @map("review_note")
+  reviewedAt       DateTime?               @map("reviewed_at") @db.Timestamptz(3)
+  publishedAt      DateTime?               @map("published_at") @db.Timestamptz(3)
+  engineVersion    String?                 @map("engine_version")
+  /// { passed: boolean, ranAt: ISO date, results: [...] } from the backend engine.
+  testRun          Json?                   @map("test_run")
+  sources          CalculatorSource[]
+  testCases        CalculatorTestCase[]
+  createdAt        DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([calculatorId, version])
+  @@index([status])
+  @@map("calculator_versions")
+}
+
+/// Citation of the published source a formula (or unit factor) was transcribed from.
+model CalculatorSource {
+  id                  String               @id @default(uuid(7)) @db.Uuid
+  calculatorVersionId String               @map("calculator_version_id") @db.Uuid
+  calculatorVersion   CalculatorVersion    @relation(fields: [calculatorVersionId], references: [id], onDelete: Restrict)
+  role                CalculatorSourceRole
+  authors             String
+  title               String
+  /// Journal or publisher.
+  publisher           String
+  year                Int                  @db.SmallInt
+  doi                 String?
+  url                 String?
+  edition             String?
+  /// Page, table or equation where the formula appears.
+  formulaLocation     String               @map("formula_location")
+  accessedAt          DateTime             @map("accessed_at") @db.Date
+  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([calculatorVersionId])
+  @@map("calculator_sources")
+}
+
+/// Worked examples and edge cases, run by both engines in CI and by the backend at publication.
+model CalculatorTestCase {
+  id                  String                @id @default(uuid(7)) @db.Uuid
+  calculatorVersionId String                @map("calculator_version_id") @db.Uuid
+  calculatorVersion   CalculatorVersion     @relation(fields: [calculatorVersionId], references: [id], onDelete: Restrict)
+  inputs              Json
+  expectedOutcome     CalculatorTestOutcome @map("expected_outcome")
+  /// Required when expectedOutcome = RESULT (CHECK).
+  expectedValue       Float?                @map("expected_value")
+  /// Required when expectedOutcome = RESULT, ≥ 0 (CHECK).
+  tolerance           Float?
+  expectedBand        String?               @map("expected_band")
+  /// e.g. "worked example, source p. 34".
+  origin              String
+  createdAt           DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([calculatorVersionId])
+  @@map("calculator_test_cases")
+}
+
+// ─────────────────────────────── [activity] ───────────────────────────────
+
+/// A disabled target is shown as "No longer available", so there is no foreign key to the target.
+model Favorite {
+  userId     String             @map("user_id") @db.Uuid
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetType FavoriteTargetType @map("target_type")
+  targetId   String             @map("target_id") @db.Uuid
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@id([userId, targetType, targetId])
+  @@map("favorites")
+}
+
+/// User-facing history ("Research"). queryText only for SEARCH (CHECK). Calculator inputs are never
+/// stored here or anywhere on the server (Lock L42).
+model RecentActivity {
+  id         String              @id @default(uuid(7)) @db.Uuid
+  userId     String              @map("user_id") @db.Uuid
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind       ActivityKind
+  targetType FavoriteTargetType? @map("target_type")
+  targetId   String?             @map("target_id") @db.Uuid
+  queryText  String?             @map("query_text") @db.VarChar(200)
+  occurredAt DateTime            @map("occurred_at") @db.Timestamptz(3)
+  deviceId   String              @map("device_id")
+
+  @@index([userId, kind, occurredAt(sort: Desc)])
+  @@map("recent_activities")
+}
+
+// ──────────────────────────── [notifications] ────────────────────────────
+
+/// Rendered in the user's language from catalogue keys.
+model Notification {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       String
+  messageKey String    @map("message_key")
+  params     Json      @default("{}")
+  readAt     DateTime? @map("read_at") @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([userId, readAt, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+// ───────────────────────────────── [demo] ─────────────────────────────────
+
+/// No name, e-mail or phone, ever. Separate from User; nothing a demo does lands in user tables.
+/// expiresAt is null by default: a demo has no time limit (ADR-006 Q5). An admin can end it (EXPIRED).
+model DemoSession {
+  id              String            @id @default(uuid(7)) @db.Uuid
+  deviceIdHash    String            @map("device_id_hash") @db.Char(64)
+  demoContext     DemoContext       @map("demo_context")
+  status          DemoSessionStatus @default(ACTIVE)
+  startedAt       DateTime          @default(now()) @map("started_at") @db.Timestamptz(3)
+  expiresAt       DateTime?         @map("expires_at") @db.Timestamptz(3)
+  lastSeenAt      DateTime          @default(now()) @map("last_seen_at") @db.Timestamptz(3)
+  /// Set on conversion, for funnel analytics only (CHECK: iff CONVERTED).
+  convertedUserId String?           @map("converted_user_id") @db.Uuid
+  convertedUser   User?             @relation(fields: [convertedUserId], references: [id], onDelete: SetNull)
+
+  @@index([deviceIdHash])
+  @@map("demo_sessions")
+}
+
+// ─────────────────────────────── [analytics] ───────────────────────────────
+
+/// Pseudonymous. No patient data, no free text, no search query text, no calculator input values.
+model AnalyticsEvent {
+  id                BigInt             @id @default(autoincrement())
+  type              AnalyticsEventType
+  occurredAt        DateTime           @map("occurred_at") @db.Timestamptz(3)
+  receivedAt        DateTime           @default(now()) @map("received_at") @db.Timestamptz(3)
+  /// Hash of the user id or demo session id.
+  subjectHash       String             @map("subject_hash") @db.Char(64)
+  accessContext     AccessContext      @map("access_context")
+  professionalType  ProfessionalType?  @map("professional_type")
+  entitlementTier   EntitlementTier    @map("entitlement_tier")
+  specialtyCode     String?            @map("specialty_code")
+  wilayaCode        Int?               @map("wilaya_code")
+  entityType        String?            @map("entity_type")
+  entityId          String?            @map("entity_id") @db.Uuid
+  calculatorVersion Int?               @map("calculator_version")
+  resultBand        String?            @map("result_band")
+  platform          ClientPlatform
+  appVersion        String?            @map("app_version")
+  dataVersion       String?            @map("data_version")
+  /// Event-specific payload from audit Appendix B (counts, flags, codes — never free text).
+  properties        Json               @default("{}")
+
+  @@index([type, occurredAt])
+  @@index([accessContext, occurredAt])
+  @@map("analytics_events")
+}
+
+// ───────────────────────────────── [audit] ─────────────────────────────────
+
+/// Append-only: UPDATE, DELETE and TRUNCATE are rejected by triggers.
+model AuditLogEntry {
+  id         BigInt         @id @default(autoincrement())
+  actorType  AuditActorType @map("actor_type")
+  actorId    String?        @map("actor_id")
+  action     String
+  entityType String         @map("entity_type")
+  entityId   String?        @map("entity_id")
+  before     Json?
+  after      Json?
+  reason     String?
+  ip         String?        @db.Inet
+  userAgent  String?        @map("user_agent")
+  occurredAt DateTime       @default(now()) @map("occurred_at") @db.Timestamptz(3)
+
+  @@index([entityType, entityId])
+  @@index([actorType, actorId, occurredAt])
+  @@index([occurredAt])
+  @@map("audit_log_entries")
+}
+
+// ────────────────────────────── [admin-auth] ──────────────────────────────
+
+/// Admins are not Users: separate table, issuer, session policy and mandatory TOTP.
+model AdminAccount {
+  id                  String      @id @default(uuid(7)) @db.Uuid
+  /// Stored lower-case (CHECK).
+  email               String      @unique
+  /// Shown in the restricted-viewer watermark and review trails.
+  fullName            String      @map("full_name")
+  passwordHash        String      @map("password_hash")
+  /// Encrypted TOTP secret; null until enrolment, and login is refused without it.
+  totpSecretEncrypted Bytes?      @map("totp_secret_encrypted")
+  status              AdminStatus @default(ACTIVE)
+  lastLoginAt         DateTime?   @map("last_login_at") @db.Timestamptz(3)
+  createdAt           DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  grants                     AdminGrant[]            @relation("AdminGrantHolder")
+  grantsGiven                AdminGrant[]            @relation("AdminGrantGrantor")
+  verificationReviews        VerificationCase[]      @relation("VerificationReviewer")
+  adjustmentsRequested       TransactionAdjustment[] @relation("AdjustmentRequester")
+  adjustmentsApproved        TransactionAdjustment[] @relation("AdjustmentApprover")
+  referenceDocumentsCreated  ReferenceDocument[]     @relation("ReferenceDocumentCreator")
+  referenceDocumentsUpdated  ReferenceDocument[]     @relation("ReferenceDocumentUpdater")
+  referenceFilesUploaded     ReferenceDocumentFile[] @relation("ReferenceDocumentFileUploader")
+  calculatorVersionsAuthored CalculatorVersion[]     @relation("CalculatorVersionAuthor")
+  calculatorVersionsReviewed CalculatorVersion[]     @relation("CalculatorVersionReviewer")
+
+  @@map("admin_accounts")
+}
+
+/// One grant key per row (e.g. "library.write"); optional expiry for time-limited grants.
+model AdminGrant {
+  id          String        @id @default(uuid(7)) @db.Uuid
+  adminId     String        @map("admin_id") @db.Uuid
+  admin       AdminAccount  @relation("AdminGrantHolder", fields: [adminId], references: [id], onDelete: Cascade)
+  grant       String
+  grantedById String?       @map("granted_by_id") @db.Uuid
+  grantedBy   AdminAccount? @relation("AdminGrantGrantor", fields: [grantedById], references: [id], onDelete: Restrict)
+  expiresAt   DateTime?     @map("expires_at") @db.Timestamptz(3)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([adminId, grant])
+  @@map("admin_grants")
+}

@@ -1,0 +1,54 @@
+# DokTool
+
+A clinical utility for doctors, residents and medical students in Algeria. It has three parts:
+
+- a **Flutter** mobile app;
+- a **Next.js** Admin Web;
+- a **NestJS** API that decides every rule.
+
+Start with [`CLAUDE.md`](CLAUDE.md), then [`docs/adr/`](docs/adr/) and [`docs/ARCHITECTURE-AUDIT.md`](docs/ARCHITECTURE-AUDIT.md).
+
+## Layout
+
+| Path | What |
+|---|---|
+| `apps/api` | NestJS modular monolith, Prisma schema and migrations |
+| `apps/admin` | Admin Web — Phase 16 |
+| `apps/mobile` | Flutter app — Phase 8 |
+| `packages/api-contract` | Generated OpenAPI contract |
+| `packages/i18n` | FR/EN message catalogues and their parity gate |
+| `packages/design-tokens` | Drift gate between `design/system/tokens.json` and its outputs |
+| `design/` | Design system v2.2 (visual source of truth) |
+| `docs/` | Architecture audit and decision records |
+
+## Local setup
+
+Requirements: Node ≥ 24 (see `.nvmrc`) and PostgreSQL ≥ 15.
+
+1. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Copy `apps/api/.env.example` to `apps/api/.env`. Set `DATABASE_URL` to a database you own; use a separate one for tests.
+
+3. Apply the migrations:
+
+   ```bash
+   npm run prisma:migrate:deploy -w @doktool/api
+   ```
+
+4. Start the API. It serves `http://localhost:3000/v1/health` and, outside production, `/docs`.
+
+   ```bash
+   npm run start:dev -w @doktool/api
+   ```
+
+5. Run everything CI runs:
+
+   ```bash
+   npm run ci
+   ```
+
+Integration tests run each case in a rolled-back transaction, but they still need a migrated database. Point them at a dedicated test database, not at data you care about.

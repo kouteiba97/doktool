@@ -1,0 +1,9 @@
+design/
+docs/
+node_modules/
+dist/
+coverage/
+apps/api/src/generated/
+packages/api-contract/openapi.json
+*.md
+package-lock.json
