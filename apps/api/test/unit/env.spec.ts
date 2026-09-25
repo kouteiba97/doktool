@@ -10,6 +10,16 @@ const required = {
   TERMS_VERSION: '2026-09',
 };
 
+/** A complete R2 configuration, so production tests isolate the rule they check. */
+const r2 = {
+  STORAGE_DRIVER: 'r2',
+  R2_ACCOUNT_ID: 'acc',
+  R2_CONTENT_ACCESS_KEY_ID: 'a',
+  R2_CONTENT_SECRET_ACCESS_KEY: 'b',
+  R2_PRIVATE_ACCESS_KEY_ID: 'c',
+  R2_PRIVATE_SECRET_ACCESS_KEY: 'd',
+};
+
 const issuesOf = (source: Record<string, string>): string[] => {
   try {
     loadEnv(source);
@@ -52,12 +62,13 @@ describe('loadEnv', () => {
   });
 
   it('requires SMTP settings in production', () => {
-    expect(issuesOf({ ...required, NODE_ENV: 'production' })).toEqual([
+    expect(issuesOf({ ...required, ...r2, NODE_ENV: 'production' })).toEqual([
       'SMTP_URL: SMTP_URL and MAIL_FROM are required in production (OTP e-mails)',
     ]);
     expect(
       issuesOf({
         ...required,
+        ...r2,
         NODE_ENV: 'production',
         SMTP_URL: 'smtps://user:pass@smtp.example.com:465',
         MAIL_FROM: 'DokTool <no-reply@example.com>',

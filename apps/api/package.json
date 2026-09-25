@@ -27,6 +27,8 @@
     "admin:create": "npm run build && node --env-file-if-exists=.env dist/scripts/create-admin.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1140.0",
+    "@aws-sdk/s3-request-presigner": "3.1140.0",
     "@doktool/i18n": "0.1.0",
     "@nestjs/common": "12.1.0",
     "@nestjs/core": "12.1.0",
@@ -38,6 +40,7 @@
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
     "cookie-parser": "1.4.7",
+    "express": "5.2.1",
     "helmet": "8.3.0",
     "intl-messageformat": "12.1.2",
     "jose": "6.2.12",
@@ -59,6 +62,7 @@
     "@types/nodemailer": "8.0.2",
     "@types/pg": "8.23.1",
     "@types/supertest": "7.2.1",
+    "aws-sdk-client-mock": "4.1.0",
     "eslint": "10.11.0",
     "pg": "8.23.0",
     "prisma": "7.10.0",

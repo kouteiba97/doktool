@@ -423,6 +423,8 @@
               "OTP_INVALID",
               "OTP_EXPIRED",
               "TOTP_INVALID",
+              "UPLOAD_INVALID",
+              "UPLOAD_EXPIRED",
               "CHALLENGE_INVALID",
               "ACCOUNT_LOCKED",
               "OTP_LOCKED",

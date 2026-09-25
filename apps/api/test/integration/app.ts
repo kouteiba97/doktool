@@ -14,7 +14,7 @@ import { requireDatabaseUrl } from './database.js';
 export interface TestApp {
   http: () => ReturnType<typeof request>;
   prisma: () => PrismaService;
-  get: <T>(token: new (...args: never[]) => T) => T;
+  get: <T>(token: abstract new (...args: never[]) => T) => T;
   /** The 6-digit code of the last message sent to `destination`. */
   lastCode: (destination: string) => string;
   /** Number of messages sent to `destination`. */

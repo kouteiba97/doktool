@@ -51,10 +51,53 @@ const envSchema = z
       .optional(),
     MAIL_FROM: z.string().trim().min(3).optional(),
 
+    /** Object storage (ADR-011): Cloudflare R2, or local files for development and tests. */
+    STORAGE_DRIVER: z.enum(['local', 'r2']).default('local'),
+    LOCAL_STORAGE_DIR: z.string().trim().min(1).default('.storage'),
+    /** Public base URL of this API; local-driver signed URLs point here. */
+    PUBLIC_API_URL: z
+      .string()
+      .url()
+      .transform((value) => value.replace(/\/+$/, ''))
+      .optional(),
+    R2_ACCOUNT_ID: z.string().trim().min(1).optional(),
+    R2_CONTENT_BUCKET: z.string().trim().min(3).default('doktool-content'),
+    R2_CONTENT_ACCESS_KEY_ID: z.string().trim().min(1).optional(),
+    R2_CONTENT_SECRET_ACCESS_KEY: z.string().trim().min(1).optional(),
+    /** Separate API token for the private (verification) bucket (ADR-002). */
+    R2_PRIVATE_BUCKET: z.string().trim().min(3).default('doktool-private'),
+    R2_PRIVATE_ACCESS_KEY_ID: z.string().trim().min(1).optional(),
+    R2_PRIVATE_SECRET_ACCESS_KEY: z.string().trim().min(1).optional(),
+
     /** Run pg-boss background jobs in this process. */
     JOBS_ENABLED: booleanFlag,
   })
   .superRefine((env, context) => {
+    if (env.NODE_ENV === 'production' && env.STORAGE_DRIVER !== 'r2') {
+      context.addIssue({
+        code: 'custom',
+        path: ['STORAGE_DRIVER'],
+        message: 'production stores files in Cloudflare R2 (STORAGE_DRIVER=r2)',
+      });
+    }
+    if (env.STORAGE_DRIVER === 'r2') {
+      const required = [
+        'R2_ACCOUNT_ID',
+        'R2_CONTENT_ACCESS_KEY_ID',
+        'R2_CONTENT_SECRET_ACCESS_KEY',
+        'R2_PRIVATE_ACCESS_KEY_ID',
+        'R2_PRIVATE_SECRET_ACCESS_KEY',
+      ] as const;
+      for (const key of required) {
+        if (!env[key]) {
+          context.addIssue({
+            code: 'custom',
+            path: [key],
+            message: `${key} is required with STORAGE_DRIVER=r2`,
+          });
+        }
+      }
+    }
     if (env.NODE_ENV === 'production' && (!env.SMTP_URL || !env.MAIL_FROM)) {
       context.addIssue({
         code: 'custom',

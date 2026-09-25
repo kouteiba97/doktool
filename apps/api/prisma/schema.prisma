@@ -1025,3 +1025,47 @@ model RateLimitCounter {
   @@index([expiresAt])
   @@map("rate_limit_counters")
 }
+
+// ──────────────────────────────── [storage] ────────────────────────────────
+
+enum StorageBucket {
+  CONTENT
+  PRIVATE
+
+  @@map("storage_bucket")
+}
+
+enum UploadPurpose {
+  REFERENCE_DOCUMENT
+  VERIFICATION_DOCUMENT
+
+  @@map("upload_purpose")
+}
+
+enum UploaderType {
+  ADMIN
+  USER
+
+  @@map("uploader_type")
+}
+
+/// A signed direct upload in progress (ADR-011). The object key is allocated by the server and
+/// immutable; confirmation checks existence, exact size, the purpose limit and the file signature.
+/// Unconfirmed intents are deleted with their object after expiry.
+model StorageUploadIntent {
+  id                String        @id @default(uuid(7)) @db.Uuid
+  bucket            StorageBucket
+  key               String        @unique
+  purpose           UploadPurpose
+  contentType       String        @map("content_type")
+  declaredSizeBytes Int           @map("declared_size_bytes")
+  declaredSha256    String        @map("declared_sha256") @db.Char(64)
+  requestedByType   UploaderType  @map("requested_by_type")
+  requestedById     String        @map("requested_by_id") @db.Uuid
+  expiresAt         DateTime      @map("expires_at") @db.Timestamptz(3)
+  confirmedAt       DateTime?     @map("confirmed_at") @db.Timestamptz(3)
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([expiresAt, confirmedAt])
+  @@map("storage_upload_intents")
+}
