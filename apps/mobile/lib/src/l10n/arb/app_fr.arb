@@ -1,0 +1,43 @@
+{
+  "@@locale": "fr",
+  "appName": "DokTool",
+  "@appName": {
+    "description": "common.appName"
+  },
+  "settingsAppearanceDark": "Sombre",
+  "@settingsAppearanceDark": {
+    "description": "mobile.settings.appearance.dark"
+  },
+  "settingsAppearanceLight": "Clair",
+  "@settingsAppearanceLight": {
+    "description": "mobile.settings.appearance.light"
+  },
+  "settingsAppearanceSystem": "Appareil",
+  "@settingsAppearanceSystem": {
+    "description": "mobile.settings.appearance.system"
+  },
+  "settingsAppearanceTitle": "Apparence",
+  "@settingsAppearanceTitle": {
+    "description": "mobile.settings.appearance.title"
+  },
+  "settingsLanguageEnglish": "English",
+  "@settingsLanguageEnglish": {
+    "description": "mobile.settings.language.english"
+  },
+  "settingsLanguageFrench": "Français",
+  "@settingsLanguageFrench": {
+    "description": "mobile.settings.language.french"
+  },
+  "settingsLanguageHelper": "S’applique à toute l’interface. Les PDF de référence gardent leur propre langue.",
+  "@settingsLanguageHelper": {
+    "description": "mobile.settings.language.helper"
+  },
+  "settingsLanguageTitle": "Langue / Language",
+  "@settingsLanguageTitle": {
+    "description": "mobile.settings.language.title"
+  },
+  "settingsTitle": "Paramètres",
+  "@settingsTitle": {
+    "description": "mobile.settings.title"
+  }
+}

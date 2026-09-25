@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Drift gate between design/system/tokens.json (the only source) and its CSS, Tailwind, TS and Dart outputs.",
+  "description": "Token gates and generators: tokens.json → CSS/Tailwind/TS drift checks, and the generated Flutter theme.",
   "scripts": {
     "check": "node scripts/check-drift.mjs",
-    "test": "node --test \"scripts/*.test.mjs\""
+    "test": "node --test \"scripts/*.test.mjs\"",
+    "generate:dart": "node scripts/generate-dart.mjs"
   }
 }

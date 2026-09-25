@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -138,5 +139,21 @@ describe('findDrift', () => {
   it('reports a missing TS scalar', () => {
     const problems = findDrift({ source, css, ts: { ...ts, radius: {} }, tailwind, dart });
     assert.deepEqual(problems, ['tokens.ts radius["radius-sm"] is missing']);
+  });
+});
+
+describe('generated Flutter theme', () => {
+  it('uses valid Dart identifiers and covers every colour in both themes', async () => {
+    const { generateDart } = await import('./dart-generator.mjs');
+    const tokens = JSON.parse(
+      await readFile(new URL('../../../design/system/tokens.json', import.meta.url), 'utf8'),
+    );
+    const dart = generateDart(tokens);
+    assert.doesNotMatch(dart, /static const (double|Duration|Curve|TextStyle) [0-9]/);
+    assert.match(dart, /static const double s4 = 16.0;/);
+    for (const token of tokens.color.tokens) {
+      const member = token.name.replace(/-([a-z0-9])/g, (_, c) => c.toUpperCase());
+      assert.match(dart, new RegExp(`final Color ${member};`));
+    }
   });
 });

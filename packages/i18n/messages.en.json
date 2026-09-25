@@ -1,7 +1,16 @@
 {
   "common.appName": "DokTool",
-  "server.otp.signUp.subject": "Your DokTool confirmation code",
-  "server.otp.signUp.text": "Your DokTool code: {code}. It expires in {minutes} minutes. Do not share it with anyone.",
+  "mobile.settings.appearance.dark": "Dark",
+  "mobile.settings.appearance.light": "Light",
+  "mobile.settings.appearance.system": "Device",
+  "mobile.settings.appearance.title": "Appearance",
+  "mobile.settings.language.english": "English",
+  "mobile.settings.language.french": "Français",
+  "mobile.settings.language.helper": "Applies to the whole interface. Reference PDFs keep their own language.",
+  "mobile.settings.language.title": "Langue / Language",
+  "mobile.settings.title": "Settings",
   "server.otp.passwordReset.subject": "Reset your DokTool password",
-  "server.otp.passwordReset.text": "Your DokTool reset code: {code}. It expires in {minutes} minutes. If you did not ask for it, ignore this message."
+  "server.otp.passwordReset.text": "Your DokTool reset code: {code}. It expires in {minutes} minutes. If you did not ask for it, ignore this message.",
+  "server.otp.signUp.subject": "Your DokTool confirmation code",
+  "server.otp.signUp.text": "Your DokTool code: {code}. It expires in {minutes} minutes. Do not share it with anyone."
 }

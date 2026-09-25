@@ -10,7 +10,8 @@
   },
   "scripts": {
     "check": "node scripts/check-parity.mjs",
-    "test": "node --test \"scripts/*.test.mjs\""
+    "test": "node --test \"scripts/*.test.mjs\"",
+    "build:arb": "node scripts/build-arb.mjs"
   },
   "dependencies": {
     "@formatjs/icu-messageformat-parser": "3.5.20"

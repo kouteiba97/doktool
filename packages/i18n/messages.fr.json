@@ -1,7 +1,16 @@
 {
   "common.appName": "DokTool",
-  "server.otp.signUp.subject": "Votre code de confirmation DokTool",
-  "server.otp.signUp.text": "Votre code DokTool : {code}. Il expire dans {minutes} minutes. Ne le communiquez à personne.",
+  "mobile.settings.appearance.dark": "Sombre",
+  "mobile.settings.appearance.light": "Clair",
+  "mobile.settings.appearance.system": "Appareil",
+  "mobile.settings.appearance.title": "Apparence",
+  "mobile.settings.language.english": "English",
+  "mobile.settings.language.french": "Français",
+  "mobile.settings.language.helper": "S’applique à toute l’interface. Les PDF de référence gardent leur propre langue.",
+  "mobile.settings.language.title": "Langue / Language",
+  "mobile.settings.title": "Paramètres",
   "server.otp.passwordReset.subject": "Réinitialisation de votre mot de passe DokTool",
-  "server.otp.passwordReset.text": "Votre code de réinitialisation DokTool : {code}. Il expire dans {minutes} minutes. Si vous n’avez rien demandé, ignorez ce message."
+  "server.otp.passwordReset.text": "Votre code de réinitialisation DokTool : {code}. Il expire dans {minutes} minutes. Si vous n’avez rien demandé, ignorez ce message.",
+  "server.otp.signUp.subject": "Votre code de confirmation DokTool",
+  "server.otp.signUp.text": "Votre code DokTool : {code}. Il expire dans {minutes} minutes. Ne le communiquez à personne."
 }

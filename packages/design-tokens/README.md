@@ -16,7 +16,12 @@
 - that the Tailwind preset maps every colour to its CSS variable;
 - the Dart colours, radii, blur, opacity, border, size and motion durations.
 
-## Known issues — fixed in Phase 8 (Flutter shell) and Phase 16 (Admin Web)
+## Generated Flutter theme
 
-- `doktool_tokens.dart` declares the spacing scale as `static const double 1 = 4.0;`. That is not a valid Dart identifier, so the file does not compile. Its generator (`gen_dart.py`) is not part of the handoff. Phase 8 replaces it with a generator in this package that emits valid names. Until then the drift check skips `DtSpace`; the CSS and TS spacing values are still checked.
-- `tailwind.preset.js` is CommonJS (`module.exports`), but the repository root is ESM (`"type": "module"`). Admin Web must not import it from `design/tokens/` directly. Phase 16 generates an ESM preset into this package. The drift check evaluates the file in an isolated CommonJS context.
+`npm run generate:dart` writes `apps/mobile/lib/src/theme/doktool_tokens.dart` from `tokens.json`, and `npm run check` fails if the committed file is stale.
+
+The handoff's `design/tokens/doktool_tokens.dart` did not compile: its spacing members were written as `static const double 1`. The generated file replaces it. Spacing members are named `DtSpace.s1 … s16` after their tokens, and shadows are added as the `DtElevation` theme extension. The handoff file is kept for reference only; its values are still checked, except its invalid `DtSpace` block.
+
+## Known issue — fixed in Phase 16 (Admin Web)
+
+`tailwind.preset.js` is CommonJS (`module.exports`), but the repository root is ESM (`"type": "module"`). Admin Web must not import it from `design/tokens/` directly. Phase 16 generates an ESM preset into this package. The drift check evaluates the file in an isolated CommonJS context.

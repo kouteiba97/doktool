@@ -14,10 +14,11 @@ Start with [`CLAUDE.md`](CLAUDE.md), then [`docs/adr/`](docs/adr/) and [`docs/AR
 |---|---|
 | `apps/api` | NestJS modular monolith, Prisma schema and migrations |
 | `apps/admin` | Admin Web — Phase 16 |
-| `apps/mobile` | Flutter app — Phase 8 |
+| `apps/mobile` | Flutter app (iOS + Android) — see its README |
 | `packages/api-contract` | Generated OpenAPI contract |
-| `packages/i18n` | FR/EN message catalogues and their parity gate |
-| `packages/design-tokens` | Drift gate between `design/system/tokens.json` and its outputs |
+| `packages/i18n` | FR/EN message catalogues, parity gate, ARB generation for Flutter |
+| `packages/design-tokens` | Drift gate for `design/system/tokens.json` outputs; generates the Flutter theme |
+| `packages/calculator-vectors` | Conformance vectors shared by the TS and Dart calculator engines |
 | `design/` | Design system v2.2 (visual source of truth) |
 | `docs/` | Architecture audit and decision records |
 

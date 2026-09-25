@@ -1,0 +1,27 @@
+# Typed API client generated from the OpenAPI contract (packages/api-contract/openapi.json).
+# Regenerate after the contract changes:
+#   dart run swagger_parser && dart run build_runner build --delete-conflicting-outputs
+swagger_parser:
+  schema_path: ../../packages/api-contract/openapi.json
+  output_directory: lib/src/core/api/generated
+  name: doktool_api
+  language: dart
+  json_serializer: json_serializable
+  root_client: true
+  root_client_name: DokToolApi
+  put_clients_in_folder: true
+  put_in_folder: false
+  enums_to_json: true
+  unknown_enum_value: true
+  mark_files_as_generated: true
+  original_http_response: false
+  # The app only ever calls the user API. An allowlist means a new admin tag can never leak in.
+  include_tags:
+    - health
+    - account
+    - auth
+    - access
+    - demo
+    - reference-library
+    - calculators
+    - offline
