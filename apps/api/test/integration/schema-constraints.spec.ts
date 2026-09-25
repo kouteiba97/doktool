@@ -54,18 +54,27 @@ async function succeededTransaction() {
 
 async function referenceDocument(createdBy: string) {
   const documentId = await db.insertId(
-    `INSERT INTO reference_documents (id, type, title_fr, created_by_id, updated_by_id, updated_at)
-     VALUES (gen_random_uuid(), 'ORDONNANCE', 'Angine de l''adulte', $1, $1, now()) RETURNING id`,
+    `INSERT INTO reference_documents (id, type, title_fr, status, created_by_id, updated_by_id, updated_at)
+     VALUES (gen_random_uuid(), 'ORDONNANCE', 'Angine de l''adulte', 'DISABLED', $1, $1, now()) RETURNING id`,
     [createdBy],
   );
   const fileId = await db.insertId(
-    `INSERT INTO reference_document_files (id, document_id, version, storage_key, size_bytes, uploaded_by_id)
-     VALUES (gen_random_uuid(), $1::uuid, 1, 'doktool/reference-documents/ordonnances/' || $1::text || '/v1.pdf', 2048, $2)
+    `INSERT INTO reference_document_files (id, document_id, version, storage_key, declared_sha256, size_bytes, uploaded_by_id)
+     VALUES (gen_random_uuid(), $1::uuid, 1, 'doktool/reference-documents/ordonnances/' || $1::text || '/v1.pdf',
+       repeat('b', 64), 2048, $2)
      RETURNING id`,
     [documentId, createdBy],
   );
   return { documentId, fileId };
 }
+
+/** What the processing job writes on success (checksum equal to the declaration). */
+const markReady = (fileId: string) =>
+  db.query(
+    `UPDATE reference_document_files SET processing_status = 'READY', sha256 = repeat('b', 64), page_count = 2,
+       processed_at = now() WHERE id = $1`,
+    [fileId],
+  );
 
 async function draftCalculatorVersion(authorId: string) {
   const calculatorId = await db.insertId(
@@ -273,7 +282,7 @@ describe('reference library (ADR-006 D3)', () => {
     expect(rows).toHaveLength(0);
   });
 
-  it('enables a document only with a current file that belongs to it', async () => {
+  it('enables a document only with a processed current file of its own', async () => {
     const adminId = await admin('library@doktool.dz');
     const first = await referenceDocument(adminId);
     await db.expectRejection(
@@ -281,29 +290,49 @@ describe('reference library (ADR-006 D3)', () => {
       [first.documentId],
       /enabled_file_chk/,
     );
+    await db.expectRejection(
+      `UPDATE reference_documents SET current_file_id = $2 WHERE id = $1`,
+      [first.documentId, first.fileId],
+      /not a processed file/,
+    );
     const second = await referenceDocument(adminId);
+    await markReady(second.fileId);
     await db.expectRejection(
       `UPDATE reference_documents SET current_file_id = $2 WHERE id = $1`,
       [first.documentId, second.fileId],
-      /does not belong/,
+      /not a processed file/,
     );
+    await markReady(first.fileId);
     await db.query(
       `UPDATE reference_documents SET current_file_id = $2, status = 'ENABLED' WHERE id = $1`,
       [first.documentId, first.fileId],
     );
   });
 
-  it('keeps file versions immutable; checksum and page count are written once', async () => {
+  it('keeps PROCESSING and its requested status together', async () => {
+    const adminId = await admin('library@doktool.dz');
+    await db.expectRejection(
+      `INSERT INTO reference_documents (id, type, title_fr, created_by_id, updated_by_id, updated_at)
+       VALUES (gen_random_uuid(), 'CERTIFICATE', 'X', $1, $1, now())`,
+      [adminId],
+      /reference_documents_processing_chk/,
+    );
+  });
+
+  it('marks a file READY only with the declared checksum, once, and keeps it immutable', async () => {
     const adminId = await admin('library@doktool.dz');
     const { fileId } = await referenceDocument(adminId);
-    await db.query(
-      `UPDATE reference_document_files SET sha256 = repeat('b', 64), page_count = 2 WHERE id = $1`,
+    await db.expectRejection(
+      `UPDATE reference_document_files SET processing_status = 'READY', sha256 = repeat('d', 64), page_count = 1,
+         processed_at = now() WHERE id = $1`,
       [fileId],
+      /reference_document_files_ready_chk/,
     );
+    await markReady(fileId);
     await db.expectRejection(
       `UPDATE reference_document_files SET page_count = 3 WHERE id = $1`,
       [fileId],
-      /immutable/,
+      /already processed/,
     );
     await db.expectRejection(
       `UPDATE reference_document_files SET storage_key = 'other.pdf' WHERE id = $1`,

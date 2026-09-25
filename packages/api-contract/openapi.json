@@ -66,6 +66,60 @@
         ],
         "type": "string"
       },
+      "AdminFileDto": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "pageCount": {
+            "nullable": true,
+            "type": "number"
+          },
+          "processedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "processingError": {
+            "nullable": true,
+            "type": "string"
+          },
+          "processingStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FileProcessingStatus"
+              }
+            ]
+          },
+          "sha256": {
+            "nullable": true,
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "uploadedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "sizeBytes",
+          "pageCount",
+          "sha256",
+          "processingStatus",
+          "processingError",
+          "uploadedAt",
+          "processedAt"
+        ],
+        "type": "object"
+      },
       "AdminMeDto": {
         "properties": {
           "email": {
@@ -125,6 +179,108 @@
           "email",
           "fullName",
           "grants"
+        ],
+        "type": "object"
+      },
+      "AdminRefDto": {
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ],
+        "type": "object"
+      },
+      "AdminReferenceDocumentDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/AdminRefDto"
+          },
+          "currentFile": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminFileDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "demoSample": {
+            "type": "boolean"
+          },
+          "files": {
+            "description": "Every version, newest first.",
+            "items": {
+              "$ref": "#/components/schemas/AdminFileDto"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceDocumentStatus"
+              }
+            ]
+          },
+          "statusAfterProcessing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceDocumentStatus"
+              }
+            ],
+            "nullable": true
+          },
+          "titleEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleFr": {
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceDocumentType"
+              }
+            ]
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedBy": {
+            "$ref": "#/components/schemas/AdminRefDto"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "titleFr",
+          "titleEn",
+          "demoSample",
+          "status",
+          "statusAfterProcessing",
+          "currentFile",
+          "files",
+          "createdBy",
+          "updatedBy",
+          "createdAt",
+          "updatedAt"
         ],
         "type": "object"
       },
@@ -303,6 +459,64 @@
         ],
         "type": "string"
       },
+      "CreateReferenceDocumentDto": {
+        "properties": {
+          "demoSample": {
+            "description": "Part of the representative Demo set.",
+            "type": "boolean"
+          },
+          "documentId": {
+            "description": "The id returned with the upload.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "intentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Recorded in the audit log.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "status": {
+            "description": "Applied once processing succeeds.",
+            "enum": [
+              "ENABLED",
+              "DISABLED"
+            ],
+            "type": "string"
+          },
+          "titleEn": {
+            "maxLength": 200,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleFr": {
+            "description": "Display title; does not change the PDF.",
+            "maxLength": 200,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceDocumentType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "reason",
+          "intentId",
+          "documentId",
+          "type",
+          "titleFr",
+          "demoSample",
+          "status"
+        ],
+        "type": "object"
+      },
       "DemoContext": {
         "description": "Médecin or Résident.",
         "enum": [
@@ -420,6 +634,9 @@
               "NOT_FOUND",
               "ACCOUNT_EXISTS",
               "PROFILE_ALREADY_SET",
+              "INVALID_STATE",
+              "VERSION_CONFLICT",
+              "CONTENT_UNAVAILABLE",
               "OTP_INVALID",
               "OTP_EXPIRED",
               "TOTP_INVALID",
@@ -550,6 +767,40 @@
         ],
         "type": "string"
       },
+      "FileProcessingStatus": {
+        "enum": [
+          "PENDING",
+          "READY",
+          "FAILED"
+        ],
+        "type": "string"
+      },
+      "FileUrlDto": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "fileVersion": {
+            "type": "number"
+          },
+          "sha256": {
+            "description": "SHA-256 of the PDF, to verify an offline copy.",
+            "type": "string"
+          },
+          "url": {
+            "description": "Signed, short-lived URL (10 minutes).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "expiresAt",
+          "fileVersion",
+          "sha256"
+        ],
+        "type": "object"
+      },
       "HealthResponse": {
         "properties": {
           "checkedAt": {
@@ -579,6 +830,39 @@
         ],
         "type": "object"
       },
+      "ItemAccessDto": {
+        "properties": {
+          "lockReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LockReason"
+              }
+            ],
+            "nullable": true
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessState"
+              }
+            ]
+          },
+          "unlockPath": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnlockPath"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "state",
+          "lockReason",
+          "unlockPath"
+        ],
+        "type": "object"
+      },
       "Language": {
         "enum": [
           "FR",
@@ -598,6 +882,56 @@
           "NO_LONGER_AVAILABLE"
         ],
         "type": "string"
+      },
+      "ManifestReferenceDto": {
+        "properties": {
+          "fileVersion": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "pageCount": {
+            "type": "number"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "titleEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleFr": {
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceDocumentType"
+              }
+            ]
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "titleFr",
+          "titleEn",
+          "fileVersion",
+          "sha256",
+          "sizeBytes",
+          "pageCount",
+          "updatedAt"
+        ],
+        "type": "object"
       },
       "MeDto": {
         "properties": {
@@ -658,6 +992,30 @@
           "professionalProfile",
           "preferences",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "OfflineManifestDto": {
+        "properties": {
+          "dataVersion": {
+            "description": "Compare with the stored value to show \"update available\".",
+            "type": "string"
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "referenceDocuments": {
+            "items": {
+              "$ref": "#/components/schemas/ManifestReferenceDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "generatedAt",
+          "dataVersion",
+          "referenceDocuments"
         ],
         "type": "object"
       },
@@ -825,6 +1183,87 @@
         ],
         "type": "string"
       },
+      "ReasonDto": {
+        "properties": {
+          "reason": {
+            "description": "Recorded in the audit log.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
+      "ReferenceDocumentStatus": {
+        "enum": [
+          "PROCESSING",
+          "ENABLED",
+          "DISABLED",
+          "ARCHIVED"
+        ],
+        "type": "string"
+      },
+      "ReferenceDocumentType": {
+        "enum": [
+          "ORDONNANCE",
+          "CERTIFICATE"
+        ],
+        "type": "string"
+      },
+      "ReferenceItemDto": {
+        "properties": {
+          "access": {
+            "$ref": "#/components/schemas/ItemAccessDto"
+          },
+          "fileDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "fileVersion": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "pageCount": {
+            "type": "number"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "titleEn": {
+            "description": "English UI falls back to titleFr.",
+            "nullable": true,
+            "type": "string"
+          },
+          "titleFr": {
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceDocumentType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "titleFr",
+          "titleEn",
+          "fileVersion",
+          "pageCount",
+          "sizeBytes",
+          "fileDate",
+          "access"
+        ],
+        "type": "object"
+      },
       "RefreshDto": {
         "properties": {
           "deviceId": {
@@ -852,6 +1291,83 @@
         "required": [
           "renewalToken",
           "deviceId"
+        ],
+        "type": "object"
+      },
+      "ReplaceFileDto": {
+        "properties": {
+          "intentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Recorded in the audit log.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "version": {
+            "description": "The version returned with the replacement upload.",
+            "minimum": 2,
+            "type": "number"
+          }
+        },
+        "required": [
+          "reason",
+          "intentId",
+          "version"
+        ],
+        "type": "object"
+      },
+      "RequestReplacementDto": {
+        "properties": {
+          "fileName": {
+            "example": "angine_adulte.pdf",
+            "type": "string"
+          },
+          "sha256": {
+            "description": "SHA-256 of the PDF, computed by Admin Web before upload (hex).",
+            "type": "string"
+          },
+          "sizeBytes": {
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "fileName",
+          "sizeBytes",
+          "sha256"
+        ],
+        "type": "object"
+      },
+      "RequestUploadDto": {
+        "properties": {
+          "fileName": {
+            "example": "angine_adulte.pdf",
+            "type": "string"
+          },
+          "sha256": {
+            "description": "SHA-256 of the PDF, computed by Admin Web before upload (hex).",
+            "type": "string"
+          },
+          "sizeBytes": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceDocumentType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "fileName",
+          "sizeBytes",
+          "sha256",
+          "type"
         ],
         "type": "object"
       },
@@ -1025,6 +1541,23 @@
         ],
         "type": "object"
       },
+      "SignedUrlDto": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "url": {
+            "description": "Signed, short-lived URL (10 minutes).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "StartDemoDto": {
         "properties": {
           "demoContext": {
@@ -1106,6 +1639,111 @@
             "nullable": true
           }
         },
+        "type": "object"
+      },
+      "UpdateReferenceDocumentDto": {
+        "properties": {
+          "demoSample": {
+            "type": "boolean"
+          },
+          "reason": {
+            "description": "Recorded in the audit log.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "titleEn": {
+            "maxLength": 200,
+            "nullable": true,
+            "type": "string"
+          },
+          "titleFr": {
+            "maxLength": 200,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
+      "UploadHeadersDto": {
+        "properties": {
+          "Content-Length": {
+            "example": "184320",
+            "type": "string"
+          },
+          "Content-Type": {
+            "example": "application/pdf",
+            "type": "string"
+          }
+        },
+        "required": [
+          "Content-Type",
+          "Content-Length"
+        ],
+        "type": "object"
+      },
+      "UploadStartDto": {
+        "properties": {
+          "documentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "suggestedTitle": {
+            "description": "Display title proposed from the file name (new models only).",
+            "type": "string"
+          },
+          "upload": {
+            "$ref": "#/components/schemas/UploadTicketDto"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "documentId",
+          "version",
+          "upload"
+        ],
+        "type": "object"
+      },
+      "UploadTicketDto": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "headers": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UploadHeadersDto"
+              }
+            ],
+            "description": "Send exactly these headers."
+          },
+          "intentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "PUT"
+            ],
+            "type": "string"
+          },
+          "url": {
+            "description": "Signed URL, valid 15 minutes.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "intentId",
+          "method",
+          "url",
+          "headers",
+          "expiresAt"
+        ],
         "type": "object"
       },
       "WeightUnit": {
@@ -1304,6 +1942,634 @@
         ],
         "tags": [
           "admin-auth"
+        ]
+      }
+    },
+    "/admin/v1/reference-documents": {
+      "get": {
+        "operationId": "ReferenceLibraryAdminController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ReferenceDocumentType"
+            }
+          },
+          {
+            "description": "Default: all but ARCHIVED.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ReferenceDocumentStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminReferenceDocumentDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-library"
+        ]
+      },
+      "post": {
+        "operationId": "ReferenceLibraryAdminController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReferenceDocumentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminReferenceDocumentDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-library"
+        ]
+      }
+    },
+    "/admin/v1/reference-documents/uploads": {
+      "post": {
+        "operationId": "ReferenceLibraryAdminController_requestUpload",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestUploadDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadStartDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-library"
+        ]
+      }
+    },
+    "/admin/v1/reference-documents/{id}": {
+      "get": {
+        "operationId": "ReferenceLibraryAdminController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminReferenceDocumentDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-library"
+        ]
+      },
+      "patch": {
+        "operationId": "ReferenceLibraryAdminController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReferenceDocumentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminReferenceDocumentDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-library"
+        ]
+      }
+    },
+    "/admin/v1/reference-documents/{id}/archive": {
+      "post": {
+        "operationId": "ReferenceLibraryAdminController_archive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminReferenceDocumentDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-library"
+        ]
+      }
+    },
+    "/admin/v1/reference-documents/{id}/disable": {
+      "post": {
+        "operationId": "ReferenceLibraryAdminController_disable",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminReferenceDocumentDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-library"
+        ]
+      }
+    },
+    "/admin/v1/reference-documents/{id}/enable": {
+      "post": {
+        "operationId": "ReferenceLibraryAdminController_enable",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminReferenceDocumentDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-library"
+        ]
+      }
+    },
+    "/admin/v1/reference-documents/{id}/files": {
+      "post": {
+        "operationId": "ReferenceLibraryAdminController_replace",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceFileDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminReferenceDocumentDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-library"
+        ]
+      }
+    },
+    "/admin/v1/reference-documents/{id}/files/{fileId}/url": {
+      "get": {
+        "operationId": "ReferenceLibraryAdminController_previewUrl",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignedUrlDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-library"
+        ]
+      }
+    },
+    "/admin/v1/reference-documents/{id}/replacement-uploads": {
+      "post": {
+        "operationId": "ReferenceLibraryAdminController_requestReplacement",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestReplacementDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadStartDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-library"
+        ]
+      }
+    },
+    "/admin/v1/reference-documents/{id}/restore": {
+      "post": {
+        "operationId": "ReferenceLibraryAdminController_restore",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminReferenceDocumentDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-library"
         ]
       }
     },
@@ -1950,6 +3216,202 @@
         ],
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/v1/offline/manifest": {
+      "get": {
+        "operationId": "OfflineController_manifest",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfflineManifestDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          },
+          {
+            "demo": []
+          }
+        ],
+        "tags": [
+          "offline"
+        ]
+      }
+    },
+    "/v1/reference-documents": {
+      "get": {
+        "operationId": "ReferenceLibraryController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ReferenceDocumentType"
+            }
+          },
+          {
+            "description": "Filter on titles (accent- and case-insensitive).",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReferenceItemDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "demo": []
+          },
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "reference-library"
+        ]
+      }
+    },
+    "/v1/reference-documents/{id}": {
+      "get": {
+        "operationId": "ReferenceLibraryController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceItemDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "demo": []
+          },
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "reference-library"
+        ]
+      }
+    },
+    "/v1/reference-documents/{id}/file-url": {
+      "get": {
+        "operationId": "ReferenceLibraryController_fileUrl",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileUrlDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "demo": []
+          },
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "reference-library"
         ]
       }
     },

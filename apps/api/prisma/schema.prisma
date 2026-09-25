@@ -149,6 +149,15 @@ enum ReferenceDocumentStatus {
   @@map("reference_document_status")
 }
 
+/// Server-side processing of an uploaded reference PDF (checksum, page count).
+enum FileProcessingStatus {
+  PENDING
+  READY
+  FAILED
+
+  @@map("file_processing_status")
+}
+
 enum CalculatorStatus {
   ACTIVE
   RETIRED
@@ -598,23 +607,25 @@ model TransactionAdjustment {
 
 /// Read-only reference PDF. Minimal metadata; no per-document access tier (ADR-006 D3).
 model ReferenceDocument {
-  id            String                  @id @default(uuid(7)) @db.Uuid
-  type          ReferenceDocumentType
+  id                    String                   @id @default(uuid(7)) @db.Uuid
+  type                  ReferenceDocumentType
   /// Required display title, pre-filled from the file name.
-  titleFr       String                  @map("title_fr")
+  titleFr               String                   @map("title_fr")
   /// Optional; falls back to titleFr.
-  titleEn       String?                 @map("title_en")
-  demoSample    Boolean                 @default(false) @map("demo_sample")
-  status        ReferenceDocumentStatus @default(PROCESSING)
-  currentFileId String?                 @unique @map("current_file_id") @db.Uuid
-  currentFile   ReferenceDocumentFile?  @relation("ReferenceDocumentCurrentFile", fields: [currentFileId], references: [id], onDelete: Restrict)
-  files         ReferenceDocumentFile[] @relation("ReferenceDocumentFiles")
-  createdById   String                  @map("created_by_id") @db.Uuid
-  createdBy     AdminAccount            @relation("ReferenceDocumentCreator", fields: [createdById], references: [id], onDelete: Restrict)
-  updatedById   String                  @map("updated_by_id") @db.Uuid
-  updatedBy     AdminAccount            @relation("ReferenceDocumentUpdater", fields: [updatedById], references: [id], onDelete: Restrict)
-  createdAt     DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt     DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+  titleEn               String?                  @map("title_en")
+  demoSample            Boolean                  @default(false) @map("demo_sample")
+  status                ReferenceDocumentStatus  @default(PROCESSING)
+  /// While PROCESSING: the status the admin chose (ENABLED or DISABLED), applied once the first file is READY.
+  statusAfterProcessing ReferenceDocumentStatus? @map("status_after_processing")
+  currentFileId         String?                  @unique @map("current_file_id") @db.Uuid
+  currentFile           ReferenceDocumentFile?   @relation("ReferenceDocumentCurrentFile", fields: [currentFileId], references: [id], onDelete: Restrict)
+  files                 ReferenceDocumentFile[]  @relation("ReferenceDocumentFiles")
+  createdById           String                   @map("created_by_id") @db.Uuid
+  createdBy             AdminAccount             @relation("ReferenceDocumentCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedById           String                   @map("updated_by_id") @db.Uuid
+  updatedBy             AdminAccount             @relation("ReferenceDocumentUpdater", fields: [updatedById], references: [id], onDelete: Restrict)
+  createdAt             DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@index([type, status, titleFr])
   @@map("reference_documents")
@@ -623,19 +634,25 @@ model ReferenceDocument {
 /// Every uploaded version is kept. Identity columns are immutable and rows are never deleted
 /// (trigger). sha256 and pageCount are filled by the processing job.
 model ReferenceDocumentFile {
-  id           String             @id @default(uuid(7)) @db.Uuid
-  documentId   String             @map("document_id") @db.Uuid
-  document     ReferenceDocument  @relation("ReferenceDocumentFiles", fields: [documentId], references: [id], onDelete: Restrict)
-  currentOf    ReferenceDocument? @relation("ReferenceDocumentCurrentFile")
-  version      Int
-  storageKey   String             @unique @map("storage_key")
-  sha256       String?            @db.Char(64)
-  sizeBytes    Int                @map("size_bytes")
-  pageCount    Int?               @map("page_count")
-  mimeType     String             @default("application/pdf") @map("mime_type")
-  uploadedById String             @map("uploaded_by_id") @db.Uuid
-  uploadedBy   AdminAccount       @relation("ReferenceDocumentFileUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
-  uploadedAt   DateTime           @default(now()) @map("uploaded_at") @db.Timestamptz(3)
+  id               String               @id @default(uuid(7)) @db.Uuid
+  documentId       String               @map("document_id") @db.Uuid
+  document         ReferenceDocument    @relation("ReferenceDocumentFiles", fields: [documentId], references: [id], onDelete: Restrict)
+  currentOf        ReferenceDocument?   @relation("ReferenceDocumentCurrentFile")
+  version          Int
+  storageKey       String               @unique @map("storage_key")
+  /// SHA-256 declared by Admin Web before upload (part of the key); the job checks it.
+  declaredSha256   String               @map("declared_sha256") @db.Char(64)
+  /// Actual SHA-256, written once by the processing job when it matches the declaration.
+  sha256           String?              @db.Char(64)
+  processingStatus FileProcessingStatus @default(PENDING) @map("processing_status")
+  processingError  String?              @map("processing_error")
+  processedAt      DateTime?            @map("processed_at") @db.Timestamptz(3)
+  sizeBytes        Int                  @map("size_bytes")
+  pageCount        Int?                 @map("page_count")
+  mimeType         String               @default("application/pdf") @map("mime_type")
+  uploadedById     String               @map("uploaded_by_id") @db.Uuid
+  uploadedBy       AdminAccount         @relation("ReferenceDocumentFileUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+  uploadedAt       DateTime             @default(now()) @map("uploaded_at") @db.Timestamptz(3)
 
   @@unique([documentId, version])
   @@map("reference_document_files")
