@@ -1,0 +1,2 @@
+# ScreenVerificationCenter
+Verification queue with separate case types (Identité · Statut professionnel · Statut étudiant) and SLA age (word + colour). Drawer: summary, registry check, and documents behind the restricted viewer — available only with the time-limited, logged `verification.documents.view` grant; documents stream from the private R2 bucket through 60-second signed URLs, watermarked, without download. Decisions (approve, reject with reason, request more) write audit entries and notify the user.

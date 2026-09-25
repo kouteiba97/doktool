@@ -1,0 +1,2 @@
+# ScreenSubscriptionMobile
+Calm by design (Lock L39): plan and status as a neutral/teal badge, period start → end, access level in words, renewal information, payment method, and the payment history (amount · method · date · transaction ID · receipt). No red, no countdown, no promotional block, and **no refund request** anywhere (no-refund policy, section 15). "Ne pas renouveler" simply records the choice; access continues to the period end. Students see "Accès étudiant — gratuit" instead of this screen. States: ScreenSubscriptionStates.

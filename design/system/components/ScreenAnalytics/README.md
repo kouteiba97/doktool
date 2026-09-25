@@ -1,0 +1,2 @@
+# ScreenAnalytics
+DokTool Intelligence with the V1 vocabulary (section 16): the activity disclaimer under the title on every tab; tabs Usage · Bibliothèque · Calculateurs · Utilisateurs · Abonnements · **Démo** (demo starts, modules viewed, limits met, conversions — demo events appear only there). Bars and lines only; previous period dashed; event names listed under each chart; any cell under 10 distinct users shows "< 10". Never "prescriptions", "ventes", "patients traités" or drug activity. Search query text is never collected.

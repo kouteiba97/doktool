@@ -1,0 +1,2 @@
+# ScreenReferenceLibraryAdminStates
+Admin states for the Reference Library: empty · uploading · processing (server validation, checksum, page count) · ready (title proposed from the file name) · failure (type or size, stated plainly) · PDF unavailable · replace (reason required; new file version under the same id) · disable · archive (replaces hard delete). Each confirmation states its consequence for users and favorites; every action is audited.

@@ -1,0 +1,2 @@
+# ScreenReferenceLibraryStates
+The five library states, identical for Ordonnances and Certificates: loading (skeleton rows, never a spinner) · empty (first publication pending) · no results (correction + report missing content) · a favorite whose model was disabled or archived (neutral "N’est plus disponible" with *Retirer* — never a broken viewer, never red) · offline (downloaded models with the cache chip; others "Non disponible hors ligne").

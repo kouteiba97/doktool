@@ -1,0 +1,4 @@
+# ScreenReferenceLibraryAdmin
+One surface for Ordonnances and Certificates (type switch), `DataTable` + drawer (sections 07, 13). The admin **does not author medical content**: the PDF is pre-created. The drawer holds the file (with its automatically derived version, pages, size and checksum, and *Remplacer*), a French display title pre-filled from the file name (the only required text, with the reminder that it does not change the PDF), an optional English title, the access tier (Étudiant et professionnel / Professionnel), the demo-sample switch and the status. No description, category or clinical fields.
+
+Upload: signed upload URL → R2 → server validation → processing job → status. Replace keeps the id and favorites and keeps every previous file. Archive replaces hard delete. Every action writes an audit entry with a reason. Grants: `library.read/write/disable`.

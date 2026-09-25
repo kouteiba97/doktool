@@ -1,0 +1,2 @@
+# ScreenSubscriptionStates
+Every subscription state in calm tones — teal for active, info for grace/pending, neutral otherwise; never red, never a countdown timer, never a blocking modal (Lock L39). Ended subscriptions keep all user data and return to sample content. There is no "refunded" state and no refund request (section 15). Renewal is manual in V1; reminders at 14 and 3 days are notifications, not banners.

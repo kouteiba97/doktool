@@ -1,0 +1,4 @@
+# ScreenCalculatorAdmin
+Calculator governance (section 28, Lock L41). Left: the version timeline (draft, in review, published, retired). Right, for the selected version: **Définition** (inputs, units, hard/validated/plausible ranges, formula AST rendered readably, interpretation bands, limitations FR/EN), **Sources** (citation, edition, formula location, role — at least one primary), **Tests** (expected vs engine output for every case, engine version, run time, definition checksum), **Revue** (author, reviewer, note), **Aperçu** (live preview with the backend engine).
+
+Publishing is blocked unless a primary source exists, all tests pass on the backend engine, and the reviewer is not the author. Published versions are immutable; devices install them at the next sync after their own self-test. No AI generates or alters a formula. The test values shown are computed from the published Cockcroft-Gault formula for this reference.

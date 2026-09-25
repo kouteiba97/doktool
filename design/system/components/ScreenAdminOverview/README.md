@@ -1,0 +1,2 @@
+# ScreenAdminOverview
+Operations first (section 07): one ledger strip (active users, pending verifications with SLA breaches, active Pro subscribers, net revenue, open incidents) and three work lists — **À traiter** (oldest verifications, calculator versions awaiting review, content reports), **Incidents** (payment confirmations, PDF processing failures), **Dernières modifications** (reference-model and calculator changes with actors). No refunds queue, no drug or partnership items, no vanity charts.

@@ -1,0 +1,239 @@
+{
+ "v": 3,
+ "layout": "files",
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-09-18T22:03:00Z"
+ },
+ "title": "DokTool",
+ "namespace": "DokTool",
+ "libraries": [],
+ "sections": {},
+ "groups": [
+  "Logos"
+ ],
+ "assetGroups": {
+  "Logos": {
+   "name": "Logos",
+   "tile": "l",
+   "order": [
+    "doktool-logo-horizontal.svg",
+    "doktool-logo-horizontal-dark.svg",
+    "doktool-logo-vertical.svg",
+    "doktool-logo-vertical-dark.svg",
+    "doktool-symbol.svg",
+    "doktool-symbol-dark.svg",
+    "doktool-mark-small.svg",
+    "doktool-mark-small-dark.svg",
+    "doktool-wordmark.svg",
+    "doktool-wordmark-dark.svg",
+    "doktool-logo-horizontal-mono-ink.svg",
+    "doktool-logo-horizontal-mono-white.svg",
+    "doktool-symbol-mono-ink.svg",
+    "doktool-symbol-mono-white.svg",
+    "doktool-app-icon.svg",
+    "doktool-favicon.svg",
+    "doktool-trace.svg",
+    "doktool-trace-marker.svg",
+    "doktool-app-icon-1024.png",
+    "doktool-app-icon-180.png",
+    "doktool-app-icon-512.png",
+    "doktool-favicon-16.png",
+    "doktool-favicon-32.png",
+    "doktool-favicon-48.png",
+    "doktool-favicon-64.png",
+    "doktool-logo-horizontal-1024.png",
+    "doktool-logo-horizontal-dark-1024.png",
+    "doktool-symbol-128.png",
+    "doktool-symbol-512.png"
+   ],
+   "files": {
+    "doktool-logo-horizontal.svg": {
+     "name": "doktool-logo-horizontal.svg",
+     "blob": "f0af924b75278bb41c5d173051300d4d",
+     "size": 4398,
+     "type": "image/svg+xml"
+    },
+    "doktool-logo-horizontal-dark.svg": {
+     "name": "doktool-logo-horizontal-dark.svg",
+     "blob": "aa7b83315249b67a778d6661e936f8fc",
+     "size": 4392,
+     "type": "image/svg+xml"
+    },
+    "doktool-logo-vertical.svg": {
+     "name": "doktool-logo-vertical.svg",
+     "blob": "d08b98da443704651b880d7ebd70e063",
+     "size": 4414,
+     "type": "image/svg+xml"
+    },
+    "doktool-logo-vertical-dark.svg": {
+     "name": "doktool-logo-vertical-dark.svg",
+     "blob": "5b35fa7698aec403d7710bb071ef8d7a",
+     "size": 4408,
+     "type": "image/svg+xml"
+    },
+    "doktool-symbol.svg": {
+     "name": "doktool-symbol.svg",
+     "blob": "a5069f96455ce04fe0cc570a7bcd24a0",
+     "size": 1527,
+     "type": "image/svg+xml"
+    },
+    "doktool-symbol-dark.svg": {
+     "name": "doktool-symbol-dark.svg",
+     "blob": "030ffa469ac65474858e7f448d265c3a",
+     "size": 1521,
+     "type": "image/svg+xml"
+    },
+    "doktool-mark-small.svg": {
+     "name": "doktool-mark-small.svg",
+     "blob": "defadc763fabb59a41194f23986c8fac",
+     "size": 399,
+     "type": "image/svg+xml"
+    },
+    "doktool-mark-small-dark.svg": {
+     "name": "doktool-mark-small-dark.svg",
+     "blob": "4938edf8a2a46f899553cbd72ad023c9",
+     "size": 399,
+     "type": "image/svg+xml"
+    },
+    "doktool-wordmark.svg": {
+     "name": "doktool-wordmark.svg",
+     "blob": "0903259e8eadc0ef6bfeec281fb2faeb",
+     "size": 2902,
+     "type": "image/svg+xml"
+    },
+    "doktool-wordmark-dark.svg": {
+     "name": "doktool-wordmark-dark.svg",
+     "blob": "efdbf639e5b03115f513a20baf4f9c42",
+     "size": 2902,
+     "type": "image/svg+xml"
+    },
+    "doktool-logo-horizontal-mono-ink.svg": {
+     "name": "doktool-logo-horizontal-mono-ink.svg",
+     "blob": "e80aa8a878cc1c0482405301a410812a",
+     "size": 3858,
+     "type": "image/svg+xml"
+    },
+    "doktool-logo-horizontal-mono-white.svg": {
+     "name": "doktool-logo-horizontal-mono-white.svg",
+     "blob": "74c1889270c4aa1f9670d4bdc6c2ff1f",
+     "size": 3858,
+     "type": "image/svg+xml"
+    },
+    "doktool-symbol-mono-ink.svg": {
+     "name": "doktool-symbol-mono-ink.svg",
+     "blob": "4ff80ff3bcecf09997707617e96f8c25",
+     "size": 1178,
+     "type": "image/svg+xml"
+    },
+    "doktool-symbol-mono-white.svg": {
+     "name": "doktool-symbol-mono-white.svg",
+     "blob": "e3df6f97b9e4e3709b47da7a41be53d1",
+     "size": 1178,
+     "type": "image/svg+xml"
+    },
+    "doktool-app-icon.svg": {
+     "name": "doktool-app-icon.svg",
+     "blob": "cb2a6f3a40ad5c4ee909dd96bd40e351",
+     "size": 1644,
+     "type": "image/svg+xml"
+    },
+    "doktool-favicon.svg": {
+     "name": "doktool-favicon.svg",
+     "blob": "5db2af5267cd8fa75cde664412940129",
+     "size": 399,
+     "type": "image/svg+xml"
+    },
+    "doktool-trace.svg": {
+     "name": "doktool-trace.svg",
+     "blob": "752077ee177e11f3a4dd9de4b3bed5ad",
+     "size": 223,
+     "type": "image/svg+xml"
+    },
+    "doktool-trace-marker.svg": {
+     "name": "doktool-trace-marker.svg",
+     "blob": "e52c0e11c86537f9a829d7e7135dd468",
+     "size": 217,
+     "type": "image/svg+xml"
+    },
+    "doktool-app-icon-1024.png": {
+     "name": "doktool-app-icon-1024.png",
+     "blob": "3cefa84d09717ffa99db6450927ea245",
+     "size": 83023,
+     "type": "image/png"
+    },
+    "doktool-app-icon-180.png": {
+     "name": "doktool-app-icon-180.png",
+     "blob": "841ba21b184a889685e2beb6c129eb7b",
+     "size": 8271,
+     "type": "image/png"
+    },
+    "doktool-app-icon-512.png": {
+     "name": "doktool-app-icon-512.png",
+     "blob": "64aba662cdb745135b6eb886c36310a1",
+     "size": 31554,
+     "type": "image/png"
+    },
+    "doktool-favicon-16.png": {
+     "name": "doktool-favicon-16.png",
+     "blob": "c4fcf909cd3eff0c3a217e0509b5c6ba",
+     "size": 434,
+     "type": "image/png"
+    },
+    "doktool-favicon-32.png": {
+     "name": "doktool-favicon-32.png",
+     "blob": "08365efa19b4cbfdb6c93bb19c221be1",
+     "size": 846,
+     "type": "image/png"
+    },
+    "doktool-favicon-48.png": {
+     "name": "doktool-favicon-48.png",
+     "blob": "4fb8401f4a2e8dfa2782d9b7e26d2fae",
+     "size": 1298,
+     "type": "image/png"
+    },
+    "doktool-favicon-64.png": {
+     "name": "doktool-favicon-64.png",
+     "blob": "5e42b48ff562a640a5bf3bfce30b3eca",
+     "size": 1591,
+     "type": "image/png"
+    },
+    "doktool-logo-horizontal-1024.png": {
+     "name": "doktool-logo-horizontal-1024.png",
+     "blob": "18ce2f6b653e7f9d8ea7f3a0f9d81bcd",
+     "size": 44026,
+     "type": "image/png"
+    },
+    "doktool-logo-horizontal-dark-1024.png": {
+     "name": "doktool-logo-horizontal-dark-1024.png",
+     "blob": "5ed380bc001ee75d73a08f2dd4d5c58b",
+     "size": 41683,
+     "type": "image/png"
+    },
+    "doktool-symbol-128.png": {
+     "name": "doktool-symbol-128.png",
+     "blob": "e7085055cd99d2396ddc1b7b331ddfed",
+     "size": 6979,
+     "type": "image/png"
+    },
+    "doktool-symbol-512.png": {
+     "name": "doktool-symbol-512.png",
+     "blob": "2fe5f7ba2ab174781235dddf234582f8",
+     "size": 45641,
+     "type": "image/png"
+    }
+   }
+  }
+ },
+ "blobs": {},
+ "docs": {
+  "readme": "project/README.md",
+  "sections": []
+ },
+ "lastChange": {
+  "by": "Apex",
+  "at": "2026-09-25T14:00:00Z",
+  "via": "Cowork",
+  "note": "Design System v2.2 — platform correction: DokTool V1 is one Flutter app (iOS + Android) for doctors, residents and students plus a separate Next.js Admin Web; no user web app (Future Web). Backend-authoritative (NestJS/Postgres/Prisma), Cloudflare R2 behind StorageService, entitlement model with Demo as an access context and Student tier with visible locked items, no-refund subscriptions (Gross → Fees → Net; profit apart), sourced/versioned/tested calculator governance, offline for all real accounts. New sections 26–28, rewritten 01–10, 12, 13, 15, 16, 18, 22; Design Lock v4 (L33–L44). All V1 hi-fi rebuilt on mobile with the V1 nav; admin rebuilt with the V1 console; 9 new cards (ScreenDemo, ScreenLockedStates, ScreenProfileMobile, ScreenSubscriptionMobile, ScreenCalculatorLibraryMobile, ScreenCalculatorStates, ScreenCalculatorAdmin, ScreenSubscriptionsAdmin, ScreenExpenses); deferred and future-web cards labelled Future; ScreenExpensesRefunds and ScreenSettingsLanguage removed. Sections consolidated to stay within 24: former 14 (evidence governance) and 17 (pharma) are appendices of 25, former 21 (motion) is part of 20, former 24 (design QA) is an appendix of 11."
+ }
+}

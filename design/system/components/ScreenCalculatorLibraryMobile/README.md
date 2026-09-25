@@ -1,0 +1,2 @@
+# ScreenCalculatorLibraryMobile
+Bibliothèque › Calculateurs: search (names and synonyms in FR/EN: "DFG", "GFR", "clairance"), category chips, favorites marked, rows with name and one-line purpose. Every calculator listed has a published, sourced, reviewed version (section 28); nothing is listed "coming soon". Locked rows (Demo non-sample, student professional-only) keep their place with a lock and reason.

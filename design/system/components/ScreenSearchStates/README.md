@@ -1,0 +1,2 @@
+# ScreenSearchStates
+Search states on mobile: empty query (recent searches, removable; browse chips for the three V1 types) · no results with a confident correction and "report missing content" · offline (local index over downloaded items with the cache chip; server-only items grouped as "Non disponible hors ligne") · locked results for an access context (here a student) — never hidden, lock + reason word, calm explanatory line. Recent searches are the user's own history (Profile › Activité); they never reach analytics as text (section 16).

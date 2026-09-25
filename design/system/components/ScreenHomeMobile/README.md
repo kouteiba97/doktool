@@ -1,0 +1,4 @@
+# ScreenHomeMobile
+Clinical launchpad for a doctor or resident. Identity line (mark, name, specialty · access, verification badge, notification bell), the glass search field as the first interactive element, three quick actions on one glass strip (**Ordonnances · Certificats · Calculateurs** — the only V1 clinical resources), Récents (calculators reopen with last inputs restored from the device), Favoris, and at most one neutral "updated" line. No statistics, greetings, promotions or drug shortcuts.
+
+States: first use (Récents/Favoris replaced by a short "Commencer" list) · loading (skeleton rows) · offline (neutral OfflineBar under the header; recents and downloaded models still open) · verification pending (neutral line with link) · professional without subscription (sample content; non-sample items show their lock in lists) · subscription ended (one neutral line "Abonnement terminé — Renouveler").

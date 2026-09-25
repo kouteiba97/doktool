@@ -1,0 +1,2 @@
+# ScreenUsersAdmin
+Users list (type, identity and professional status as separate columns, subscription, derived access tier) and the drawer. The **Accès** tab shows the five inputs and the entitlements the backend computed, read-only, with the policy version — access is never edited directly (section 27). Other tabs: Profil (no documents), Abonnement (plan, period, transactions — read-only, no refund action), Activité (counts by module only, never content), Historique (audit entries). Actions: suspend (reason), reset sign-in, send a notification.
