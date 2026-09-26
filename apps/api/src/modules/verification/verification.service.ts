@@ -141,7 +141,7 @@ export class VerificationService {
     const record = await this.preparing(userId, caseId);
     const target = caseTarget(record);
     const raw: Record<string, unknown> = Object.fromEntries(
-      Object.entries(input).filter(([, value]) => value !== undefined),
+      Object.entries(input).filter(([, value]) => value !== undefined && value !== null),
     );
     if (target !== null) raw.professionalType = target;
     await this.assertDetails(userId, record, raw);

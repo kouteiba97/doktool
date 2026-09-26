@@ -101,7 +101,7 @@ export class VerificationUploadRequestDto {
   @IsIn(STEP_TYPES)
   stepType!: StepType;
 
-  @ApiProperty({ enum: ['image/jpeg', 'image/png', 'application/pdf'] })
+  @ApiProperty({ description: 'image/jpeg, image/png or application/pdf.', example: 'image/jpeg' })
   @IsString()
   contentType!: string;
 

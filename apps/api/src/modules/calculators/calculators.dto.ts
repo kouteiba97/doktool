@@ -67,6 +67,9 @@ class ReasonField {
 
 export class CalculatorReasonDto extends ReasonField {}
 
+/** One-line purpose shown under the name in lists and search. */
+const PURPOSE_MAX_LENGTH = 160;
+
 export class CreateCalculatorDto extends ReasonField {
   @ApiProperty({
     example: 'clairance-creatinine',
@@ -89,6 +92,27 @@ export class CreateCalculatorDto extends ReasonField {
   @MinLength(1)
   @MaxLength(NAME_MAX_LENGTH)
   nameEn!: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    maxLength: PURPOSE_MAX_LENGTH,
+    description: 'One-line purpose (lists, search).',
+  })
+  @IsOptional()
+  @trimmed
+  @IsString()
+  @MinLength(1)
+  @MaxLength(PURPOSE_MAX_LENGTH)
+  purposeFr?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, maxLength: PURPOSE_MAX_LENGTH })
+  @IsOptional()
+  @trimmed
+  @IsString()
+  @MinLength(1)
+  @MaxLength(PURPOSE_MAX_LENGTH)
+  purposeEn?: string | null;
 
   @ApiPropertyOptional({ type: String, nullable: true, maxLength: 60 })
   @IsOptional()
@@ -126,6 +150,32 @@ export class UpdateCalculatorDto extends ReasonField {
   @MinLength(1)
   @MaxLength(NAME_MAX_LENGTH)
   nameEn?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    maxLength: PURPOSE_MAX_LENGTH,
+    description: 'null clears it.',
+  })
+  @ValidateIf((_, value) => value !== null && value !== undefined)
+  @trimmed
+  @IsString()
+  @MinLength(1)
+  @MaxLength(PURPOSE_MAX_LENGTH)
+  purposeFr?: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    maxLength: PURPOSE_MAX_LENGTH,
+    description: 'null clears it.',
+  })
+  @ValidateIf((_, value) => value !== null && value !== undefined)
+  @trimmed
+  @IsString()
+  @MinLength(1)
+  @MaxLength(PURPOSE_MAX_LENGTH)
+  purposeEn?: string | null;
 
   @ApiPropertyOptional({ type: String, nullable: true })
   @ValidateIf((_, value) => value !== null && value !== undefined)
@@ -395,6 +445,8 @@ export class AdminCalculatorDto {
   @ApiProperty() slug!: string;
   @ApiProperty() nameFr!: string;
   @ApiProperty() nameEn!: string;
+  @ApiProperty({ type: String, nullable: true }) purposeFr!: string | null;
+  @ApiProperty({ type: String, nullable: true }) purposeEn!: string | null;
   @ApiProperty({ type: String, nullable: true }) category!: string | null;
   @ApiProperty({ enum: AccessTier, enumName: 'AccessTier' }) accessTier!: AccessTier;
   @ApiProperty() demoSample!: boolean;
@@ -409,6 +461,8 @@ export class AdminCalculatorDto {
       slug: record.slug,
       nameFr: record.nameFr,
       nameEn: record.nameEn,
+      purposeFr: record.purposeFr,
+      purposeEn: record.purposeEn,
       category: record.category,
       accessTier: record.accessTier,
       demoSample: record.demoSample,
@@ -492,6 +546,9 @@ export class CalculatorSummaryDto {
   @ApiProperty() slug!: string;
   @ApiProperty() nameFr!: string;
   @ApiProperty() nameEn!: string;
+  @ApiProperty({ type: String, nullable: true, description: 'One-line purpose.' }) purposeFr!:
+    string | null;
+  @ApiProperty({ type: String, nullable: true }) purposeEn!: string | null;
   @ApiProperty({ type: String, nullable: true }) category!: string | null;
   @ApiProperty({ description: 'Published version number (the "v3" chip).' }) version!: number;
   @ApiProperty({ type: ItemAccessDto }) access!: ItemAccessDto;

@@ -27,6 +27,8 @@ export interface NewCalculator {
   slug: string;
   nameFr: string;
   nameEn: string;
+  purposeFr?: string | null;
+  purposeEn?: string | null;
   category?: string | null;
   accessTier: AccessTier;
   demoSample: boolean;
@@ -36,6 +38,8 @@ export interface NewCalculator {
 export interface CalculatorPatch {
   nameFr?: string;
   nameEn?: string;
+  purposeFr?: string | null;
+  purposeEn?: string | null;
   category?: string | null;
   accessTier?: AccessTier;
   demoSample?: boolean;
@@ -117,6 +121,8 @@ export class CalculatorsAdminService {
           slug: input.slug,
           nameFr: input.nameFr.trim(),
           nameEn: input.nameEn.trim(),
+          purposeFr: input.purposeFr?.trim() || null,
+          purposeEn: input.purposeEn?.trim() || null,
           category: input.category?.trim() || null,
           accessTier: input.accessTier,
           demoSample: input.demoSample,
@@ -157,6 +163,8 @@ export class CalculatorsAdminService {
       data: {
         ...(patch.nameFr !== undefined ? { nameFr: patch.nameFr.trim() } : {}),
         ...(patch.nameEn !== undefined ? { nameEn: patch.nameEn.trim() } : {}),
+        ...(patch.purposeFr !== undefined ? { purposeFr: patch.purposeFr?.trim() || null } : {}),
+        ...(patch.purposeEn !== undefined ? { purposeEn: patch.purposeEn?.trim() || null } : {}),
         ...(patch.category !== undefined ? { category: patch.category?.trim() || null } : {}),
         ...(patch.accessTier !== undefined ? { accessTier: patch.accessTier } : {}),
         ...(patch.demoSample !== undefined ? { demoSample: patch.demoSample } : {}),
@@ -166,6 +174,8 @@ export class CalculatorsAdminService {
     const snapshot = (c: CalculatorRecord) => ({
       nameFr: c.nameFr,
       nameEn: c.nameEn,
+      purposeFr: c.purposeFr,
+      purposeEn: c.purposeEn,
       category: c.category,
       accessTier: c.accessTier,
       demoSample: c.demoSample,

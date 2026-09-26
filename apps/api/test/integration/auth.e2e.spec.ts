@@ -390,3 +390,10 @@ describe('account', () => {
     expect(response.body.error.code).toBe('VALIDATION_FAILED');
   });
 });
+
+describe('legal pages', () => {
+  it('publishes the current terms version for the sign-up screen', async () => {
+    const { body } = await app.http().get('/v1/legal').expect(200);
+    expect(body).toEqual({ termsVersion: TEST_TERMS_VERSION, termsUrl: null, privacyUrl: null });
+  });
+});

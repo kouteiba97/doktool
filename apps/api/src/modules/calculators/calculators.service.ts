@@ -22,6 +22,8 @@ export interface CalculatorSummary {
   slug: string;
   nameFr: string;
   nameEn: string;
+  purposeFr: string | null;
+  purposeEn: string | null;
   category: string | null;
   version: number;
   access: ItemAccess;
@@ -73,6 +75,8 @@ type Row = {
   slug: string;
   nameFr: string;
   nameEn: string;
+  purposeFr: string | null;
+  purposeEn: string | null;
   category: string | null;
   accessTier: AccessTier;
   demoSample: boolean;
@@ -213,6 +217,8 @@ export class CalculatorsService {
         slug: row.slug,
         nameFr: row.nameFr,
         nameEn: row.nameEn,
+        purposeFr: row.purposeFr,
+        purposeEn: row.purposeEn,
         category: row.category,
         version: row.currentVersion!.version,
         access: decisions[index]!,

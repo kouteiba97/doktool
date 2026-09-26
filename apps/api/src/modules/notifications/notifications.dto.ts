@@ -18,9 +18,9 @@ export class NotificationDto {
   @ApiProperty({
     type: 'object',
     additionalProperties: { type: 'string' },
-    description: 'Values of the message placeholders (strings or numbers).',
+    description: 'Values of the message placeholders, as strings (numbers in decimal).',
   })
-  params!: Record<string, string | number>;
+  params!: Record<string, string>;
 
   @ApiPropertyOptional({ format: 'date-time', nullable: true, type: String })
   readAt!: string | null;
@@ -33,7 +33,9 @@ export class NotificationDto {
       id: record.id,
       type: record.type,
       messageKey: record.messageKey,
-      params: record.params,
+      params: Object.fromEntries(
+        Object.entries(record.params).map(([key, value]) => [key, String(value)]),
+      ),
       readAt: record.readAt?.toISOString() ?? null,
       createdAt: record.createdAt.toISOString(),
     };

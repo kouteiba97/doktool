@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Inject,
   HttpStatus,
   Patch,
   Post,
@@ -15,17 +16,38 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { ENV, type Env } from '../../config/env.js';
 import { ErrorResponse } from '../../common/errors/error-response.js';
 import { USER_API_PREFIX } from '../../http/api-prefix.js';
 import { CurrentUser, UserAuthGuard } from '../../infrastructure/security/user-auth.guard.js';
 import type { UserPrincipal } from '../../infrastructure/security/user-tokens.js';
-import { MeDto, SetProfessionalProfileDto, UpdatePreferencesDto, WilayaDto } from './users.dto.js';
+import {
+  LegalDto,
+  MeDto,
+  SetProfessionalProfileDto,
+  UpdatePreferencesDto,
+  WilayaDto,
+} from './users.dto.js';
 import { UsersService } from './users.service.js';
 
 @ApiTags('account')
 @Controller(USER_API_PREFIX)
 export class UsersController {
-  constructor(private readonly users: UsersService) {}
+  constructor(
+    private readonly users: UsersService,
+    @Inject(ENV) private readonly env: Env,
+  ) {}
+
+  /** Current terms version and the legal pages linked at sign-up (public). */
+  @Get('legal')
+  @ApiOkResponse({ type: LegalDto })
+  legal(): LegalDto {
+    return {
+      termsVersion: this.env.TERMS_VERSION,
+      termsUrl: this.env.TERMS_URL ?? null,
+      privacyUrl: this.env.PRIVACY_URL ?? null,
+    };
+  }
 
   /** Wilayas for the sign-up form (public). */
   @Get('wilayas')

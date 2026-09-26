@@ -42,6 +42,12 @@ const app = await NestFactory.create(AppModule.forRoot(env), { preview: true, lo
 const document = buildOpenApiDocument(app);
 await app.close();
 
+// Nest omits `required` when no property is required. Generators then disagree (swagger_parser
+// treats every property as required), so the contract states the empty list explicitly.
+for (const schema of Object.values(document.components?.schemas ?? {})) {
+  if ('properties' in schema && schema.properties && !schema.required) schema.required = [];
+}
+
 const serialised = `${JSON.stringify(sortKeys(document), null, 2)}\n`;
 
 if (process.argv.includes('--check')) {

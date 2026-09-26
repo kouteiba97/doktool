@@ -20,6 +20,12 @@ const r2 = {
   R2_PRIVATE_SECRET_ACCESS_KEY: 'd',
 };
 
+/** Legal pages, required in production. */
+const legal = {
+  TERMS_URL: 'https://doktool.dz/cgu',
+  PRIVACY_URL: 'https://doktool.dz/confidentialite',
+};
+
 const issuesOf = (source: Record<string, string>): string[] => {
   try {
     loadEnv(source);
@@ -61,14 +67,29 @@ describe('loadEnv', () => {
     expect(issues).toHaveLength(2);
   });
 
+  it('requires the legal page links in production', () => {
+    expect(
+      issuesOf({
+        ...required,
+        ...r2,
+        NODE_ENV: 'production',
+        SMTP_URL: 'smtps://user:pass@smtp.example.com:465',
+        MAIL_FROM: 'DokTool <no-reply@example.com>',
+      }),
+    ).toEqual([
+      'TERMS_URL: TERMS_URL and PRIVACY_URL are required in production (linked at sign-up)',
+    ]);
+  });
+
   it('requires SMTP settings in production', () => {
-    expect(issuesOf({ ...required, ...r2, NODE_ENV: 'production' })).toEqual([
+    expect(issuesOf({ ...required, ...r2, ...legal, NODE_ENV: 'production' })).toEqual([
       'SMTP_URL: SMTP_URL and MAIL_FROM are required in production (OTP e-mails)',
     ]);
     expect(
       issuesOf({
         ...required,
         ...r2,
+        ...legal,
         NODE_ENV: 'production',
         SMTP_URL: 'smtps://user:pass@smtp.example.com:465',
         MAIL_FROM: 'DokTool <no-reply@example.com>',

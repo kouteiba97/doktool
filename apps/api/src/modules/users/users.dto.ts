@@ -16,6 +16,18 @@ export class WilayaDto {
   name!: string;
 }
 
+/** What the sign-up screen shows and sends back (the server refuses a stale terms version). */
+export class LegalDto {
+  @ApiProperty({ example: '2026-09' })
+  termsVersion!: string;
+
+  @ApiPropertyOptional({ type: String, nullable: true, format: 'uri' })
+  termsUrl!: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, format: 'uri' })
+  privacyUrl!: string | null;
+}
+
 export class ProfessionalProfileDto {
   @ApiProperty({ enum: ProfessionalType, enumName: 'ProfessionalType' })
   professionalType!: ProfessionalType;

@@ -674,6 +674,9 @@ model Calculator {
   slug             String              @unique
   nameFr           String              @map("name_fr")
   nameEn           String              @map("name_en")
+  /// One-line purpose shown in lists and search (section 12); plain text, no formula.
+  purposeFr        String?             @map("purpose_fr")
+  purposeEn        String?             @map("purpose_en")
   category         String?
   /// STUDENT = open to students and professionals (every V1 calculator, ADR-006 Q2).
   accessTier       AccessTier          @default(STUDENT) @map("access_tier")
@@ -762,6 +765,30 @@ model CalculatorTestCase {
 
   @@index([calculatorVersionId])
   @@map("calculator_test_cases")
+}
+
+// ──────────────────────────────── [search] ────────────────────────────────
+
+enum SearchEntityType {
+  REFERENCE_DOCUMENT
+  CALCULATOR
+
+  @@map("search_entity_type")
+}
+
+/// Admin synonyms (lay terms, abbreviations, frequent misspellings) matched by search in both
+/// languages (section 12). `termNormalized` is lower-case without accents (CHECK).
+model SearchSynonym {
+  id             String           @id @default(uuid(7)) @db.Uuid
+  entityType     SearchEntityType @map("entity_type")
+  entityId       String           @map("entity_id") @db.Uuid
+  term           String
+  termNormalized String           @map("term_normalized")
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([entityType, entityId, termNormalized])
+  @@index([termNormalized])
+  @@map("search_synonyms")
 }
 
 // ─────────────────────────────── [activity] ───────────────────────────────

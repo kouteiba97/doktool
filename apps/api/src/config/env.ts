@@ -42,6 +42,9 @@ const envSchema = z
 
     /** Version of the terms of use a new account accepts. */
     TERMS_VERSION: z.string().trim().min(1),
+    /** Public pages of the terms of use and the privacy policy, linked from sign-up. */
+    TERMS_URL: z.string().url().optional(),
+    PRIVACY_URL: z.string().url().optional(),
 
     /** SMTP transport for OTP e-mails, e.g. smtps://user:pass@smtp.example.com:465 */
     SMTP_URL: z
@@ -97,6 +100,13 @@ const envSchema = z
           });
         }
       }
+    }
+    if (env.NODE_ENV === 'production' && (!env.TERMS_URL || !env.PRIVACY_URL)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['TERMS_URL'],
+        message: 'TERMS_URL and PRIVACY_URL are required in production (linked at sign-up)',
+      });
     }
     if (env.NODE_ENV === 'production' && (!env.SMTP_URL || !env.MAIL_FROM)) {
       context.addIssue({
