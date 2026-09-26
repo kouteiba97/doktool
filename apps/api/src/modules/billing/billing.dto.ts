@@ -83,6 +83,7 @@ export class EligibilityDto {
       'VERIFICATION_PENDING',
       'ACCOUNT_SUSPENDED',
       'ACTIVE',
+      'ACCOUNT_REQUIRED',
     ],
     enumName: 'CheckoutEligibility',
   })

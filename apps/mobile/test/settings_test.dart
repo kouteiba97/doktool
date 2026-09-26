@@ -4,6 +4,7 @@ import 'package:doktool/src/core/database/app_database.dart';
 import 'package:doktool/src/features/settings/app_settings.dart';
 import 'package:doktool/src/features/settings/settings_controller.dart';
 import 'package:doktool/src/features/settings/settings_screen.dart';
+import 'package:doktool/src/router/app_router.dart';
 import 'package:doktool/src/theme/doktool_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,21 +21,26 @@ void main() {
   Future<void> pumpApp(WidgetTester tester, {Locale deviceLocale = const Locale('fr')}) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: testOverrides(database: database, deviceLocale: deviceLocale),
+        overrides: [
+          ...testOverrides(database: database, deviceLocale: deviceLocale),
+          routerProvider.overrideWith((ref) => singleScreenRouter(const SettingsScreen())),
+        ],
         child: const DokToolApp(),
       ),
     );
     await tester.pumpAndSettle();
   }
 
-  Brightness brightnessOf(WidgetTester tester) =>
-      Theme.of(tester.element(find.byType(SettingsScreen))).brightness;
+  Brightness brightnessOf(WidgetTester tester) => Theme.of(tester.element(find.byType(SettingsScreen))).brightness;
 
   testWidgets('starts in French on a French device, following the device appearance', (tester) async {
     await pumpApp(tester);
     expect(find.text('Paramètres'), findsOneWidget);
     expect(find.text('Apparence'), findsOneWidget);
-    expect(find.text('S’applique à toute l’interface. Les PDF de référence gardent leur propre langue.'), findsOneWidget);
+    expect(
+      find.text('S’applique à toute l’interface. Les PDF de référence gardent leur propre langue.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('starts in English on an English device', (tester) async {

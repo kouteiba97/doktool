@@ -40,10 +40,7 @@ class DtSegmentedControl<T> extends StatelessWidget {
       child: Container(
         constraints: const BoxConstraints(minHeight: DtSize.touchMin),
         padding: const EdgeInsets.all(_inset),
-        decoration: BoxDecoration(
-          color: colors.surfaceSunken,
-          borderRadius: BorderRadius.circular(DtRadius.full),
-        ),
+        decoration: BoxDecoration(color: colors.surfaceSunken, borderRadius: BorderRadius.circular(DtRadius.full)),
         child: Row(
           children: [
             for (final segment in segments)

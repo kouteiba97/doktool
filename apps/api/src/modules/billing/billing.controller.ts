@@ -27,6 +27,11 @@ import { DomainError } from '../../common/errors/domain-error.js';
 import { ErrorResponse } from '../../common/errors/error-response.js';
 import { USER_API_PREFIX } from '../../http/api-prefix.js';
 import { CurrentUser, UserAuthGuard } from '../../infrastructure/security/user-auth.guard.js';
+import {
+  CurrentViewer,
+  type Viewer,
+  ViewerAuthGuard,
+} from '../../infrastructure/security/viewer-auth.guard.js';
 import type { UserPrincipal } from '../../infrastructure/security/user-tokens.js';
 import { UsersService } from '../users/index.js';
 import { ACKNOWLEDGEMENT_VERSION } from './billing.policy.js';
@@ -81,15 +86,26 @@ export class BillingController {
     };
   }
 
-  /** The offers, with whether checkout is open (only once professional verification is VERIFIED). */
+  /**
+   * The offers, with whether checkout is open (only once professional verification is VERIFIED).
+   * The demo sees the same offers with ACCOUNT_REQUIRED (ScreenDemo « Voir les offres »).
+   */
   @Get('plans')
-  @UseGuards(UserAuthGuard)
+  @UseGuards(ViewerAuthGuard)
   @ApiBearerAuth('user')
+  @ApiBearerAuth('demo')
   @ApiOkResponse({ type: PlansDto })
   @errors
-  async listPlans(@CurrentUser() user: UserPrincipal): Promise<PlansDto> {
-    const eligibility = await this.checkout.eligibility(user.userId);
-    const type = (await this.users.getAccessFacts(user.userId))?.professionalType;
+  async listPlans(@CurrentViewer() viewer: Viewer): Promise<PlansDto> {
+    if (viewer.accessContext === 'DEMO') {
+      return {
+        eligibility: { state: 'ACCOUNT_REQUIRED' },
+        plans: (await this.plans.purchasable(viewer.demoContext)).map((plan) => PlanDto.from(plan)),
+        acknowledgementVersion: ACKNOWLEDGEMENT_VERSION,
+      };
+    }
+    const eligibility = await this.checkout.eligibility(viewer.userId);
+    const type = (await this.users.getAccessFacts(viewer.userId))?.professionalType;
     const plans = type && type !== 'STUDENT' ? await this.plans.purchasable(type) : [];
     return {
       eligibility: EligibilityDto.from(eligibility),

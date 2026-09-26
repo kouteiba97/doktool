@@ -85,7 +85,10 @@ class _Section extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Semantics(header: true, child: Text(title, style: DtType.heading.copyWith(color: colors.ink))),
+          Semantics(
+            header: true,
+            child: Text(title, style: DtType.heading.copyWith(color: colors.ink)),
+          ),
           const SizedBox(height: DtSpace.s3),
           child,
           if (helper != null) ...[

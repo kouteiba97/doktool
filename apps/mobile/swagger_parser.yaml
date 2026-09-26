@@ -25,3 +25,8 @@ swagger_parser:
     - reference-library
     - calculators
     - offline
+    - verification
+    - notifications
+    - search
+    - activity
+    - subscription

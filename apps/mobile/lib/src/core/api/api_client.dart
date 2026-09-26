@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/settings/settings_controller.dart';
+import '../auth/auth_interceptor.dart';
+import '../auth/session_vault.dart';
 import '../config/app_config.dart';
 import 'generated/dok_tool_api.dart';
 
@@ -18,8 +20,8 @@ class AcceptLanguageInterceptor extends Interceptor {
   }
 }
 
-/// HTTP client for the DokTool API. The auth interceptor (tokens, single-flight refresh) is
-/// added with sign-in in Phase 9.
+/// HTTP client for the DokTool API: interface language and session token on every call, with a
+/// single-flight refresh after a 401.
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
     BaseOptions(
@@ -29,9 +31,9 @@ final dioProvider = Provider<Dio>((ref) {
       headers: const {'Accept': 'application/json'},
     ),
   );
-  dio.interceptors.add(
-    AcceptLanguageInterceptor(() => ref.read(settingsControllerProvider).value?.language.name ?? 'fr'),
-  );
+  dio.interceptors
+    ..add(AcceptLanguageInterceptor(() => ref.read(settingsControllerProvider).value?.language.name ?? 'fr'))
+    ..add(AuthInterceptor(ref.watch(sessionVaultProvider), () => dio));
   ref.onDispose(dio.close);
   return dio;
 });

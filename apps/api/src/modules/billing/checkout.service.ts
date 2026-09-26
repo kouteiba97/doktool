@@ -23,6 +23,7 @@ import { PlansService } from './plans.service.js';
 
 export type Eligibility =
   | { state: 'OPEN'; renewal: boolean }
+  | { state: 'ACCOUNT_REQUIRED' }
   | { state: 'STUDENT_FREE' }
   | { state: 'ROLE_REQUIRED' }
   | { state: 'VERIFICATION_REQUIRED' }

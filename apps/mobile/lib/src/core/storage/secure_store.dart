@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:uuid/uuid.dart';
 
-/// Keychain / Keystore storage for secrets (audit Appendix D): the installation id, and the
-/// session tokens from Phase 9. Never the database, never shared preferences.
+/// Keychain / Keystore storage for secrets (audit Appendix D): the installation id and the session
+/// tokens. Never the database, never shared preferences.
 class SecureStore {
   SecureStore(this._storage);
 
@@ -20,8 +20,12 @@ class SecureStore {
     await _storage.write(key: _installationIdKey, value: created);
     return created;
   }
+
+  Future<String?> read(String key) => _storage.read(key: key);
+
+  Future<void> write(String key, String value) => _storage.write(key: key, value: value);
+
+  Future<void> delete(String key) => _storage.delete(key: key);
 }
 
-final secureStoreProvider = Provider<SecureStore>(
-  (ref) => SecureStore(const FlutterSecureStorage()),
-);
+final secureStoreProvider = Provider<SecureStore>((ref) => SecureStore(const FlutterSecureStorage()));

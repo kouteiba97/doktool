@@ -23,8 +23,7 @@ class SettingsController extends AsyncNotifier<AppSettings> {
     final language = await database.readSetting(_languageKey);
     return AppSettings(
       appearance: AppearancePreference.values.asNameMap()[appearance] ?? AppearancePreference.system,
-      language: AppLanguage.values.asNameMap()[language] ??
-          AppLanguage.fromDevice(ref.watch(deviceLocaleProvider)),
+      language: AppLanguage.values.asNameMap()[language] ?? AppLanguage.fromDevice(ref.watch(deviceLocaleProvider)),
     );
   }
 
@@ -46,5 +45,4 @@ class SettingsController extends AsyncNotifier<AppSettings> {
   }
 }
 
-final settingsControllerProvider =
-    AsyncNotifierProvider<SettingsController, AppSettings>(SettingsController.new);
+final settingsControllerProvider = AsyncNotifierProvider<SettingsController, AppSettings>(SettingsController.new);

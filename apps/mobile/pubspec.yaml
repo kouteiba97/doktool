@@ -22,6 +22,14 @@ dependencies:
   path_provider: ^2.1.6
   flutter_secure_storage: ^11.2.0
   uuid: ^4.6.0
+  camera: ^0.12.1
+  google_mlkit_text_recognition: ^0.17.1
+  file_picker: ^13.1.0
+  crypto: ^3.0.7
+  flutter_svg: ^2.3.0
+  url_launcher: ^6.3.2
+  lucide_icons_flutter: ^3.1.20
+  pdfrx: ^2.6.5
 
 dev_dependencies:
   flutter_test:
@@ -35,6 +43,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/logos/
   # gen-l10n: ARB files are generated from packages/i18n (npm run build:arb -w @doktool/i18n).
   generate: true
   # Fonts converted from design/system/fonts (Lock L19); licence: assets/fonts/README.md.

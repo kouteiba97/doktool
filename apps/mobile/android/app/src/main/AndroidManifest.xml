@@ -1,6 +1,13 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Verification documents are photographed in the app (section 06). No audio is ever recorded:
+         the camera plugin's microphone permission is removed. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO" tools:node="remove"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="doktool"
+        android:label="DokTool"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

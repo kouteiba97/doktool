@@ -24,6 +24,63 @@
   "@accessStudent": {
     "description": "mobile.access.student"
   },
+  "activityClear": "Clear history",
+  "@activityClear": {
+    "description": "mobile.activity.clear"
+  },
+  "activityClearConfirm": "Your history of searches, viewed models and calculations will be cleared on all your devices. Your favorites are kept.",
+  "@activityClearConfirm": {
+    "description": "mobile.activity.clearConfirm"
+  },
+  "activityEmpty": "No activity yet.",
+  "@activityEmpty": {
+    "description": "mobile.activity.empty"
+  },
+  "activityFilterAll": "All",
+  "@activityFilterAll": {
+    "description": "mobile.activity.filterAll"
+  },
+  "activityFilterCalculations": "Calculations",
+  "@activityFilterCalculations": {
+    "description": "mobile.activity.filterCalculations"
+  },
+  "activityFilterModels": "Models",
+  "@activityFilterModels": {
+    "description": "mobile.activity.filterModels"
+  },
+  "activityFilterSearches": "Searches",
+  "@activityFilterSearches": {
+    "description": "mobile.activity.filterSearches"
+  },
+  "activityPrivate": "Only you can see your history. Values entered in calculators never leave the device.",
+  "@activityPrivate": {
+    "description": "mobile.activity.private"
+  },
+  "activitySearched": "Search “{query}”",
+  "@activitySearched": {
+    "description": "mobile.activity.searched",
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "activitySegment": "Activity",
+  "@activitySegment": {
+    "description": "mobile.activity.segment"
+  },
+  "activityTitle": "Activity and favorites",
+  "@activityTitle": {
+    "description": "mobile.activity.title"
+  },
+  "activityToday": "Today",
+  "@activityToday": {
+    "description": "mobile.activity.today"
+  },
+  "activityYesterday": "Yesterday",
+  "@activityYesterday": {
+    "description": "mobile.activity.yesterday"
+  },
   "calculatorCheckValue": "Check the value (unusual: {range}).",
   "@calculatorCheckValue": {
     "description": "mobile.calculator.checkValue",
@@ -367,9 +424,41 @@
   "@errorsSessionExpired": {
     "description": "mobile.errors.sessionExpired"
   },
+  "favoritesAdd": "Add to favorites",
+  "@favoritesAdd": {
+    "description": "mobile.favorites.add"
+  },
+  "favoritesEmpty": "No favorites. Tap the star of a model or a calculator to add it.",
+  "@favoritesEmpty": {
+    "description": "mobile.favorites.empty"
+  },
+  "favoritesRemove": "Remove from favorites",
+  "@favoritesRemove": {
+    "description": "mobile.favorites.remove"
+  },
+  "favoritesRemoveAction": "Remove",
+  "@favoritesRemoveAction": {
+    "description": "mobile.favorites.removeAction"
+  },
+  "favoritesTitle": "Favorites",
+  "@favoritesTitle": {
+    "description": "mobile.favorites.title"
+  },
+  "favoritesUnavailable": "No longer available",
+  "@favoritesUnavailable": {
+    "description": "mobile.favorites.unavailable"
+  },
+  "homeFavorites": "Favorites",
+  "@homeFavorites": {
+    "description": "mobile.home.favorites"
+  },
   "homeNotifications": "Notifications",
   "@homeNotifications": {
     "description": "mobile.home.notifications"
+  },
+  "homeRecents": "Recent",
+  "@homeRecents": {
+    "description": "mobile.home.recents"
   },
   "homeSearchHint": "Search a model or a calculator",
   "@homeSearchHint": {
@@ -690,6 +779,189 @@
   "@otpVerify": {
     "description": "mobile.otp.verify"
   },
+  "paymentCanceled": "The payment was abandoned.",
+  "@paymentCanceled": {
+    "description": "mobile.payment.canceled"
+  },
+  "paymentCheck": "Check the payment",
+  "@paymentCheck": {
+    "description": "mobile.payment.check"
+  },
+  "paymentFailed": "The payment did not go through.",
+  "@paymentFailed": {
+    "description": "mobile.payment.failed"
+  },
+  "paymentInProgress": "A payment is already in progress. Finish it or wait a few minutes.",
+  "@paymentInProgress": {
+    "description": "mobile.payment.inProgress"
+  },
+  "paymentOtherMethod": "Another payment method",
+  "@paymentOtherMethod": {
+    "description": "mobile.payment.otherMethod"
+  },
+  "paymentReopen": "Reopen the payment page",
+  "@paymentReopen": {
+    "description": "mobile.payment.reopen"
+  },
+  "paymentRetry": "Try again",
+  "@paymentRetry": {
+    "description": "mobile.payment.retry"
+  },
+  "paymentSeeSubscription": "See my subscription",
+  "@paymentSeeSubscription": {
+    "description": "mobile.payment.seeSubscription"
+  },
+  "paymentSuccess": "Payment confirmed. Your DokTool Pro subscription is active.",
+  "@paymentSuccess": {
+    "description": "mobile.payment.success"
+  },
+  "paymentTitle": "Payment",
+  "@paymentTitle": {
+    "description": "mobile.payment.title"
+  },
+  "paymentWaiting": "Waiting for the payment confirmation…",
+  "@paymentWaiting": {
+    "description": "mobile.payment.waiting"
+  },
+  "paymentWaitingNote": "Finish the payment on SATIM’s page, then come back here.",
+  "@paymentWaitingNote": {
+    "description": "mobile.payment.waitingNote"
+  },
+  "plansAccess": "Access: the whole reference library and the calculators",
+  "@plansAccess": {
+    "description": "mobile.plans.access"
+  },
+  "plansAccountNote": "Create an account and have your status verified to choose a plan.",
+  "@plansAccountNote": {
+    "description": "mobile.plans.accountNote"
+  },
+  "plansActiveNote": "Your subscription is active. Renewal opens on {date}.",
+  "@plansActiveNote": {
+    "description": "mobile.plans.activeNote",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "plansChoose": "Choose",
+  "@plansChoose": {
+    "description": "mobile.plans.choose"
+  },
+  "plansDurationDays": "{days, plural, one {# day} other {# days}}",
+  "@plansDurationDays": {
+    "description": "mobile.plans.durationDays",
+    "placeholders": {
+      "days": {
+        "type": "num"
+      }
+    }
+  },
+  "plansDurationMonth": "1 month",
+  "@plansDurationMonth": {
+    "description": "mobile.plans.durationMonth"
+  },
+  "plansDurationYear": "1 year",
+  "@plansDurationYear": {
+    "description": "mobile.plans.durationYear"
+  },
+  "plansEmpty": "No plan is offered at the moment.",
+  "@plansEmpty": {
+    "description": "mobile.plans.empty"
+  },
+  "plansExcludes": "Not included",
+  "@plansExcludes": {
+    "description": "mobile.plans.excludes"
+  },
+  "plansIncludes": "Included",
+  "@plansIncludes": {
+    "description": "mobile.plans.includes"
+  },
+  "plansNoRefund": "The payment is non-refundable. The demo lets you try DokTool before paying.",
+  "@plansNoRefund": {
+    "description": "mobile.plans.noRefund"
+  },
+  "plansPendingNote": "Your verification is in progress. You can choose a plan as soon as it is approved.",
+  "@plansPendingNote": {
+    "description": "mobile.plans.pendingNote"
+  },
+  "plansPrice": "{price} incl. taxes",
+  "@plansPrice": {
+    "description": "mobile.plans.price",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "plansStudentNote": "Students need no subscription: student access is free.",
+  "@plansStudentNote": {
+    "description": "mobile.plans.studentNote"
+  },
+  "plansTitle": "Plans",
+  "@plansTitle": {
+    "description": "mobile.plans.title"
+  },
+  "plansVerificationNote": "Your professional status must be verified before choosing a plan. Usual answer within 24 h.",
+  "@plansVerificationNote": {
+    "description": "mobile.plans.verificationNote"
+  },
+  "plansVerificationRequired": "Verification required",
+  "@plansVerificationRequired": {
+    "description": "mobile.plans.verificationRequired"
+  },
+  "profileActivity": "Activity and favorites",
+  "@profileActivity": {
+    "description": "mobile.profile.activity"
+  },
+  "profileBio": "About",
+  "@profileBio": {
+    "description": "mobile.profile.bio"
+  },
+  "profileBioHelper": "280 characters maximum.",
+  "@profileBioHelper": {
+    "description": "mobile.profile.bioHelper"
+  },
+  "profileEdit": "Edit",
+  "@profileEdit": {
+    "description": "mobile.profile.edit"
+  },
+  "profileEditTitle": "Edit profile",
+  "@profileEditTitle": {
+    "description": "mobile.profile.editTitle"
+  },
+  "profileNameNote": "Your verification is based on the name on your documents: changing your name may require a new verification.",
+  "@profileNameNote": {
+    "description": "mobile.profile.nameNote"
+  },
+  "profileNotifications": "Notifications",
+  "@profileNotifications": {
+    "description": "mobile.profile.notifications"
+  },
+  "profilePhoto": "Photo",
+  "@profilePhoto": {
+    "description": "mobile.profile.photo"
+  },
+  "profilePhotoChange": "Change photo",
+  "@profilePhotoChange": {
+    "description": "mobile.profile.photoChange"
+  },
+  "profilePhotoHelper": "Re-encoded without metadata (location, device) before it is saved.",
+  "@profilePhotoHelper": {
+    "description": "mobile.profile.photoHelper"
+  },
+  "profilePhotoRemove": "Remove photo",
+  "@profilePhotoRemove": {
+    "description": "mobile.profile.photoRemove"
+  },
+  "profileSave": "Save",
+  "@profileSave": {
+    "description": "mobile.profile.save"
+  },
+  "profileSaved": "Profile saved.",
+  "@profileSaved": {
+    "description": "mobile.profile.saved"
+  },
   "profileSettings": "Settings",
   "@profileSettings": {
     "description": "mobile.profile.settings"
@@ -697,6 +969,14 @@
   "profileSignOut": "Sign out",
   "@profileSignOut": {
     "description": "mobile.profile.signOut"
+  },
+  "profileStudentAccess": "Student access — free",
+  "@profileStudentAccess": {
+    "description": "mobile.profile.studentAccess"
+  },
+  "profileSubscription": "Subscription",
+  "@profileSubscription": {
+    "description": "mobile.profile.subscription"
   },
   "profileTitle": "Profile",
   "@profileTitle": {
@@ -729,6 +1009,70 @@
   "resetTitle": "Forgot password",
   "@resetTitle": {
     "description": "mobile.reset.title"
+  },
+  "reviewAccessLevel": "Access",
+  "@reviewAccessLevel": {
+    "description": "mobile.review.accessLevel"
+  },
+  "reviewAcknowledgement": "I understand what DokTool Pro includes. The payment is non-refundable.",
+  "@reviewAcknowledgement": {
+    "description": "mobile.review.acknowledgement"
+  },
+  "reviewCib": "CIB",
+  "@reviewCib": {
+    "description": "mobile.review.cib"
+  },
+  "reviewEdahabia": "Edahabia",
+  "@reviewEdahabia": {
+    "description": "mobile.review.edahabia"
+  },
+  "reviewMethod": "Payment method",
+  "@reviewMethod": {
+    "description": "mobile.review.method"
+  },
+  "reviewPay": "Pay",
+  "@reviewPay": {
+    "description": "mobile.review.pay"
+  },
+  "reviewPeriod": "Period",
+  "@reviewPeriod": {
+    "description": "mobile.review.period"
+  },
+  "reviewPeriodValue": "From {start} to {end}",
+  "@reviewPeriodValue": {
+    "description": "mobile.review.periodValue",
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewPlan": "Plan",
+  "@reviewPlan": {
+    "description": "mobile.review.plan"
+  },
+  "reviewPrice": "Price",
+  "@reviewPrice": {
+    "description": "mobile.review.price"
+  },
+  "reviewRedirectNote": "You will be taken to SATIM’s secure payment page.",
+  "@reviewRedirectNote": {
+    "description": "mobile.review.redirectNote"
+  },
+  "reviewRenewal": "Renewal",
+  "@reviewRenewal": {
+    "description": "mobile.review.renewal"
+  },
+  "reviewRenewalManual": "Manual: you choose to renew at the end of the period.",
+  "@reviewRenewalManual": {
+    "description": "mobile.review.renewalManual"
+  },
+  "reviewTitle": "Summary",
+  "@reviewTitle": {
+    "description": "mobile.review.title"
   },
   "roleDoctor": "Doctor",
   "@roleDoctor": {
@@ -989,6 +1333,125 @@
   "signUpWilayaPick": "Choose a wilaya",
   "@signUpWilayaPick": {
     "description": "mobile.signUp.wilayaPick"
+  },
+  "subscriptionEndedNote": "Your favorites, activity and settings are kept; you get the sample content back until you renew.",
+  "@subscriptionEndedNote": {
+    "description": "mobile.subscription.endedNote"
+  },
+  "subscriptionGraceUntil": "Access kept until {date}",
+  "@subscriptionGraceUntil": {
+    "description": "mobile.subscription.graceUntil",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionHistory": "Payments",
+  "@subscriptionHistory": {
+    "description": "mobile.subscription.history"
+  },
+  "subscriptionNone": "No subscription.",
+  "@subscriptionNone": {
+    "description": "mobile.subscription.none"
+  },
+  "subscriptionPeriod": "From {start} to {end}",
+  "@subscriptionPeriod": {
+    "description": "mobile.subscription.period",
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionRenew": "Renew",
+  "@subscriptionRenew": {
+    "description": "mobile.subscription.renew"
+  },
+  "subscriptionRenewFrom": "Renewal opens on {date}.",
+  "@subscriptionRenewFrom": {
+    "description": "mobile.subscription.renewFrom",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionStatusActive": "Active",
+  "@subscriptionStatusActive": {
+    "description": "mobile.subscription.statusActive"
+  },
+  "subscriptionStatusCanceled": "Not renewed",
+  "@subscriptionStatusCanceled": {
+    "description": "mobile.subscription.statusCanceled"
+  },
+  "subscriptionStatusEnded": "Ended",
+  "@subscriptionStatusEnded": {
+    "description": "mobile.subscription.statusEnded"
+  },
+  "subscriptionStatusGrace": "Grace period",
+  "@subscriptionStatusGrace": {
+    "description": "mobile.subscription.statusGrace"
+  },
+  "subscriptionStatusRenewsOn": "Ends on {date}",
+  "@subscriptionStatusRenewsOn": {
+    "description": "mobile.subscription.statusRenewsOn",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionStopRenewal": "Don’t renew",
+  "@subscriptionStopRenewal": {
+    "description": "mobile.subscription.stopRenewal"
+  },
+  "subscriptionStopRenewalConfirm": "Your choice is recorded; access continues until the end of the period.",
+  "@subscriptionStopRenewalConfirm": {
+    "description": "mobile.subscription.stopRenewalConfirm"
+  },
+  "subscriptionStopped": "Not renewed · access until {date}",
+  "@subscriptionStopped": {
+    "description": "mobile.subscription.stopped",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionTitle": "Subscription",
+  "@subscriptionTitle": {
+    "description": "mobile.subscription.title"
+  },
+  "subscriptionTransactionCanceled": "Abandoned",
+  "@subscriptionTransactionCanceled": {
+    "description": "mobile.subscription.transactionCanceled"
+  },
+  "subscriptionTransactionFailed": "Refused",
+  "@subscriptionTransactionFailed": {
+    "description": "mobile.subscription.transactionFailed"
+  },
+  "subscriptionTransactionLine": "{date} · {amount} · {method}",
+  "@subscriptionTransactionLine": {
+    "description": "mobile.subscription.transactionLine",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionTransactionPending": "Pending",
+  "@subscriptionTransactionPending": {
+    "description": "mobile.subscription.transactionPending"
   },
   "typesCalculator": "Calculator",
   "@typesCalculator": {

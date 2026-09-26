@@ -14,7 +14,8 @@ class DokToolApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsControllerProvider).value ??
+    final settings =
+        ref.watch(settingsControllerProvider).value ??
         AppSettings(
           appearance: AppearancePreference.system,
           language: AppLanguage.fromDevice(ref.watch(deviceLocaleProvider)),

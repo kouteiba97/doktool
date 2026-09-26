@@ -1,0 +1,8 @@
+# json_serializable: optional request fields left null are omitted, so the API never receives
+# `"field": null` for a field the app did not set (the backend validates absent and null alike).
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          include_if_null: false

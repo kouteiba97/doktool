@@ -3,7 +3,7 @@
 import { randomUUID } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { SubscriptionLifecycleService } from '../../src/modules/billing/subscription-lifecycle.service.js';
-import { type AdminActor, adminActor, userActor } from './actors.js';
+import { type AdminActor, adminActor, demoActor, userActor } from './actors.js';
 import { useTestApp } from './app.js';
 
 const app = useTestApp();
@@ -337,5 +337,26 @@ describe('reconciliation', () => {
       where: { transactionId: started.body.transactionId },
     });
     expect(transaction.status).toBe('CANCELED');
+  });
+});
+
+describe('demo', () => {
+  it('shows the real offers to the demo, with an account required to buy', async () => {
+    const demo = await demoActor(app);
+    const plans = await app.http().get('/v1/subscription/plans').set(demo.auth).expect(200);
+    expect(plans.body.eligibility).toEqual({ state: 'ACCOUNT_REQUIRED' });
+    expect(plans.body.plans.some((plan: { id: string }) => plan.id === monthlyId)).toBe(true);
+    await app.http().get('/v1/subscription').set(demo.auth).expect(401);
+    await app
+      .http()
+      .post('/v1/subscription/checkout')
+      .set(demo.auth)
+      .send({
+        planId: monthlyId,
+        provider: 'SATIM_CIB',
+        acknowledged: true,
+        acknowledgementVersion: 'pro-no-refund-v1',
+      })
+      .expect(401);
   });
 });
