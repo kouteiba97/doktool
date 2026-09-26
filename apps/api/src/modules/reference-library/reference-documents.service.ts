@@ -74,6 +74,36 @@ export class ReferenceDocumentsService {
   ) {}
 
   /** A–Z list of one type, optionally filtered by title (accent- and case-insensitive). */
+  /** Titles and type of reference models by id (admin read models; status does not matter). */
+  async labels(
+    ids: string[],
+  ): Promise<
+    Map<string, { titleFr: string; titleEn: string | null; type: ReferenceDocumentType }>
+  > {
+    const unique = [...new Set(ids)];
+    if (unique.length === 0) return new Map();
+    const rows = await this.prisma.referenceDocument.findMany({
+      where: { id: { in: unique } },
+      select: { id: true, titleFr: true, titleEn: true, type: true },
+    });
+    return new Map(rows.map(({ id, ...label }) => [id, label]));
+  }
+
+  /** Models whose latest file failed processing (overview « Incidents »). */
+  async processingFailures(limit: number) {
+    return this.prisma.referenceDocumentFile.findMany({
+      where: { processingStatus: 'FAILED' },
+      orderBy: { uploadedAt: 'desc' },
+      take: limit,
+      select: {
+        id: true,
+        version: true,
+        uploadedAt: true,
+        document: { select: { id: true, titleFr: true, type: true } },
+      },
+    });
+  }
+
   async list(
     viewer: Viewer,
     type: ReferenceDocumentType,

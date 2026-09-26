@@ -147,6 +147,7 @@ export class SessionsService {
     });
 
     if (outcome.kind === 'rejected') throw new DomainError('SESSION_INVALID', outcome.message);
+    await this.users.touchLastSeen(outcome.userId);
     return this.tokensFor(
       outcome.userId,
       outcome.sessionId,

@@ -27,6 +27,8 @@ const envSchema = z
     USER_JWT_SECRET: secret('USER_JWT_SECRET'),
     /** Key of the OTP code HMAC. */
     OTP_HMAC_SECRET: secret('OTP_HMAC_SECRET'),
+    /** Key of the pseudonymous analytics subject hash (section 16); changing it splits the history. */
+    ANALYTICS_SUBJECT_SECRET: secret('ANALYTICS_SUBJECT_SECRET'),
     /** Base64 AES-256 key encrypting admin TOTP secrets. */
     ADMIN_TOTP_ENCRYPTION_KEY: z
       .string()

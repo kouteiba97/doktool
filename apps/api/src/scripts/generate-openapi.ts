@@ -33,6 +33,7 @@ const env = loadEnv({
   DATABASE_URL: 'postgresql://openapi-generation.invalid/doktool',
   USER_JWT_SECRET: 'openapi-generation-placeholder-secret-000000',
   OTP_HMAC_SECRET: 'openapi-generation-placeholder-secret-000000',
+  ANALYTICS_SUBJECT_SECRET: 'openapi-generation-placeholder-secret-000001',
   ADMIN_TOTP_ENCRYPTION_KEY: Buffer.alloc(32).toString('base64'),
   ADMIN_WEB_ORIGIN: 'https://admin.invalid',
   TERMS_VERSION: 'openapi',

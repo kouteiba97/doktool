@@ -34,6 +34,33 @@ export interface SignInCandidate {
   lockedUntil: Date | null;
 }
 
+/** What Admin Web shows of a person: identity and profile, never the password or tokens. */
+const ADMIN_USER_SELECT = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  email: true,
+  phone: true,
+  status: true,
+  createdAt: true,
+  lastSeenAt: true,
+  emailConfirmedAt: true,
+  phoneConfirmedAt: true,
+  wilaya: { select: { code: true, name: true } },
+  preference: { select: { language: true } },
+  professionalProfile: {
+    select: {
+      professionalType: true,
+      academicYear: true,
+      residencyYear: true,
+      orderNumberMasked: true,
+      specialty: { select: { code: true, nameFr: true, nameEn: true } },
+      institution: { select: { name: true } },
+      university: { select: { name: true } },
+    },
+  },
+} as const satisfies Prisma.UserSelect;
+
 export interface AccessFacts {
   status: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
   professionalType: ProfessionalType | null;
@@ -412,6 +439,99 @@ export class UsersService {
       specialties: new Map(specialties.map((row) => [row.id, { fr: row.nameFr, en: row.nameEn }])),
       universities: new Map(universities.map((row) => [row.id, row.name])),
     };
+  }
+
+  /** Segments of the analytics envelope (section 16): never names or contact data. */
+  async analyticsFacts(userId: string): Promise<{
+    professionalType: ProfessionalType | null;
+    specialtyCode: string | null;
+    wilayaCode: number;
+  } | null> {
+    const row = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        wilayaCode: true,
+        professionalProfile: {
+          select: { professionalType: true, specialty: { select: { code: true } } },
+        },
+      },
+    });
+    if (!row) return null;
+    return {
+      professionalType: row.professionalProfile?.professionalType ?? null,
+      specialtyCode: row.professionalProfile?.specialty?.code ?? null,
+      wilayaCode: row.wilayaCode,
+    };
+  }
+
+  /** Confirmed accounts created in [from, to) (onboarding funnel). */
+  countSignUps(from: Date, to: Date): Promise<number> {
+    return this.prisma.user.count({
+      where: {
+        createdAt: { gte: from, lt: to },
+        OR: [{ emailConfirmedAt: { not: null } }, { phoneConfirmedAt: { not: null } }],
+      },
+    });
+  }
+
+  /** Records activity for « Dernière activité »; written at most once an hour per person. */
+  async touchLastSeen(userId: string, now = new Date()): Promise<void> {
+    await this.prisma.user.updateMany({
+      where: {
+        id: userId,
+        OR: [{ lastSeenAt: null }, { lastSeenAt: { lt: new Date(now.getTime() - 3_600_000) } }],
+      },
+      data: { lastSeenAt: now },
+    });
+  }
+
+  /** Admin Web « Utilisateurs »: 50 per page, newest first; search on name, e-mail or phone. */
+  adminList(filter: {
+    search?: string;
+    professionalType?: ProfessionalType;
+    status?: 'ACTIVE' | 'SUSPENDED';
+    cursor?: string;
+  }) {
+    const search = filter.search?.trim();
+    const words = search ? search.split(/\s+/).filter(Boolean).slice(0, 4) : [];
+    return this.prisma.user.findMany({
+      where: {
+        status: filter.status ?? { in: ['ACTIVE', 'SUSPENDED'] },
+        OR: [{ emailConfirmedAt: { not: null } }, { phoneConfirmedAt: { not: null } }],
+        ...(filter.professionalType
+          ? { professionalProfile: { professionalType: filter.professionalType } }
+          : {}),
+        ...(words.length > 0
+          ? {
+              AND: words.map((word) => ({
+                OR: [
+                  { firstName: { contains: word, mode: 'insensitive' as const } },
+                  { lastName: { contains: word, mode: 'insensitive' as const } },
+                  { email: { contains: word.toLowerCase() } },
+                  { phone: { contains: word } },
+                ],
+              })),
+            }
+          : {}),
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: 50,
+      ...(filter.cursor ? { cursor: { id: filter.cursor }, skip: 1 } : {}),
+      select: ADMIN_USER_SELECT,
+    });
+  }
+
+  adminDetail(userId: string) {
+    return this.prisma.user.findUnique({ where: { id: userId }, select: ADMIN_USER_SELECT });
+  }
+
+  /** Suspension blocks sign-in and refresh (ADR-010); the account and its data are kept. */
+  async setStatus(userId: string, status: 'ACTIVE' | 'SUSPENDED'): Promise<boolean> {
+    const { count } = await this.prisma.user.updateMany({
+      where: { id: userId, status: status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE' },
+      data: { status },
+    });
+    return count === 1;
   }
 
   /** What a verification reviewer sees about the person (never the password or tokens). */

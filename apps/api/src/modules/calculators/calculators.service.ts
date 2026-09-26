@@ -107,6 +107,34 @@ export class CalculatorsService {
     private readonly access: AccessService,
   ) {}
 
+  /** Names of calculators by id (admin read models). */
+  async labels(
+    ids: string[],
+  ): Promise<Map<string, { nameFr: string; nameEn: string; slug: string }>> {
+    const unique = [...new Set(ids)];
+    if (unique.length === 0) return new Map();
+    const rows = await this.prisma.calculator.findMany({
+      where: { id: { in: unique } },
+      select: { id: true, nameFr: true, nameEn: true, slug: true },
+    });
+    return new Map(rows.map(({ id, ...label }) => [id, label]));
+  }
+
+  /** Versions submitted for review, oldest first. */
+  async awaitingReview(limit: number) {
+    return this.prisma.calculatorVersion.findMany({
+      where: { status: 'IN_REVIEW' },
+      orderBy: { createdAt: 'asc' },
+      take: limit,
+      select: {
+        id: true,
+        version: true,
+        createdAt: true,
+        calculator: { select: { id: true, nameFr: true, nameEn: true } },
+      },
+    });
+  }
+
   async list(viewer: Viewer, query?: string): Promise<CalculatorSummary[]> {
     const rows = await this.rows();
     const matching = query

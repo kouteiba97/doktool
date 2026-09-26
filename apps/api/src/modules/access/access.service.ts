@@ -23,6 +23,12 @@ export class AccessService {
     return evaluateAccess(await this.inputsFor(viewer));
   }
 
+  /** Admin Web « Accès »: the profile of one account and its inputs (read-only). */
+  async explainForUser(userId: string): Promise<{ profile: AccessProfile; inputs: AccessInputs }> {
+    const inputs = await this.inputsFor({ accessContext: 'AUTHENTICATED', userId, sessionId: '' });
+    return { profile: evaluateAccess(inputs), inputs };
+  }
+
   /** Decides many items at once for list and search endpoints. */
   async decideItems<T extends AccessibleItem>(
     viewer: Viewer,

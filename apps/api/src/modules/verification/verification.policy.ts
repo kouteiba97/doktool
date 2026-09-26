@@ -2,6 +2,9 @@
 import { z } from 'zod';
 import type { ProfessionalType, VerificationType } from '../../generated/prisma/enums.js';
 
+/** Service level of the review queue: a case waiting longer is flagged (Admin Web « SLA 24 h »). */
+export const VERIFICATION_SLA_HOURS = 24;
+
 /** Documents and declared details are deleted this long after the decision (section 06). */
 export const DOCUMENT_RETENTION_MONTHS = 24;
 /** Reminders before a verification expires (section 06). */

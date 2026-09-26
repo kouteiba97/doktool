@@ -1,6 +1,7 @@
 import { Module, type OnModuleInit } from '@nestjs/common';
 import { JobsService } from '../../infrastructure/jobs/jobs.service.js';
 import { AuditModule } from '../audit/index.js';
+import { AdminAccountsController } from './admin-accounts.controller.js';
 import { AdminAccountsService } from './admin-accounts.service.js';
 import { AdminAuthController } from './admin-auth.controller.js';
 import { AdminAuthService } from './admin-auth.service.js';
@@ -15,7 +16,7 @@ import { AdminBoundaryGuard, AdminSessionGuard } from './admin-guards.js';
  */
 @Module({
   imports: [AuditModule],
-  controllers: [AdminAuthController],
+  controllers: [AdminAuthController, AdminAccountsController],
   providers: [AdminAccountsService, AdminAuthService, AdminBoundaryGuard, AdminSessionGuard],
   exports: [AdminAccountsService, AdminAuthService, AdminBoundaryGuard, AdminSessionGuard],
 })

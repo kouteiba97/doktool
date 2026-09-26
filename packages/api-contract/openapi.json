@@ -8,6 +8,54 @@
         ],
         "type": "string"
       },
+      "AccessInputsDto": {
+        "properties": {
+          "academicYear": {
+            "nullable": true,
+            "type": "number"
+          },
+          "accountStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserStatus"
+              }
+            ]
+          },
+          "professionalType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfessionalType"
+              }
+            ],
+            "nullable": true
+          },
+          "subscriptionEndsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "subscriptionStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionStatus"
+              }
+            ],
+            "nullable": true
+          },
+          "verification": {
+            "$ref": "#/components/schemas/VerificationStateDto"
+          }
+        },
+        "required": [
+          "accountStatus",
+          "professionalType",
+          "academicYear",
+          "verification",
+          "subscriptionStatus",
+          "subscriptionEndsAt"
+        ],
+        "type": "object"
+      },
       "AccessProfileDto": {
         "properties": {
           "accessContext": {
@@ -65,6 +113,27 @@
           "PROFESSIONAL"
         ],
         "type": "string"
+      },
+      "ActivityCountsDto": {
+        "properties": {
+          "favorites": {
+            "items": {
+              "$ref": "#/components/schemas/FavoriteCountDto"
+            },
+            "type": "array"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryCountDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "favorites",
+          "history"
+        ],
+        "type": "object"
       },
       "ActivityDto": {
         "properties": {
@@ -151,6 +220,22 @@
           "CALCULATOR_USE"
         ],
         "type": "string"
+      },
+      "ActorDto": {
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ],
+        "type": "object"
       },
       "AddSourceDto": {
         "properties": {
@@ -256,6 +341,176 @@
           "inputs",
           "expectedOutcome",
           "origin"
+        ],
+        "type": "object"
+      },
+      "AdjustmentBody": {
+        "properties": {
+          "amountMinor": {
+            "description": "Signed amount in centimes; negative for a reversal.",
+            "type": "number"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdjustmentKind"
+              }
+            ]
+          },
+          "note": {
+            "maxLength": 1000,
+            "minLength": 3,
+            "type": "string"
+          },
+          "reasonCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdjustmentReason"
+              }
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "amountMinor",
+          "reasonCode",
+          "note"
+        ],
+        "type": "object"
+      },
+      "AdjustmentDto": {
+        "properties": {
+          "amountMinor": {
+            "type": "number"
+          },
+          "approvedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "approvedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ActorDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdjustmentKind"
+              }
+            ]
+          },
+          "reasonCode": {
+            "type": "string"
+          },
+          "reasonNote": {
+            "type": "string"
+          },
+          "requestedBy": {
+            "$ref": "#/components/schemas/ActorDto"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "amountMinor",
+          "reasonCode",
+          "reasonNote",
+          "requestedBy",
+          "createdAt",
+          "approvedBy",
+          "approvedAt"
+        ],
+        "type": "object"
+      },
+      "AdjustmentKind": {
+        "enum": [
+          "REVERSAL",
+          "CORRECTION"
+        ],
+        "type": "string"
+      },
+      "AdjustmentReason": {
+        "enum": [
+          "PROVIDER_ERROR",
+          "DUPLICATE_PAYMENT",
+          "LEGAL_OBLIGATION",
+          "ACCOUNTING_CORRECTION",
+          "OTHER"
+        ],
+        "type": "string"
+      },
+      "AdminAccountDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "grants": {
+            "items": {
+              "$ref": "#/components/schemas/AdminGrantDto"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastLoginAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "preset": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminPreset"
+              }
+            ],
+            "description": "The preset these permanent grants match exactly, if any.",
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminStatus"
+              }
+            ]
+          },
+          "totpEnrolled": {
+            "description": "An authenticator is enrolled (false after a TOTP reset).",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "fullName",
+          "status",
+          "totpEnrolled",
+          "lastLoginAt",
+          "createdAt",
+          "grants",
+          "preset"
         ],
         "type": "object"
       },
@@ -390,6 +645,133 @@
           "processingError",
           "uploadedAt",
           "processedAt"
+        ],
+        "type": "object"
+      },
+      "AdminGrantDto": {
+        "properties": {
+          "expiresAt": {
+            "description": "Temporary grants only.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "grant": {
+            "enum": [
+              "users.read",
+              "users.write",
+              "users.suspend",
+              "verification.queue.read",
+              "verification.review",
+              "verification.documents.view",
+              "verification.appeal.decide",
+              "library.read",
+              "library.write",
+              "library.disable",
+              "calculators.read",
+              "calculators.draft",
+              "calculators.review",
+              "calculators.publish",
+              "calculators.retire",
+              "subscriptions.read",
+              "subscriptions.plans.write",
+              "transactions.read",
+              "transactions.adjustment.request",
+              "transactions.adjustment.approve",
+              "finance.read",
+              "finance.expenses.write",
+              "finance.reports.export",
+              "analytics.read",
+              "analytics.export",
+              "audit.read",
+              "audit.export",
+              "system.roles.write",
+              "system.settings.write",
+              "system.notifications.send",
+              "system.demo.configure"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+              "usersRead",
+              "usersWrite",
+              "usersSuspend",
+              "verificationQueueRead",
+              "verificationReview",
+              "verificationDocumentsView",
+              "verificationAppealDecide",
+              "libraryRead",
+              "libraryWrite",
+              "libraryDisable",
+              "calculatorsRead",
+              "calculatorsDraft",
+              "calculatorsReview",
+              "calculatorsPublish",
+              "calculatorsRetire",
+              "subscriptionsRead",
+              "subscriptionsPlansWrite",
+              "transactionsRead",
+              "transactionsAdjustmentRequest",
+              "transactionsAdjustmentApprove",
+              "financeRead",
+              "financeExpensesWrite",
+              "financeReportsExport",
+              "analyticsRead",
+              "analyticsExport",
+              "auditRead",
+              "auditExport",
+              "systemRolesWrite",
+              "systemSettingsWrite",
+              "systemNotificationsSend",
+              "systemDemoConfigure"
+            ],
+            "x-enumNames": [
+              "usersRead",
+              "usersWrite",
+              "usersSuspend",
+              "verificationQueueRead",
+              "verificationReview",
+              "verificationDocumentsView",
+              "verificationAppealDecide",
+              "libraryRead",
+              "libraryWrite",
+              "libraryDisable",
+              "calculatorsRead",
+              "calculatorsDraft",
+              "calculatorsReview",
+              "calculatorsPublish",
+              "calculatorsRetire",
+              "subscriptionsRead",
+              "subscriptionsPlansWrite",
+              "transactionsRead",
+              "transactionsAdjustmentRequest",
+              "transactionsAdjustmentApprove",
+              "financeRead",
+              "financeExpensesWrite",
+              "financeReportsExport",
+              "analyticsRead",
+              "analyticsExport",
+              "auditRead",
+              "auditExport",
+              "systemRolesWrite",
+              "systemSettingsWrite",
+              "systemNotificationsSend",
+              "systemDemoConfigure"
+            ]
+          },
+          "grantedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GrantorDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "grant",
+          "expiresAt",
+          "grantedBy"
         ],
         "type": "object"
       },
@@ -534,6 +916,32 @@
         "required": [
           "id",
           "fullName"
+        ],
+        "type": "object"
+      },
+      "AdminPreset": {
+        "description": "The preset these permanent grants match exactly, if any.",
+        "enum": [
+          "SUPER_ADMIN",
+          "VERIFICATION_REVIEWER",
+          "LIBRARY_MANAGER",
+          "CALCULATOR_EDITOR",
+          "CLINICAL_REVIEWER",
+          "FINANCE_ADMIN",
+          "ANALYST"
+        ],
+        "type": "string"
+      },
+      "AdminReasonBody": {
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
         ],
         "type": "object"
       },
@@ -750,6 +1158,69 @@
         ],
         "type": "object"
       },
+      "AdminStatus": {
+        "enum": [
+          "ACTIVE",
+          "SUSPENDED"
+        ],
+        "type": "string"
+      },
+      "AdminSubscriptionDto": {
+        "properties": {
+          "currentPeriodEnd": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "currentPeriodStart": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "graceEndsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastTransaction": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LedgerTransactionRefDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/LedgerPlanDto"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionStatus"
+              }
+            ]
+          },
+          "user": {
+            "$ref": "#/components/schemas/LedgerPersonDto"
+          }
+        },
+        "required": [
+          "id",
+          "user",
+          "plan",
+          "status",
+          "currentPeriodStart",
+          "currentPeriodEnd",
+          "graceEndsAt",
+          "lastTransaction"
+        ],
+        "type": "object"
+      },
       "AdminTestCaseDto": {
         "properties": {
           "expectedBand": {
@@ -816,6 +1287,434 @@
         "required": [
           "challengeToken",
           "code"
+        ],
+        "type": "object"
+      },
+      "AdminTransactionDetailDto": {
+        "properties": {
+          "adjustments": {
+            "items": {
+              "$ref": "#/components/schemas/AdjustmentDto"
+            },
+            "type": "array"
+          },
+          "amountMinor": {
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "fees": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FeeViewDto"
+              }
+            ],
+            "description": "Succeeded payments only.",
+            "nullable": true,
+            "type": "object"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryEntryDto"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "metadata": {
+            "description": "Provider details stored with the payment (no card data).",
+            "type": "object"
+          },
+          "netAmountMinor": {
+            "description": "Amount − fees (succeeded payments only).",
+            "nullable": true,
+            "type": "number"
+          },
+          "paymentDate": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "paymentProvider": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentProvider"
+              }
+            ]
+          },
+          "plan": {
+            "$ref": "#/components/schemas/LedgerPlanDto"
+          },
+          "providerReference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TransactionStatus"
+              }
+            ]
+          },
+          "subscriptionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "transactionId": {
+            "example": "DT-2026-001842",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/LedgerPersonDto"
+          }
+        },
+        "required": [
+          "id",
+          "transactionId",
+          "user",
+          "plan",
+          "subscriptionId",
+          "amountMinor",
+          "currency",
+          "paymentProvider",
+          "providerReference",
+          "status",
+          "paymentDate",
+          "fees",
+          "netAmountMinor",
+          "createdAt",
+          "metadata",
+          "adjustments",
+          "history"
+        ],
+        "type": "object"
+      },
+      "AdminTransactionDto": {
+        "properties": {
+          "amountMinor": {
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "fees": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FeeViewDto"
+              }
+            ],
+            "description": "Succeeded payments only.",
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "netAmountMinor": {
+            "description": "Amount − fees (succeeded payments only).",
+            "nullable": true,
+            "type": "number"
+          },
+          "paymentDate": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "paymentProvider": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentProvider"
+              }
+            ]
+          },
+          "plan": {
+            "$ref": "#/components/schemas/LedgerPlanDto"
+          },
+          "providerReference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TransactionStatus"
+              }
+            ]
+          },
+          "subscriptionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "transactionId": {
+            "example": "DT-2026-001842",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/LedgerPersonDto"
+          }
+        },
+        "required": [
+          "id",
+          "transactionId",
+          "user",
+          "plan",
+          "subscriptionId",
+          "amountMinor",
+          "currency",
+          "paymentProvider",
+          "providerReference",
+          "status",
+          "paymentDate",
+          "fees",
+          "netAmountMinor",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "AdminUserDetailDto": {
+        "properties": {
+          "academicYear": {
+            "nullable": true,
+            "type": "number"
+          },
+          "access": {
+            "$ref": "#/components/schemas/AccessProfileDto"
+          },
+          "accessInputs": {
+            "$ref": "#/components/schemas/AccessInputsDto"
+          },
+          "activity": {
+            "$ref": "#/components/schemas/ActivityCountsDto"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "email": {
+            "nullable": true,
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryDto"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "institution": {
+            "nullable": true,
+            "type": "string"
+          },
+          "language": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Language"
+              }
+            ],
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "lastSeenAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "orderNumberMasked": {
+            "nullable": true,
+            "type": "string"
+          },
+          "phone": {
+            "nullable": true,
+            "type": "string"
+          },
+          "professionalType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfessionalType"
+              }
+            ],
+            "nullable": true
+          },
+          "residencyYear": {
+            "nullable": true,
+            "type": "number"
+          },
+          "specialty": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedNameDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserStatus"
+              }
+            ]
+          },
+          "subscription": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionStatus"
+              }
+            ],
+            "nullable": true
+          },
+          "subscriptions": {
+            "description": "With `subscriptions.read`.",
+            "items": {
+              "$ref": "#/components/schemas/AdminSubscriptionDto"
+            },
+            "type": "array"
+          },
+          "university": {
+            "nullable": true,
+            "type": "string"
+          },
+          "verification": {
+            "$ref": "#/components/schemas/VerificationStateDto"
+          },
+          "wilaya": {
+            "$ref": "#/components/schemas/WilayaDto"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "email",
+          "phone",
+          "status",
+          "professionalType",
+          "specialty",
+          "university",
+          "wilaya",
+          "verification",
+          "subscription",
+          "lastSeenAt",
+          "createdAt",
+          "language",
+          "academicYear",
+          "residencyYear",
+          "orderNumberMasked",
+          "institution",
+          "access",
+          "accessInputs",
+          "activity",
+          "history"
+        ],
+        "type": "object"
+      },
+      "AdminUserDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "email": {
+            "nullable": true,
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "lastSeenAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "phone": {
+            "nullable": true,
+            "type": "string"
+          },
+          "professionalType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfessionalType"
+              }
+            ],
+            "nullable": true
+          },
+          "specialty": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedNameDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserStatus"
+              }
+            ]
+          },
+          "subscription": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionStatus"
+              }
+            ],
+            "nullable": true
+          },
+          "university": {
+            "nullable": true,
+            "type": "string"
+          },
+          "verification": {
+            "$ref": "#/components/schemas/VerificationStateDto"
+          },
+          "wilaya": {
+            "$ref": "#/components/schemas/WilayaDto"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "email",
+          "phone",
+          "status",
+          "professionalType",
+          "specialty",
+          "university",
+          "wilaya",
+          "verification",
+          "subscription",
+          "lastSeenAt",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -1146,6 +2045,82 @@
         ],
         "type": "object"
       },
+      "AnalyticsBatchDto": {
+        "properties": {
+          "appVersion": {
+            "example": "1.0.0+12",
+            "type": "string"
+          },
+          "dataVersion": {
+            "description": "Offline data version the app runs on.",
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsEventDto"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "platform": {
+            "enum": [
+              "IOS",
+              "ANDROID"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "platform",
+          "events"
+        ],
+        "type": "object"
+      },
+      "AnalyticsEventDto": {
+        "properties": {
+          "entityId": {
+            "description": "Reference model or calculator id.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "occurredAt": {
+            "description": "When it happened on the device (offline buffer).",
+            "format": "date-time",
+            "type": "string"
+          },
+          "properties": {
+            "additionalProperties": true,
+            "description": "Counts, codes and flags of this event type only (section 16); never free text.",
+            "type": "object"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClientAnalyticsEventType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "occurredAt",
+          "properties"
+        ],
+        "type": "object"
+      },
+      "ApproveAdjustmentBody": {
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
       "ApproveVerificationDto": {
         "properties": {
           "expiresAt": {
@@ -1209,6 +2184,84 @@
         ],
         "type": "object"
       },
+      "AuditActorType": {
+        "enum": [
+          "ADMIN",
+          "SYSTEM",
+          "USER"
+        ],
+        "type": "string"
+      },
+      "AuditEntryDto": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "actorId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "actorName": {
+            "description": "Admin name when the actor is an admin.",
+            "nullable": true,
+            "type": "string"
+          },
+          "actorType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuditActorType"
+              }
+            ]
+          },
+          "after": {
+            "description": "JSON after the change.",
+            "nullable": true,
+            "type": "object"
+          },
+          "before": {
+            "description": "JSON before the change.",
+            "nullable": true,
+            "type": "object"
+          },
+          "entityId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "ip": {
+            "nullable": true,
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "occurredAt",
+          "actorType",
+          "actorId",
+          "actorName",
+          "action",
+          "entityType",
+          "entityId",
+          "before",
+          "after",
+          "reason",
+          "ip"
+        ],
+        "type": "object"
+      },
       "AuthTokensDto": {
         "properties": {
           "accessToken": {
@@ -1262,6 +2315,45 @@
           "code",
           "severity",
           "label"
+        ],
+        "type": "object"
+      },
+      "CalculatorActivityDto": {
+        "properties": {
+          "completions": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "nameFr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "starts": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          },
+          "version": {
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "nameFr",
+          "nameEn",
+          "version",
+          "starts",
+          "completions"
         ],
         "type": "object"
       },
@@ -1428,6 +2520,20 @@
         ],
         "type": "string"
       },
+      "CalculatorsDashboardDto": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/CalculatorActivityDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
       "CheckoutDto": {
         "properties": {
           "acknowledged": {
@@ -1495,6 +2601,22 @@
           "redirectUrl"
         ],
         "type": "object"
+      },
+      "ClientAnalyticsEventType": {
+        "enum": [
+          "SEARCH_PERFORMED",
+          "REFERENCE_SEARCHED",
+          "REFERENCE_OPENED",
+          "REFERENCE_VIEWED",
+          "CALCULATOR_STARTED",
+          "CALCULATOR_COMPLETED",
+          "FAVORITE_ADDED",
+          "FAVORITE_REMOVED",
+          "SUBSCRIPTION_VIEWED",
+          "DEMO_STARTED",
+          "DEMO_FEATURE_VIEWED"
+        ],
+        "type": "string"
       },
       "ConfirmSignUpDto": {
         "properties": {
@@ -1781,6 +2903,41 @@
         "required": [],
         "type": "object"
       },
+      "CreatedAdminDto": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "oneTimePassword": {
+            "description": "Shown once; the admin changes nothing, they enrol TOTP at first sign-in.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "oneTimePassword"
+        ],
+        "type": "object"
+      },
+      "DayActivityDto": {
+        "properties": {
+          "day": {
+            "format": "date",
+            "type": "string"
+          },
+          "subjects": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "day",
+          "subjects"
+        ],
+        "type": "object"
+      },
       "DemoContext": {
         "description": "Médecin or Résident.",
         "enum": [
@@ -1788,6 +2945,55 @@
           "RESIDENT"
         ],
         "type": "string"
+      },
+      "DemoDashboardDto": {
+        "properties": {
+          "converted": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          },
+          "modules": {
+            "items": {
+              "$ref": "#/components/schemas/DemoModuleActivityDto"
+            },
+            "type": "array"
+          },
+          "started": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "started",
+          "converted",
+          "modules"
+        ],
+        "type": "object"
+      },
+      "DemoModuleActivityDto": {
+        "properties": {
+          "limitsMet": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          },
+          "module": {
+            "type": "string"
+          },
+          "viewed": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "module",
+          "viewed",
+          "limitsMet"
+        ],
+        "type": "object"
       },
       "DemoSessionDto": {
         "properties": {
@@ -2106,6 +3312,101 @@
         ],
         "type": "object"
       },
+      "ExpenseCategory": {
+        "enum": [
+          "INFRASTRUCTURE",
+          "CLINICAL_REVIEW",
+          "SUPPORT",
+          "OTHER"
+        ],
+        "type": "string"
+      },
+      "ExpenseDto": {
+        "properties": {
+          "amountMinor": {
+            "type": "number"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExpenseCategory"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/ActorDto"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "incurredOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "voidReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "voidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "voidedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ActorDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "label",
+          "amountMinor",
+          "currency",
+          "incurredOn",
+          "createdBy",
+          "createdAt",
+          "voidedAt",
+          "voidedBy",
+          "voidReason"
+        ],
+        "type": "object"
+      },
+      "FavoriteCountDto": {
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "targetType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FavoriteTargetType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "targetType",
+          "count"
+        ],
+        "type": "object"
+      },
       "FavoriteDto": {
         "properties": {
           "createdAt": {
@@ -2259,6 +3560,154 @@
           "profileEdit"
         ]
       },
+      "FeeRateBody": {
+        "properties": {
+          "fixedMinor": {
+            "description": "Fixed part per payment, in centimes.",
+            "minimum": 0,
+            "type": "number"
+          },
+          "rateBps": {
+            "description": "Percentage of the amount in basis points (1.5 % = 150).",
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "rateBps",
+          "fixedMinor"
+        ],
+        "type": "object"
+      },
+      "FeeRateDto": {
+        "properties": {
+          "fixedMinor": {
+            "nullable": true,
+            "type": "number"
+          },
+          "provider": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentProvider"
+              }
+            ]
+          },
+          "rateBps": {
+            "nullable": true,
+            "type": "number"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "updatedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ActorDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "provider",
+          "rateBps",
+          "fixedMinor",
+          "updatedBy",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "FeeSettlementBody": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FeeSettlementItem"
+            },
+            "maxItems": 500,
+            "type": "array"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "items"
+        ],
+        "type": "object"
+      },
+      "FeeSettlementItem": {
+        "properties": {
+          "feesMinor": {
+            "description": "Actual provider fee, in centimes.",
+            "minimum": 0,
+            "type": "number"
+          },
+          "transactionId": {
+            "example": "DT-2026-001842",
+            "type": "string"
+          }
+        },
+        "required": [
+          "transactionId",
+          "feesMinor"
+        ],
+        "type": "object"
+      },
+      "FeeSettlementResultDto": {
+        "properties": {
+          "outcome": {
+            "enum": [
+              "SETTLED",
+              "NOT_FOUND",
+              "NOT_SUCCEEDED",
+              "FEES_ABOVE_AMOUNT"
+            ],
+            "type": "string"
+          },
+          "transactionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "transactionId",
+          "outcome"
+        ],
+        "type": "object"
+      },
+      "FeeViewDto": {
+        "properties": {
+          "estimated": {
+            "description": "The provider has not settled the actual fee yet (« estimé »).",
+            "type": "boolean"
+          },
+          "feesMinor": {
+            "type": "number"
+          },
+          "rateMissing": {
+            "description": "No fee rate is configured for this provider.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "feesMinor",
+          "estimated",
+          "rateMissing"
+        ],
+        "type": "object"
+      },
       "FileProcessingStatus": {
         "enum": [
           "PENDING",
@@ -2293,6 +3742,219 @@
         ],
         "type": "object"
       },
+      "FinanceOverviewDto": {
+        "properties": {
+          "bucket": {
+            "enum": [
+              "DAY",
+              "WEEK",
+              "MONTH"
+            ],
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "feeRatesMissing": {
+            "items": {
+              "$ref": "#/components/schemas/PaymentProvider"
+            },
+            "type": "array"
+          },
+          "incidents": {
+            "$ref": "#/components/schemas/IncidentsDto"
+          },
+          "ledger": {
+            "$ref": "#/components/schemas/LedgerDto"
+          },
+          "period": {
+            "$ref": "#/components/schemas/PeriodDto"
+          },
+          "previous": {
+            "$ref": "#/components/schemas/PeriodDto"
+          },
+          "previousLedger": {
+            "$ref": "#/components/schemas/LedgerDto"
+          },
+          "revenueByPlan": {
+            "items": {
+              "$ref": "#/components/schemas/PlanRevenueDto"
+            },
+            "type": "array"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesPointDto"
+            },
+            "type": "array"
+          },
+          "subscriptions": {
+            "$ref": "#/components/schemas/SubscriptionFiguresDto"
+          }
+        },
+        "required": [
+          "period",
+          "previous",
+          "currency",
+          "bucket",
+          "ledger",
+          "previousLedger",
+          "feeRatesMissing",
+          "subscriptions",
+          "revenueByPlan",
+          "series",
+          "incidents"
+        ],
+        "type": "object"
+      },
+      "FreshnessDto": {
+        "properties": {
+          "latestEventAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "latestEventAt"
+        ],
+        "type": "object"
+      },
+      "GrantorDto": {
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ],
+        "type": "object"
+      },
+      "GrantsBody": {
+        "properties": {
+          "grants": {
+            "items": {
+              "enum": [
+                "users.read",
+                "users.write",
+                "users.suspend",
+                "verification.queue.read",
+                "verification.review",
+                "verification.documents.view",
+                "verification.appeal.decide",
+                "library.read",
+                "library.write",
+                "library.disable",
+                "calculators.read",
+                "calculators.draft",
+                "calculators.review",
+                "calculators.publish",
+                "calculators.retire",
+                "subscriptions.read",
+                "subscriptions.plans.write",
+                "transactions.read",
+                "transactions.adjustment.request",
+                "transactions.adjustment.approve",
+                "finance.read",
+                "finance.expenses.write",
+                "finance.reports.export",
+                "analytics.read",
+                "analytics.export",
+                "audit.read",
+                "audit.export",
+                "system.roles.write",
+                "system.settings.write",
+                "system.notifications.send",
+                "system.demo.configure"
+              ],
+              "type": "string",
+              "x-enum-varnames": [
+                "usersRead",
+                "usersWrite",
+                "usersSuspend",
+                "verificationQueueRead",
+                "verificationReview",
+                "verificationDocumentsView",
+                "verificationAppealDecide",
+                "libraryRead",
+                "libraryWrite",
+                "libraryDisable",
+                "calculatorsRead",
+                "calculatorsDraft",
+                "calculatorsReview",
+                "calculatorsPublish",
+                "calculatorsRetire",
+                "subscriptionsRead",
+                "subscriptionsPlansWrite",
+                "transactionsRead",
+                "transactionsAdjustmentRequest",
+                "transactionsAdjustmentApprove",
+                "financeRead",
+                "financeExpensesWrite",
+                "financeReportsExport",
+                "analyticsRead",
+                "analyticsExport",
+                "auditRead",
+                "auditExport",
+                "systemRolesWrite",
+                "systemSettingsWrite",
+                "systemNotificationsSend",
+                "systemDemoConfigure"
+              ],
+              "x-enumNames": [
+                "usersRead",
+                "usersWrite",
+                "usersSuspend",
+                "verificationQueueRead",
+                "verificationReview",
+                "verificationDocumentsView",
+                "verificationAppealDecide",
+                "libraryRead",
+                "libraryWrite",
+                "libraryDisable",
+                "calculatorsRead",
+                "calculatorsDraft",
+                "calculatorsReview",
+                "calculatorsPublish",
+                "calculatorsRetire",
+                "subscriptionsRead",
+                "subscriptionsPlansWrite",
+                "transactionsRead",
+                "transactionsAdjustmentRequest",
+                "transactionsAdjustmentApprove",
+                "financeRead",
+                "financeExpensesWrite",
+                "financeReportsExport",
+                "analyticsRead",
+                "analyticsExport",
+                "auditRead",
+                "auditExport",
+                "systemRolesWrite",
+                "systemSettingsWrite",
+                "systemNotificationsSend",
+                "systemDemoConfigure"
+              ]
+            },
+            "type": "array"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "grants"
+        ],
+        "type": "object"
+      },
       "HealthResponse": {
         "properties": {
           "checkedAt": {
@@ -2319,6 +3981,112 @@
           "status",
           "database",
           "checkedAt"
+        ],
+        "type": "object"
+      },
+      "HistoryCountDto": {
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ActivityKind"
+              }
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "count"
+        ],
+        "type": "object"
+      },
+      "HistoryEntryDto": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "actorId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "actorType": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "actorId",
+          "actorType",
+          "reason",
+          "occurredAt"
+        ],
+        "type": "object"
+      },
+      "IncidentsDto": {
+        "properties": {
+          "failedPayments": {
+            "type": "number"
+          },
+          "stalePendingPayments": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "failedPayments",
+          "stalePendingPayments"
+        ],
+        "type": "object"
+      },
+      "IngestRejectionsDto": {
+        "properties": {
+          "CONTEXT": {
+            "type": "number"
+          },
+          "ENTITY": {
+            "type": "number"
+          },
+          "PROPERTIES": {
+            "type": "number"
+          },
+          "TIME": {
+            "type": "number"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "IngestResultDto": {
+        "properties": {
+          "accepted": {
+            "type": "number"
+          },
+          "rejected": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IngestRejectionsDto"
+              }
+            ],
+            "description": "Dropped events by reason (not retried)."
+          }
+        },
+        "required": [
+          "accepted",
+          "rejected"
         ],
         "type": "object"
       },
@@ -2387,6 +4155,137 @@
         ],
         "type": "string"
       },
+      "LedgerDto": {
+        "properties": {
+          "adjustmentsMinor": {
+            "type": "number"
+          },
+          "estimatedFeesMinor": {
+            "description": "Part of the fees still estimated.",
+            "type": "number"
+          },
+          "expensesMinor": {
+            "type": "number"
+          },
+          "feesMinor": {
+            "type": "number"
+          },
+          "grossMinor": {
+            "description": "Payments + approved exceptional adjustments.",
+            "type": "number"
+          },
+          "netProfitMinor": {
+            "type": "number"
+          },
+          "netRevenueMinor": {
+            "type": "number"
+          },
+          "payments": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "grossMinor",
+          "adjustmentsMinor",
+          "feesMinor",
+          "estimatedFeesMinor",
+          "netRevenueMinor",
+          "expensesMinor",
+          "netProfitMinor",
+          "payments"
+        ],
+        "type": "object"
+      },
+      "LedgerPersonDto": {
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName"
+        ],
+        "type": "object"
+      },
+      "LedgerPlanDto": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "durationDays": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "nameFr": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "version",
+          "nameFr",
+          "nameEn",
+          "durationDays"
+        ],
+        "type": "object"
+      },
+      "LedgerTransactionRefDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "paymentProvider": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentProvider"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TransactionStatus"
+              }
+            ]
+          },
+          "transactionId": {
+            "example": "DT-2026-001842",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "transactionId",
+          "status",
+          "paymentProvider",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "LegalDto": {
         "properties": {
           "privacyUrl": {
@@ -2406,6 +4305,47 @@
         },
         "required": [
           "termsVersion"
+        ],
+        "type": "object"
+      },
+      "LibraryDashboardDto": {
+        "properties": {
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ModelActivityDto"
+            },
+            "type": "array"
+          },
+          "searches": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          },
+          "searchesWithoutResult": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "searches",
+          "searchesWithoutResult",
+          "models"
+        ],
+        "type": "object"
+      },
+      "LocalizedNameDto": {
+        "properties": {
+          "en": {
+            "type": "string"
+          },
+          "fr": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fr",
+          "en"
         ],
         "type": "object"
       },
@@ -2602,6 +4542,130 @@
         ],
         "type": "object"
       },
+      "ModelActivityDto": {
+        "properties": {
+          "favorites": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "offlineViews": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          },
+          "opens": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          },
+          "titleEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleFr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceDocumentType"
+              }
+            ],
+            "nullable": true
+          },
+          "views": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "titleFr",
+          "titleEn",
+          "type",
+          "opens",
+          "views",
+          "offlineViews",
+          "favorites"
+        ],
+        "type": "object"
+      },
+      "NewAdminBody": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "fullName": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "preset": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminPreset"
+              }
+            ]
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "email",
+          "fullName",
+          "preset"
+        ],
+        "type": "object"
+      },
+      "NewExpenseBody": {
+        "properties": {
+          "amountMinor": {
+            "description": "Centimes.",
+            "minimum": 1,
+            "type": "number"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExpenseCategory"
+              }
+            ]
+          },
+          "incurredOn": {
+            "example": "2026-09-01",
+            "format": "date",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 200,
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "category",
+          "label",
+          "amountMinor",
+          "incurredOn"
+        ],
+        "type": "object"
+      },
       "NotificationDto": {
         "properties": {
           "createdAt": {
@@ -2692,6 +4756,37 @@
         ],
         "type": "object"
       },
+      "OnboardingDashboardDto": {
+        "properties": {
+          "rejected": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          },
+          "signUps": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          },
+          "submitted": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          },
+          "verified": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "signUps",
+          "submitted",
+          "verified",
+          "rejected"
+        ],
+        "type": "object"
+      },
       "OtpChallengeDto": {
         "properties": {
           "challengeId": {
@@ -2724,6 +4819,169 @@
           "destinationHint",
           "expiresAt",
           "resendAvailableAt"
+        ],
+        "type": "object"
+      },
+      "OverviewCaseDto": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "personName": {
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationStatus"
+              }
+            ]
+          },
+          "type": {
+            "type": "string"
+          },
+          "waitingSince": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "status",
+          "waitingSince",
+          "personName"
+        ],
+        "type": "object"
+      },
+      "OverviewDto": {
+        "properties": {
+          "activeUsers30d": {
+            "description": "analytics.read; null = « < 10 ».",
+            "nullable": true,
+            "type": "number"
+          },
+          "failedPayments30d": {
+            "description": "transactions.read",
+            "type": "number"
+          },
+          "fileFailures": {
+            "items": {
+              "$ref": "#/components/schemas/OverviewFileFailureDto"
+            },
+            "type": "array"
+          },
+          "latestChanges": {
+            "description": "Latest content changes.",
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryDto"
+            },
+            "type": "array"
+          },
+          "netRevenue30dMinor": {
+            "description": "finance.read",
+            "type": "number"
+          },
+          "oldestCases": {
+            "items": {
+              "$ref": "#/components/schemas/OverviewCaseDto"
+            },
+            "type": "array"
+          },
+          "payingProfessionals": {
+            "description": "subscriptions.read",
+            "type": "number"
+          },
+          "pendingVerifications": {
+            "description": "verification.queue.read",
+            "type": "number"
+          },
+          "slaBreaches": {
+            "description": "verification.queue.read",
+            "type": "number"
+          },
+          "slaHours": {
+            "description": "Verification SLA in hours.",
+            "type": "number"
+          },
+          "stalePendingPayments": {
+            "description": "transactions.read",
+            "type": "number"
+          },
+          "versionsToReview": {
+            "items": {
+              "$ref": "#/components/schemas/OverviewVersionDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "slaHours"
+        ],
+        "type": "object"
+      },
+      "OverviewFileFailureDto": {
+        "properties": {
+          "documentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "titleFr": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "uploadedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "documentId",
+          "titleFr",
+          "type",
+          "version",
+          "uploadedAt"
+        ],
+        "type": "object"
+      },
+      "OverviewVersionDto": {
+        "properties": {
+          "calculatorId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "nameFr": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "versionId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "versionId",
+          "calculatorId",
+          "nameFr",
+          "nameEn",
+          "version",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -2776,6 +5034,23 @@
           "SATIM_EDAHABIA"
         ],
         "type": "string"
+      },
+      "PeriodDto": {
+        "properties": {
+          "from": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "to": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
       },
       "PersonRefDto": {
         "properties": {
@@ -2904,6 +5179,29 @@
         ],
         "type": "object"
       },
+      "PlanActivityDto": {
+        "properties": {
+          "planCode": {
+            "type": "string"
+          },
+          "renewed": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          },
+          "started": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "planCode",
+          "started",
+          "renewed"
+        ],
+        "type": "object"
+      },
       "PlanDto": {
         "properties": {
           "audience": {
@@ -2984,6 +5282,25 @@
           "excludesFr",
           "excludesEn",
           "isPurchasable"
+        ],
+        "type": "object"
+      },
+      "PlanRevenueDto": {
+        "properties": {
+          "grossMinor": {
+            "type": "number"
+          },
+          "payments": {
+            "type": "number"
+          },
+          "planCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "planCode",
+          "grossMinor",
+          "payments"
         ],
         "type": "object"
       },
@@ -3727,6 +6044,47 @@
         ],
         "type": "string"
       },
+      "SeriesPointDto": {
+        "properties": {
+          "byPlan": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "Plan code → gross.",
+            "type": "object"
+          },
+          "ended": {
+            "type": "number"
+          },
+          "grossMinor": {
+            "type": "number"
+          },
+          "partial": {
+            "description": "The bucket is not over (« période en cours »).",
+            "type": "boolean"
+          },
+          "renewed": {
+            "type": "number"
+          },
+          "start": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "started": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "start",
+          "partial",
+          "grossMinor",
+          "byPlan",
+          "started",
+          "renewed",
+          "ended"
+        ],
+        "type": "object"
+      },
       "SessionDto": {
         "properties": {
           "createdAt": {
@@ -4012,6 +6370,19 @@
         ],
         "type": "object"
       },
+      "StatusBody": {
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
       "SubscriptionDto": {
         "properties": {
           "currentPeriodEnd": {
@@ -4048,6 +6419,50 @@
           "id",
           "status",
           "plan"
+        ],
+        "type": "object"
+      },
+      "SubscriptionFiguresDto": {
+        "properties": {
+          "arrMinor": {
+            "description": "MRR × 12, a projection.",
+            "type": "number"
+          },
+          "ended": {
+            "type": "number"
+          },
+          "mrrMinor": {
+            "type": "number"
+          },
+          "payingProfessionals": {
+            "type": "number"
+          },
+          "previousEnded": {
+            "type": "number"
+          },
+          "previousRenewed": {
+            "type": "number"
+          },
+          "previousStarted": {
+            "type": "number"
+          },
+          "renewed": {
+            "type": "number"
+          },
+          "started": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "mrrMinor",
+          "arrMinor",
+          "payingProfessionals",
+          "started",
+          "renewed",
+          "ended",
+          "previousStarted",
+          "previousRenewed",
+          "previousEnded"
         ],
         "type": "object"
       },
@@ -4089,6 +6504,26 @@
         ],
         "type": "string"
       },
+      "SubscriptionsDashboardDto": {
+        "properties": {
+          "byPlan": {
+            "items": {
+              "$ref": "#/components/schemas/PlanActivityDto"
+            },
+            "type": "array"
+          },
+          "planViews": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "planViews",
+          "byPlan"
+        ],
+        "type": "object"
+      },
       "SynonymsDto": {
         "properties": {
           "terms": {
@@ -4100,6 +6535,50 @@
         },
         "required": [
           "terms"
+        ],
+        "type": "object"
+      },
+      "TemporaryGrantBody": {
+        "properties": {
+          "grant": {
+            "enum": [
+              "verification.documents.view"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+              "verificationDocumentsView"
+            ],
+            "x-enumNames": [
+              "verificationDocumentsView"
+            ]
+          },
+          "hours": {
+            "default": 2,
+            "maximum": 8,
+            "minimum": 1,
+            "type": "number"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "grant"
+        ],
+        "type": "object"
+      },
+      "TemporaryGrantDto": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expiresAt"
         ],
         "type": "object"
       },
@@ -4191,6 +6670,27 @@
           "CANCELED"
         ],
         "type": "string"
+      },
+      "TypeActivityDto": {
+        "properties": {
+          "professionalType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfessionalType"
+              }
+            ]
+          },
+          "subjects": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "professionalType",
+          "subjects"
+        ],
+        "type": "object"
       },
       "UnlockPath": {
         "enum": [
@@ -4418,6 +6918,54 @@
           "expiresAt"
         ],
         "type": "object"
+      },
+      "UsageDashboardDto": {
+        "properties": {
+          "activeSubjects": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          },
+          "byType": {
+            "items": {
+              "$ref": "#/components/schemas/TypeActivityDto"
+            },
+            "type": "array"
+          },
+          "daily": {
+            "items": {
+              "$ref": "#/components/schemas/DayActivityDto"
+            },
+            "type": "array"
+          },
+          "previousActiveSubjects": {
+            "description": "null when fewer than 10 people (« < 10 »).",
+            "nullable": true,
+            "type": "number"
+          },
+          "previousDaily": {
+            "items": {
+              "$ref": "#/components/schemas/DayActivityDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "activeSubjects",
+          "previousActiveSubjects",
+          "byType",
+          "daily",
+          "previousDaily"
+        ],
+        "type": "object"
+      },
+      "UserStatus": {
+        "enum": [
+          "ACTIVE",
+          "SUSPENDED",
+          "DELETED"
+        ],
+        "type": "string"
       },
       "VerificationCaseDto": {
         "properties": {
@@ -4875,6 +7423,36 @@
         ],
         "type": "string"
       },
+      "VerificationStateDto": {
+        "properties": {
+          "identity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationStatus"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VerificationStatus"
+              }
+            ],
+            "description": "Professional status, or student status for students."
+          },
+          "statusExpiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "identity",
+          "status",
+          "statusExpiresAt"
+        ],
+        "type": "object"
+      },
       "VerificationStatus": {
         "enum": [
           "NOT_STARTED",
@@ -5065,6 +7643,19 @@
         ],
         "type": "object"
       },
+      "VoidExpenseBody": {
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
       "WeightUnit": {
         "enum": [
           "KG",
@@ -5117,6 +7708,1019 @@
   },
   "openapi": "3.0.0",
   "paths": {
+    "/admin/v1/admins": {
+      "get": {
+        "operationId": "AdminAccountsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminAccountDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-permissions"
+        ]
+      },
+      "post": {
+        "operationId": "AdminAccountsController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewAdminBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedAdminDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-permissions"
+        ]
+      }
+    },
+    "/admin/v1/admins/{id}/grants": {
+      "put": {
+        "operationId": "AdminAccountsController_setGrants",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantsBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-permissions"
+        ]
+      }
+    },
+    "/admin/v1/admins/{id}/reinstate": {
+      "post": {
+        "operationId": "AdminAccountsController_reinstate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-permissions"
+        ]
+      }
+    },
+    "/admin/v1/admins/{id}/reset-totp": {
+      "post": {
+        "operationId": "AdminAccountsController_resetTotp",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-permissions"
+        ]
+      }
+    },
+    "/admin/v1/admins/{id}/suspend": {
+      "post": {
+        "operationId": "AdminAccountsController_suspend",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-permissions"
+        ]
+      }
+    },
+    "/admin/v1/admins/{id}/temporary-grants": {
+      "post": {
+        "operationId": "AdminAccountsController_grantTemporary",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemporaryGrantBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemporaryGrantDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-permissions"
+        ]
+      }
+    },
+    "/admin/v1/analytics/calculators": {
+      "get": {
+        "operationId": "AnalyticsAdminController_calculators",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "professionalType",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ProfessionalType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "specialtyCode",
+            "required": false,
+            "schema": {
+              "example": "CARDIOLOGY",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalculatorsDashboardDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-analytics"
+        ]
+      }
+    },
+    "/admin/v1/analytics/demo": {
+      "get": {
+        "operationId": "AnalyticsAdminController_demo",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "professionalType",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ProfessionalType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "specialtyCode",
+            "required": false,
+            "schema": {
+              "example": "CARDIOLOGY",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoDashboardDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-analytics"
+        ]
+      }
+    },
+    "/admin/v1/analytics/freshness": {
+      "get": {
+        "operationId": "AnalyticsAdminController_freshness",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FreshnessDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-analytics"
+        ]
+      }
+    },
+    "/admin/v1/analytics/library": {
+      "get": {
+        "operationId": "AnalyticsAdminController_library",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "professionalType",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ProfessionalType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "specialtyCode",
+            "required": false,
+            "schema": {
+              "example": "CARDIOLOGY",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryDashboardDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-analytics"
+        ]
+      }
+    },
+    "/admin/v1/analytics/subscriptions": {
+      "get": {
+        "operationId": "AnalyticsAdminController_subscriptions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "professionalType",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ProfessionalType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "specialtyCode",
+            "required": false,
+            "schema": {
+              "example": "CARDIOLOGY",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionsDashboardDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-analytics"
+        ]
+      }
+    },
+    "/admin/v1/analytics/usage": {
+      "get": {
+        "operationId": "AnalyticsAdminController_usage",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "professionalType",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ProfessionalType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "specialtyCode",
+            "required": false,
+            "schema": {
+              "example": "CARDIOLOGY",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageDashboardDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-analytics"
+        ]
+      }
+    },
+    "/admin/v1/analytics/users": {
+      "get": {
+        "operationId": "AnalyticsAdminController_users",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "professionalType",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ProfessionalType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "specialtyCode",
+            "required": false,
+            "schema": {
+              "example": "CARDIOLOGY",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingDashboardDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-analytics"
+        ]
+      }
+    },
+    "/admin/v1/audit": {
+      "get": {
+        "operationId": "AuditLogController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "actorType",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AuditActorType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actorId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "entityType",
+            "required": false,
+            "schema": {
+              "example": "ReferenceDocument",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Exact action, or a prefix ending with \".\" (e.g. \"finance.\").",
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Id of the last entry of the previous page.",
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEntryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-audit"
+        ]
+      }
+    },
+    "/admin/v1/audit/export": {
+      "get": {
+        "operationId": "AuditLogController_export",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "actorType",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AuditActorType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actorId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "entityType",
+            "required": false,
+            "schema": {
+              "example": "ReferenceDocument",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Exact action, or a prefix ending with \".\" (e.g. \"finance.\").",
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Id of the last entry of the previous page.",
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "CSV (UTF-8, `;` separated)."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-audit"
+        ]
+      }
+    },
     "/admin/v1/auth/sign-in": {
       "post": {
         "operationId": "AdminAuthController_signIn",
@@ -6126,6 +9730,451 @@
         ]
       }
     },
+    "/admin/v1/finance/expenses": {
+      "get": {
+        "operationId": "FinanceController_expenses",
+        "parameters": [
+          {
+            "description": "Start of the period (inclusive).",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "End of the period (exclusive).",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExpenseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-finance"
+        ]
+      },
+      "post": {
+        "operationId": "FinanceController_addExpense",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewExpenseBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-finance"
+        ]
+      }
+    },
+    "/admin/v1/finance/expenses/{id}/void": {
+      "post": {
+        "operationId": "FinanceController_voidExpense",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoidExpenseBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-finance"
+        ]
+      }
+    },
+    "/admin/v1/finance/fee-rates": {
+      "get": {
+        "operationId": "FinanceController_feeRates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FeeRateDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-finance"
+        ]
+      }
+    },
+    "/admin/v1/finance/fee-rates/{provider}": {
+      "put": {
+        "operationId": "FinanceController_setFeeRate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PaymentProvider"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeeRateBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-finance"
+        ]
+      }
+    },
+    "/admin/v1/finance/fee-settlements": {
+      "post": {
+        "operationId": "FinanceController_settleFees",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeeSettlementBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FeeSettlementResultDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-finance"
+        ]
+      }
+    },
+    "/admin/v1/finance/overview": {
+      "get": {
+        "operationId": "FinanceController_overview",
+        "parameters": [
+          {
+            "description": "Start of the period (inclusive).",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "End of the period (exclusive).",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceOverviewDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-finance"
+        ]
+      }
+    },
+    "/admin/v1/finance/reports/{kind}": {
+      "get": {
+        "operationId": "FinanceController_report",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "revenue-by-plan",
+                "subscriptions",
+                "provider-fees"
+              ],
+              "type": "string",
+              "x-enum-varnames": [
+                "revenueByPlan",
+                "subscriptions",
+                "providerFees"
+              ],
+              "x-enumNames": [
+                "revenueByPlan",
+                "subscriptions",
+                "providerFees"
+              ]
+            }
+          },
+          {
+            "description": "Start of the period (inclusive).",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "End of the period (exclusive).",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "locale",
+            "required": false,
+            "schema": {
+              "default": "FR",
+              "enum": [
+                "FR",
+                "EN"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "CSV (UTF-8, `;` separated)."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-finance"
+        ]
+      }
+    },
     "/admin/v1/me": {
       "get": {
         "operationId": "AdminAuthController_me",
@@ -6159,6 +10208,42 @@
         ],
         "tags": [
           "admin-auth"
+        ]
+      }
+    },
+    "/admin/v1/overview": {
+      "get": {
+        "operationId": "OverviewController_overview",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverviewDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-overview"
         ]
       }
     },
@@ -7291,6 +11376,606 @@
         ]
       }
     },
+    "/admin/v1/subscriptions": {
+      "get": {
+        "operationId": "BillingLedgerController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SubscriptionStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "planCode",
+            "required": false,
+            "schema": {
+              "example": "PRO_MONTHLY",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Id of the last row of the previous page.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminSubscriptionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-subscriptions"
+        ]
+      }
+    },
+    "/admin/v1/transactions": {
+      "get": {
+        "operationId": "TransactionsController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TransactionStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "provider",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PaymentProvider"
+            }
+          },
+          {
+            "in": "query",
+            "name": "planCode",
+            "required": false,
+            "schema": {
+              "example": "PRO_MONTHLY",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Exact DT-… number or provider reference.",
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "userId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Id of the last row of the previous page.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminTransactionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-transactions"
+        ]
+      }
+    },
+    "/admin/v1/transactions/adjustments/{adjustmentId}/approve": {
+      "post": {
+        "operationId": "TransactionsController_approveAdjustment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "adjustmentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveAdjustmentBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminTransactionDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-transactions"
+        ]
+      }
+    },
+    "/admin/v1/transactions/{id}": {
+      "get": {
+        "operationId": "TransactionsController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminTransactionDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-transactions"
+        ]
+      }
+    },
+    "/admin/v1/transactions/{id}/adjustments": {
+      "post": {
+        "operationId": "TransactionsController_requestAdjustment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustmentBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminTransactionDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-transactions"
+        ]
+      }
+    },
+    "/admin/v1/users": {
+      "get": {
+        "operationId": "AdminUsersController_list",
+        "parameters": [
+          {
+            "description": "Words of the name, e-mail or phone.",
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "professionalType",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ProfessionalType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "ACTIVE",
+                "SUSPENDED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminUserDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-users"
+        ]
+      }
+    },
+    "/admin/v1/users/{id}": {
+      "get": {
+        "operationId": "AdminUsersController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-users"
+        ]
+      }
+    },
+    "/admin/v1/users/{id}/reinstate": {
+      "post": {
+        "operationId": "AdminUsersController_reinstate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminReasonBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-users"
+        ]
+      }
+    },
+    "/admin/v1/users/{id}/sign-out": {
+      "post": {
+        "operationId": "AdminUsersController_signOut",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminReasonBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-users"
+        ]
+      }
+    },
+    "/admin/v1/users/{id}/suspend": {
+      "post": {
+        "operationId": "AdminUsersController_suspend",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminReasonBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-users"
+        ]
+      }
+    },
     "/admin/v1/verification/cases": {
       "get": {
         "operationId": "VerificationAdminController_queue",
@@ -7654,6 +12339,52 @@
         ],
         "tags": [
           "admin-verification"
+        ]
+      }
+    },
+    "/v1/analytics/events": {
+      "post": {
+        "operationId": "AnalyticsController_ingest",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyticsBatchDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResultDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "analytics"
         ]
       }
     },

@@ -7,6 +7,8 @@ import { NotificationsModule } from '../notifications/index.js';
 import { UsersModule } from '../users/index.js';
 import { VerificationModule } from '../verification/index.js';
 import { BillingAdminController } from './billing-admin.controller.js';
+import { BillingLedgerController } from './billing-ledger.controller.js';
+import { BillingLedgerService } from './billing-ledger.service.js';
 import { BillingController } from './billing.controller.js';
 import { CheckoutService } from './checkout.service.js';
 import { FakeGateway } from './payments/fake.gateway.js';
@@ -24,12 +26,13 @@ import { SubscriptionStatusService } from './subscription-status.service.js';
  */
 @Module({
   imports: [AdminAuthModule, AuditModule, NotificationsModule, UsersModule, VerificationModule],
-  controllers: [BillingController, BillingAdminController],
+  controllers: [BillingController, BillingAdminController, BillingLedgerController],
   providers: [
     SubscriptionStatusService,
     PlansService,
     CheckoutService,
     SubscriptionLifecycleService,
+    BillingLedgerService,
     FakeGateway,
     SatimGateway,
     {
@@ -39,7 +42,7 @@ import { SubscriptionStatusService } from './subscription-status.service.js';
         env.PAYMENT_PROVIDER === 'satim' ? satim : fake,
     },
   ],
-  exports: [SubscriptionStatusService, CheckoutService],
+  exports: [SubscriptionStatusService, CheckoutService, BillingLedgerService],
 })
 export class BillingModule implements OnModuleInit {
   constructor(

@@ -133,6 +133,15 @@ enum AdjustmentKind {
   @@map("adjustment_kind")
 }
 
+enum ExpenseCategory {
+  INFRASTRUCTURE
+  CLINICAL_REVIEW
+  SUPPORT
+  OTHER
+
+  @@map("expense_category")
+}
+
 enum ReferenceDocumentType {
   ORDONNANCE
   CERTIFICATE
@@ -294,6 +303,8 @@ enum SessionRevocationReason {
   REFRESH_REUSE
   DEVICE_MISMATCH
   ACCOUNT_SUSPENDED
+  /// An admin signed the person out of every device (Admin Web « Réinitialiser la connexion »).
+  ADMIN_REVOKED
 
   @@map("session_revocation_reason")
 }
@@ -609,6 +620,41 @@ model TransactionAdjustment {
   @@index([transactionId])
   @@index([approvedAt])
   @@map("transaction_adjustments")
+}
+
+/// Operating expense entered by finance (section 15). Never deleted: a mistaken entry is voided,
+/// once, with a reason (trigger), and voided entries leave the totals.
+model OperatingExpense {
+  id          String          @id @default(uuid(7)) @db.Uuid
+  category    ExpenseCategory
+  /// Short label, e.g. "Hébergement septembre" (CHECK 1–200 characters).
+  label       String
+  amountMinor Int             @map("amount_minor")
+  currency    String          @default("DZD") @db.Char(3)
+  incurredOn  DateTime        @map("incurred_on") @db.Date
+  createdById String          @map("created_by_id") @db.Uuid
+  createdBy   AdminAccount    @relation("ExpenseCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  voidedAt    DateTime?       @map("voided_at") @db.Timestamptz(3)
+  voidedById  String?         @map("voided_by_id") @db.Uuid
+  voidedBy    AdminAccount?   @relation("ExpenseVoider", fields: [voidedById], references: [id], onDelete: Restrict)
+  voidReason  String?         @map("void_reason")
+
+  @@index([incurredOn])
+  @@map("operating_expenses")
+}
+
+/// How payment fees are estimated per provider until the provider's statement gives the actual
+/// fee of each transaction: rate (basis points of the amount) plus a fixed part.
+model PaymentFeeRate {
+  provider    PaymentProvider @id
+  rateBps     Int             @map("rate_bps")
+  fixedMinor  Int             @map("fixed_minor")
+  updatedById String          @map("updated_by_id") @db.Uuid
+  updatedBy   AdminAccount    @relation("FeeRateUpdater", fields: [updatedById], references: [id], onDelete: Restrict)
+  updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("payment_fee_rates")
 }
 
 // ─────────────────────────── [reference-library] ───────────────────────────
@@ -1007,6 +1053,9 @@ model AdminAccount {
   appealedRejections         VerificationCase[]      @relation("VerificationRejecter")
   adjustmentsRequested       TransactionAdjustment[] @relation("AdjustmentRequester")
   adjustmentsApproved        TransactionAdjustment[] @relation("AdjustmentApprover")
+  expensesCreated            OperatingExpense[]      @relation("ExpenseCreator")
+  expensesVoided             OperatingExpense[]      @relation("ExpenseVoider")
+  feeRatesUpdated            PaymentFeeRate[]        @relation("FeeRateUpdater")
   referenceDocumentsCreated  ReferenceDocument[]     @relation("ReferenceDocumentCreator")
   referenceDocumentsUpdated  ReferenceDocument[]     @relation("ReferenceDocumentUpdater")
   referenceFilesUploaded     ReferenceDocumentFile[] @relation("ReferenceDocumentFileUploader")

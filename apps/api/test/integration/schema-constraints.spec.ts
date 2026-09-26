@@ -275,6 +275,57 @@ describe('exceptional adjustments (ADR-005)', () => {
   });
 });
 
+describe('operating expenses and fee rates (Phase 17)', () => {
+  it('keeps an expense immutable except one void with a reason, and never deletes it', async () => {
+    const financeAdmin = await admin('finance@doktool.dz');
+    await db.expectRejection(
+      `INSERT INTO operating_expenses (id, category, label, amount_minor, incurred_on, created_by_id)
+       VALUES (gen_random_uuid(), 'SUPPORT', 'Zero', 0, '2026-09-01', $1)`,
+      [financeAdmin],
+      /amount_chk/,
+    );
+    const expenseId = await db.insertId(
+      `INSERT INTO operating_expenses (id, category, label, amount_minor, incurred_on, created_by_id)
+       VALUES (gen_random_uuid(), 'INFRASTRUCTURE', 'Hébergement', 50000, '2026-09-01', $1) RETURNING id`,
+      [financeAdmin],
+    );
+    await db.expectRejection(
+      `UPDATE operating_expenses SET amount_minor = 1 WHERE id = $1`,
+      [expenseId],
+      /voided once/,
+    );
+    await db.expectRejection(
+      `UPDATE operating_expenses SET voided_at = now(), voided_by_id = $2 WHERE id = $1`,
+      [expenseId, financeAdmin],
+      /void_chk/,
+    );
+    await db.query(
+      `UPDATE operating_expenses SET voided_at = now(), voided_by_id = $2, void_reason = 'Duplicate' WHERE id = $1`,
+      [expenseId, financeAdmin],
+    );
+    await db.expectRejection(
+      `UPDATE operating_expenses SET void_reason = 'Other' WHERE id = $1`,
+      [expenseId],
+      /voided once/,
+    );
+    await db.expectRejection(
+      `DELETE FROM operating_expenses WHERE id = $1`,
+      [expenseId],
+      /never deleted/,
+    );
+  });
+
+  it('bounds the fee rate of a provider', async () => {
+    const financeAdmin = await admin('rates@doktool.dz');
+    await db.expectRejection(
+      `INSERT INTO payment_fee_rates (provider, rate_bps, fixed_minor, updated_by_id, updated_at)
+       VALUES ('SATIM_CIB', 10001, 0, $1, now())`,
+      [financeAdmin],
+      /rate_chk/,
+    );
+  });
+});
+
 describe('reference library (ADR-006 D3)', () => {
   it('has no per-document access tier', async () => {
     const { rows } = await db.query(

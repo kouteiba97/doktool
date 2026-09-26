@@ -58,6 +58,26 @@ export class ActivityService {
 
   // ───────────────────────────────── favorites ─────────────────────────────────
 
+  /** Admin Web « Activité »: how many favorites and history entries, by kind — never which. */
+  async countsFor(userId: string) {
+    const [favorites, history] = await Promise.all([
+      this.prisma.favorite.groupBy({
+        by: ['targetType'],
+        where: { userId },
+        _count: { _all: true },
+      }),
+      this.prisma.recentActivity.groupBy({
+        by: ['kind'],
+        where: { userId },
+        _count: { _all: true },
+      }),
+    ]);
+    return {
+      favorites: favorites.map((row) => ({ targetType: row.targetType, count: row._count._all })),
+      history: history.map((row) => ({ kind: row.kind, count: row._count._all })),
+    };
+  }
+
   async favorites(viewer: Viewer & { userId: string }): Promise<FavoriteView[]> {
     const rows = await this.prisma.favorite.findMany({
       where: { userId: viewer.userId },

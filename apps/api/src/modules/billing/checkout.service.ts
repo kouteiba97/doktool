@@ -9,6 +9,11 @@ import type {
   Transaction,
 } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
+import {
+  ANALYTICS_SERVER_EVENT_JOB,
+  type ServerAnalyticsEvent,
+} from '../../infrastructure/jobs/analytics-job.js';
+import { JobsService } from '../../infrastructure/jobs/jobs.service.js';
 import { NotificationsService } from '../notifications/index.js';
 import { UsersService } from '../users/index.js';
 import { VerificationStatusService } from '../verification/index.js';
@@ -54,6 +59,7 @@ export class CheckoutService {
     private readonly users: UsersService,
     private readonly verification: VerificationStatusService,
     private readonly notifications: NotificationsService,
+    private readonly jobs: JobsService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -347,10 +353,11 @@ export class CheckoutService {
           },
         },
       });
-      if (count !== 1) return false;
+      if (count !== 1) return null;
       const subscription = await tx.subscription.findUniqueOrThrow({
         where: { id: transaction.subscriptionId },
       });
+      const started = subscription.status === 'PENDING_PAYMENT';
       const start =
         subscription.status === 'PENDING_PAYMENT' || !subscription.currentPeriodEnd
           ? paidAt
@@ -369,7 +376,7 @@ export class CheckoutService {
           graceEndsAt: null,
         },
       });
-      return true;
+      return { started };
     });
     if (settled) {
       if (paidAmountMinor !== transaction.amountMinor) {
@@ -383,6 +390,14 @@ export class CheckoutService {
         messageKey: 'mobile.notifications.subscriptionActivated',
         params: { transactionId: transaction.transactionId },
       });
+      const event: ServerAnalyticsEvent = {
+        type: settled.started ? 'SUBSCRIPTION_STARTED' : 'SUBSCRIPTION_RENEWED',
+        userId: transaction.userId,
+        occurredAt: paidAt.toISOString(),
+        planCode: plan.code,
+        planVersion: plan.version,
+      };
+      await this.jobs.enqueue(ANALYTICS_SERVER_EVENT_JOB, event);
     }
     return this.prisma.transaction.findUniqueOrThrow({ where: { id: transaction.id } });
   }

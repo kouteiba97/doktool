@@ -5,6 +5,7 @@ const required = {
   DATABASE_URL: 'postgresql://u@localhost:5432/db',
   USER_JWT_SECRET: 'x'.repeat(32),
   OTP_HMAC_SECRET: 'y'.repeat(32),
+  ANALYTICS_SUBJECT_SECRET: 'a'.repeat(32),
   ADMIN_TOTP_ENCRYPTION_KEY: Buffer.alloc(32).toString('base64'),
   ADMIN_WEB_ORIGIN: 'https://admin.doktool.dz/',
   TERMS_VERSION: '2026-09',

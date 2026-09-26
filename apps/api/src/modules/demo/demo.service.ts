@@ -95,4 +95,15 @@ export class DemoService {
     });
     return { accessToken: access.token, accessTokenExpiresAt: access.expiresAt };
   }
+
+  /** Demo sessions started in [from, to), and how many of them became accounts. */
+  async stats(from: Date, to: Date): Promise<{ started: number; converted: number }> {
+    const [started, converted] = await Promise.all([
+      this.prisma.demoSession.count({ where: { startedAt: { gte: from, lt: to } } }),
+      this.prisma.demoSession.count({
+        where: { startedAt: { gte: from, lt: to }, convertedUserId: { not: null } },
+      }),
+    ]);
+    return { started, converted };
+  }
 }
