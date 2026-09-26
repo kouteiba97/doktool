@@ -20,25 +20,47 @@ import '../../ui/dt_button.dart';
 import '../../ui/error_text.dart';
 import '../../ui/locks.dart';
 import '../../ui/tokens.dart';
+import '../offline/offline_store.dart';
 import 'reference_files.dart';
 import '../../core/api/generated/models/favorite_target_type.dart';
 import '../activity/activity_recorder.dart';
 import '../activity/favorite_button.dart';
+import '../../ui/dt_badge.dart';
 
 /// A reference model and its PDF, checked against the published SHA-256.
 class OpenedReference {
-  const OpenedReference({required this.item, required this.bytes});
+  const OpenedReference({required this.item, required this.bytes, this.cachedAt});
 
   final ReferenceItemDto item;
   final Uint8List bytes;
+
+  /// Set when the copy comes from the offline store without a connection (« Cache · date »).
+  final DateTime? cachedAt;
 }
 
+/// Online: the current file, from the offline copy when it is the same version. Without a
+/// connection: the offline copy, or « Non disponible hors ligne » (section 18).
 final openedReferenceProvider = FutureProvider.autoDispose.family<OpenedReference, String>((ref, id) async {
-  final api = ref.watch(apiProvider).referenceLibrary;
-  final item = await api.referenceLibraryControllerGet(id: id);
+  final store = ref.read(offlineStoreProvider);
+  final local = await store.document(id);
+  final ReferenceItemDto item;
+  try {
+    item = await ref.watch(apiProvider).referenceLibrary.referenceLibraryControllerGet(id: id);
+  } catch (error) {
+    if (!ApiError.from(error).isNetwork || local == null) rethrow;
+    final bytes = await store.bytesOf(local);
+    if (bytes == null) rethrow;
+    final cached = (await store.referenceItems(ReferenceDocumentType.fromJson(local.type)))
+        .firstWhere((candidate) => candidate.id == id);
+    return OpenedReference(item: cached, bytes: bytes, cachedAt: local.updatedAt);
+  }
   if (item.access.state == AccessState.locked) return OpenedReference(item: item, bytes: Uint8List(0));
-  final bytes = await ref.watch(referenceFilesProvider).bytesOf(item);
-  return OpenedReference(item: item, bytes: bytes);
+  if (local != null && local.fileVersion == item.fileVersion) {
+    final bytes = await store.bytesOf(local);
+    if (bytes != null) return OpenedReference(item: item, bytes: bytes);
+  }
+  final file = await ref.watch(referenceFilesProvider).download(id);
+  return OpenedReference(item: item, bytes: file.bytes);
 });
 
 /// ScreenReferenceViewer: full-screen and read-only. The reference notice is pinned and never
@@ -93,9 +115,21 @@ class _ReferenceViewerScreenState extends ConsumerState<ReferenceViewerScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: DtType.heading.copyWith(color: colors.ink),
                   ),
-                  Text(
-                    l10n.viewerMeta(type, dateText(context, item.fileDate)),
-                    style: DtType.caption.copyWith(color: colors.inkSecondary),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          l10n.viewerMeta(type, dateText(context, item.fileDate)),
+                          overflow: TextOverflow.ellipsis,
+                          style: DtType.caption.copyWith(color: colors.inkSecondary),
+                        ),
+                      ),
+                      const SizedBox(width: DtSpace.s2),
+                      if (opened.value?.cachedAt != null)
+                        DtBadge(text: l10n.offlineChipCached(dateText(context, opened.value!.cachedAt)))
+                      else
+                        DtBadge(text: l10n.offlineChipLive, variant: DtBadgeVariant.teal),
+                    ],
                   ),
                 ],
               ),
@@ -253,6 +287,8 @@ class _Failure extends StatelessWidget {
     final String message;
     if (gone) {
       message = l10n.lockNoLongerAvailable;
+    } else if (error.isNetwork) {
+      message = l10n.lockOfflineUnavailable;
     } else if (error.code == ReferenceFiles.integrityCode) {
       message = l10n.viewerIntegrityFailed;
     } else {

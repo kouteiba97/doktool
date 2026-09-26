@@ -370,7 +370,12 @@ class _CalculatorState extends ConsumerState<_Calculator> {
               ),
             ),
             const SizedBox(width: DtSpace.s2),
-            DtBadge(text: l10n.calculatorVersion('$version'), variant: DtBadgeVariant.teal),
+            DtBadge(
+              text: widget.runtime.offline
+                  ? '${l10n.calculatorVersion('$version')} · ${l10n.offlineChipOffline}'
+                  : l10n.calculatorVersion('$version'),
+              variant: DtBadgeVariant.teal,
+            ),
           ],
         ),
         actions: [

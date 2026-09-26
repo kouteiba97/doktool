@@ -20,6 +20,9 @@ import '../../ui/tokens.dart';
 import '../library/library_data.dart';
 import 'recent_searches.dart';
 import '../activity/activity_recorder.dart';
+import '../../ui/text_match.dart';
+import '../activity/activity_data.dart';
+import '../activity/activity_screen.dart';
 
 /// ScreenSearchMobile: full-screen overlay, keyboard up. Grouped results (Ordonnances,
 /// Certificats, Calculateurs — the only V1 types), 3 rows per group, chips with counts filtering in
@@ -41,6 +44,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Map<SearchType, int> _totals = const {};
   bool _loading = false;
   bool _failed = false;
+
+  /// Local results shown when the full search is unavailable.
+  List<ContentRef> _local = const [];
   int _request = 0;
 
   @override
@@ -87,10 +93,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         _loading = false;
       });
     } catch (_) {
+      // Without the full search, look through what the device holds (offline store included).
+      List<ContentRef> local = const [];
+      try {
+        final index = await ref.read(contentIndexProvider.future);
+        local = [
+          for (final content in index.values)
+            if (matchesAllWords(query, [content.titleFr, content.titleEn])) content,
+        ]..sort((a, b) => a.titleFr.compareTo(b.titleFr));
+      } catch (_) {
+        local = const [];
+      }
       if (!mounted || request != _request) return;
       setState(() {
         _loading = false;
         _failed = true;
+        _local = local;
       });
     }
   }
@@ -206,6 +224,25 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Widget _body(BuildContext context, AppLocalizations l10n, String query) {
     final colors = context.colors;
     if (query.length < 2) return _EmptyQuery(onPick: _useQuery);
+    if (_failed && _local.isNotEmpty) {
+      return ListView(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(DtSpace.s4, DtSpace.s3, DtSpace.s4, DtSpace.s1),
+            child: Text(l10n.offlineSearchLocal, style: DtType.caption.copyWith(color: colors.inkMuted)),
+          ),
+          for (final content in _local)
+            ContentRow(
+              icon: content.isCalculator ? LucideIcons.calculator : LucideIcons.fileText,
+              title: localizedTitle(context, content.titleFr, content.titleEn),
+              access: content.access,
+              actionLabel: content.isCalculator ? l10n.libraryOpen : l10n.libraryViewModel,
+              highlight: query,
+              onOpen: () => openContent(context, content),
+            ),
+        ],
+      );
+    }
     if (_failed) {
       return Padding(
         padding: const EdgeInsets.all(DtSpace.s4),

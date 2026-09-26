@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../router/app_router.dart';
 import '../../theme/doktool_tokens.dart';
 import '../../ui/segmented_control.dart';
 import '../../ui/tokens.dart';
@@ -57,6 +60,20 @@ class SettingsScreen extends ConsumerWidget {
                       DtSegment(value: AppLanguage.fr, label: l10n.settingsLanguageFrench),
                       DtSegment(value: AppLanguage.en, label: l10n.settingsLanguageEnglish),
                     ],
+                  ),
+                ),
+                const SizedBox(height: DtSpace.s6),
+                _Section(
+                  title: l10n.settingsMore,
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(LucideIcons.hardDriveDownload, color: colors.inkSecondary),
+                      title: Text(l10n.settingsOffline, style: DtType.body.copyWith(color: colors.ink)),
+                      trailing: Icon(LucideIcons.chevronRight, color: colors.inkMuted),
+                      onTap: () => context.push(Routes.offlineSettings),
+                    ),
                   ),
                 ),
               ],

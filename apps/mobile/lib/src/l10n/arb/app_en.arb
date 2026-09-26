@@ -706,6 +706,155 @@
       }
     }
   },
+  "offlineBarFailed": "The offline update failed.",
+  "@offlineBarFailed": {
+    "description": "mobile.offline.barFailed"
+  },
+  "offlineBarOffline": "Offline · data from {date} · {version}",
+  "@offlineBarOffline": {
+    "description": "mobile.offline.barOffline",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineBarOfflineNoData": "Offline",
+  "@offlineBarOfflineNoData": {
+    "description": "mobile.offline.barOfflineNoData"
+  },
+  "offlineBarOutdated": "Data older than 30 days — Update",
+  "@offlineBarOutdated": {
+    "description": "mobile.offline.barOutdated"
+  },
+  "offlineBarSyncing": "Updating offline data…",
+  "@offlineBarSyncing": {
+    "description": "mobile.offline.barSyncing"
+  },
+  "offlineCalculators": "{count, plural, =0 {No calculator installed} one {# calculator installed} other {# calculators installed}}",
+  "@offlineCalculators": {
+    "description": "mobile.offline.calculators",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "offlineChipCached": "Cache · {date}",
+  "@offlineChipCached": {
+    "description": "mobile.offline.chipCached",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineChipLive": "Up to date",
+  "@offlineChipLive": {
+    "description": "mobile.offline.chipLive"
+  },
+  "offlineChipOffline": "offline",
+  "@offlineChipOffline": {
+    "description": "mobile.offline.chipOffline"
+  },
+  "offlineDataVersion": "Data version: {version}",
+  "@offlineDataVersion": {
+    "description": "mobile.offline.dataVersion",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineIntro": "The models and calculators of your access stay available without a connection. Verification, payments and the profile photo need a connection.",
+  "@offlineIntro": {
+    "description": "mobile.offline.intro"
+  },
+  "offlineLastSync": "Last update: {date}",
+  "@offlineLastSync": {
+    "description": "mobile.offline.lastSync",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineLocked": "Offline is not included in your current access.",
+  "@offlineLocked": {
+    "description": "mobile.offline.locked"
+  },
+  "offlineLost": "Your access changed: the protected offline copies were deleted.",
+  "@offlineLost": {
+    "description": "mobile.offline.lost"
+  },
+  "offlineMobileData": "Allow mobile data",
+  "@offlineMobileData": {
+    "description": "mobile.offline.mobileData"
+  },
+  "offlineMobileDataHelper": "Otherwise, away from Wi-Fi, only favorites download.",
+  "@offlineMobileDataHelper": {
+    "description": "mobile.offline.mobileDataHelper"
+  },
+  "offlineModels": "{count, plural, =0 {No model downloaded} one {# model downloaded} other {# models downloaded}} · {size}",
+  "@offlineModels": {
+    "description": "mobile.offline.models",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineNeverSynced": "No offline data yet.",
+  "@offlineNeverSynced": {
+    "description": "mobile.offline.neverSynced"
+  },
+  "offlinePending": "{count, plural, one {# model waiting (Wi-Fi or “All models”)} other {# models waiting (Wi-Fi or “All models”)}}",
+  "@offlinePending": {
+    "description": "mobile.offline.pending",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "offlineRemove": "Delete downloaded models",
+  "@offlineRemove": {
+    "description": "mobile.offline.remove"
+  },
+  "offlineRemoveConfirm": "Models will no longer open without a connection. Calculators stay available.",
+  "@offlineRemoveConfirm": {
+    "description": "mobile.offline.removeConfirm"
+  },
+  "offlineScope": "Models to download",
+  "@offlineScope": {
+    "description": "mobile.offline.scope"
+  },
+  "offlineScopeAll": "All models",
+  "@offlineScopeAll": {
+    "description": "mobile.offline.scopeAll"
+  },
+  "offlineScopeFavorites": "Favorites only",
+  "@offlineScopeFavorites": {
+    "description": "mobile.offline.scopeFavorites"
+  },
+  "offlineSearchLocal": "Local results — full search unavailable.",
+  "@offlineSearchLocal": {
+    "description": "mobile.offline.searchLocal"
+  },
+  "offlineTitle": "Data and offline",
+  "@offlineTitle": {
+    "description": "mobile.offline.title"
+  },
+  "offlineUpdate": "Update now",
+  "@offlineUpdate": {
+    "description": "mobile.offline.update"
+  },
   "otpChannelUnavailable": "Sending by SMS is not available yet. Use an e-mail address.",
   "@otpChannelUnavailable": {
     "description": "mobile.otp.channelUnavailable"
@@ -1208,6 +1357,14 @@
   "settingsLanguageTitle": "Langue / Language",
   "@settingsLanguageTitle": {
     "description": "mobile.settings.language.title"
+  },
+  "settingsMore": "More",
+  "@settingsMore": {
+    "description": "mobile.settings.more"
+  },
+  "settingsOffline": "Data and offline",
+  "@settingsOffline": {
+    "description": "mobile.settings.offline"
   },
   "settingsTitle": "Settings",
   "@settingsTitle": {

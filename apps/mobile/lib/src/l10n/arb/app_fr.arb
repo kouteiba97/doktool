@@ -706,6 +706,155 @@
       }
     }
   },
+  "offlineBarFailed": "La mise à jour hors ligne a échoué.",
+  "@offlineBarFailed": {
+    "description": "mobile.offline.barFailed"
+  },
+  "offlineBarOffline": "Hors ligne · données du {date} · {version}",
+  "@offlineBarOffline": {
+    "description": "mobile.offline.barOffline",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineBarOfflineNoData": "Hors ligne",
+  "@offlineBarOfflineNoData": {
+    "description": "mobile.offline.barOfflineNoData"
+  },
+  "offlineBarOutdated": "Données de plus de 30 jours — Mettre à jour",
+  "@offlineBarOutdated": {
+    "description": "mobile.offline.barOutdated"
+  },
+  "offlineBarSyncing": "Mise à jour des données hors ligne…",
+  "@offlineBarSyncing": {
+    "description": "mobile.offline.barSyncing"
+  },
+  "offlineCalculators": "{count, plural, =0 {Aucun calculateur installé} one {# calculateur installé} other {# calculateurs installés}}",
+  "@offlineCalculators": {
+    "description": "mobile.offline.calculators",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "offlineChipCached": "Cache · {date}",
+  "@offlineChipCached": {
+    "description": "mobile.offline.chipCached",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineChipLive": "À jour",
+  "@offlineChipLive": {
+    "description": "mobile.offline.chipLive"
+  },
+  "offlineChipOffline": "hors ligne",
+  "@offlineChipOffline": {
+    "description": "mobile.offline.chipOffline"
+  },
+  "offlineDataVersion": "Version des données : {version}",
+  "@offlineDataVersion": {
+    "description": "mobile.offline.dataVersion",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineIntro": "Les modèles et calculateurs de votre accès restent disponibles sans connexion. La vérification, les paiements et la photo de profil demandent une connexion.",
+  "@offlineIntro": {
+    "description": "mobile.offline.intro"
+  },
+  "offlineLastSync": "Dernière mise à jour : {date}",
+  "@offlineLastSync": {
+    "description": "mobile.offline.lastSync",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineLocked": "Le hors ligne n’est pas inclus dans votre accès actuel.",
+  "@offlineLocked": {
+    "description": "mobile.offline.locked"
+  },
+  "offlineLost": "Votre accès a changé : les copies hors ligne protégées ont été supprimées.",
+  "@offlineLost": {
+    "description": "mobile.offline.lost"
+  },
+  "offlineMobileData": "Autoriser les données mobiles",
+  "@offlineMobileData": {
+    "description": "mobile.offline.mobileData"
+  },
+  "offlineMobileDataHelper": "Sinon, hors Wi-Fi, seuls les favoris se téléchargent.",
+  "@offlineMobileDataHelper": {
+    "description": "mobile.offline.mobileDataHelper"
+  },
+  "offlineModels": "{count, plural, =0 {Aucun modèle téléchargé} one {# modèle téléchargé} other {# modèles téléchargés}} · {size}",
+  "@offlineModels": {
+    "description": "mobile.offline.models",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineNeverSynced": "Pas encore de données hors ligne.",
+  "@offlineNeverSynced": {
+    "description": "mobile.offline.neverSynced"
+  },
+  "offlinePending": "{count, plural, one {# modèle en attente (Wi-Fi ou « Tous les modèles »)} other {# modèles en attente (Wi-Fi ou « Tous les modèles »)}}",
+  "@offlinePending": {
+    "description": "mobile.offline.pending",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "offlineRemove": "Supprimer les modèles téléchargés",
+  "@offlineRemove": {
+    "description": "mobile.offline.remove"
+  },
+  "offlineRemoveConfirm": "Les modèles ne s’ouvriront plus sans connexion. Les calculateurs restent disponibles.",
+  "@offlineRemoveConfirm": {
+    "description": "mobile.offline.removeConfirm"
+  },
+  "offlineScope": "Modèles à télécharger",
+  "@offlineScope": {
+    "description": "mobile.offline.scope"
+  },
+  "offlineScopeAll": "Tous les modèles",
+  "@offlineScopeAll": {
+    "description": "mobile.offline.scopeAll"
+  },
+  "offlineScopeFavorites": "Favoris uniquement",
+  "@offlineScopeFavorites": {
+    "description": "mobile.offline.scopeFavorites"
+  },
+  "offlineSearchLocal": "Résultats locaux — recherche complète indisponible.",
+  "@offlineSearchLocal": {
+    "description": "mobile.offline.searchLocal"
+  },
+  "offlineTitle": "Données et hors ligne",
+  "@offlineTitle": {
+    "description": "mobile.offline.title"
+  },
+  "offlineUpdate": "Mettre à jour maintenant",
+  "@offlineUpdate": {
+    "description": "mobile.offline.update"
+  },
   "otpChannelUnavailable": "L’envoi par SMS n’est pas encore disponible. Utilisez une adresse e-mail.",
   "@otpChannelUnavailable": {
     "description": "mobile.otp.channelUnavailable"
@@ -1208,6 +1357,14 @@
   "settingsLanguageTitle": "Langue / Language",
   "@settingsLanguageTitle": {
     "description": "mobile.settings.language.title"
+  },
+  "settingsMore": "Plus",
+  "@settingsMore": {
+    "description": "mobile.settings.more"
+  },
+  "settingsOffline": "Données et hors ligne",
+  "@settingsOffline": {
+    "description": "mobile.settings.offline"
   },
   "settingsTitle": "Paramètres",
   "@settingsTitle": {

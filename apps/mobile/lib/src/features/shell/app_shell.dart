@@ -9,6 +9,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../router/app_router.dart';
 import '../../theme/doktool_tokens.dart';
 import '../../ui/tokens.dart';
+import '../offline/offline_bar.dart';
 
 /// The tab scaffold (BottomNav): Accueil · Recherche (raised disc) · Bibliothèque · Profil on a
 /// Clinical Glass bar. Each tab keeps its stack; re-tapping the active tab pops to its root; the
@@ -26,9 +27,19 @@ class AppShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final keyboardUp = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final barShown = ref.watch(offlineBarKindProvider) != null;
     return Scaffold(
       extendBody: true,
-      body: navigationShell,
+      body: barShown
+          ? Column(
+              children: [
+                const SafeArea(bottom: false, child: OfflineBar()),
+                Expanded(
+                  child: MediaQuery.removePadding(context: context, removeTop: true, child: navigationShell),
+                ),
+              ],
+            )
+          : navigationShell,
       bottomNavigationBar: keyboardUp
           ? null
           : _GlassBar(

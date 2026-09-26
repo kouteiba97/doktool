@@ -36,6 +36,7 @@ import '../features/subscription/payment_result_screen.dart';
 import '../features/subscription/plans_screen.dart';
 import '../features/subscription/review_screen.dart';
 import '../features/subscription/subscription_screen.dart';
+import '../features/offline/offline_settings_screen.dart';
 
 /// Route map of audit §11. Guards read the session and the account; locked content is never
 /// hidden by a guard — it renders its locked state (section 27).
@@ -58,6 +59,7 @@ abstract final class Routes {
   static const search = '/search';
   static const profile = '/profile';
   static const settings = '/settings';
+  static const offlineSettings = '/settings/offline';
   static const notifications = '/notifications';
   static const plans = '/subscription/plans';
   static const subscription = '/subscription';
@@ -153,6 +155,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: Routes.verificationStatus, builder: (context, state) => const VerificationStatusScreen()),
       GoRoute(path: Routes.search, builder: (context, state) => const SearchScreen()),
       GoRoute(path: Routes.settings, builder: (context, state) => const SettingsScreen()),
+      GoRoute(path: Routes.offlineSettings, builder: (context, state) => const OfflineSettingsScreen()),
       GoRoute(path: Routes.notifications, builder: (context, state) => const NotificationsScreen()),
       GoRoute(path: Routes.plans, builder: (context, state) => const PlansScreen()),
       GoRoute(path: Routes.subscription, builder: (context, state) => const SubscriptionScreen()),

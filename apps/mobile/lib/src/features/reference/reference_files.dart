@@ -7,10 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_error.dart';
 import '../../core/api/generated/dok_tool_api.dart';
-import '../../core/api/generated/models/reference_item_dto.dart';
+
+/// A reference PDF as downloaded and verified.
+typedef ReferenceFile = ({Uint8List bytes, String sha256, int fileVersion});
 
 /// Fetches reference PDFs through short-lived signed URLs (10 minutes, ADR-011) and checks each
-/// against its published SHA-256 before it is shown.
+/// against its published SHA-256 before it is shown or stored.
 class ReferenceFiles {
   ReferenceFiles(this._api, this._download);
 
@@ -20,8 +22,8 @@ class ReferenceFiles {
   final DokToolApi _api;
   final Dio _download;
 
-  Future<Uint8List> bytesOf(ReferenceItemDto item) async {
-    final signed = await _api.referenceLibrary.referenceLibraryControllerFileUrl(id: item.id);
+  Future<ReferenceFile> download(String referenceId) async {
+    final signed = await _api.referenceLibrary.referenceLibraryControllerFileUrl(id: referenceId);
     final Response<List<int>> response;
     try {
       response = await _download.get<List<int>>(signed.url, options: Options(responseType: ResponseType.bytes));
@@ -32,7 +34,7 @@ class ReferenceFiles {
     if (sha256.convert(bytes).toString() != signed.sha256) {
       throw const ApiError(code: integrityCode);
     }
-    return bytes;
+    return (bytes: bytes, sha256: signed.sha256, fileVersion: signed.fileVersion.toInt());
   }
 }
 
