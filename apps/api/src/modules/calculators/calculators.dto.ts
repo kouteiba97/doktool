@@ -31,7 +31,11 @@ import {
   REASON_MIN_LENGTH,
   SLUG_PATTERN,
 } from './calculators.policy.js';
-import type { CalculatorSummary, PublishedVersion } from './calculators.service.js';
+import type {
+  CalculatorSummary,
+  PublishedVersion,
+  PublishedTestCase,
+} from './calculators.service.js';
 import type { Evaluation } from './engine/index.js';
 
 const trimmed = Transform(({ value }: { value: unknown }) =>
@@ -583,6 +587,34 @@ export class PublishedVersionDto {
   }
 }
 
+/** A reference test case of a published version; the device runs them before first use. */
+export class PublishedTestCaseDto {
+  @ApiProperty({ type: 'object', additionalProperties: true })
+  inputs!: Record<string, unknown>;
+
+  @ApiProperty({ enum: ['RESULT', 'INVALID', 'OUT_OF_VALIDATED_RANGE'] })
+  expectedOutcome!: string;
+
+  @ApiProperty({ type: Number, nullable: true })
+  expectedValue!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true })
+  tolerance!: number | null;
+
+  @ApiProperty({ type: String, nullable: true })
+  expectedBand!: string | null;
+
+  static from(testCase: PublishedTestCase): PublishedTestCaseDto {
+    return {
+      inputs: testCase.inputs,
+      expectedOutcome: testCase.expectedOutcome,
+      expectedValue: testCase.expectedValue,
+      tolerance: testCase.tolerance,
+      expectedBand: testCase.expectedBand,
+    };
+  }
+}
+
 export class CalculatorDetailDto extends CalculatorSummaryDto {
   @ApiProperty({
     type: PublishedVersionDto,
@@ -590,4 +622,11 @@ export class CalculatorDetailDto extends CalculatorSummaryDto {
     description: 'Only when access is AVAILABLE.',
   })
   published!: PublishedVersionDto | null;
+
+  @ApiProperty({
+    type: [PublishedTestCaseDto],
+    description:
+      'Test cases of the published version (empty when locked); run on the device before use.',
+  })
+  testCases!: PublishedTestCaseDto[];
 }

@@ -2,6 +2,8 @@ import { Module, type OnModuleInit } from '@nestjs/common';
 import { JobsService } from '../../infrastructure/jobs/jobs.service.js';
 import { AdminAuthModule } from '../admin-auth/index.js';
 import { AuditModule } from '../audit/index.js';
+import { StorageModule } from '../storage/index.js';
+import { ProfilePhotoService } from './profile-photo.service.js';
 import {
   ReferenceDataAdminController,
   ReferenceDataController,
@@ -16,9 +18,9 @@ import { UsersService } from './users.service.js';
  * Other modules reach it only through ./index.ts.
  */
 @Module({
-  imports: [AdminAuthModule, AuditModule],
+  imports: [AdminAuthModule, AuditModule, StorageModule],
   controllers: [UsersController, ReferenceDataController, ReferenceDataAdminController],
-  providers: [UsersService],
+  providers: [UsersService, ProfilePhotoService],
   exports: [UsersService],
 })
 export class UsersModule implements OnModuleInit {

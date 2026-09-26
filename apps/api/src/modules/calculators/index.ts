@@ -6,4 +6,4 @@ export {
   type PublishedTestCase,
   type PublishedVersion,
 } from './calculators.service.js';
-export { PublishedVersionDto } from './calculators.dto.js';
+export { PublishedTestCaseDto, PublishedVersionDto } from './calculators.dto.js';

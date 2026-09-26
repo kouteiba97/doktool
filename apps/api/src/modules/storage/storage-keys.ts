@@ -37,6 +37,11 @@ export const StorageKeys = {
     return `doktool/verification/${userId}/${caseId}/${documentId}.${extension}`;
   },
 
+  /** doktool/profile-images/{userId}/originals/{uuid}.{jpg|png} — deleted once re-encoded. */
+  profileImageOriginal(userId: string, imageId: string, extension: 'jpg' | 'png') {
+    return `doktool/profile-images/${userId}/originals/${imageId}.${extension}`;
+  },
+
   /** doktool/profile-images/{userId}/{uuid}.webp */
   profileImage(userId: string, imageId: string) {
     return `doktool/profile-images/${userId}/${imageId}.webp`;

@@ -44,6 +44,13 @@ export const UPLOAD_RULES: Record<UploadPurpose, UploadRule> = {
     maxBytes: 20 * MB,
     signatures: [PDF],
   },
+  /** The original photo; the API re-encodes it (WebP, 512 px, no metadata) and deletes it. */
+  PROFILE_IMAGE: {
+    bucket: 'CONTENT',
+    keyPrefix: 'doktool/profile-images/',
+    maxBytes: 8 * MB,
+    signatures: [JPEG, PNG],
+  },
   VERIFICATION_DOCUMENT: {
     bucket: 'PRIVATE',
     keyPrefix: 'doktool/verification/',

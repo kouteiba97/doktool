@@ -62,6 +62,8 @@ const ME_SELECT = {
   id: true,
   firstName: true,
   lastName: true,
+  bio: true,
+  avatarStorageKey: true,
   email: true,
   phone: true,
   emailConfirmedAt: true,
@@ -244,6 +246,22 @@ export class UsersService {
     if (!user || user.status === 'DELETED')
       throw new DomainError('UNAUTHENTICATED', 'Account not found.');
     return user;
+  }
+
+  /** « Modifier »: name and bio (null clears the bio). Verification keeps the names it checked. */
+  async updateProfile(
+    userId: string,
+    input: { firstName?: string; lastName?: string; bio?: string | null },
+  ): Promise<MeRecord> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(input.firstName !== undefined ? { firstName: input.firstName.trim() } : {}),
+        ...(input.lastName !== undefined ? { lastName: input.lastName.trim() } : {}),
+        ...(input.bio !== undefined ? { bio: input.bio?.trim() || null } : {}),
+      },
+    });
+    return this.getMe(userId);
   }
 
   async updatePreferences(userId: string, input: PreferencesInput): Promise<MeRecord> {

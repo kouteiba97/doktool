@@ -526,6 +526,101 @@
       ]
     },
     {
+      "name": "round-exponent-notation",
+      "description": "round on numbers whose shortest form has an exponent: 1.5e-7 → 0, 2.5e-7 at 7 digits → 3e-7, 1e21 stays 1e21",
+      "definition": {
+        "schemaVersion": 1,
+        "inputs": [
+          {
+            "kind": "NUMBER",
+            "key": "a",
+            "label": {
+              "fr": "Valeur a",
+              "en": "Value a"
+            },
+            "required": true,
+            "quantity": "ABSTRACT",
+            "canonicalUnit": "1"
+          }
+        ],
+        "formula": {
+          "op": "round",
+          "digits": 7,
+          "args": [
+            {
+              "input": "a"
+            }
+          ]
+        },
+        "result": {
+          "unit": "1",
+          "decimals": 6,
+          "label": {
+            "fr": "Résultat",
+            "en": "Result"
+          }
+        },
+        "limitations": {
+          "fr": "Vecteur de test, sans usage clinique.",
+          "en": "Test vector, no clinical use."
+        }
+      },
+      "cases": [
+        {
+          "name": "2.5e-7 → 3e-7",
+          "inputs": {
+            "a": {
+              "value": 2.5e-7
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 3e-7,
+            "issues": []
+          }
+        },
+        {
+          "name": "1.4e-8 → 0",
+          "inputs": {
+            "a": {
+              "value": 1.4e-8
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 0,
+            "issues": []
+          }
+        },
+        {
+          "name": "1e21 stays 1e21",
+          "inputs": {
+            "a": {
+              "value": 1e21
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": 1e21,
+            "issues": []
+          }
+        },
+        {
+          "name": "−2.5e-7 → −3e-7",
+          "inputs": {
+            "a": {
+              "value": -2.5e-7
+            }
+          },
+          "expected": {
+            "outcome": "RESULT",
+            "value": -3e-7,
+            "issues": []
+          }
+        }
+      ]
+    },
+    {
       "name": "conditionals",
       "description": "piecewise (first match), if, comparisons, and/or/not, eq/ne",
       "definition": {

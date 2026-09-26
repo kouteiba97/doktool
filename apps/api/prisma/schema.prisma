@@ -1091,6 +1091,7 @@ enum StorageBucket {
 enum UploadPurpose {
   REFERENCE_DOCUMENT
   VERIFICATION_DOCUMENT
+  PROFILE_IMAGE
 
   @@map("upload_purpose")
 }

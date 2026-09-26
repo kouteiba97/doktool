@@ -48,6 +48,39 @@ for (const schema of Object.values(document.components?.schemas ?? {})) {
   if ('properties' in schema && schema.properties && !schema.required) schema.required = [];
 }
 
+/** `auth.sign-up` → `authSignUp`: generated clients need identifiers for such enum values. */
+function nameEnums(value: unknown): void {
+  if (Array.isArray(value)) {
+    value.forEach(nameEnums);
+    return;
+  }
+  if (value === null || typeof value !== 'object') return;
+  const node = value as Record<string, unknown>;
+  const values = node.enum;
+  if (
+    Array.isArray(values) &&
+    values.every((item) => typeof item === 'string') &&
+    values.some((item) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(item))
+  ) {
+    const names = values.map((item) =>
+      item
+        .split(/[^A-Za-z0-9]+/)
+        .filter(Boolean)
+        .map((part, index) =>
+          index === 0
+            ? part.toLowerCase()
+            : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
+        )
+        .join(''),
+    );
+    // swagger_parser (Dart) reads x-enumNames; OpenAPI Generator reads x-enum-varnames.
+    node['x-enumNames'] = names;
+    node['x-enum-varnames'] = names;
+  }
+  Object.values(node).forEach(nameEnums);
+}
+nameEnums(document);
+
 const serialised = `${JSON.stringify(sortKeys(document), null, 2)}\n`;
 
 if (process.argv.includes('--check')) {

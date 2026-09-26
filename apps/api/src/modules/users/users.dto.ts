@@ -1,5 +1,18 @@
+import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsOptional, IsUUID, Max, Min, ValidateIf } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+  ValidateIf,
+} from 'class-validator';
 import {
   Language,
   ProfessionalType,
@@ -69,6 +82,16 @@ export class MeDto {
   @ApiProperty()
   lastName!: string;
 
+  @ApiProperty({ type: String, nullable: true, maxLength: 280 })
+  bio!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Signed URL of the profile photo (1 hour).',
+  })
+  avatarUrl!: string | null;
+
   @ApiProperty({ type: String, nullable: true })
   email!: string | null;
 
@@ -93,11 +116,13 @@ export class MeDto {
   @ApiProperty({ format: 'date-time' })
   createdAt!: string;
 
-  static from(record: MeRecord): MeDto {
+  static from(record: MeRecord, avatarUrl: string | null): MeDto {
     return {
       id: record.id,
       firstName: record.firstName,
       lastName: record.lastName,
+      bio: record.bio,
+      avatarUrl,
       email: record.email,
       phone: record.phone,
       emailConfirmed: record.emailConfirmedAt !== null,
@@ -112,6 +137,98 @@ export class MeDto {
       createdAt: record.createdAt.toISOString(),
     };
   }
+}
+
+const trimmedText = Transform(({ value }: { value: unknown }) =>
+  typeof value === 'string' ? value.trim() : value,
+);
+
+export class UpdateProfileDto {
+  @ApiPropertyOptional({ maxLength: 80 })
+  @IsOptional()
+  @trimmedText
+  @IsString()
+  @MinLength(1)
+  @MaxLength(80)
+  firstName?: string;
+
+  @ApiPropertyOptional({ maxLength: 80 })
+  @IsOptional()
+  @trimmedText
+  @IsString()
+  @MinLength(1)
+  @MaxLength(80)
+  lastName?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    maxLength: 280,
+    description: 'null clears it.',
+  })
+  @ValidateIf((_, value) => value !== null && value !== undefined)
+  @trimmedText
+  @IsString()
+  @MaxLength(280)
+  bio?: string | null;
+}
+
+export class PhotoUploadRequestDto {
+  @ApiProperty({ description: 'image/jpeg or image/png.' })
+  @IsString()
+  contentType!: string;
+
+  @ApiProperty({ description: 'Exact size in bytes (at most 8 MB).' })
+  @IsInt()
+  @Min(1)
+  sizeBytes!: number;
+
+  @ApiProperty({ description: 'Lower-case hex SHA-256 of the file.' })
+  @Matches(/^[0-9a-f]{64}$/)
+  sha256!: string;
+}
+
+export class PhotoUploadHeadersDto {
+  @ApiProperty({ name: 'Content-Type' })
+  'Content-Type'!: string;
+
+  @ApiProperty({ name: 'Content-Length' })
+  'Content-Length'!: string;
+}
+
+export class PhotoUploadTicketDto {
+  @ApiProperty({ format: 'uuid' })
+  intentId!: string;
+
+  @ApiProperty({ enum: ['PUT'] })
+  method!: 'PUT';
+
+  @ApiProperty({ description: 'Signed URL, valid 15 minutes.' })
+  url!: string;
+
+  @ApiProperty({ type: PhotoUploadHeadersDto, description: 'Send exactly these headers.' })
+  headers!: PhotoUploadHeadersDto;
+
+  @ApiProperty({ format: 'date-time' })
+  expiresAt!: string;
+}
+
+export class PhotoUploadStartDto {
+  @ApiProperty({ format: 'uuid' })
+  imageId!: string;
+
+  @ApiProperty({ type: PhotoUploadTicketDto })
+  upload!: PhotoUploadTicketDto;
+}
+
+export class AttachPhotoDto {
+  @ApiProperty({ format: 'uuid' })
+  @IsUUID()
+  intentId!: string;
+
+  @ApiProperty({ format: 'uuid', description: 'The id returned with the upload.' })
+  @IsUUID()
+  imageId!: string;
 }
 
 export class UpdatePreferencesDto {

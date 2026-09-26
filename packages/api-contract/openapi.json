@@ -66,6 +66,92 @@
         ],
         "type": "string"
       },
+      "ActivityDto": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ActivityKind"
+              }
+            ]
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "queryText": {
+            "nullable": true,
+            "type": "string"
+          },
+          "targetId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "targetType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FavoriteTargetType"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "occurredAt"
+        ],
+        "type": "object"
+      },
+      "ActivityEntryDto": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ActivityKind"
+              }
+            ]
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "queryText": {
+            "description": "SEARCH only. Kept for the person only.",
+            "maxLength": 200,
+            "type": "string"
+          },
+          "targetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "targetType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FavoriteTargetType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "occurredAt"
+        ],
+        "type": "object"
+      },
+      "ActivityKind": {
+        "enum": [
+          "SEARCH",
+          "REFERENCE_VIEW",
+          "CALCULATOR_USE"
+        ],
+        "type": "string"
+      },
       "AddSourceDto": {
         "properties": {
           "accessedAt": {
@@ -352,7 +438,73 @@
                 "system.notifications.send",
                 "system.demo.configure"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enum-varnames": [
+                "usersRead",
+                "usersWrite",
+                "usersSuspend",
+                "verificationQueueRead",
+                "verificationReview",
+                "verificationDocumentsView",
+                "verificationAppealDecide",
+                "libraryRead",
+                "libraryWrite",
+                "libraryDisable",
+                "calculatorsRead",
+                "calculatorsDraft",
+                "calculatorsReview",
+                "calculatorsPublish",
+                "calculatorsRetire",
+                "subscriptionsRead",
+                "subscriptionsPlansWrite",
+                "transactionsRead",
+                "transactionsAdjustmentRequest",
+                "transactionsAdjustmentApprove",
+                "financeRead",
+                "financeExpensesWrite",
+                "financeReportsExport",
+                "analyticsRead",
+                "analyticsExport",
+                "auditRead",
+                "auditExport",
+                "systemRolesWrite",
+                "systemSettingsWrite",
+                "systemNotificationsSend",
+                "systemDemoConfigure"
+              ],
+              "x-enumNames": [
+                "usersRead",
+                "usersWrite",
+                "usersSuspend",
+                "verificationQueueRead",
+                "verificationReview",
+                "verificationDocumentsView",
+                "verificationAppealDecide",
+                "libraryRead",
+                "libraryWrite",
+                "libraryDisable",
+                "calculatorsRead",
+                "calculatorsDraft",
+                "calculatorsReview",
+                "calculatorsPublish",
+                "calculatorsRetire",
+                "subscriptionsRead",
+                "subscriptionsPlansWrite",
+                "transactionsRead",
+                "transactionsAdjustmentRequest",
+                "transactionsAdjustmentApprove",
+                "financeRead",
+                "financeExpensesWrite",
+                "financeReportsExport",
+                "analyticsRead",
+                "analyticsExport",
+                "auditRead",
+                "auditExport",
+                "systemRolesWrite",
+                "systemSettingsWrite",
+                "systemNotificationsSend",
+                "systemDemoConfigure"
+              ]
             },
             "type": "array"
           },
@@ -994,6 +1146,24 @@
         ],
         "type": "object"
       },
+      "AttachPhotoDto": {
+        "properties": {
+          "imageId": {
+            "description": "The id returned with the upload.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "intentId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "intentId",
+          "imageId"
+        ],
+        "type": "object"
+      },
       "AttachVerificationDocumentDto": {
         "properties": {
           "documentId": {
@@ -1117,6 +1287,13 @@
           "slug": {
             "type": "string"
           },
+          "testCases": {
+            "description": "Test cases of the published version (empty when locked); run on the device before use.",
+            "items": {
+              "$ref": "#/components/schemas/PublishedTestCaseDto"
+            },
+            "type": "array"
+          },
           "version": {
             "description": "Published version number (the \"v3\" chip).",
             "type": "number"
@@ -1132,7 +1309,8 @@
           "category",
           "version",
           "access",
-          "published"
+          "published",
+          "testCases"
         ],
         "type": "object"
       },
@@ -1817,6 +1995,80 @@
         ],
         "type": "object"
       },
+      "FavoriteDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "item": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FavoriteItemDto"
+              }
+            ],
+            "description": "Null when no longer available (« N’est plus disponible » with « Retirer »).",
+            "nullable": true,
+            "type": "object"
+          },
+          "targetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "targetType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FavoriteTargetType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "targetType",
+          "targetId",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "FavoriteItemDto": {
+        "properties": {
+          "access": {
+            "$ref": "#/components/schemas/ItemAccessDto"
+          },
+          "kind": {
+            "enum": [
+              "ORDONNANCE",
+              "CERTIFICATE",
+              "CALCULATOR"
+            ],
+            "type": "string"
+          },
+          "slug": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "titleFr": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "titleFr",
+          "access"
+        ],
+        "type": "object"
+      },
+      "FavoriteTargetType": {
+        "enum": [
+          "REFERENCE_DOCUMENT",
+          "CALCULATOR"
+        ],
+        "type": "string"
+      },
       "FeatureDecisionDto": {
         "properties": {
           "key": {
@@ -1874,7 +2126,27 @@
           "subscription.purchase",
           "profile.edit"
         ],
-        "type": "string"
+        "type": "string",
+        "x-enum-varnames": [
+          "search",
+          "referenceView",
+          "calculatorUse",
+          "favorites",
+          "activityHistory",
+          "offlineSync",
+          "subscriptionPurchase",
+          "profileEdit"
+        ],
+        "x-enumNames": [
+          "search",
+          "referenceView",
+          "calculatorUse",
+          "favorites",
+          "activityHistory",
+          "offlineSync",
+          "subscriptionPurchase",
+          "profileEdit"
+        ]
       },
       "FileProcessingStatus": {
         "enum": [
@@ -2079,7 +2351,7 @@
           "testCases": {
             "description": "Run on the device before first use.",
             "items": {
-              "$ref": "#/components/schemas/ManifestTestCaseDto"
+              "$ref": "#/components/schemas/PublishedTestCaseDto"
             },
             "type": "array"
           }
@@ -2145,44 +2417,18 @@
         ],
         "type": "object"
       },
-      "ManifestTestCaseDto": {
-        "properties": {
-          "expectedBand": {
-            "nullable": true,
-            "type": "string"
-          },
-          "expectedOutcome": {
-            "enum": [
-              "RESULT",
-              "INVALID",
-              "OUT_OF_VALIDATED_RANGE"
-            ],
-            "type": "string"
-          },
-          "expectedValue": {
-            "nullable": true,
-            "type": "number"
-          },
-          "inputs": {
-            "additionalProperties": true,
-            "type": "object"
-          },
-          "tolerance": {
-            "nullable": true,
-            "type": "number"
-          }
-        },
-        "required": [
-          "inputs",
-          "expectedOutcome",
-          "expectedValue",
-          "tolerance",
-          "expectedBand"
-        ],
-        "type": "object"
-      },
       "MeDto": {
         "properties": {
+          "avatarUrl": {
+            "description": "Signed URL of the profile photo (1 hour).",
+            "nullable": true,
+            "type": "string"
+          },
+          "bio": {
+            "maxLength": 280,
+            "nullable": true,
+            "type": "string"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -2232,6 +2478,8 @@
           "id",
           "firstName",
           "lastName",
+          "bio",
+          "avatarUrl",
           "email",
           "phone",
           "emailConfirmed",
@@ -2427,6 +2675,97 @@
         ],
         "type": "object"
       },
+      "PhotoUploadHeadersDto": {
+        "properties": {
+          "Content-Length": {
+            "type": "string"
+          },
+          "Content-Type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "Content-Type",
+          "Content-Length"
+        ],
+        "type": "object"
+      },
+      "PhotoUploadRequestDto": {
+        "properties": {
+          "contentType": {
+            "description": "image/jpeg or image/png.",
+            "type": "string"
+          },
+          "sha256": {
+            "description": "Lower-case hex SHA-256 of the file.",
+            "type": "string"
+          },
+          "sizeBytes": {
+            "description": "Exact size in bytes (at most 8 MB).",
+            "type": "number"
+          }
+        },
+        "required": [
+          "contentType",
+          "sizeBytes",
+          "sha256"
+        ],
+        "type": "object"
+      },
+      "PhotoUploadStartDto": {
+        "properties": {
+          "imageId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "upload": {
+            "$ref": "#/components/schemas/PhotoUploadTicketDto"
+          }
+        },
+        "required": [
+          "imageId",
+          "upload"
+        ],
+        "type": "object"
+      },
+      "PhotoUploadTicketDto": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "headers": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PhotoUploadHeadersDto"
+              }
+            ],
+            "description": "Send exactly these headers."
+          },
+          "intentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "PUT"
+            ],
+            "type": "string"
+          },
+          "url": {
+            "description": "Signed URL, valid 15 minutes.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "intentId",
+          "method",
+          "url",
+          "headers",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "PlaceDto": {
         "properties": {
           "id": {
@@ -2547,6 +2886,42 @@
         ],
         "type": "object"
       },
+      "PublishedTestCaseDto": {
+        "properties": {
+          "expectedBand": {
+            "nullable": true,
+            "type": "string"
+          },
+          "expectedOutcome": {
+            "enum": [
+              "RESULT",
+              "INVALID",
+              "OUT_OF_VALIDATED_RANGE"
+            ],
+            "type": "string"
+          },
+          "expectedValue": {
+            "nullable": true,
+            "type": "number"
+          },
+          "inputs": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "tolerance": {
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "inputs",
+          "expectedOutcome",
+          "expectedValue",
+          "tolerance",
+          "expectedBand"
+        ],
+        "type": "object"
+      },
       "PublishedVersionDto": {
         "properties": {
           "definition": {
@@ -2604,6 +2979,26 @@
         },
         "required": [
           "reason"
+        ],
+        "type": "object"
+      },
+      "RecordActivityDto": {
+        "properties": {
+          "deviceId": {
+            "description": "Installation id of the device that recorded the entries.",
+            "type": "string"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityEntryDto"
+            },
+            "maxItems": 100,
+            "type": "array"
+          }
+        },
+        "required": [
+          "deviceId",
+          "entries"
         ],
         "type": "object"
       },
@@ -3325,7 +3720,21 @@
           "verification.start",
           "verification.status"
         ],
-        "type": "string"
+        "type": "string",
+        "x-enum-varnames": [
+          "authSignUp",
+          "subscriptionPlans",
+          "onboardingRole",
+          "verificationStart",
+          "verificationStatus"
+        ],
+        "x-enumNames": [
+          "authSignUp",
+          "subscriptionPlans",
+          "onboardingRole",
+          "verificationStart",
+          "verificationStatus"
+        ]
       },
       "UpdateCalculatorDto": {
         "properties": {
@@ -3400,6 +3809,26 @@
               }
             ],
             "nullable": true
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "UpdateProfileDto": {
+        "properties": {
+          "bio": {
+            "description": "null clears it.",
+            "maxLength": 280,
+            "nullable": true,
+            "type": "string"
+          },
+          "firstName": {
+            "maxLength": 80,
+            "type": "string"
+          },
+          "lastName": {
+            "maxLength": 80,
+            "type": "string"
           }
         },
         "required": [],
@@ -7217,6 +7646,269 @@
         ]
       }
     },
+    "/v1/me/activity": {
+      "delete": {
+        "operationId": "ActivityController_clear",
+        "parameters": [
+          {
+            "description": "Only this kind.",
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ActivityKind"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "activity"
+        ]
+      },
+      "get": {
+        "operationId": "ActivityController_history",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ActivityKind"
+            }
+          },
+          {
+            "description": "Entries before this instant (paging).",
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ActivityDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "activity"
+        ]
+      },
+      "post": {
+        "operationId": "ActivityController_record",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordActivityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "activity"
+        ]
+      }
+    },
+    "/v1/me/favorites": {
+      "get": {
+        "operationId": "ActivityController_favorites",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FavoriteDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "activity"
+        ]
+      }
+    },
+    "/v1/me/favorites/{targetType}/{targetId}": {
+      "delete": {
+        "operationId": "ActivityController_removeFavorite",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "targetType",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/FavoriteTargetType"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "activity"
+        ]
+      },
+      "put": {
+        "operationId": "ActivityController_addFavorite",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "targetType",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/FavoriteTargetType"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "activity"
+        ]
+      }
+    },
     "/v1/me/notifications": {
       "get": {
         "operationId": "NotificationsController_list",
@@ -7331,6 +8023,132 @@
         ]
       }
     },
+    "/v1/me/photo": {
+      "delete": {
+        "operationId": "UsersController_removePhoto",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      },
+      "post": {
+        "operationId": "UsersController_attachPhoto",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachPhotoDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/v1/me/photo/uploads": {
+      "post": {
+        "operationId": "UsersController_requestPhotoUpload",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhotoUploadRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoUploadStartDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
     "/v1/me/preferences": {
       "patch": {
         "operationId": "UsersController_updatePreferences",
@@ -7401,6 +8219,52 @@
               }
             },
             "description": "PROFILE_ALREADY_SET"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/v1/me/profile": {
+      "patch": {
+        "operationId": "UsersController_updateProfile",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
           }
         },
         "security": [

@@ -120,7 +120,11 @@ export class CalculatorsService {
   async get(
     viewer: Viewer,
     slug: string,
-  ): Promise<{ summary: CalculatorSummary; published: PublishedVersion | null }> {
+  ): Promise<{
+    summary: CalculatorSummary;
+    published: PublishedVersion | null;
+    testCases: PublishedTestCase[];
+  }> {
     const row = await this.prisma.calculator.findUnique({
       where: { slug },
       include: PUBLISHED_INCLUDE,
@@ -134,9 +138,11 @@ export class CalculatorsService {
     }
     const [entry] = await this.withAccess(viewer, [row as Row]);
     const { summary } = entry!;
+    const available = summary.access.state === 'AVAILABLE';
     return {
       summary,
-      published: summary.access.state === 'AVAILABLE' ? published(row as Row) : null,
+      published: available ? published(row as Row) : null,
+      testCases: available ? testCasesOf(row as Row) : [],
     };
   }
 
@@ -179,13 +185,7 @@ export class CalculatorsService {
       .map(({ summary, row }) => ({
         ...summary,
         published: published(row),
-        testCases: row.currentVersion!.testCases.map((testCase) => ({
-          inputs: testCase.inputs,
-          expectedOutcome: testCase.expectedOutcome,
-          expectedValue: testCase.expectedValue,
-          tolerance: testCase.tolerance,
-          expectedBand: testCase.expectedBand,
-        })),
+        testCases: testCasesOf(row),
       }))
       .sort((a, b) => compareFrench(a.nameFr, b.nameFr));
   }
@@ -225,6 +225,16 @@ export class CalculatorsService {
       },
     }));
   }
+}
+
+function testCasesOf(row: Row): PublishedTestCase[] {
+  return row.currentVersion!.testCases.map((testCase) => ({
+    inputs: testCase.inputs,
+    expectedOutcome: testCase.expectedOutcome,
+    expectedValue: testCase.expectedValue,
+    tolerance: testCase.tolerance,
+    expectedBand: testCase.expectedBand,
+  }));
 }
 
 function published(row: Row): PublishedVersion {

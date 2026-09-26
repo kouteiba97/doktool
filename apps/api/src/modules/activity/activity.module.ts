@@ -1,10 +1,19 @@
 import { Module } from '@nestjs/common';
+import { CalculatorsModule } from '../calculators/index.js';
+import { ReferenceLibraryModule } from '../reference-library/index.js';
+import { ActivityController } from './activity.controller.js';
+import { ActivityService } from './activity.service.js';
 
 /**
- * Favorites and recent activity ("Research").
+ * Favorites and recent activity (« Activité »).
  *
  * Owns: `favorites`, `recent_activities`.
- * Built in Phase 13 of docs/ARCHITECTURE-AUDIT.md §15.2. Other modules reach it only through ./index.ts.
+ * Other modules reach it only through ./index.ts.
  */
-@Module({})
+@Module({
+  imports: [CalculatorsModule, ReferenceLibraryModule],
+  controllers: [ActivityController],
+  providers: [ActivityService],
+  exports: [ActivityService],
+})
 export class ActivityModule {}

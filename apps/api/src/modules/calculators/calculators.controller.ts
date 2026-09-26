@@ -24,6 +24,7 @@ import {
   CalculatorSummaryDto,
   EvaluateDto,
   EvaluationResponseDto,
+  PublishedTestCaseDto,
   PublishedVersionDto,
 } from './calculators.dto.js';
 import { CalculatorsService } from './calculators.service.js';
@@ -64,10 +65,11 @@ export class CalculatorsController {
     @CurrentViewer() viewer: Viewer,
     @Param('slug') slug: string,
   ): Promise<CalculatorDetailDto> {
-    const { summary, published } = await this.calculators.get(viewer, slug);
+    const { summary, published, testCases } = await this.calculators.get(viewer, slug);
     return {
       ...CalculatorSummaryDto.from(summary),
       published: published ? PublishedVersionDto.from(published) : null,
+      testCases: testCases.map((testCase) => PublishedTestCaseDto.from(testCase)),
     };
   }
 

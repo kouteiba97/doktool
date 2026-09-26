@@ -315,12 +315,19 @@ function run(node: Expr, values: Map<string, Value>, definition: CalculatorDefin
 }
 
 /**
- * Rounds to `digits` decimals, halves away from zero (2.5 → 3, −2.5 → −3). The exponent shift
- * avoids the binary representation error of multiplying by 10^digits (1.005 → 1.01).
+ * Rounds to `digits` decimals, halves away from zero (2.5 → 3, −2.5 → −3). Shifting the decimal
+ * exponent of the shortest representation avoids the binary error of multiplying by 10^digits
+ * (1.005 → 1.01), and handles numbers written with an exponent (1.5e-7, 1e21).
  */
 export function roundHalfAwayFromZero(value: number, digits: number): number {
   if (!Number.isFinite(value)) return value;
   const sign = value < 0 ? -1 : 1;
-  const shifted = Math.round(Number(`${Math.abs(value)}e${digits}`));
-  return sign * Number(`${shifted}e-${digits}`);
+  const shifted = Math.round(shiftDecimal(Math.abs(value), digits));
+  return sign * shiftDecimal(shifted, -digits);
+}
+
+/** value × 10^places, computed on the decimal representation. */
+function shiftDecimal(value: number, places: number): number {
+  const [mantissa, exponent = '0'] = String(value).split('e');
+  return Number(`${mantissa}e${Number(exponent) + places}`);
 }

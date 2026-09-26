@@ -367,6 +367,7 @@ describe('using a published calculator', () => {
     const student = await userActor(app, 'STUDENT');
 
     const detail = await app.http().get(`/v1/calculators/${slug}`).set(student.auth).expect(200);
+    expect(detail.body.testCases).toHaveLength(2);
     expect(detail.body).toMatchObject({
       version: 1,
       access: { state: 'AVAILABLE' },
@@ -411,6 +412,7 @@ describe('using a published calculator', () => {
     expect(lockedDetail.body).toMatchObject({
       access: { state: 'LOCKED', lockReason: 'SUBSCRIPTION_REQUIRED' },
       published: null,
+      testCases: [],
     });
     const refused = await app
       .http()
