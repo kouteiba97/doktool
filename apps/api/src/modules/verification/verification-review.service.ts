@@ -44,6 +44,9 @@ const QUEUE_SELECT = {
 export type QueueRecord = Prisma.VerificationCaseGetPayload<{ select: typeof QUEUE_SELECT }> & {
   reviewer: { id: string; fullName: string } | null;
   user: { id: string; firstName: string; lastName: string };
+  /** Declared specialty (professional status) or university (student status), by name. */
+  specialty: { fr: string; en: string } | null;
+  university: string | null;
 };
 
 export interface ReviewRecord {
@@ -100,10 +103,28 @@ export class VerificationReviewService {
     const reviewers = await this.admins.names(
       rows.flatMap((row) => (row.reviewerId ? [row.reviewerId] : [])),
     );
-    return rows.map((row) => {
+    const declared = rows.map((row) => detailsOf(row));
+    const affiliations = await this.users.affiliationNames({
+      specialtyIds: declared.flatMap((details) =>
+        typeof details.specialtyId === 'string' ? [details.specialtyId] : [],
+      ),
+      universityIds: declared.flatMap((details) =>
+        typeof details.universityId === 'string' ? [details.universityId] : [],
+      ),
+    });
+    return rows.map((row, index) => {
       const reviewerName = row.reviewerId ? reviewers.get(row.reviewerId) : undefined;
+      const details = declared[index] ?? {};
       return {
         ...row,
+        specialty:
+          typeof details.specialtyId === 'string'
+            ? (affiliations.specialties.get(details.specialtyId) ?? null)
+            : null,
+        university:
+          typeof details.universityId === 'string'
+            ? (affiliations.universities.get(details.universityId) ?? null)
+            : null,
         reviewer:
           row.reviewerId && reviewerName ? { id: row.reviewerId, fullName: reviewerName } : null,
         user: { id: row.userId, ...(people.get(row.userId) ?? { firstName: '', lastName: '' }) },

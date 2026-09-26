@@ -26,9 +26,9 @@ Under **R2 → Manage API tokens**, create **two** tokens with *Object Read & Wr
 
 Also set `R2_ACCOUNT_ID` (shown on the R2 overview page). If the buckets have other names, set `R2_CONTENT_BUCKET` and `R2_PRIVATE_BUCKET`.
 
-## 3. CORS (browser uploads from Admin Web)
+## 3. CORS (Admin Web)
 
-Admin Web uploads reference PDFs straight to R2 with a signed `PUT`. On `doktool-content`, set this CORS policy (replace the origin):
+Admin Web uploads reference PDFs straight to R2 with a signed `PUT`, and reads PDFs with a signed `GET` to render them itself (pdf.js, no browser download or print toolbar). On `doktool-content`, set this CORS policy (replace the origin with `ADMIN_WEB_ORIGIN`):
 
 ```json
 [
@@ -41,7 +41,20 @@ Admin Web uploads reference PDFs straight to R2 with a signed `PUT`. On `doktool
 ]
 ```
 
-Use the same policy on `doktool-private` once verification uploads go live (Phase 9). If those uploads come from the mobile app, no CORS entry is needed there.
+On `doktool-private`, allow only `GET` from the same origin: reviewers open PDF identity documents in the restricted viewer (Phase 16). Uploads to that bucket come from the mobile app, which needs no CORS.
+
+```json
+[
+  {
+    "AllowedOrigins": ["https://admin.example.dz"],
+    "AllowedMethods": ["GET"],
+    "AllowedHeaders": [],
+    "MaxAgeSeconds": 600
+  }
+]
+```
+
+Admin Web's Content-Security-Policy must also allow the R2 endpoint: build it with `DOKTOOL_STORAGE_ORIGINS=https://<account>.r2.cloudflarestorage.com` (see `apps/admin/README.md`). With `STORAGE_DRIVER=local`, the API itself answers these cross-origin requests for `ADMIN_WEB_ORIGIN`.
 
 ## 4. Check before launch
 

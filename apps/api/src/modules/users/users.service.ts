@@ -387,6 +387,33 @@ export class UsersService {
     );
   }
 
+  /** Specialty (FR/EN) and university names by id, for the verification queue columns. */
+  async affiliationNames(ids: { specialtyIds: string[]; universityIds: string[] }): Promise<{
+    specialties: Map<string, { fr: string; en: string }>;
+    universities: Map<string, string>;
+  }> {
+    const specialtyIds = [...new Set(ids.specialtyIds)];
+    const universityIds = [...new Set(ids.universityIds)];
+    const [specialties, universities] = await Promise.all([
+      specialtyIds.length === 0
+        ? []
+        : this.prisma.specialty.findMany({
+            where: { id: { in: specialtyIds } },
+            select: { id: true, nameFr: true, nameEn: true },
+          }),
+      universityIds.length === 0
+        ? []
+        : this.prisma.university.findMany({
+            where: { id: { in: universityIds } },
+            select: { id: true, name: true },
+          }),
+    ]);
+    return {
+      specialties: new Map(specialties.map((row) => [row.id, { fr: row.nameFr, en: row.nameEn }])),
+      universities: new Map(universities.map((row) => [row.id, row.name])),
+    };
+  }
+
   /** What a verification reviewer sees about the person (never the password or tokens). */
   async reviewSummary(userId: string) {
     return this.prisma.user.findUniqueOrThrow({

@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   typescript:
-    name: API, contracts, tokens, i18n
+    name: API, Admin Web, contracts, tokens, i18n
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -56,6 +56,11 @@ jobs:
 
       - name: Format, lint, types, i18n parity, token drift, OpenAPI contract, tests
         run: npm run ci
+
+      - name: Admin Web production build
+        run: npm run build -w @doktool/admin
+        env:
+          NEXT_PUBLIC_DOKTOOL_ENVIRONMENT: development
 
   mobile:
     name: Flutter app

@@ -410,6 +410,14 @@ export class VerificationPersonNameDto {
   lastName!: string;
 }
 
+export class QueueSpecialtyDto {
+  @ApiProperty()
+  fr!: string;
+
+  @ApiProperty()
+  en!: string;
+}
+
 export class AdminVerificationQueueItemDto {
   @ApiProperty({ format: 'uuid' })
   id!: string;
@@ -435,6 +443,23 @@ export class AdminVerificationQueueItemDto {
   @ApiProperty({ type: VerificationPersonNameDto })
   user!: VerificationPersonNameDto;
 
+  @ApiPropertyOptional({
+    type: QueueSpecialtyDto,
+    nullable: true,
+    description: 'Declared specialty (professional status cases).',
+  })
+  specialty!: QueueSpecialtyDto | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    description: 'Declared university (student status cases).',
+  })
+  university!: string | null;
+
+  @ApiPropertyOptional({ type: Number, nullable: true })
+  academicYear!: number | null;
+
   static from(record: QueueRecord): AdminVerificationQueueItemDto {
     const details = record.declaredDetails;
     const declared =
@@ -456,6 +481,9 @@ export class AdminVerificationQueueItemDto {
       appealedAt: iso(record.appealedAt),
       reviewer: record.reviewer,
       user: record.user,
+      specialty: record.specialty,
+      university: record.university,
+      academicYear: typeof declared.academicYear === 'number' ? declared.academicYear : null,
     };
   }
 }

@@ -19,5 +19,6 @@ One file per decision, numbered, never rewritten after acceptance — a changed 
 | [013](ADR-013-verification.md) | Verification cases, review and retention | Accepted |
 | [014](ADR-014-search.md) | Search index and calculator purpose | Accepted |
 | [015](ADR-015-billing-and-payments.md) | Billing and payments (SATIM, renewal, no refund) | Accepted |
+| [016](ADR-016-admin-web.md) | Admin Web (Next.js console, same-origin API proxy) | Accepted |
 
 Source of the architecture: [`docs/ARCHITECTURE-AUDIT.md`](../ARCHITECTURE-AUDIT.md). Where an ADR and the design system disagree, the ADR wins; where ADR-006 and the audit disagree, ADR-006 wins.

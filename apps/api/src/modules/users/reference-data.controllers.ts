@@ -110,6 +110,30 @@ export class ReferenceDataAdminController {
     private readonly audit: AuditService,
   ) {}
 
+  @Get('specialties')
+  @RequireGrants('system.settings.write')
+  @ApiOkResponse({ type: [SpecialtyDto] })
+  @errors
+  listSpecialties(): Promise<SpecialtyDto[]> {
+    return this.users.listSpecialties();
+  }
+
+  @Get('institutions')
+  @RequireGrants('system.settings.write')
+  @ApiOkResponse({ type: [PlaceDto] })
+  @errors
+  listInstitutions(@Query() query: InstitutionQuery): Promise<PlaceDto[]> {
+    return this.users.listInstitutions(query.wilayaCode);
+  }
+
+  @Get('universities')
+  @RequireGrants('system.settings.write')
+  @ApiOkResponse({ type: [PlaceDto] })
+  @errors
+  listUniversities(): Promise<PlaceDto[]> {
+    return this.users.listUniversities();
+  }
+
   @Post('specialties')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('system.settings.write')

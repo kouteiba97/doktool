@@ -8,3 +8,7 @@ packages/api-contract/openapi.json
 *.md
 package-lock.json
 apps/mobile/
+packages/design-tokens/web/
+apps/admin/src/api/schema.d.ts
+apps/admin/.next/
+apps/admin/next-env.d.ts

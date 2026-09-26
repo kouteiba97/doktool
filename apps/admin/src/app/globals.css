@@ -1,0 +1,4 @@
+@import 'tailwindcss';
+@import '@doktool/design-tokens/tokens.css';
+@import './console.css';
+@config '../../tailwind.config.mjs';

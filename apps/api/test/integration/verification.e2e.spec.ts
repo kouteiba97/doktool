@@ -715,6 +715,21 @@ describe('reference pickers', () => {
     expect(elsewhere.body.some((item: { id: string }) => item.id === institutionId)).toBe(false);
     await app.http().get('/v1/universities').expect(200);
 
+    // Admin Web reads the same lists through the admin API.
+    const has = (body: { id: string }[], id: string) => body.some((item) => item.id === id);
+    const adminSpecialties = await superAdmin
+      .get('/admin/v1/reference-data/specialties')
+      .expect(200);
+    expect(has(adminSpecialties.body, specialtyId)).toBe(true);
+    const adminInstitutions = await superAdmin
+      .get('/admin/v1/reference-data/institutions?wilayaCode=16')
+      .expect(200);
+    expect(has(adminInstitutions.body, institutionId)).toBe(true);
+    const adminUniversities = await superAdmin
+      .get('/admin/v1/reference-data/universities')
+      .expect(200);
+    expect(has(adminUniversities.body, universityId)).toBe(true);
+
     const duplicate = await superAdmin
       .post('/admin/v1/reference-data/institutions')
       .send({
@@ -729,12 +744,48 @@ describe('reference pickers', () => {
       .send({ name: 'Université inconnue', wilayaCode: 99, reason: 'Unknown wilaya' })
       .expect(400);
     const reviewer = await adminActor(app, 'VERIFICATION_REVIEWER');
+    await reviewer.get('/admin/v1/reference-data/specialties').expect(403);
     await reviewer
       .post('/admin/v1/reference-data/specialties')
       .send({ code: 'NEPHRO', nameFr: 'Néphrologie', nameEn: 'Nephrology', reason: 'Not allowed' })
       .expect(403);
   });
 });
+
+describe('queue columns (Admin Web)', () => {
+  it('shows the declared specialty or university of each case', async () => {
+    const doctor = await newPerson('DOCTOR');
+    const statusId = await submitCase(doctor.auth, 'PROFESSIONAL_STATUS');
+    const student = await newPerson('STUDENT');
+    const studentId = await submitCase(student.auth, 'STUDENT_STATUS');
+
+    const professional = await queueItem('PROFESSIONAL_STATUS', statusId);
+    expect(professional.specialty.fr).toMatch(/^Cardiologie/);
+    expect(professional.specialty.en).toMatch(/^Cardiology/);
+    expect(professional.university).toBeNull();
+    expect(professional.professionalType).toBe('DOCTOR');
+
+    const studying = await queueItem('STUDENT_STATUS', studentId);
+    expect(studying.university).toMatch(/^Université d’Alger 1/);
+    expect(typeof studying.academicYear).toBe('number');
+    expect(studying.specialty).toBeNull();
+  });
+});
+
+/** Pages through the pending queue of one type until the case appears. */
+async function queueItem(type: string, caseId: string) {
+  let cursor: string | undefined;
+  for (;;) {
+    const page = await superAdmin
+      .get('/admin/v1/verification/cases')
+      .query({ type, ...(cursor ? { cursor } : {}) })
+      .expect(200);
+    const found = page.body.find((item: { id: string }) => item.id === caseId);
+    if (found) return found;
+    if (page.body.length < 50) throw new Error(`case ${caseId} is not in the queue`);
+    cursor = page.body.at(-1).id;
+  }
+}
 
 async function startAllowed(testApp: TestApp, auth: Auth): Promise<boolean> {
   const overview = await testApp.http().get('/v1/me/verification').set(auth).expect(200);

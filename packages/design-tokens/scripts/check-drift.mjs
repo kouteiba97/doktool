@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
 import { findDrift, loadTailwindPreset } from './drift.mjs';
 import { DART_OUTPUT, renderDart } from './generate-dart.mjs';
+import { WEB_CSS, WEB_PRESET, renderWeb } from './generate-web.mjs';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const designDir = path.join(repoRoot, 'design');
@@ -34,11 +35,25 @@ if (committedDart.replace(/\r\n/g, '\n') !== (await renderDart())) {
   );
 }
 
+// The Admin Web outputs (ESM preset, stylesheet) are generated too.
+const web = await renderWeb();
+for (const [file, expected] of [
+  [WEB_PRESET, web.presetModule],
+  [WEB_CSS, web.webCss],
+]) {
+  const committed = await readFile(file, 'utf8').catch(() => '');
+  if (committed.replace(/\r\n/g, '\n') !== expected) {
+    problems.push(
+      `packages/design-tokens/web/${path.basename(file)} is stale: run \`npm run generate:web -w @doktool/design-tokens\``,
+    );
+  }
+}
+
 if (problems.length > 0) {
   console.error(`Design-token drift (${problems.length}):`);
   for (const problem of problems) console.error(`  - ${problem}`);
   process.exit(1);
 }
 console.log(
-  'Design tokens: CSS, Tailwind, TS, Dart and the generated Flutter theme match tokens.json.',
+  'Design tokens: CSS, Tailwind, TS, Dart, the Flutter theme and the Admin Web outputs match tokens.json.',
 );

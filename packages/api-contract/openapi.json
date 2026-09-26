@@ -974,6 +974,10 @@
       },
       "AdminVerificationQueueItemDto": {
         "properties": {
+          "academicYear": {
+            "nullable": true,
+            "type": "number"
+          },
           "appealedAt": {
             "format": "date-time",
             "nullable": true,
@@ -1000,6 +1004,16 @@
             "nullable": true,
             "type": "object"
           },
+          "specialty": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QueueSpecialtyDto"
+              }
+            ],
+            "description": "Declared specialty (professional status cases).",
+            "nullable": true,
+            "type": "object"
+          },
           "status": {
             "allOf": [
               {
@@ -1018,6 +1032,11 @@
                 "$ref": "#/components/schemas/VerificationType"
               }
             ]
+          },
+          "university": {
+            "description": "Declared university (student status cases).",
+            "nullable": true,
+            "type": "string"
           },
           "user": {
             "$ref": "#/components/schemas/VerificationPersonNameDto"
@@ -3270,6 +3289,21 @@
           "publishedAt",
           "review",
           "sources"
+        ],
+        "type": "object"
+      },
+      "QueueSpecialtyDto": {
+        "properties": {
+          "en": {
+            "type": "string"
+          },
+          "fr": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fr",
+          "en"
         ],
         "type": "object"
       },
@@ -6257,6 +6291,53 @@
       }
     },
     "/admin/v1/reference-data/institutions": {
+      "get": {
+        "operationId": "ReferenceDataAdminController_listInstitutions",
+        "parameters": [
+          {
+            "description": "Only the institutions of this wilaya.",
+            "in": "query",
+            "name": "wilayaCode",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlaceDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-data"
+        ]
+      },
       "post": {
         "operationId": "ReferenceDataAdminController_createInstitution",
         "parameters": [],
@@ -6303,6 +6384,43 @@
       }
     },
     "/admin/v1/reference-data/specialties": {
+      "get": {
+        "operationId": "ReferenceDataAdminController_listSpecialties",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SpecialtyDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-data"
+        ]
+      },
       "post": {
         "operationId": "ReferenceDataAdminController_createSpecialty",
         "parameters": [],
@@ -6349,6 +6467,43 @@
       }
     },
     "/admin/v1/reference-data/universities": {
+      "get": {
+        "operationId": "ReferenceDataAdminController_listUniversities",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlaceDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-reference-data"
+        ]
+      },
       "post": {
         "operationId": "ReferenceDataAdminController_createUniversity",
         "parameters": [],

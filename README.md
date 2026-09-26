@@ -13,11 +13,11 @@ Start with [`CLAUDE.md`](CLAUDE.md), then [`docs/adr/`](docs/adr/) and [`docs/AR
 | Path | What |
 |---|---|
 | `apps/api` | NestJS modular monolith, Prisma schema and migrations |
-| `apps/admin` | Admin Web — Phase 16 |
+| `apps/admin` | Admin Web (Next.js console over `/admin/v1`) — see its README |
 | `apps/mobile` | Flutter app (iOS + Android) — see its README |
 | `packages/api-contract` | Generated OpenAPI contract |
 | `packages/i18n` | FR/EN message catalogues, parity gate, ARB generation for Flutter |
-| `packages/design-tokens` | Drift gate for `design/system/tokens.json` outputs; generates the Flutter theme |
+| `packages/design-tokens` | Drift gate for `design/system/tokens.json` outputs; generates the Flutter theme and the Admin Web preset |
 | `packages/calculator-vectors` | Conformance vectors shared by the TS and Dart calculator engines |
 | `design/` | Design system v2.2 (visual source of truth) |
 | `docs/` | Architecture audit and decision records |

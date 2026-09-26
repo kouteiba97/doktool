@@ -8,6 +8,7 @@
   },
   "workspaces": [
     "apps/api",
+    "apps/admin",
     "packages/*"
   ],
   "scripts": {
@@ -18,7 +19,8 @@
     "check:i18n": "npm run check --workspace @doktool/i18n",
     "check:tokens": "npm run check --workspace @doktool/design-tokens",
     "check:openapi": "npm run openapi:check --workspace @doktool/api",
-    "ci": "npm run format:check && npm run lint && npm run typecheck && npm run check:i18n && npm run check:tokens && npm run check:openapi && npm run test"
+    "ci": "npm run format:check && npm run lint && npm run typecheck && npm run check:i18n && npm run check:tokens && npm run check:openapi && npm run check:admin-api && npm run test",
+    "check:admin-api": "npm run check:api --workspace @doktool/admin"
   },
   "devDependencies": {
     "prettier": "3.9.9"
@@ -28,5 +30,10 @@
     "prisma@7.10.0": true,
     "@swc/core@1.16.2": true,
     "@scarf/scarf": false
+  },
+  "overrides": {
+    "openapi-typescript": {
+      "typescript": "6.0.3"
+    }
   }
 }
