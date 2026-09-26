@@ -38,6 +38,8 @@ const activeSubscription = (userId: string, planId: string, status = 'ACTIVE') =
     [userId, planId, status],
   );
 
+// Transactions of these tests are rolled back; the year 1999 keeps their public ids apart from the
+// ones end-to-end tests create for real in the same database.
 async function succeededTransaction() {
   const userId = await user('payer@example.dz');
   const planId = await plan();
@@ -45,7 +47,7 @@ async function succeededTransaction() {
   const id = await db.insertId(
     `INSERT INTO transactions (id, transaction_id, user_id, subscription_id, plan_id, amount_minor,
        currency, payment_provider, provider_reference, status, payment_date, updated_at)
-     VALUES (gen_random_uuid(), 'DT-2026-000001', $1, $2, $3, 100000, 'DZD', 'SATIM_CIB', 'satim-1',
+     VALUES (gen_random_uuid(), 'DT-1999-000001', $1, $2, $3, 100000, 'DZD', 'SATIM_CIB', gen_random_uuid()::text,
        'SUCCEEDED', now(), now()) RETURNING id`,
     [userId, subscriptionId, planId],
   );
@@ -214,7 +216,7 @@ describe('billing (ADR-005, ADR-006 Q3)', () => {
     await db.expectRejection(
       `INSERT INTO transactions (id, transaction_id, user_id, subscription_id, plan_id, amount_minor, currency,
          payment_provider, status, payment_fees_minor, net_amount_minor, updated_at)
-       VALUES (gen_random_uuid(), 'DT-2026-000002', $1, $2, $3, 1000, 'DZD', 'SATIM_CIB', 'PENDING', 50, 900, now())`,
+       VALUES (gen_random_uuid(), 'DT-1999-000002', $1, $2, $3, 1000, 'DZD', 'SATIM_CIB', 'PENDING', 50, 900, now())`,
       [userId, subscriptionId, planId],
       /transactions_net_chk/,
     );

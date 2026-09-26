@@ -4,6 +4,542 @@
   "@appName": {
     "description": "common.appName"
   },
+  "accessDemo": "Démo",
+  "@accessDemo": {
+    "description": "mobile.access.demo"
+  },
+  "accessPro": "DokTool Pro",
+  "@accessPro": {
+    "description": "mobile.access.pro"
+  },
+  "accessRestricted": "Accès limité",
+  "@accessRestricted": {
+    "description": "mobile.access.restricted"
+  },
+  "accessSample": "Contenu d’exemple",
+  "@accessSample": {
+    "description": "mobile.access.sample"
+  },
+  "accessStudent": "Accès étudiant — gratuit",
+  "@accessStudent": {
+    "description": "mobile.access.student"
+  },
+  "calculatorCheckValue": "Vérifiez la valeur (inhabituelle : {range}).",
+  "@calculatorCheckValue": {
+    "description": "mobile.calculator.checkValue",
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "calculatorConverted": "Converti : {from} = {to}",
+  "@calculatorConverted": {
+    "description": "mobile.calculator.converted",
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "calculatorCopied": "Résultat copié.",
+  "@calculatorCopied": {
+    "description": "mobile.calculator.copied"
+  },
+  "calculatorCopy": "Copier",
+  "@calculatorCopy": {
+    "description": "mobile.calculator.copy"
+  },
+  "calculatorDefinitionUnsupported": "Cette version du calculateur n’est pas prise en charge par cette version de l’application. Mettez l’application à jour.",
+  "@calculatorDefinitionUnsupported": {
+    "description": "mobile.calculator.definitionUnsupported"
+  },
+  "calculatorErrorChoice": "Choix non reconnu.",
+  "@calculatorErrorChoice": {
+    "description": "mobile.calculator.errorChoice"
+  },
+  "calculatorErrorComputation": "Le calcul n’a pas abouti avec ces valeurs.",
+  "@calculatorErrorComputation": {
+    "description": "mobile.calculator.errorComputation"
+  },
+  "calculatorErrorImpossible": "Valeur impossible — attendu : {range}.",
+  "@calculatorErrorImpossible": {
+    "description": "mobile.calculator.errorImpossible",
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "calculatorErrorInteger": "Nombre entier attendu.",
+  "@calculatorErrorInteger": {
+    "description": "mobile.calculator.errorInteger"
+  },
+  "calculatorErrorNumber": "Nombre attendu.",
+  "@calculatorErrorNumber": {
+    "description": "mobile.calculator.errorNumber"
+  },
+  "calculatorErrorUnit": "Unité non reconnue.",
+  "@calculatorErrorUnit": {
+    "description": "mobile.calculator.errorUnit"
+  },
+  "calculatorFormula": "Formule",
+  "@calculatorFormula": {
+    "description": "mobile.calculator.formula"
+  },
+  "calculatorInvalidTitle": "Vérifiez les valeurs saisies",
+  "@calculatorInvalidTitle": {
+    "description": "mobile.calculator.invalidTitle"
+  },
+  "calculatorLimitations": "Limites",
+  "@calculatorLimitations": {
+    "description": "mobile.calculator.limitations"
+  },
+  "calculatorNo": "Non",
+  "@calculatorNo": {
+    "description": "mobile.calculator.no"
+  },
+  "calculatorPending": "{count, plural, one {# champ requis à compléter} other {# champs requis à compléter}}",
+  "@calculatorPending": {
+    "description": "mobile.calculator.pending",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "calculatorPublished": "Version {version} publiée le {date}",
+  "@calculatorPublished": {
+    "description": "mobile.calculator.published",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "calculatorRangeBetween": "{min} à {max} {unit}",
+  "@calculatorRangeBetween": {
+    "description": "mobile.calculator.rangeBetween",
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "calculatorRangeMax": "au plus {max} {unit}",
+  "@calculatorRangeMax": {
+    "description": "mobile.calculator.rangeMax",
+    "placeholders": {
+      "max": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "calculatorRangeMin": "au moins {min} {unit}",
+  "@calculatorRangeMin": {
+    "description": "mobile.calculator.rangeMin",
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "calculatorReset": "Réinitialiser",
+  "@calculatorReset": {
+    "description": "mobile.calculator.reset"
+  },
+  "calculatorReview": "Revue",
+  "@calculatorReview": {
+    "description": "mobile.calculator.review"
+  },
+  "calculatorReviewLine": "Revu par {reviewer} le {date} · {count, plural, one {# test de référence réussi} other {# tests de référence réussis}}",
+  "@calculatorReviewLine": {
+    "description": "mobile.calculator.reviewLine",
+    "placeholders": {
+      "reviewer": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      },
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "calculatorRoleUnitConversion": "Conversion d’unités",
+  "@calculatorRoleUnitConversion": {
+    "description": "mobile.calculator.roleUnitConversion"
+  },
+  "calculatorRoleValidation": "Validation",
+  "@calculatorRoleValidation": {
+    "description": "mobile.calculator.roleValidation"
+  },
+  "calculatorSelfTestFailed": "Ce calculateur n’a pas passé ses tests de référence sur cet appareil. Mettez l’application à jour avant de l’utiliser.",
+  "@calculatorSelfTestFailed": {
+    "description": "mobile.calculator.selfTestFailed"
+  },
+  "calculatorSource": "Source",
+  "@calculatorSource": {
+    "description": "mobile.calculator.source"
+  },
+  "calculatorSourceSheet": "Fiche source",
+  "@calculatorSourceSheet": {
+    "description": "mobile.calculator.sourceSheet"
+  },
+  "calculatorUnavailableRange": "{input} est hors de l’intervalle validé par la source ({range}).",
+  "@calculatorUnavailableRange": {
+    "description": "mobile.calculator.unavailableRange",
+    "placeholders": {
+      "input": {
+        "type": "String"
+      },
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "calculatorUnavailableTitle": "Calcul non disponible",
+  "@calculatorUnavailableTitle": {
+    "description": "mobile.calculator.unavailableTitle"
+  },
+  "calculatorUnit": "Unité",
+  "@calculatorUnit": {
+    "description": "mobile.calculator.unit"
+  },
+  "calculatorValidatedRanges": "Intervalles validés",
+  "@calculatorValidatedRanges": {
+    "description": "mobile.calculator.validatedRanges"
+  },
+  "calculatorVersion": "v{version}",
+  "@calculatorVersion": {
+    "description": "mobile.calculator.version",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "calculatorYes": "Oui",
+  "@calculatorYes": {
+    "description": "mobile.calculator.yes"
+  },
+  "commonBack": "Retour",
+  "@commonBack": {
+    "description": "mobile.common.back"
+  },
+  "commonCancel": "Annuler",
+  "@commonCancel": {
+    "description": "mobile.common.cancel"
+  },
+  "commonClose": "Fermer",
+  "@commonClose": {
+    "description": "mobile.common.close"
+  },
+  "commonConnectionRequired": "Connexion requise",
+  "@commonConnectionRequired": {
+    "description": "mobile.common.connectionRequired"
+  },
+  "commonContinue": "Continuer",
+  "@commonContinue": {
+    "description": "mobile.common.continue"
+  },
+  "commonLater": "Plus tard",
+  "@commonLater": {
+    "description": "mobile.common.later"
+  },
+  "commonOptional": "facultatif",
+  "@commonOptional": {
+    "description": "mobile.common.optional"
+  },
+  "commonRequired": "requis",
+  "@commonRequired": {
+    "description": "mobile.common.required"
+  },
+  "commonRetry": "Réessayer",
+  "@commonRetry": {
+    "description": "mobile.common.retry"
+  },
+  "commonSearch": "Rechercher",
+  "@commonSearch": {
+    "description": "mobile.common.search"
+  },
+  "commonStepOf": "Étape {current} sur {total}",
+  "@commonStepOf": {
+    "description": "mobile.common.stepOf",
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "demoBar": "Mode démo · contenu d’exemple réel",
+  "@demoBar": {
+    "description": "mobile.demo.bar"
+  },
+  "demoEnd": "Quitter la démo",
+  "@demoEnd": {
+    "description": "mobile.demo.end"
+  },
+  "demoInDemoTitle": "Dans la démo",
+  "@demoInDemoTitle": {
+    "description": "mobile.demo.inDemoTitle"
+  },
+  "demoIntro": "Utilisez le vrai DokTool avec une sélection de modèles et de calculateurs réels. Sans inscription.",
+  "@demoIntro": {
+    "description": "mobile.demo.intro"
+  },
+  "demoLabel": "Démo · {role}",
+  "@demoLabel": {
+    "description": "mobile.demo.label",
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "demoPointLocked": "Le reste est visible, marqué « Inclus dans DokTool Pro »",
+  "@demoPointLocked": {
+    "description": "mobile.demo.pointLocked"
+  },
+  "demoPointNavigation": "Navigation, recherche et bibliothèque réelles",
+  "@demoPointNavigation": {
+    "description": "mobile.demo.pointNavigation"
+  },
+  "demoPointPrivacy": "Rien n’est enregistré à votre nom",
+  "@demoPointPrivacy": {
+    "description": "mobile.demo.pointPrivacy"
+  },
+  "demoPointSample": "Une sélection de modèles et de calculateurs ouverts",
+  "@demoPointSample": {
+    "description": "mobile.demo.pointSample"
+  },
+  "demoStart": "Commencer la démo",
+  "@demoStart": {
+    "description": "mobile.demo.start"
+  },
+  "demoTitle": "Explorer la démo",
+  "@demoTitle": {
+    "description": "mobile.demo.title"
+  },
+  "demoYouAre": "Vous êtes",
+  "@demoYouAre": {
+    "description": "mobile.demo.youAre"
+  },
+  "errorsFieldRequired": "Champ requis.",
+  "@errorsFieldRequired": {
+    "description": "mobile.errors.fieldRequired"
+  },
+  "errorsGeneric": "Une erreur est survenue. Réessayez.",
+  "@errorsGeneric": {
+    "description": "mobile.errors.generic"
+  },
+  "errorsNetwork": "Pas de connexion. Vérifiez votre réseau et réessayez.",
+  "@errorsNetwork": {
+    "description": "mobile.errors.network"
+  },
+  "errorsRateLimited": "Trop de tentatives. Réessayez dans quelques minutes.",
+  "@errorsRateLimited": {
+    "description": "mobile.errors.rateLimited"
+  },
+  "errorsSessionExpired": "Votre session a expiré. Reconnectez-vous.",
+  "@errorsSessionExpired": {
+    "description": "mobile.errors.sessionExpired"
+  },
+  "homeNotifications": "Notifications",
+  "@homeNotifications": {
+    "description": "mobile.home.notifications"
+  },
+  "homeSearchHint": "Rechercher un modèle ou un calculateur",
+  "@homeSearchHint": {
+    "description": "mobile.home.searchHint"
+  },
+  "homeStartCalculators": "Ouvrir un calculateur",
+  "@homeStartCalculators": {
+    "description": "mobile.home.startCalculators"
+  },
+  "homeStartCertificates": "Parcourir les certificats de référence",
+  "@homeStartCertificates": {
+    "description": "mobile.home.startCertificates"
+  },
+  "homeStartOrdonnances": "Parcourir les ordonnances de référence",
+  "@homeStartOrdonnances": {
+    "description": "mobile.home.startOrdonnances"
+  },
+  "homeStartTitle": "Commencer",
+  "@homeStartTitle": {
+    "description": "mobile.home.startTitle"
+  },
+  "homeStudentNote": "Les modèles d’ordonnances et de certificats sont réservés aux médecins et résidents abonnés. Vos calculateurs restent gratuits.",
+  "@homeStudentNote": {
+    "description": "mobile.home.studentNote"
+  },
+  "homeVerificationLink": "Voir ma vérification",
+  "@homeVerificationLink": {
+    "description": "mobile.home.verificationLink"
+  },
+  "homeVerificationPending": "Vérification en cours · réponse habituelle sous 24 h.",
+  "@homeVerificationPending": {
+    "description": "mobile.home.verificationPending"
+  },
+  "homeVerificationRequired": "Vérifiez votre statut pour accéder à DokTool.",
+  "@homeVerificationRequired": {
+    "description": "mobile.home.verificationRequired"
+  },
+  "homeVerificationToRedo": "Une étape de vérification est à reprendre.",
+  "@homeVerificationToRedo": {
+    "description": "mobile.home.verificationToRedo"
+  },
+  "libraryEmpty": "Aucun modèle publié pour le moment.",
+  "@libraryEmpty": {
+    "description": "mobile.library.empty"
+  },
+  "libraryEmptyCalculators": "Aucun calculateur publié pour le moment.",
+  "@libraryEmptyCalculators": {
+    "description": "mobile.library.emptyCalculators"
+  },
+  "libraryNoResults": "Aucun résultat pour « {query} ».",
+  "@libraryNoResults": {
+    "description": "mobile.library.noResults",
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryOpen": "Ouvrir",
+  "@libraryOpen": {
+    "description": "mobile.library.open"
+  },
+  "librarySearchCalculators": "Rechercher un calculateur",
+  "@librarySearchCalculators": {
+    "description": "mobile.library.searchCalculators"
+  },
+  "librarySearchCertificates": "Rechercher un certificat",
+  "@librarySearchCertificates": {
+    "description": "mobile.library.searchCertificates"
+  },
+  "librarySearchOrdonnances": "Rechercher une ordonnance",
+  "@librarySearchOrdonnances": {
+    "description": "mobile.library.searchOrdonnances"
+  },
+  "libraryTitle": "Bibliothèque",
+  "@libraryTitle": {
+    "description": "mobile.library.title"
+  },
+  "libraryViewModel": "Voir le modèle",
+  "@libraryViewModel": {
+    "description": "mobile.library.viewModel"
+  },
+  "lockAccountSuspended": "Ce compte est suspendu. Contactez le support DokTool.",
+  "@lockAccountSuspended": {
+    "description": "mobile.lock.accountSuspended"
+  },
+  "lockContinueDemo": "Continuer la démo",
+  "@lockContinueDemo": {
+    "description": "mobile.lock.continueDemo"
+  },
+  "lockCreateAccount": "Créer un compte",
+  "@lockCreateAccount": {
+    "description": "mobile.lock.createAccount"
+  },
+  "lockDemoLimit": "Inclus dans DokTool Pro. La démo en ouvre une sélection pour que vous voyiez exactement comment le contenu se présente.",
+  "@lockDemoLimit": {
+    "description": "mobile.lock.demoLimit"
+  },
+  "lockNoLongerAvailable": "Ce contenu a été retiré de la bibliothèque par l’administrateur.",
+  "@lockNoLongerAvailable": {
+    "description": "mobile.lock.noLongerAvailable"
+  },
+  "lockOfflineUnavailable": "Ce contenu n’a pas été téléchargé. Il s’ouvrira dès le retour de la connexion.",
+  "@lockOfflineUnavailable": {
+    "description": "mobile.lock.offlineUnavailable"
+  },
+  "lockProfessionalOnly": "Ce contenu est réservé aux médecins et aux résidents abonnés. Vos calculateurs restent gratuits.",
+  "@lockProfessionalOnly": {
+    "description": "mobile.lock.professionalOnly"
+  },
+  "lockSeePlans": "Voir les offres",
+  "@lockSeePlans": {
+    "description": "mobile.lock.seePlans"
+  },
+  "lockSeeVerification": "Voir ma vérification",
+  "@lockSeeVerification": {
+    "description": "mobile.lock.seeVerification"
+  },
+  "lockSubscriptionRequired": "Inclus dans DokTool Pro. Votre compte ouvre les modèles d’exemple ; l’abonnement ouvre toute la bibliothèque.",
+  "@lockSubscriptionRequired": {
+    "description": "mobile.lock.subscriptionRequired"
+  },
+  "lockVerificationPending": "Votre vérification est en cours de revue. Réponse habituelle sous 24 h.",
+  "@lockVerificationPending": {
+    "description": "mobile.lock.verificationPending"
+  },
+  "lockVerificationRequired": "Votre statut doit être vérifié pour ouvrir ce contenu. Réponse habituelle sous 24 h.",
+  "@lockVerificationRequired": {
+    "description": "mobile.lock.verificationRequired"
+  },
+  "lockWordDoctors": "Médecins",
+  "@lockWordDoctors": {
+    "description": "mobile.lock.wordDoctors"
+  },
+  "lockWordOffline": "Hors ligne",
+  "@lockWordOffline": {
+    "description": "mobile.lock.wordOffline"
+  },
+  "lockWordPro": "Pro",
+  "@lockWordPro": {
+    "description": "mobile.lock.wordPro"
+  },
+  "lockWordSuspended": "Suspendu",
+  "@lockWordSuspended": {
+    "description": "mobile.lock.wordSuspended"
+  },
+  "lockWordUnavailable": "Indisponible",
+  "@lockWordUnavailable": {
+    "description": "mobile.lock.wordUnavailable"
+  },
+  "lockWordVerification": "Vérification",
+  "@lockWordVerification": {
+    "description": "mobile.lock.wordVerification"
+  },
+  "navHome": "Accueil",
+  "@navHome": {
+    "description": "mobile.nav.home"
+  },
+  "navLibrary": "Bibliothèque",
+  "@navLibrary": {
+    "description": "mobile.nav.library"
+  },
+  "navProfile": "Profil",
+  "@navProfile": {
+    "description": "mobile.nav.profile"
+  },
+  "navSearch": "Recherche",
+  "@navSearch": {
+    "description": "mobile.nav.search"
+  },
   "notificationsEmpty": "Aucune notification pour le moment.",
   "@notificationsEmpty": {
     "description": "mobile.notifications.empty"
@@ -11,6 +547,32 @@
   "notificationsMarkAllRead": "Tout marquer comme lu",
   "@notificationsMarkAllRead": {
     "description": "mobile.notifications.markAllRead"
+  },
+  "notificationsSubscriptionActivated": "Votre abonnement DokTool Pro est actif.",
+  "@notificationsSubscriptionActivated": {
+    "description": "mobile.notifications.subscriptionActivated"
+  },
+  "notificationsSubscriptionEnded": "Abonnement terminé. Vos favoris et votre activité sont conservés ; renouvelez pour retrouver toute la bibliothèque.",
+  "@notificationsSubscriptionEnded": {
+    "description": "mobile.notifications.subscriptionEnded"
+  },
+  "notificationsSubscriptionGrace": "Votre période d’abonnement est terminée. L’accès reste ouvert jusqu’au {graceEndsAt} ; renouvelez quand vous le souhaitez.",
+  "@notificationsSubscriptionGrace": {
+    "description": "mobile.notifications.subscriptionGrace",
+    "placeholders": {
+      "graceEndsAt": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsSubscriptionRenewal": "Votre abonnement se termine le {endsAt}. Renouvelez quand vous le souhaitez.",
+  "@notificationsSubscriptionRenewal": {
+    "description": "mobile.notifications.subscriptionRenewal",
+    "placeholders": {
+      "endsAt": {
+        "type": "String"
+      }
+    }
   },
   "notificationsTitle": "Notifications",
   "@notificationsTitle": {
@@ -55,6 +617,222 @@
       }
     }
   },
+  "otpChannelUnavailable": "L’envoi par SMS n’est pas encore disponible. Utilisez une adresse e-mail.",
+  "@otpChannelUnavailable": {
+    "description": "mobile.otp.channelUnavailable"
+  },
+  "otpDigitLabel": "Chiffre {position} sur 6",
+  "@otpDigitLabel": {
+    "description": "mobile.otp.digitLabel",
+    "placeholders": {
+      "position": {
+        "type": "String"
+      }
+    }
+  },
+  "otpExpired": "Ce code a expiré. Demandez-en un nouveau.",
+  "@otpExpired": {
+    "description": "mobile.otp.expired"
+  },
+  "otpInvalid": "Code incorrect. {attempts, plural, one {Encore # essai.} other {Encore # essais.}}",
+  "@otpInvalid": {
+    "description": "mobile.otp.invalid",
+    "placeholders": {
+      "attempts": {
+        "type": "num"
+      }
+    }
+  },
+  "otpLocked": "Trop d’essais. Réessayez à {time}.",
+  "@otpLocked": {
+    "description": "mobile.otp.locked",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "otpResend": "Renvoyer le code",
+  "@otpResend": {
+    "description": "mobile.otp.resend"
+  },
+  "otpResendIn": "Renvoyer dans {seconds} s",
+  "@otpResendIn": {
+    "description": "mobile.otp.resendIn",
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "otpResent": "Nouveau code envoyé.",
+  "@otpResent": {
+    "description": "mobile.otp.resent"
+  },
+  "otpSendLimit": "Limite d’envois atteinte. Réessayez plus tard.",
+  "@otpSendLimit": {
+    "description": "mobile.otp.sendLimit"
+  },
+  "otpSentTo": "Saisissez le code à 6 chiffres envoyé à {destination}.",
+  "@otpSentTo": {
+    "description": "mobile.otp.sentTo",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "otpTitle": "Code de confirmation",
+  "@otpTitle": {
+    "description": "mobile.otp.title"
+  },
+  "otpVerify": "Valider",
+  "@otpVerify": {
+    "description": "mobile.otp.verify"
+  },
+  "profileSettings": "Paramètres",
+  "@profileSettings": {
+    "description": "mobile.profile.settings"
+  },
+  "profileSignOut": "Se déconnecter",
+  "@profileSignOut": {
+    "description": "mobile.profile.signOut"
+  },
+  "profileTitle": "Profil",
+  "@profileTitle": {
+    "description": "mobile.profile.title"
+  },
+  "profileVerification": "Vérification",
+  "@profileVerification": {
+    "description": "mobile.profile.verification"
+  },
+  "resetConfirm": "Changer le mot de passe",
+  "@resetConfirm": {
+    "description": "mobile.reset.confirm"
+  },
+  "resetDone": "Mot de passe changé. Connectez-vous avec le nouveau.",
+  "@resetDone": {
+    "description": "mobile.reset.done"
+  },
+  "resetIntro": "Saisissez votre e-mail ou téléphone : nous vous enverrons un code.",
+  "@resetIntro": {
+    "description": "mobile.reset.intro"
+  },
+  "resetNewPassword": "Nouveau mot de passe",
+  "@resetNewPassword": {
+    "description": "mobile.reset.newPassword"
+  },
+  "resetSend": "Envoyer le code",
+  "@resetSend": {
+    "description": "mobile.reset.send"
+  },
+  "resetTitle": "Mot de passe oublié",
+  "@resetTitle": {
+    "description": "mobile.reset.title"
+  },
+  "roleDoctor": "Médecin",
+  "@roleDoctor": {
+    "description": "mobile.role.doctor"
+  },
+  "roleDoctorLine": "Généraliste ou spécialiste inscrit à l’Ordre",
+  "@roleDoctorLine": {
+    "description": "mobile.role.doctorLine"
+  },
+  "roleFree": "Gratuit",
+  "@roleFree": {
+    "description": "mobile.role.free"
+  },
+  "roleIntro": "Nous adaptons la vérification et les outils à votre profil. Il pourra évoluer (étudiant → résident → médecin) sans perdre vos favoris ni votre activité.",
+  "@roleIntro": {
+    "description": "mobile.role.intro"
+  },
+  "roleNote": "Choisir un profil ne vous vérifie pas encore : la vérification suit la création du compte.",
+  "@roleNote": {
+    "description": "mobile.role.note"
+  },
+  "rolePro": "DokTool Pro",
+  "@rolePro": {
+    "description": "mobile.role.pro"
+  },
+  "roleResident": "Médecin résident",
+  "@roleResident": {
+    "description": "mobile.role.resident"
+  },
+  "roleResidentLine": "En cours de résidanat",
+  "@roleResidentLine": {
+    "description": "mobile.role.residentLine"
+  },
+  "roleStudent": "Étudiant en médecine",
+  "@roleStudent": {
+    "description": "mobile.role.student"
+  },
+  "roleStudentLine": "De la 1re à la 7e année",
+  "@roleStudentLine": {
+    "description": "mobile.role.studentLine"
+  },
+  "roleTitle": "Qui êtes-vous ?",
+  "@roleTitle": {
+    "description": "mobile.role.title"
+  },
+  "searchAll": "Tout",
+  "@searchAll": {
+    "description": "mobile.search.all"
+  },
+  "searchBrowse": "Parcourir",
+  "@searchBrowse": {
+    "description": "mobile.search.browse"
+  },
+  "searchClearRecent": "Tout effacer",
+  "@searchClearRecent": {
+    "description": "mobile.search.clearRecent"
+  },
+  "searchClose": "Fermer la recherche",
+  "@searchClose": {
+    "description": "mobile.search.close"
+  },
+  "searchDidYouMean": "Vouliez-vous dire",
+  "@searchDidYouMean": {
+    "description": "mobile.search.didYouMean"
+  },
+  "searchHint": "Rechercher",
+  "@searchHint": {
+    "description": "mobile.search.hint"
+  },
+  "searchNoResults": "Aucun résultat pour « {query} ».",
+  "@searchNoResults": {
+    "description": "mobile.search.noResults",
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchRecent": "Recherches récentes",
+  "@searchRecent": {
+    "description": "mobile.search.recent"
+  },
+  "searchRemoveRecent": "Retirer « {query} »",
+  "@searchRemoveRecent": {
+    "description": "mobile.search.removeRecent",
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchSeeAll": "Voir les {count} résultats",
+  "@searchSeeAll": {
+    "description": "mobile.search.seeAll",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "searchUnavailable": "Recherche complète indisponible.",
+  "@searchUnavailable": {
+    "description": "mobile.search.unavailable"
+  },
   "settingsAppearanceDark": "Sombre",
   "@settingsAppearanceDark": {
     "description": "mobile.settings.appearance.dark"
@@ -90,5 +868,746 @@
   "settingsTitle": "Paramètres",
   "@settingsTitle": {
     "description": "mobile.settings.title"
+  },
+  "signInForgot": "Mot de passe oublié ?",
+  "@signInForgot": {
+    "description": "mobile.signIn.forgot"
+  },
+  "signInInvalid": "Identifiant ou mot de passe incorrect.",
+  "@signInInvalid": {
+    "description": "mobile.signIn.invalid"
+  },
+  "signInLocked": "Compte verrouillé après plusieurs essais. Réessayez à {time}.",
+  "@signInLocked": {
+    "description": "mobile.signIn.locked",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "signInNoAccount": "Pas encore de compte ? Créer un compte",
+  "@signInNoAccount": {
+    "description": "mobile.signIn.noAccount"
+  },
+  "signInNotConfirmed": "Ce compte n’a pas été confirmé. Créez-le à nouveau pour recevoir un code.",
+  "@signInNotConfirmed": {
+    "description": "mobile.signIn.notConfirmed"
+  },
+  "signInSubmit": "Se connecter",
+  "@signInSubmit": {
+    "description": "mobile.signIn.submit"
+  },
+  "signInSuspended": "Ce compte est suspendu. Contactez le support DokTool.",
+  "@signInSuspended": {
+    "description": "mobile.signIn.suspended"
+  },
+  "signInTitle": "Se connecter",
+  "@signInTitle": {
+    "description": "mobile.signIn.title"
+  },
+  "signUpAccountExists": "Ce compte existe déjà — se connecter ?",
+  "@signUpAccountExists": {
+    "description": "mobile.signUp.accountExists"
+  },
+  "signUpCodeNote": "Un code de confirmation vous sera envoyé.",
+  "@signUpCodeNote": {
+    "description": "mobile.signUp.codeNote"
+  },
+  "signUpFirstName": "Prénom",
+  "@signUpFirstName": {
+    "description": "mobile.signUp.firstName"
+  },
+  "signUpIdentifier": "E-mail ou téléphone",
+  "@signUpIdentifier": {
+    "description": "mobile.signUp.identifier"
+  },
+  "signUpIdentifierInvalid": "E-mail ou numéro incomplet — exemple : nom@domaine.dz ou 0550 12 34 56",
+  "@signUpIdentifierInvalid": {
+    "description": "mobile.signUp.identifierInvalid"
+  },
+  "signUpLastName": "Nom",
+  "@signUpLastName": {
+    "description": "mobile.signUp.lastName"
+  },
+  "signUpPassword": "Mot de passe",
+  "@signUpPassword": {
+    "description": "mobile.signUp.password"
+  },
+  "signUpPasswordFair": "Correct · ajoutez chiffres et symboles",
+  "@signUpPasswordFair": {
+    "description": "mobile.signUp.passwordFair"
+  },
+  "signUpPasswordStrong": "Solide",
+  "@signUpPasswordStrong": {
+    "description": "mobile.signUp.passwordStrong"
+  },
+  "signUpPasswordTooShort": "8 caractères au minimum.",
+  "@signUpPasswordTooShort": {
+    "description": "mobile.signUp.passwordTooShort"
+  },
+  "signUpPasswordWeak": "Faible · 10 caractères, chiffres et symboles recommandés",
+  "@signUpPasswordWeak": {
+    "description": "mobile.signUp.passwordWeak"
+  },
+  "signUpPrivacyLink": "politique de confidentialité",
+  "@signUpPrivacyLink": {
+    "description": "mobile.signUp.privacyLink"
+  },
+  "signUpSubmit": "Créer le compte",
+  "@signUpSubmit": {
+    "description": "mobile.signUp.submit"
+  },
+  "signUpTermsAnd": " et la ",
+  "@signUpTermsAnd": {
+    "description": "mobile.signUp.termsAnd"
+  },
+  "signUpTermsChanged": "Les conditions ont été mises à jour. Relisez-les puis réessayez.",
+  "@signUpTermsChanged": {
+    "description": "mobile.signUp.termsChanged"
+  },
+  "signUpTermsLink": "CGU",
+  "@signUpTermsLink": {
+    "description": "mobile.signUp.termsLink"
+  },
+  "signUpTermsPrefix": "J’accepte les ",
+  "@signUpTermsPrefix": {
+    "description": "mobile.signUp.termsPrefix"
+  },
+  "signUpTermsRequired": "Acceptez les conditions pour créer le compte.",
+  "@signUpTermsRequired": {
+    "description": "mobile.signUp.termsRequired"
+  },
+  "signUpTitle": "Créer votre compte",
+  "@signUpTitle": {
+    "description": "mobile.signUp.title"
+  },
+  "signUpWilaya": "Wilaya d’exercice",
+  "@signUpWilaya": {
+    "description": "mobile.signUp.wilaya"
+  },
+  "signUpWilayaPick": "Choisir une wilaya",
+  "@signUpWilayaPick": {
+    "description": "mobile.signUp.wilayaPick"
+  },
+  "typesCalculator": "Calculateur",
+  "@typesCalculator": {
+    "description": "mobile.types.calculator"
+  },
+  "typesCalculators": "Calculateurs",
+  "@typesCalculators": {
+    "description": "mobile.types.calculators"
+  },
+  "typesCertificate": "Certificat",
+  "@typesCertificate": {
+    "description": "mobile.types.certificate"
+  },
+  "typesCertificates": "Certificats",
+  "@typesCertificates": {
+    "description": "mobile.types.certificates"
+  },
+  "typesOrdonnance": "Ordonnance",
+  "@typesOrdonnance": {
+    "description": "mobile.types.ordonnance"
+  },
+  "typesOrdonnances": "Ordonnances",
+  "@typesOrdonnances": {
+    "description": "mobile.types.ordonnances"
+  },
+  "verificationActionAppeal": "Faire un recours",
+  "@verificationActionAppeal": {
+    "description": "mobile.verification.action.appeal"
+  },
+  "verificationActionContinue": "Continuer",
+  "@verificationActionContinue": {
+    "description": "mobile.verification.action.continue"
+  },
+  "verificationActionCorrect": "Corriger et renvoyer",
+  "@verificationActionCorrect": {
+    "description": "mobile.verification.action.correct"
+  },
+  "verificationActionErase": "Supprimer mes documents",
+  "@verificationActionErase": {
+    "description": "mobile.verification.action.erase"
+  },
+  "verificationActionRenew": "Renouveler",
+  "@verificationActionRenew": {
+    "description": "mobile.verification.action.renew"
+  },
+  "verificationActionSeePlans": "Voir les offres DokTool Pro",
+  "@verificationActionSeePlans": {
+    "description": "mobile.verification.action.seePlans"
+  },
+  "verificationActionStart": "Commencer",
+  "@verificationActionStart": {
+    "description": "mobile.verification.action.start"
+  },
+  "verificationAppealNote": "Deuxième refus : vous pouvez demander qu’un autre réviseur examine votre dossier.",
+  "@verificationAppealNote": {
+    "description": "mobile.verification.appealNote"
+  },
+  "verificationBadgeAppealed": "Recours en cours",
+  "@verificationBadgeAppealed": {
+    "description": "mobile.verification.badge.appealed"
+  },
+  "verificationBadgeDraft": "En préparation",
+  "@verificationBadgeDraft": {
+    "description": "mobile.verification.badge.draft"
+  },
+  "verificationBadgeExpired": "Expirée",
+  "@verificationBadgeExpired": {
+    "description": "mobile.verification.badge.expired"
+  },
+  "verificationBadgeExpiring": "Expire bientôt",
+  "@verificationBadgeExpiring": {
+    "description": "mobile.verification.badge.expiring"
+  },
+  "verificationBadgeInReview": "En revue",
+  "@verificationBadgeInReview": {
+    "description": "mobile.verification.badge.inReview"
+  },
+  "verificationBadgeToDo": "À faire",
+  "@verificationBadgeToDo": {
+    "description": "mobile.verification.badge.toDo"
+  },
+  "verificationBadgeToRedo": "À reprendre",
+  "@verificationBadgeToRedo": {
+    "description": "mobile.verification.badge.toRedo"
+  },
+  "verificationBadgeVerified": "Vérifié",
+  "@verificationBadgeVerified": {
+    "description": "mobile.verification.badge.verified"
+  },
+  "verificationCaseIdentity": "Identité",
+  "@verificationCaseIdentity": {
+    "description": "mobile.verification.case.identity"
+  },
+  "verificationCaseProfessional": "Statut professionnel",
+  "@verificationCaseProfessional": {
+    "description": "mobile.verification.case.professional"
+  },
+  "verificationCaseStudent": "Statut d’étudiant",
+  "@verificationCaseStudent": {
+    "description": "mobile.verification.case.student"
+  },
+  "verificationDocumentCameraUnavailable": "Appareil photo indisponible. Autorisez l’accès dans les réglages, ou importez un fichier.",
+  "@verificationDocumentCameraUnavailable": {
+    "description": "mobile.verification.document.cameraUnavailable"
+  },
+  "verificationDocumentCapture": "Photographier",
+  "@verificationDocumentCapture": {
+    "description": "mobile.verification.document.capture"
+  },
+  "verificationDocumentChecking": "Vérification de la lisibilité…",
+  "@verificationDocumentChecking": {
+    "description": "mobile.verification.document.checking"
+  },
+  "verificationDocumentFormats": "JPG, PNG ou PDF · 10 Mo au maximum",
+  "@verificationDocumentFormats": {
+    "description": "mobile.verification.document.formats"
+  },
+  "verificationDocumentGuide": "Posez le document à plat, sans reflet, dans le cadre",
+  "@verificationDocumentGuide": {
+    "description": "mobile.verification.document.guide"
+  },
+  "verificationDocumentIllegible": "Texte peu lisible : évitez le flou et les reflets, et cadrez tout le document.",
+  "@verificationDocumentIllegible": {
+    "description": "mobile.verification.document.illegible"
+  },
+  "verificationDocumentImport": "Importer un fichier",
+  "@verificationDocumentImport": {
+    "description": "mobile.verification.document.import"
+  },
+  "verificationDocumentLegible": "Lisible · {size}",
+  "@verificationDocumentLegible": {
+    "description": "mobile.verification.document.legible",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "verificationDocumentLegibleName": "Lisible · nom lu : {name}",
+  "@verificationDocumentLegibleName": {
+    "description": "mobile.verification.document.legibleName",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "verificationDocumentNameMismatch": "Le nom lu ne correspond pas à celui du compte ({name}). Reprenez la photo, ou envoyez-la : le réviseur vérifiera.",
+  "@verificationDocumentNameMismatch": {
+    "description": "mobile.verification.document.nameMismatch",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "verificationDocumentPdfNotChecked": "PDF · {size} · lisibilité vérifiée par le réviseur",
+  "@verificationDocumentPdfNotChecked": {
+    "description": "mobile.verification.document.pdfNotChecked",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "verificationDocumentRemove": "Retirer",
+  "@verificationDocumentRemove": {
+    "description": "mobile.verification.document.remove"
+  },
+  "verificationDocumentReplace": "Remplacer",
+  "@verificationDocumentReplace": {
+    "description": "mobile.verification.document.replace"
+  },
+  "verificationDocumentRetake": "Reprendre",
+  "@verificationDocumentRetake": {
+    "description": "mobile.verification.document.retake"
+  },
+  "verificationDocumentSendAnyway": "Envoyer quand même",
+  "@verificationDocumentSendAnyway": {
+    "description": "mobile.verification.document.sendAnyway"
+  },
+  "verificationDocumentTooLarge": "Fichier trop lourd : 10 Mo au maximum.",
+  "@verificationDocumentTooLarge": {
+    "description": "mobile.verification.document.tooLarge"
+  },
+  "verificationDocumentUploadFailed": "L’envoi a échoué. Réessayez.",
+  "@verificationDocumentUploadFailed": {
+    "description": "mobile.verification.document.uploadFailed"
+  },
+  "verificationDocumentUploading": "Envoi en cours…",
+  "@verificationDocumentUploading": {
+    "description": "mobile.verification.document.uploading"
+  },
+  "verificationDocumentUsePhoto": "Utiliser cette photo",
+  "@verificationDocumentUsePhoto": {
+    "description": "mobile.verification.document.usePhoto"
+  },
+  "verificationDocumentWrongType": "Format non accepté : JPG, PNG ou PDF.",
+  "@verificationDocumentWrongType": {
+    "description": "mobile.verification.document.wrongType"
+  },
+  "verificationEraseConfirm": "Les fichiers et informations envoyés pour ce dossier seront supprimés. La décision reste inchangée.",
+  "@verificationEraseConfirm": {
+    "description": "mobile.verification.eraseConfirm"
+  },
+  "verificationErased": "Documents supprimés.",
+  "@verificationErased": {
+    "description": "mobile.verification.erased"
+  },
+  "verificationIdentityBack": "Verso",
+  "@verificationIdentityBack": {
+    "description": "mobile.verification.identity.back"
+  },
+  "verificationIdentityFront": "Recto",
+  "@verificationIdentityFront": {
+    "description": "mobile.verification.identity.front"
+  },
+  "verificationIdentityIntro": "Carte nationale d’identité biométrique ou passeport. Nous vérifions que le nom correspond à votre compte.",
+  "@verificationIdentityIntro": {
+    "description": "mobile.verification.identity.intro"
+  },
+  "verificationIdentityIntroStudent": "Carte nationale d’identité, passeport ou carte d’étudiant. Nous vérifions que le nom correspond à votre compte.",
+  "@verificationIdentityIntroStudent": {
+    "description": "mobile.verification.identity.introStudent"
+  },
+  "verificationIdentityKindNationalId": "CNI biométrique",
+  "@verificationIdentityKindNationalId": {
+    "description": "mobile.verification.identity.kindNationalId"
+  },
+  "verificationIdentityKindPassport": "Passeport",
+  "@verificationIdentityKindPassport": {
+    "description": "mobile.verification.identity.kindPassport"
+  },
+  "verificationIdentityKindStudentCard": "Carte d’étudiant",
+  "@verificationIdentityKindStudentCard": {
+    "description": "mobile.verification.identity.kindStudentCard"
+  },
+  "verificationIdentityPassportPage": "Page d’identité",
+  "@verificationIdentityPassportPage": {
+    "description": "mobile.verification.identity.passportPage"
+  },
+  "verificationIdentityStep": "Identité",
+  "@verificationIdentityStep": {
+    "description": "mobile.verification.identity.step"
+  },
+  "verificationIdentityTitle": "Vérifier votre identité",
+  "@verificationIdentityTitle": {
+    "description": "mobile.verification.identity.title"
+  },
+  "verificationIdentityStillVerified": "Votre identité reste vérifiée.",
+  "@verificationIdentityStillVerified": {
+    "description": "mobile.verification.identityStillVerified"
+  },
+  "verificationIntroDocuments": "Stockage privé, accès restreint et journalisé, conservés 24 mois après la décision, supprimables à votre demande.",
+  "@verificationIntroDocuments": {
+    "description": "mobile.verification.intro.documents"
+  },
+  "verificationIntroDocumentsTitle": "Vos documents",
+  "@verificationIntroDocumentsTitle": {
+    "description": "mobile.verification.intro.documentsTitle"
+  },
+  "verificationIntroDuration": "Réponse habituelle sous 24 h.",
+  "@verificationIntroDuration": {
+    "description": "mobile.verification.intro.duration"
+  },
+  "verificationIntroDurationTitle": "Durée",
+  "@verificationIntroDurationTitle": {
+    "description": "mobile.verification.intro.durationTitle"
+  },
+  "verificationIntroStart": "Commencer",
+  "@verificationIntroStart": {
+    "description": "mobile.verification.intro.start"
+  },
+  "verificationIntroWhatDoctor": "Votre identité, puis votre inscription à l’Ordre et votre spécialité.",
+  "@verificationIntroWhatDoctor": {
+    "description": "mobile.verification.intro.whatDoctor"
+  },
+  "verificationIntroWhatResident": "Votre identité, puis votre résidanat, votre établissement et votre spécialité.",
+  "@verificationIntroWhatResident": {
+    "description": "mobile.verification.intro.whatResident"
+  },
+  "verificationIntroWhatStudent": "Votre identité, puis votre inscription à l’université.",
+  "@verificationIntroWhatStudent": {
+    "description": "mobile.verification.intro.whatStudent"
+  },
+  "verificationIntroWhatTitle": "Ce que nous vérifions",
+  "@verificationIntroWhatTitle": {
+    "description": "mobile.verification.intro.whatTitle"
+  },
+  "verificationIntroWhy": "DokTool est réservé aux professionnels de santé et aux étudiants en médecine.",
+  "@verificationIntroWhy": {
+    "description": "mobile.verification.intro.why"
+  },
+  "verificationIntroWhyTitle": "Pourquoi",
+  "@verificationIntroWhyTitle": {
+    "description": "mobile.verification.intro.whyTitle"
+  },
+  "verificationLineAppealed": "Recours envoyé le {date} · un autre réviseur examinera votre dossier.",
+  "@verificationLineAppealed": {
+    "description": "mobile.verification.line.appealed",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "verificationLineDraft": "Commencée, pas encore envoyée",
+  "@verificationLineDraft": {
+    "description": "mobile.verification.line.draft"
+  },
+  "verificationLineExpired": "Expirée le {date}",
+  "@verificationLineExpired": {
+    "description": "mobile.verification.line.expired",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "verificationLineInReview": "En cours de revue · réponse habituelle sous 24 h",
+  "@verificationLineInReview": {
+    "description": "mobile.verification.line.inReview"
+  },
+  "verificationLineNotStarted": "Pas encore envoyée",
+  "@verificationLineNotStarted": {
+    "description": "mobile.verification.line.notStarted"
+  },
+  "verificationLineReceived": "Reçue le {date} · réponse habituelle sous 24 h",
+  "@verificationLineReceived": {
+    "description": "mobile.verification.line.received",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "verificationLineValidUntil": "Valide jusqu’au {date}",
+  "@verificationLineValidUntil": {
+    "description": "mobile.verification.line.validUntil",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "verificationLineVerifiedOn": "Vérifiée le {date}",
+  "@verificationLineVerifiedOn": {
+    "description": "mobile.verification.line.verifiedOn",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "verificationOneStepToRedo": "Une étape est à reprendre.",
+  "@verificationOneStepToRedo": {
+    "description": "mobile.verification.oneStepToRedo"
+  },
+  "verificationPrivacy": "Stockage privé, accès restreint et journalisé, supprimé 24 mois après la décision.",
+  "@verificationPrivacy": {
+    "description": "mobile.verification.privacy"
+  },
+  "verificationReasonDocumentExpired": "Le document a expiré.",
+  "@verificationReasonDocumentExpired": {
+    "description": "mobile.verification.reason.documentExpired"
+  },
+  "verificationReasonIllegible": "Le document est illisible.",
+  "@verificationReasonIllegible": {
+    "description": "mobile.verification.reason.illegible"
+  },
+  "verificationReasonInformationMismatch": "Les informations saisies ne correspondent pas au document.",
+  "@verificationReasonInformationMismatch": {
+    "description": "mobile.verification.reason.informationMismatch"
+  },
+  "verificationReasonNameMismatch": "Le nom ne correspond pas à celui du compte.",
+  "@verificationReasonNameMismatch": {
+    "description": "mobile.verification.reason.nameMismatch"
+  },
+  "verificationReasonOther": "Le document n’a pas pu être accepté.",
+  "@verificationReasonOther": {
+    "description": "mobile.verification.reason.other"
+  },
+  "verificationReasonWrongDocument": "Ce n’est pas le document demandé.",
+  "@verificationReasonWrongDocument": {
+    "description": "mobile.verification.reason.wrongDocument"
+  },
+  "verificationStatusAcademicYear": "Année d’études",
+  "@verificationStatusAcademicYear": {
+    "description": "mobile.verification.status.academicYear"
+  },
+  "verificationStatusInstitution": "Établissement",
+  "@verificationStatusInstitution": {
+    "description": "mobile.verification.status.institution"
+  },
+  "verificationStatusIntroDoctor": "Votre identité est vérifiée séparément. Ici, nous confirmons votre inscription à l’Ordre.",
+  "@verificationStatusIntroDoctor": {
+    "description": "mobile.verification.status.introDoctor"
+  },
+  "verificationStatusIntroResident": "Votre identité est vérifiée séparément. Ici, nous confirmons votre résidanat.",
+  "@verificationStatusIntroResident": {
+    "description": "mobile.verification.status.introResident"
+  },
+  "verificationStatusIntroStudent": "Votre identité est vérifiée séparément. Ici, nous confirmons votre inscription à l’université.",
+  "@verificationStatusIntroStudent": {
+    "description": "mobile.verification.status.introStudent"
+  },
+  "verificationStatusNoOptions": "Aucun choix disponible pour le moment. Réessayez plus tard.",
+  "@verificationStatusNoOptions": {
+    "description": "mobile.verification.status.noOptions"
+  },
+  "verificationStatusOrderNumber": "N° d’inscription à l’Ordre",
+  "@verificationStatusOrderNumber": {
+    "description": "mobile.verification.status.orderNumber"
+  },
+  "verificationStatusOrderNumberHelper": "Visible uniquement par l’équipe de vérification, masqué ailleurs.",
+  "@verificationStatusOrderNumberHelper": {
+    "description": "mobile.verification.status.orderNumberHelper"
+  },
+  "verificationStatusOrderNumberInvalid": "Chiffres et lettres uniquement (30 au maximum).",
+  "@verificationStatusOrderNumberInvalid": {
+    "description": "mobile.verification.status.orderNumberInvalid"
+  },
+  "verificationStatusOrderProof": "Attestation d’inscription ou diplôme",
+  "@verificationStatusOrderProof": {
+    "description": "mobile.verification.status.orderProof"
+  },
+  "verificationStatusPickInstitution": "Choisir un établissement",
+  "@verificationStatusPickInstitution": {
+    "description": "mobile.verification.status.pickInstitution"
+  },
+  "verificationStatusPickSpecialty": "Choisir une spécialité",
+  "@verificationStatusPickSpecialty": {
+    "description": "mobile.verification.status.pickSpecialty"
+  },
+  "verificationStatusPickUniversity": "Choisir une université",
+  "@verificationStatusPickUniversity": {
+    "description": "mobile.verification.status.pickUniversity"
+  },
+  "verificationStatusResidencyProof": "Attestation de résidanat",
+  "@verificationStatusResidencyProof": {
+    "description": "mobile.verification.status.residencyProof"
+  },
+  "verificationStatusResidencyYear": "Année de résidanat",
+  "@verificationStatusResidencyYear": {
+    "description": "mobile.verification.status.residencyYear"
+  },
+  "verificationStatusSpecialty": "Spécialité",
+  "@verificationStatusSpecialty": {
+    "description": "mobile.verification.status.specialty"
+  },
+  "verificationStatusSpecialtyInProgress": "Spécialité en cours",
+  "@verificationStatusSpecialtyInProgress": {
+    "description": "mobile.verification.status.specialtyInProgress"
+  },
+  "verificationStatusStep": "Statut",
+  "@verificationStatusStep": {
+    "description": "mobile.verification.status.step"
+  },
+  "verificationStatusStudentProof": "Carte d’étudiant ou certificat de scolarité",
+  "@verificationStatusStudentProof": {
+    "description": "mobile.verification.status.studentProof"
+  },
+  "verificationStatusTitleDoctor": "Statut professionnel",
+  "@verificationStatusTitleDoctor": {
+    "description": "mobile.verification.status.titleDoctor"
+  },
+  "verificationStatusTitleResident": "Résidanat",
+  "@verificationStatusTitleResident": {
+    "description": "mobile.verification.status.titleResident"
+  },
+  "verificationStatusTitleStudent": "Statut d’étudiant",
+  "@verificationStatusTitleStudent": {
+    "description": "mobile.verification.status.titleStudent"
+  },
+  "verificationStatusUniversity": "Université",
+  "@verificationStatusUniversity": {
+    "description": "mobile.verification.status.university"
+  },
+  "verificationStatusYear": "{year, plural, =1 {1re année} other {#e année}}",
+  "@verificationStatusYear": {
+    "description": "mobile.verification.status.year",
+    "placeholders": {
+      "year": {
+        "type": "num"
+      }
+    }
+  },
+  "verificationSummaryComplete": "Complet",
+  "@verificationSummaryComplete": {
+    "description": "mobile.verification.summary.complete"
+  },
+  "verificationSummaryEdit": "Modifier",
+  "@verificationSummaryEdit": {
+    "description": "mobile.verification.summary.edit"
+  },
+  "verificationSummaryIncomplete": "À compléter",
+  "@verificationSummaryIncomplete": {
+    "description": "mobile.verification.summary.incomplete"
+  },
+  "verificationSummaryIntro": "Vérifiez avant l’envoi. Les documents ne sont plus modifiables une fois envoyés.",
+  "@verificationSummaryIntro": {
+    "description": "mobile.verification.summary.intro"
+  },
+  "verificationSummarySend": "Envoyer",
+  "@verificationSummarySend": {
+    "description": "mobile.verification.summary.send"
+  },
+  "verificationSummaryStep": "Récapitulatif",
+  "@verificationSummaryStep": {
+    "description": "mobile.verification.summary.step"
+  },
+  "verificationSummaryTitle": "Récapitulatif",
+  "@verificationSummaryTitle": {
+    "description": "mobile.verification.summary.title"
+  },
+  "verificationTimelineDecision": "Décision",
+  "@verificationTimelineDecision": {
+    "description": "mobile.verification.timeline.decision"
+  },
+  "verificationTimelineReceived": "Reçu",
+  "@verificationTimelineReceived": {
+    "description": "mobile.verification.timeline.received"
+  },
+  "verificationTimelineReview": "En cours de revue",
+  "@verificationTimelineReview": {
+    "description": "mobile.verification.timeline.review"
+  },
+  "verificationTitle": "Vérification",
+  "@verificationTitle": {
+    "description": "mobile.verification.title"
+  },
+  "verificationVerifiedHeadline": "{role, select, DOCTOR {Médecin vérifié} RESIDENT {Résident vérifié} other {Étudiant vérifié}}",
+  "@verificationVerifiedHeadline": {
+    "description": "mobile.verification.verifiedHeadline",
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "verificationWaitingNote": "En attendant, vous pouvez explorer DokTool avec les modèles et calculateurs d’exemple.",
+  "@verificationWaitingNote": {
+    "description": "mobile.verification.waitingNote"
+  },
+  "viewerCached": "Cache · {date}",
+  "@viewerCached": {
+    "description": "mobile.viewer.cached",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "viewerFit": "Ajuster à la page",
+  "@viewerFit": {
+    "description": "mobile.viewer.fit"
+  },
+  "viewerIntegrityFailed": "Le fichier reçu est incomplet. Réessayez.",
+  "@viewerIntegrityFailed": {
+    "description": "mobile.viewer.integrityFailed"
+  },
+  "viewerMeta": "{type} · {date}",
+  "@viewerMeta": {
+    "description": "mobile.viewer.meta",
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "viewerNotice": "Modèle de référence à adapter au cas clinique.",
+  "@viewerNotice": {
+    "description": "mobile.viewer.notice"
+  },
+  "viewerPage": "{current} / {total}",
+  "@viewerPage": {
+    "description": "mobile.viewer.page",
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "viewerZoomIn": "Agrandir",
+  "@viewerZoomIn": {
+    "description": "mobile.viewer.zoomIn"
+  },
+  "viewerZoomOut": "Réduire",
+  "@viewerZoomOut": {
+    "description": "mobile.viewer.zoomOut"
+  },
+  "welcomeAudience": "Réservé aux professionnels et étudiants en santé.",
+  "@welcomeAudience": {
+    "description": "mobile.welcome.audience"
+  },
+  "welcomeCreateAccount": "Créer un compte",
+  "@welcomeCreateAccount": {
+    "description": "mobile.welcome.createAccount"
+  },
+  "welcomeDemo": "Explorer la démo",
+  "@welcomeDemo": {
+    "description": "mobile.welcome.demo"
+  },
+  "welcomeDemoNote": "La démo ne demande aucune inscription.",
+  "@welcomeDemoNote": {
+    "description": "mobile.welcome.demoNote"
+  },
+  "welcomePromise": "Les outils essentiels du médecin, au même endroit.",
+  "@welcomePromise": {
+    "description": "mobile.welcome.promise"
+  },
+  "welcomeSignIn": "Se connecter",
+  "@welcomeSignIn": {
+    "description": "mobile.welcome.signIn"
   }
 }

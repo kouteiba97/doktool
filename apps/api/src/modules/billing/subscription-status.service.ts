@@ -8,7 +8,7 @@ export interface SubscriptionSnapshot {
   graceEndsAt: Date | null;
 }
 
-/** Read side of billing used by the access policy (subscriptions are written in Phase 14). */
+/** Read side of billing used by the access policy. */
 @Injectable()
 export class SubscriptionStatusService {
   constructor(private readonly prisma: PrismaService) {}

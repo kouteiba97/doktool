@@ -72,6 +72,22 @@ const envSchema = z
     R2_PRIVATE_ACCESS_KEY_ID: z.string().trim().min(1).optional(),
     R2_PRIVATE_SECRET_ACCESS_KEY: z.string().trim().min(1).optional(),
 
+    /**
+     * Card payments (ADR-015): SATIM (CIB and Edahabia) in production; `fake` simulates the payment
+     * page for development and tests and is refused in production.
+     */
+    PAYMENT_PROVIDER: z.enum(['satim', 'fake']).default('fake'),
+    /** SATIM e-payment REST base, e.g. https://test2.satim.dz/payment/rest (test) — from SATIM. */
+    SATIM_BASE_URL: z
+      .string()
+      .url()
+      .transform((value) => value.replace(/\/+$/, ''))
+      .optional(),
+    SATIM_USERNAME: z.string().trim().min(1).optional(),
+    SATIM_PASSWORD: z.string().min(1).optional(),
+    /** Terminal id SATIM assigns to the merchant (sent as force_terminal_id). */
+    SATIM_TERMINAL_ID: z.string().trim().min(1).optional(),
+
     /** Run pg-boss background jobs in this process. */
     JOBS_ENABLED: booleanFlag,
   })
@@ -99,6 +115,36 @@ const envSchema = z
             message: `${key} is required with STORAGE_DRIVER=r2`,
           });
         }
+      }
+    }
+    if (env.NODE_ENV === 'production' && env.PAYMENT_PROVIDER !== 'satim') {
+      context.addIssue({
+        code: 'custom',
+        path: ['PAYMENT_PROVIDER'],
+        message: 'production takes real payments (PAYMENT_PROVIDER=satim)',
+      });
+    }
+    if (env.PAYMENT_PROVIDER === 'satim') {
+      for (const key of [
+        'SATIM_BASE_URL',
+        'SATIM_USERNAME',
+        'SATIM_PASSWORD',
+        'SATIM_TERMINAL_ID',
+      ] as const) {
+        if (!env[key]) {
+          context.addIssue({
+            code: 'custom',
+            path: [key],
+            message: `${key} is required with PAYMENT_PROVIDER=satim`,
+          });
+        }
+      }
+      if (!env.PUBLIC_API_URL) {
+        context.addIssue({
+          code: 'custom',
+          path: ['PUBLIC_API_URL'],
+          message: 'PUBLIC_API_URL is required with PAYMENT_PROVIDER=satim (payment return URL)',
+        });
       }
     }
     if (env.NODE_ENV === 'production' && (!env.TERMS_URL || !env.PRIVACY_URL)) {

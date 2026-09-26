@@ -1,0 +1,67 @@
+import { randomUUID } from 'node:crypto';
+import { Inject, Injectable } from '@nestjs/common';
+import { ENV, type Env } from '../../../config/env.js';
+import {
+  type OrderOutcome,
+  PaymentGateway,
+  type RegisteredOrder,
+  type RegisterOrder,
+} from './payment-provider.js';
+
+interface FakeOrder {
+  order: RegisterOrder;
+  outcome: 'PENDING' | 'PAID' | 'FAILED';
+}
+
+/**
+ * Development and test stand-in for SATIM (refused in production by the environment check). Its
+ * payment page is served by the API itself and lets the developer choose the outcome.
+ */
+@Injectable()
+export class FakeGateway extends PaymentGateway {
+  private readonly orders = new Map<string, FakeOrder>();
+
+  constructor(@Inject(ENV) private readonly env: Env) {
+    super();
+  }
+
+  register(order: RegisterOrder): Promise<RegisteredOrder> {
+    const providerReference = `fake-${randomUUID()}`;
+    this.orders.set(providerReference, { order, outcome: 'PENDING' });
+    const base = this.env.PUBLIC_API_URL ?? `http://localhost:${this.env.PORT}`;
+    return Promise.resolve({
+      providerReference,
+      redirectUrl: `${base}/v1/subscription/checkout/fake-page?orderId=${providerReference}`,
+    });
+  }
+
+  status(providerReference: string): Promise<OrderOutcome> {
+    const fake = this.orders.get(providerReference);
+    if (!fake || fake.outcome === 'PENDING') return Promise.resolve({ status: 'PENDING' });
+    if (fake.outcome === 'PAID') {
+      return Promise.resolve({
+        status: 'PAID',
+        paidAt: new Date(),
+        amountMinor: fake.order.amountMinor,
+        details: { approvalCode: 'FAKE00', Pan: '6280****0000' },
+      });
+    }
+    return Promise.resolve({
+      status: 'FAILED',
+      providerMessage: 'Paiement refusé (simulation).',
+      details: {},
+    });
+  }
+
+  /** The fake page's buttons: returns where the person goes back, or null for an unknown order. */
+  settle(providerReference: string, outcome: 'PAID' | 'FAILED'): string | null {
+    const fake = this.orders.get(providerReference);
+    if (!fake) return null;
+    fake.outcome = outcome;
+    return fake.order.returnUrl;
+  }
+
+  describe(providerReference: string): RegisterOrder | null {
+    return this.orders.get(providerReference)?.order ?? null;
+  }
+}

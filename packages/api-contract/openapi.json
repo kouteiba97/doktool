@@ -1409,6 +1409,73 @@
         ],
         "type": "string"
       },
+      "CheckoutDto": {
+        "properties": {
+          "acknowledged": {
+            "description": "« J’ai compris ce que comprend DokTool Pro. Le paiement n’est pas remboursable. »",
+            "type": "boolean"
+          },
+          "acknowledgementVersion": {
+            "description": "The acknowledgement version the screen showed.",
+            "type": "string"
+          },
+          "language": {
+            "description": "Language of the payment page.",
+            "enum": [
+              "FR",
+              "EN"
+            ],
+            "type": "string"
+          },
+          "planId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "provider": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentProvider"
+              }
+            ]
+          }
+        },
+        "required": [
+          "planId",
+          "provider",
+          "acknowledged",
+          "acknowledgementVersion"
+        ],
+        "type": "object"
+      },
+      "CheckoutEligibility": {
+        "enum": [
+          "OPEN",
+          "STUDENT_FREE",
+          "ROLE_REQUIRED",
+          "VERIFICATION_REQUIRED",
+          "VERIFICATION_PENDING",
+          "ACCOUNT_SUSPENDED",
+          "ACTIVE"
+        ],
+        "type": "string"
+      },
+      "CheckoutStartedDto": {
+        "properties": {
+          "redirectUrl": {
+            "description": "The payment provider’s page (CIB / Edahabia).",
+            "type": "string"
+          },
+          "transactionId": {
+            "example": "DT-2026-000123",
+            "type": "string"
+          }
+        },
+        "required": [
+          "transactionId",
+          "redirectUrl"
+        ],
+        "type": "object"
+      },
       "ConfirmSignUpDto": {
         "properties": {
           "challengeId": {
@@ -1784,6 +1851,30 @@
           "ANDROID"
         ],
         "type": "string"
+      },
+      "EligibilityDto": {
+        "properties": {
+          "renewableFrom": {
+            "description": "ACTIVE only: renewal opens then.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "renewal": {
+            "description": "OPEN only: the payment extends the current period.",
+            "type": "boolean"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckoutEligibility"
+              }
+            ]
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "type": "object"
       },
       "EntitlementTier": {
         "enum": [
@@ -2659,6 +2750,13 @@
         ],
         "type": "object"
       },
+      "PaymentProvider": {
+        "enum": [
+          "SATIM_CIB",
+          "SATIM_EDAHABIA"
+        ],
+        "type": "string"
+      },
       "PersonRefDto": {
         "properties": {
           "fullName": {
@@ -2786,6 +2884,130 @@
         ],
         "type": "object"
       },
+      "PlanDto": {
+        "properties": {
+          "audience": {
+            "items": {
+              "$ref": "#/components/schemas/ProfessionalType"
+            },
+            "type": "array"
+          },
+          "code": {
+            "example": "PRO_MONTHLY",
+            "type": "string"
+          },
+          "currency": {
+            "example": "DZD",
+            "type": "string"
+          },
+          "durationDays": {
+            "type": "number"
+          },
+          "excludesEn": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "excludesFr": {
+            "description": "What the plan does not include, stated plainly.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "includesEn": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "includesFr": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "isPurchasable": {
+            "type": "boolean"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "nameFr": {
+            "type": "string"
+          },
+          "priceMinor": {
+            "description": "Price in minor units (centimes), taxes included.",
+            "type": "number"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "version",
+          "nameFr",
+          "nameEn",
+          "priceMinor",
+          "currency",
+          "durationDays",
+          "audience",
+          "includesFr",
+          "includesEn",
+          "excludesFr",
+          "excludesEn",
+          "isPurchasable"
+        ],
+        "type": "object"
+      },
+      "PlanSaleDto": {
+        "properties": {
+          "isPurchasable": {
+            "type": "boolean"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "isPurchasable"
+        ],
+        "type": "object"
+      },
+      "PlansDto": {
+        "properties": {
+          "acknowledgementVersion": {
+            "description": "Version of the acknowledgement the review screen shows (« non remboursable »).",
+            "type": "string"
+          },
+          "eligibility": {
+            "$ref": "#/components/schemas/EligibilityDto"
+          },
+          "plans": {
+            "description": "Empty for students (no subscription, ADR-006 Q2).",
+            "items": {
+              "$ref": "#/components/schemas/PlanDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "eligibility",
+          "plans",
+          "acknowledgementVersion"
+        ],
+        "type": "object"
+      },
       "PreferencesDto": {
         "properties": {
           "language": {
@@ -2883,6 +3105,88 @@
         },
         "required": [
           "reviewNote"
+        ],
+        "type": "object"
+      },
+      "PublishPlanDto": {
+        "properties": {
+          "audience": {
+            "items": {
+              "enum": [
+                "DOCTOR",
+                "RESIDENT"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "code": {
+            "description": "Stable code; a new version keeps it.",
+            "example": "PRO_MONTHLY",
+            "type": "string"
+          },
+          "durationDays": {
+            "example": 30,
+            "type": "number"
+          },
+          "excludesEn": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "excludesFr": {
+            "description": "Stated plainly: no drug database, no prescription or certificate writing.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "includesEn": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "includesFr": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "isPurchasable": {
+            "description": "Start selling this version now (earlier versions stop).",
+            "type": "boolean"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "nameFr": {
+            "type": "string"
+          },
+          "priceMinor": {
+            "description": "Price in centimes, taxes included (e.g. 150000 = 1 500 DZD).",
+            "type": "number"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "code",
+          "nameFr",
+          "nameEn",
+          "audience",
+          "priceMinor",
+          "durationDays",
+          "includesFr",
+          "includesEn",
+          "excludesFr",
+          "excludesEn",
+          "isPurchasable"
         ],
         "type": "object"
       },
@@ -3673,6 +3977,83 @@
         ],
         "type": "object"
       },
+      "SubscriptionDto": {
+        "properties": {
+          "currentPeriodEnd": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "currentPeriodStart": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "graceEndsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanDto"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "plan"
+        ],
+        "type": "object"
+      },
+      "SubscriptionOverviewDto": {
+        "properties": {
+          "eligibility": {
+            "$ref": "#/components/schemas/EligibilityDto"
+          },
+          "subscription": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "transactions": {
+            "description": "Newest first.",
+            "items": {
+              "$ref": "#/components/schemas/TransactionDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "eligibility",
+          "transactions"
+        ],
+        "type": "object"
+      },
+      "SubscriptionStatus": {
+        "enum": [
+          "PENDING_PAYMENT",
+          "ACTIVE",
+          "GRACE",
+          "EXPIRED",
+          "CANCELED"
+        ],
+        "type": "string"
+      },
       "SynonymsDto": {
         "properties": {
           "terms": {
@@ -3711,6 +4092,70 @@
           "otpauthUri"
         ],
         "type": "object"
+      },
+      "TransactionDto": {
+        "properties": {
+          "amountMinor": {
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "paymentDate": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "paymentProvider": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentProvider"
+              }
+            ]
+          },
+          "planCode": {
+            "type": "string"
+          },
+          "providerMessage": {
+            "description": "FAILED only: the provider’s own message, shown as is.",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TransactionStatus"
+              }
+            ]
+          },
+          "transactionId": {
+            "example": "DT-2026-000123",
+            "type": "string"
+          }
+        },
+        "required": [
+          "transactionId",
+          "status",
+          "amountMinor",
+          "currency",
+          "paymentProvider",
+          "planCode",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "TransactionStatus": {
+        "enum": [
+          "PENDING",
+          "SUCCEEDED",
+          "FAILED",
+          "CANCELED"
+        ],
+        "type": "string"
       },
       "UnlockPath": {
         "enum": [
@@ -5679,6 +6124,134 @@
         ],
         "tags": [
           "admin-auth"
+        ]
+      }
+    },
+    "/admin/v1/plans": {
+      "get": {
+        "operationId": "BillingAdminController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlanDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-plans"
+        ]
+      },
+      "post": {
+        "operationId": "BillingAdminController_publish",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishPlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-plans"
+        ]
+      }
+    },
+    "/admin/v1/plans/{id}/sale": {
+      "post": {
+        "operationId": "BillingAdminController_sale",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanSaleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-plans"
         ]
       }
     },
@@ -9056,6 +9629,199 @@
         },
         "tags": [
           "account"
+        ]
+      }
+    },
+    "/v1/subscription": {
+      "get": {
+        "operationId": "BillingController_overview",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionOverviewDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "subscription"
+        ]
+      }
+    },
+    "/v1/subscription/checkout": {
+      "post": {
+        "operationId": "BillingController_start",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutStartedDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "subscription"
+        ]
+      }
+    },
+    "/v1/subscription/plans": {
+      "get": {
+        "operationId": "BillingController_listPlans",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlansDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "subscription"
+        ]
+      }
+    },
+    "/v1/subscription/stop-renewal": {
+      "post": {
+        "operationId": "BillingController_stopRenewal",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "subscription"
+        ]
+      }
+    },
+    "/v1/subscription/transactions/{transactionId}": {
+      "get": {
+        "operationId": "BillingController_transaction",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "transactionId",
+            "required": true,
+            "schema": {
+              "example": "DT-2026-000123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "subscription"
         ]
       }
     },

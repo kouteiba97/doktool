@@ -20,6 +20,16 @@ const r2 = {
   R2_PRIVATE_SECRET_ACCESS_KEY: 'd',
 };
 
+/** Real payments, required in production (ADR-015). */
+const payments = {
+  PAYMENT_PROVIDER: 'satim',
+  SATIM_BASE_URL: 'https://test2.satim.dz/payment/rest/',
+  SATIM_USERNAME: 'merchant',
+  SATIM_PASSWORD: 'secret',
+  SATIM_TERMINAL_ID: 'E010000000',
+  PUBLIC_API_URL: 'https://api.doktool.dz',
+};
+
 /** Legal pages, required in production. */
 const legal = {
   TERMS_URL: 'https://doktool.dz/cgu',
@@ -72,6 +82,7 @@ describe('loadEnv', () => {
       issuesOf({
         ...required,
         ...r2,
+        ...payments,
         NODE_ENV: 'production',
         SMTP_URL: 'smtps://user:pass@smtp.example.com:465',
         MAIL_FROM: 'DokTool <no-reply@example.com>',
@@ -82,9 +93,23 @@ describe('loadEnv', () => {
   });
 
   it('requires SMTP settings in production', () => {
-    expect(issuesOf({ ...required, ...r2, ...legal, NODE_ENV: 'production' })).toEqual([
-      'SMTP_URL: SMTP_URL and MAIL_FROM are required in production (OTP e-mails)',
-    ]);
+    expect(issuesOf({ ...required, ...r2, ...legal, ...payments, NODE_ENV: 'production' })).toEqual(
+      ['SMTP_URL: SMTP_URL and MAIL_FROM are required in production (OTP e-mails)'],
+    );
+    expect(
+      issuesOf({
+        ...required,
+        ...r2,
+        ...legal,
+        ...payments,
+        NODE_ENV: 'production',
+        SMTP_URL: 'smtps://user:pass@smtp.example.com:465',
+        MAIL_FROM: 'DokTool <no-reply@example.com>',
+      }),
+    ).toEqual([]);
+  });
+
+  it('requires SATIM in production, with all its settings', () => {
     expect(
       issuesOf({
         ...required,
@@ -94,7 +119,11 @@ describe('loadEnv', () => {
         SMTP_URL: 'smtps://user:pass@smtp.example.com:465',
         MAIL_FROM: 'DokTool <no-reply@example.com>',
       }),
-    ).toEqual([]);
+    ).toEqual(['PAYMENT_PROVIDER: production takes real payments (PAYMENT_PROVIDER=satim)']);
+    expect(issuesOf({ ...required, PAYMENT_PROVIDER: 'satim' })).toHaveLength(5);
+    expect(loadEnv({ ...required, ...payments }).SATIM_BASE_URL).toBe(
+      'https://test2.satim.dz/payment/rest',
+    );
   });
 
   it('parses JOBS_ENABLED strictly', () => {
