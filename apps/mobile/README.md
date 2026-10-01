@@ -30,6 +30,12 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000
 
 `10.0.2.2` is how the Android emulator reaches the host; on a real phone use the machine's LAN address.
 
+Release builds also pass the version reported with analytics:
+
+```bash
+flutter build apk --dart-define=API_BASE_URL=https://api.example.dz --dart-define=APP_VERSION=1.0.0+1
+```
+
 ## Check
 
 ```bash
@@ -49,6 +55,7 @@ flutter test
 | Reference viewer | `lib/src/features/reference/` | pdfrx, read-only, text selection off, SHA-256 checked before display |
 | Calculators | `lib/src/features/calculators/` | Dart engine (runs `packages/calculator-vectors` in `test/`), self-test of each published version before use; inputs never leave the device |
 | Activity | `lib/src/features/activity/` | Favorites, and the person's own history synced in batches |
+| Analytics | `lib/src/features/analytics/` | Section 16 events only — codes and counts, never a query, an input or a PDF's content; buffered in SQLite (max 5 000, 30 days), sent in batches of 100 for the session that recorded them, on resume, background and reconnect |
 | Subscription | `lib/src/features/subscription/` | Plans, review with the no-refund acknowledgement, SATIM page in the browser, result confirmed by the API |
 
 ## Permissions

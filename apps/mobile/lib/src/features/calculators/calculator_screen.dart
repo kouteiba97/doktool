@@ -30,6 +30,8 @@ import 'engine/formula_text.dart';
 import '../../core/api/generated/models/favorite_target_type.dart';
 import '../activity/activity_recorder.dart';
 import '../activity/favorite_button.dart';
+import '../analytics/analytics_event.dart';
+import '../analytics/analytics_recorder.dart';
 
 /// ScreenCalculatorMobile: select tool → enter validated inputs → calculate → review result +
 /// source → done (section 28). Computed on the device with the published, self-tested version.
@@ -165,7 +167,20 @@ class _CalculatorState extends ConsumerState<_Calculator> {
   /// A use is recorded once per opening, at the first result (never the values).
   bool _useRecorded = false;
 
+  /// CALCULATOR_COMPLETED is counted at the first result, and again after « Réinitialiser ».
+  bool _completionRecorded = false;
+
   CalculatorDetailDto get _detail => widget.runtime.detail;
+
+  int get _version => _detail.published!.version.toInt();
+
+  @override
+  void initState() {
+    super.initState();
+    ref
+        .read(analyticsRecorderProvider)
+        .record(AnalyticsEvent.calculatorStarted(id: widget.runtime.detail.id, version: _version));
+  }
 
   @override
   void didChangeDependencies() {
@@ -256,9 +271,23 @@ class _CalculatorState extends ConsumerState<_Calculator> {
         if (entry.value != null) entry.key: entry.value,
     };
     _evaluation = evaluate(_definition, given);
-    if (!_useRecorded && _evaluation!.outcome == Outcome.result) {
+    if (_evaluation!.outcome != Outcome.result) return;
+    if (!_useRecorded) {
       _useRecorded = true;
       unawaited(ref.read(activityRecorderProvider).calculatorUsed(_detail.id));
+    }
+    if (!_completionRecorded) {
+      _completionRecorded = true;
+      ref
+          .read(analyticsRecorderProvider)
+          .record(
+            AnalyticsEvent.calculatorCompleted(
+              id: _detail.id,
+              version: _version,
+              resultBand: _evaluation!.band?.code,
+              engine: engineVersion,
+            ),
+          );
     }
   }
 
@@ -273,6 +302,7 @@ class _CalculatorState extends ConsumerState<_Calculator> {
       _committed.clear();
       _touched.clear();
       _evaluation = null;
+      _completionRecorded = false;
     });
     unawaited(ref.read(lastInputsProvider).write(_detail.slug, const {}));
   }
@@ -346,7 +376,7 @@ class _CalculatorState extends ConsumerState<_Calculator> {
     final colors = context.colors;
     final language = Localizations.localeOf(context).languageCode;
     final name = localizedTitle(context, _detail.nameFr, _detail.nameEn);
-    final version = _detail.published!.version.toInt();
+    final version = _version;
     final evaluation = _evaluation;
     final result = evaluation?.outcome == Outcome.result ? evaluation : null;
 

@@ -25,6 +25,8 @@ import 'reference_files.dart';
 import '../../core/api/generated/models/favorite_target_type.dart';
 import '../activity/activity_recorder.dart';
 import '../activity/favorite_button.dart';
+import '../analytics/analytics_event.dart';
+import '../analytics/analytics_recorder.dart';
 import '../../ui/dt_badge.dart';
 
 /// A reference model and its PDF, checked against the published SHA-256.
@@ -79,6 +81,9 @@ class _ReferenceViewerScreenState extends ConsumerState<ReferenceViewerScreen> {
   final _controller = PdfViewerController();
   int _page = 1;
   int _pages = 0;
+
+  /// REFERENCE_VIEWED is counted once, when the PDF has rendered.
+  bool _viewRecorded = false;
 
   @override
   void initState() {
@@ -174,7 +179,20 @@ class _ReferenceViewerScreenState extends ConsumerState<ReferenceViewerScreen> {
                 params: PdfViewerParams(
                   backgroundColor: colors.surfaceSunken,
                   textSelectionParams: const PdfTextSelectionParams(enabled: false),
-                  onViewerReady: (document, controller) => setState(() => _pages = document.pages.length),
+                  onViewerReady: (document, controller) {
+                    setState(() => _pages = document.pages.length);
+                    if (_viewRecorded) return;
+                    _viewRecorded = true;
+                    ref
+                        .read(analyticsRecorderProvider)
+                        .record(
+                          AnalyticsEvent.referenceViewed(
+                            id: opened.item.id,
+                            fileVersion: opened.item.fileVersion.toInt(),
+                            offline: opened.cachedAt != null,
+                          ),
+                        );
+                  },
                   onPageChanged: (page) {
                     if (page != null) setState(() => _page = page);
                   },

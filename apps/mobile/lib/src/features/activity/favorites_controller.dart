@@ -6,6 +6,8 @@ import '../../core/api/generated/models/favorite_dto.dart';
 import '../../core/api/generated/models/favorite_target_type.dart';
 import '../../core/auth/session.dart';
 import '../../core/auth/session_controller.dart';
+import '../analytics/analytics_event.dart';
+import '../analytics/analytics_recorder.dart';
 
 /// A favorite's identity: what it points at.
 @immutable
@@ -56,7 +58,11 @@ class FavoritesController extends AsyncNotifier<Favorites> {
     final keys = {...current.keys};
     adding ? keys.add(key) : keys.remove(key);
     state = AsyncData(Favorites(entries: current.entries, keys: keys));
-    if (ref.read(sessionControllerProvider).value is! UserSession) return;
+    final event = AnalyticsEvent.favorite(id: id, targetType: type, added: adding);
+    if (ref.read(sessionControllerProvider).value is! UserSession) {
+      ref.read(analyticsRecorderProvider).record(event);
+      return;
+    }
     final api = ref.read(apiProvider).activity;
     try {
       if (adding) {
@@ -64,6 +70,7 @@ class FavoritesController extends AsyncNotifier<Favorites> {
       } else {
         await api.activityControllerRemoveFavorite(targetType: type, targetId: id);
       }
+      ref.read(analyticsRecorderProvider).record(event);
       ref.invalidateSelf();
     } catch (_) {
       state = AsyncData(current);

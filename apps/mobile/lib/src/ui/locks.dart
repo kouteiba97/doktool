@@ -10,6 +10,7 @@ import '../router/app_router.dart';
 import '../theme/doktool_tokens.dart';
 import 'dt_button.dart';
 import 'tokens.dart';
+import '../features/analytics/analytics_host.dart';
 
 /// The reason word shown next to the lock on a row (ScreenLockedStates). Never red, never hidden.
 String lockWord(AppLocalizations l10n, LockReason? reason) => switch (reason) {
@@ -67,6 +68,7 @@ Future<void> showLockSheet(BuildContext context, ItemAccessDto access, {required
     _ => null,
   };
   final demo = access.lockReason == LockReason.demoLimit;
+  if (demo) recordDemoLimit(context);
   return showModalBottomSheet<void>(
     context: context,
     useSafeArea: true,

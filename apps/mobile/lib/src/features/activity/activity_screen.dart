@@ -18,6 +18,8 @@ import '../../ui/dt_button.dart';
 import '../../ui/segmented_control.dart';
 import '../../ui/skeleton.dart';
 import '../../ui/tokens.dart';
+import '../analytics/analytics_event.dart';
+import '../analytics/analytics_recorder.dart';
 import 'activity_data.dart';
 import 'favorites_controller.dart';
 
@@ -75,9 +77,20 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
 void openContent(BuildContext context, ContentRef content) {
   if (content.slug != null) {
     context.push(Routes.calculator(content.slug!));
+  } else if (content.referenceType != null) {
+    openReference(context, content.id, content.referenceType!);
   } else {
     context.push(Routes.reference(content.id));
   }
+}
+
+/// Opens a reference model from a tapped row, counted as REFERENCE_OPENED (section 16).
+void openReference(BuildContext context, String id, ReferenceDocumentType type) {
+  ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(analyticsRecorderProvider).record(AnalyticsEvent.referenceOpened(id: id, referenceType: type));
+  context.push(Routes.reference(id));
 }
 
 class _FavoritesList extends ConsumerWidget {

@@ -13,6 +13,8 @@ import '../../ui/dt_page.dart';
 import '../../ui/error_text.dart';
 import '../../ui/segmented_control.dart';
 import '../../ui/tokens.dart';
+import '../analytics/analytics_event.dart';
+import '../analytics/analytics_recorder.dart';
 
 /// ScreenDemo step 2 « Contexte professionnel »: the demo is an access context, never a
 /// professional type. No sign-up, no personal data, no time limit (ADR-006 Q5).
@@ -33,8 +35,10 @@ class _DemoStartScreenState extends ConsumerState<DemoStartScreen> {
       _starting = true;
       _error = null;
     });
+    final analytics = ref.read(analyticsRecorderProvider);
     try {
       await ref.read(sessionControllerProvider.notifier).startDemo(_context);
+      analytics.record(AnalyticsEvent.demoStarted(_context));
     } catch (error) {
       if (mounted) setState(() => _error = ApiError.from(error));
     } finally {

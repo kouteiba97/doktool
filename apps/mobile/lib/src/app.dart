@@ -6,6 +6,7 @@ import 'features/settings/settings_controller.dart';
 import 'l10n/generated/app_localizations.dart';
 import 'router/app_router.dart';
 import 'theme/doktool_tokens.dart';
+import 'features/analytics/analytics_host.dart';
 import 'features/offline/offline_bar.dart';
 
 /// Root widget: light and dark themes from the tokens, FR/EN from packages/i18n, both switched
@@ -31,7 +32,7 @@ class DokToolApp extends ConsumerWidget {
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       debugShowCheckedModeBanner: false,
-      builder: (context, child) => OfflineSyncHost(child: child ?? const SizedBox.shrink()),
+      builder: (context, child) => AnalyticsHost(child: OfflineSyncHost(child: child ?? const SizedBox.shrink())),
     );
   }
 }

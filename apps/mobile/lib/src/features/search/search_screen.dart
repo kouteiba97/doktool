@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/api/generated/models/reference_document_type.dart';
 import '../../core/api/generated/models/search_hit_dto.dart';
 import '../../core/api/generated/models/search_result_dto.dart';
 import '../../core/api/generated/models/search_type.dart';
@@ -23,6 +24,8 @@ import '../activity/activity_recorder.dart';
 import '../../ui/text_match.dart';
 import '../activity/activity_data.dart';
 import '../activity/activity_screen.dart';
+import '../analytics/analytics_event.dart';
+import '../analytics/analytics_recorder.dart';
 
 /// ScreenSearchMobile: full-screen overlay, keyboard up. Grouped results (Ordonnances,
 /// Certificats, Calculateurs — the only V1 types), 3 rows per group, chips with counts filtering in
@@ -37,6 +40,9 @@ class SearchScreen extends ConsumerStatefulWidget {
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _query = TextEditingController();
   Timer? _debounce;
+
+  /// A search counts once its results have stayed on screen briefly, not per keystroke.
+  Timer? _report;
   SearchType? _filter;
   SearchResultDto? _result;
 
@@ -52,6 +58,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   void dispose() {
     _debounce?.cancel();
+    _report?.cancel();
     _query.dispose();
     super.dispose();
   }
@@ -73,6 +80,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Future<void> _run() async {
     final query = _query.text.trim();
     if (query.length < 2) return;
+    _report?.cancel();
     final request = ++_request;
     setState(() {
       _loading = true;
@@ -91,6 +99,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         _result = result;
         _totals = totals;
         _loading = false;
+      });
+      _report = Timer(const Duration(seconds: 1), () {
+        ref
+            .read(analyticsRecorderProvider)
+            .record(
+              AnalyticsEvent.searchPerformed(
+                resultCount: totals.values.fold(0, (sum, total) => sum + total),
+                groups: [
+                  for (final entry in totals.entries)
+                    if (entry.value > 0) entry.key,
+                ],
+              ),
+            );
       });
     } catch (_) {
       // Without the full search, look through what the device holds (offline store included).
@@ -130,7 +151,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     if (hit.type == SearchType.calculator && hit.slug != null) {
       context.push(Routes.calculator(hit.slug!));
     } else {
-      context.push(Routes.reference(hit.id));
+      openReference(
+        context,
+        hit.id,
+        hit.type == SearchType.certificate ? ReferenceDocumentType.certificate : ReferenceDocumentType.ordonnance,
+      );
     }
   }
 

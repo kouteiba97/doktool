@@ -58,8 +58,26 @@ class OfflineCalculators extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Analytics events waiting to be sent (section 16): at most 5 000, kept with their original time,
+/// and only for the session that recorded them. Codes, counts and flags only — never free text.
+@DataClassName('QueuedAnalyticsEvent')
+class AnalyticsQueue extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// The user or demo session the event belongs to; another session never sends it.
+  TextColumn get sessionKey => text()();
+
+  /// ClientAnalyticsEventType as sent to the API.
+  TextColumn get type => text()();
+  TextColumn get entityId => text().nullable()();
+
+  /// The event's properties as JSON.
+  TextColumn get properties => text()();
+  DateTimeColumn get occurredAt => dateTime()();
+}
+
 /// The app's SQLite store (drift).
-@DriftDatabase(tables: [LocalSettings, OfflineDocuments, OfflineCalculators])
+@DriftDatabase(tables: [LocalSettings, OfflineDocuments, OfflineCalculators, AnalyticsQueue])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
@@ -67,7 +85,7 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.onDevice() => AppDatabase(driftDatabase(name: 'doktool'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -76,6 +94,7 @@ class AppDatabase extends _$AppDatabase {
         await migrator.createTable(offlineDocuments);
         await migrator.createTable(offlineCalculators);
       }
+      if (from < 3) await migrator.createTable(analyticsQueue);
     },
   );
 

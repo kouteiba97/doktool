@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,7 +19,10 @@ import '../../ui/text_match.dart';
 import '../../ui/tokens.dart';
 import 'library_data.dart';
 import '../../core/api/generated/models/favorite_target_type.dart';
+import '../activity/activity_screen.dart';
 import '../activity/favorites_controller.dart';
+import '../analytics/analytics_event.dart';
+import '../analytics/analytics_recorder.dart';
 
 /// ScreenReferenceLibrary: segmented Ordonnances · Certificats · Calculateurs, a search field
 /// scoped to the section, an A–Z list. A row has one action; a locked row keeps its place with the
@@ -34,16 +39,43 @@ class LibraryScreen extends ConsumerStatefulWidget {
 class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   final _query = TextEditingController();
 
+  /// A library search counts once the typing has paused, not per keystroke.
+  Timer? _report;
+
   @override
   void didUpdateWidget(LibraryScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.section != widget.section) _query.clear();
+    if (oldWidget.section != widget.section) {
+      _report?.cancel();
+      _query.clear();
+    }
   }
 
   @override
   void dispose() {
+    _report?.cancel();
     _query.dispose();
     super.dispose();
+  }
+
+  void _changed(String value) {
+    setState(() {});
+    _report?.cancel();
+    final type = widget.section.documentType;
+    final query = value.trim();
+    if (type == null || query.length < 2) return;
+    _report = Timer(const Duration(seconds: 1), () {
+      final items = ref.read(referenceListProvider(type)).value;
+      if (items == null) return;
+      ref
+          .read(analyticsRecorderProvider)
+          .record(
+            AnalyticsEvent.referenceSearched(
+              referenceType: type,
+              resultCount: items.where((item) => matchesAllWords(query, [item.titleFr, item.titleEn])).length,
+            ),
+          );
+    });
   }
 
   @override
@@ -84,7 +116,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             padding: const EdgeInsets.fromLTRB(DtSpace.s4, 0, DtSpace.s4, DtSpace.s2),
             child: TextField(
               controller: _query,
-              onChanged: (_) => setState(() {}),
+              onChanged: _changed,
               textInputAction: TextInputAction.search,
               style: DtType.body.copyWith(color: colors.ink),
               decoration: InputDecoration(
@@ -145,7 +177,7 @@ class _ReferenceList extends ConsumerWidget {
               access: item.access,
               actionLabel: l10n.libraryViewModel,
               highlight: query,
-              onOpen: () => context.push(Routes.reference(item.id)),
+              onOpen: () => openReference(context, item.id, section.documentType!),
             ),
       ],
       total: items.value?.length ?? 0,
