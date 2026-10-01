@@ -1,10 +1,17 @@
 import {
+  ArrowLeftRight,
   BadgeCheck,
   BookOpen,
   Calculator,
+  ChartColumn,
   CreditCard,
+  KeyRound,
+  LayoutDashboard,
+  Landmark,
   type LucideIcon,
+  ScrollText,
   Settings,
+  Users,
 } from 'lucide-react';
 import type { MessageKey } from '@/i18n/messages';
 import type { Grant } from '@/session/session';
@@ -13,20 +20,27 @@ export interface NavItem {
   href: string;
   label: MessageKey;
   icon: LucideIcon;
-  /** Shown when the admin holds this grant (a missing grant hides the item, section 02). */
-  grant: Grant;
+  /** Shown when the admin holds this grant (a missing grant hides the item, section 02); null for every admin. */
+  grant: Grant | null;
 }
 
 export interface NavGroup {
-  label: MessageKey;
+  label: MessageKey | null;
   items: NavItem[];
 }
 
 /** Admin navigation (design system section 02). */
 export const NAVIGATION: NavGroup[] = [
   {
+    label: null,
+    items: [
+      { href: '/admin/overview', label: 'admin.nav.overview', icon: LayoutDashboard, grant: null },
+    ],
+  },
+  {
     label: 'admin.nav.operations',
     items: [
+      { href: '/admin/users', label: 'admin.nav.users', icon: Users, grant: 'users.read' },
       {
         href: '/admin/verification',
         label: 'admin.nav.verification',
@@ -61,11 +75,36 @@ export const NAVIGATION: NavGroup[] = [
         icon: CreditCard,
         grant: 'subscriptions.read',
       },
+      {
+        href: '/admin/transactions',
+        label: 'admin.nav.transactions',
+        icon: ArrowLeftRight,
+        grant: 'transactions.read',
+      },
+      { href: '/admin/finance', label: 'admin.nav.finance', icon: Landmark, grant: 'finance.read' },
+    ],
+  },
+  {
+    label: 'admin.nav.intelligence',
+    items: [
+      {
+        href: '/admin/analytics',
+        label: 'admin.nav.analytics',
+        icon: ChartColumn,
+        grant: 'analytics.read',
+      },
     ],
   },
   {
     label: 'admin.nav.system',
     items: [
+      { href: '/admin/audit', label: 'admin.nav.audit', icon: ScrollText, grant: 'audit.read' },
+      {
+        href: '/admin/permissions',
+        label: 'admin.nav.permissions',
+        icon: KeyRound,
+        grant: 'system.roles.write',
+      },
       {
         href: '/admin/settings',
         label: 'admin.nav.settings',
@@ -80,7 +119,7 @@ export const NAVIGATION: NavGroup[] = [
 export function visibleNavigation(grants: readonly Grant[]): NavGroup[] {
   return NAVIGATION.map((group) => ({
     ...group,
-    items: group.items.filter((item) => grants.includes(item.grant)),
+    items: group.items.filter((item) => item.grant === null || grants.includes(item.grant)),
   })).filter((group) => group.items.length > 0);
 }
 

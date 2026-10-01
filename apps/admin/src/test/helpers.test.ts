@@ -68,15 +68,21 @@ describe('navigation', () => {
   it('shows only the sections the grants open, in the section 02 order', () => {
     const groups = visibleNavigation(['calculators.read', 'verification.queue.read']);
     expect(groups.map((group) => group.items.map((item) => item.href))).toEqual([
+      ['/admin/overview'],
       ['/admin/verification'],
       ['/admin/calculators'],
     ]);
-    expect(homeFor(['library.read'])).toBe('/admin/library/ordonnances');
-    expect(homeFor([])).toBeNull();
+    // The overview needs no grant: every admin lands there first.
+    expect(homeFor([])).toBe('/admin/overview');
+    expect(
+      visibleNavigation(['finance.read']).flatMap((group) => group.items.map((item) => item.href)),
+    ).toEqual(['/admin/overview', '/admin/finance']);
   });
 
   it('keeps the library item active on both type pages and calculators on detail pages', () => {
-    const [library, calculators] = NAVIGATION[1]!.items;
+    const [library, calculators] = NAVIGATION.find(
+      (group) => group.label === 'admin.nav.library',
+    )!.items;
     expect(isActive(library!, '/admin/library/certificates')).toBe(true);
     expect(isActive(calculators!, '/admin/calculators/7f0c')).toBe(true);
     expect(isActive(calculators!, '/admin/calculatorsx')).toBe(false);

@@ -88,8 +88,8 @@ export function ConsoleShell({ children }: { children: ReactNode }) {
         <nav className="dt-sidebar" aria-label={t('admin.shell.navigation')}>
           {me.data
             ? visibleNavigation(me.data.grants).map((group) => (
-                <div key={group.label} className="flex flex-col gap-px">
-                  <div className="grp">{t(group.label)}</div>
+                <div key={group.label ?? 'home'} className="flex flex-col gap-px">
+                  {group.label ? <div className="grp">{t(group.label)}</div> : null}
                   {group.items.map((item) => (
                     <Link
                       key={item.href}

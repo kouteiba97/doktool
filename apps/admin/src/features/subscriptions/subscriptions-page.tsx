@@ -15,7 +15,9 @@ import { EmptyState, PageHeader } from '@/ui/feedback';
 import { OverflowMenu } from '@/ui/menu';
 import { ReasonDialog } from '@/ui/reason-dialog';
 import { useToast } from '@/ui/toast';
+import { Tab, TabList, TabPanel, Tabs } from '@/ui/tabs';
 import { PlanDrawer } from './plan-drawer';
+import { SubscriptionsList } from './subscriptions-list';
 import type { Plan } from './plan-form';
 
 const plansKey = ['admin', 'plans'] as const;
@@ -137,29 +139,35 @@ export function SubscriptionsPage() {
           ) : null
         }
       />
-      <div className="dt-tabs" role="tablist" aria-label={t('admin.plans.title')}>
-        <button type="button" role="tab" aria-selected>
-          {t('admin.plans.tabPlans')}
-        </button>
-      </div>
-      {plans.isError ? (
-        <EmptyState icon={CircleAlert} error title={t('admin.errors.loadFailed')}>
-          {errorText(plans.error)}
-        </EmptyState>
-      ) : (
-        <DataTable
-          label={t('admin.plans.tabPlans')}
-          columns={columns}
-          rows={plans.data ?? []}
-          rowId={(row) => row.id}
-          loading={plans.isPending}
-          empty={
-            <EmptyState icon={Plus} title={t('admin.plans.empty')}>
-              {t('admin.plans.emptyBody')}
+      <Tabs defaultValue="plans" className="dt-stack">
+        <TabList label={t('admin.plans.title')}>
+          <Tab value="plans">{t('admin.plans.tabPlans')}</Tab>
+          <Tab value="subscriptions">{t('admin.plans.tabSubscriptions')}</Tab>
+        </TabList>
+        <TabPanel value="plans">
+          {plans.isError ? (
+            <EmptyState icon={CircleAlert} error title={t('admin.errors.loadFailed')}>
+              {errorText(plans.error)}
             </EmptyState>
-          }
-        />
-      )}
+          ) : (
+            <DataTable
+              label={t('admin.plans.tabPlans')}
+              columns={columns}
+              rows={plans.data ?? []}
+              rowId={(row) => row.id}
+              loading={plans.isPending}
+              empty={
+                <EmptyState icon={Plus} title={t('admin.plans.empty')}>
+                  {t('admin.plans.emptyBody')}
+                </EmptyState>
+              }
+            />
+          )}
+        </TabPanel>
+        <TabPanel value="subscriptions">
+          <SubscriptionsList />
+        </TabPanel>
+      </Tabs>
       <p className="dt-cap">{t('admin.plans.noRefund')}</p>
       <PlanDrawer
         base={drawer?.base ?? null}
