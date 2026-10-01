@@ -53,6 +53,7 @@ const ACTIONS: Record<string, MessageKey> = {
   'reference_data.institution_created': 'admin.audit.actions.referenceDataInstitutionCreated',
   'reference_data.university_created': 'admin.audit.actions.referenceDataUniversityCreated',
   'search.synonyms_replaced': 'admin.audit.actions.searchSynonymsReplaced',
+  'user.account_deleted': 'admin.audit.actions.userAccountDeleted',
   'user.reinstated': 'admin.audit.actions.userReinstated',
   'user.sessions_revoked': 'admin.audit.actions.userSessionsRevoked',
   'user.suspended': 'admin.audit.actions.userSuspended',

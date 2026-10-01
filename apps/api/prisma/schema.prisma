@@ -305,6 +305,8 @@ enum SessionRevocationReason {
   ACCOUNT_SUSPENDED
   /// An admin signed the person out of every device (Admin Web « Réinitialiser la connexion »).
   ADMIN_REVOKED
+  /// The person deleted their account (Settings « Supprimer le compte »).
+  ACCOUNT_DELETED
 
   @@map("session_revocation_reason")
 }

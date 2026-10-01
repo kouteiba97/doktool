@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { VerificationStatus } from '../../generated/prisma/enums.js';
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 import { NotificationsService } from '../notifications/index.js';
 import { VerificationFilesService } from './verification-files.service.js';
@@ -11,6 +12,13 @@ import {
 
 const DAY_MS = 24 * 3600 * 1000;
 const BATCH = 200;
+/** Cases no reviewer has decided: nothing about them needs keeping once the account is gone. */
+const UNDECIDED: ReadonlySet<VerificationStatus> = new Set([
+  'NOT_STARTED',
+  'SUBMITTED',
+  'IN_REVIEW',
+  'APPEALED',
+]);
 
 /** Daily verification housekeeping: expiry, reminders and the retention purge (section 06). */
 @Injectable()
@@ -81,6 +89,26 @@ export class VerificationMaintenanceService {
       sent += 1;
     }
     return sent;
+  }
+
+  /**
+   * Account deletion: every document of the person is deleted now, cases still waiting for a
+   * decision leave the queue, and decided cases keep only the decision (who, when, outcome) with
+   * their declared details cleared. Returns the number of documents deleted.
+   */
+  async eraseUser(userId: string): Promise<number> {
+    const cases = await this.prisma.verificationCase.findMany({
+      where: { userId },
+      select: { id: true, status: true },
+    });
+    let documents = 0;
+    for (const item of cases) {
+      documents += await this.files.eraseCase(item.id);
+      if (UNDECIDED.has(item.status)) {
+        await this.prisma.verificationCase.deleteMany({ where: { id: item.id } });
+      }
+    }
+    return documents;
   }
 
   /**

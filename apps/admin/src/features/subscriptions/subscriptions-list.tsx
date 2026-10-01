@@ -11,6 +11,7 @@ import { Button } from '@/ui/button';
 import { type Column, DataTable } from '@/ui/data-table';
 import { useErrorText } from '@/ui/errors';
 import { EmptyState } from '@/ui/feedback';
+import { personName } from '../users/labels';
 import { Select } from '@/ui/field';
 import {
   PROVIDER_LABELS,
@@ -47,7 +48,7 @@ export function SubscriptionsList() {
       {
         id: 'user',
         header: t('admin.subscriptions.colUser'),
-        cell: (row) => `${row.user.firstName} ${row.user.lastName}`,
+        cell: (row) => personName(row.user, t),
       },
       {
         id: 'plan',

@@ -6,10 +6,16 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" tools:node="remove"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- No backup or device transfer of app data (res/xml/data_extraction_rules.xml); cleartext
+         HTTP is refused outside debug builds (src/debug/AndroidManifest.xml). -->
     <application
         android:label="DokTool"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:usesCleartextTraffic="false">
         <activity
             android:name=".MainActivity"
             android:exported="true"

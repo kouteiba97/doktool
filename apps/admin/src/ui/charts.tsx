@@ -148,7 +148,7 @@ export function BarSeriesChart<T>(props: ChartProps<T> & { stacked?: boolean }) 
       <div aria-hidden style={{ height: props.height ?? 240 }}>
         {tokens ? (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={props.data}>
+            <BarChart data={props.data} accessibilityLayer={false}>
               {axes(tokens, props)}
               {props.series.map((item, index) => (
                 <Bar
@@ -176,7 +176,7 @@ export function LineSeriesChart<T>(props: ChartProps<T>) {
       <div aria-hidden style={{ height: props.height ?? 240 }}>
         {tokens ? (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={props.data}>
+            <LineChart data={props.data} accessibilityLayer={false}>
               {axes(tokens, props)}
               {props.series.map((item, index) => (
                 <Line

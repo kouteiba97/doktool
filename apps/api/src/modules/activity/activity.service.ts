@@ -56,6 +56,14 @@ export class ActivityService {
     private readonly calculators: CalculatorsService,
   ) {}
 
+  /** Account deletion: the person's favorites and research history go with the account. */
+  async eraseUser(userId: string): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.favorite.deleteMany({ where: { userId } }),
+      this.prisma.recentActivity.deleteMany({ where: { userId } }),
+    ]);
+  }
+
   // ───────────────────────────────── favorites ─────────────────────────────────
 
   /** Admin Web « Activité »: how many favorites and history entries, by kind — never which. */

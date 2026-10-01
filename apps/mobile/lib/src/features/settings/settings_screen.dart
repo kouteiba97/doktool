@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/auth/session.dart';
+import '../../core/auth/session_controller.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../router/app_router.dart';
 import '../../theme/doktool_tokens.dart';
@@ -11,8 +13,8 @@ import '../../ui/tokens.dart';
 import 'app_settings.dart';
 import 'settings_controller.dart';
 
-/// « Paramètres » (ScreenSettings): appearance and language, applied instantly. The other sections
-/// (notifications, security, data & offline, account, about, sign out) join with their phases.
+/// « Paramètres » (ScreenSettings): appearance and language applied instantly, data and offline, and
+/// for a real account « Supprimer mon compte » (section 08).
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -22,6 +24,7 @@ class SettingsScreen extends ConsumerWidget {
     final colors = context.colors;
     final settings = ref.watch(settingsControllerProvider).value;
     final controller = ref.read(settingsControllerProvider.notifier);
+    final account = ref.watch(sessionControllerProvider).value is UserSession;
 
     return Scaffold(
       appBar: AppBar(
@@ -76,6 +79,22 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
+                if (account) ...[
+                  const SizedBox(height: DtSpace.s6),
+                  _Section(
+                    title: l10n.settingsAccount,
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(LucideIcons.userX, color: colors.critical),
+                        title: Text(l10n.settingsDeleteAccount, style: DtType.body.copyWith(color: colors.critical)),
+                        trailing: Icon(LucideIcons.chevronRight, color: colors.inkMuted),
+                        onTap: () => context.push(Routes.deleteAccount),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
     );

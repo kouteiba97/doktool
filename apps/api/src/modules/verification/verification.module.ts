@@ -30,7 +30,7 @@ import { VerificationService } from './verification.service.js';
     VerificationFilesService,
     VerificationMaintenanceService,
   ],
-  exports: [VerificationStatusService],
+  exports: [VerificationStatusService, VerificationMaintenanceService],
 })
 export class VerificationModule implements OnModuleInit {
   constructor(

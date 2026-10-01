@@ -145,6 +145,25 @@ describe('users and profiles', () => {
     );
   });
 
+  it('keeps a deleted account only as an erased tombstone (account deletion)', async () => {
+    const userId = await user('leaving@example.dz');
+    await db.expectRejection(
+      `UPDATE users SET status = 'DELETED' WHERE id = $1`,
+      [userId],
+      /users_deleted_erased_chk/,
+    );
+    await db.query(
+      `UPDATE users SET status = 'DELETED', email = NULL, phone = NULL, first_name = '',
+         last_name = '', password_hash = '' WHERE id = $1`,
+      [userId],
+    );
+    await db.expectRejection(
+      `UPDATE users SET status = 'ACTIVE' WHERE id = $1`,
+      [userId],
+      /users_email_or_phone_chk|users_names_chk/,
+    );
+  });
+
   it('offers only Doctor, Resident and Medical student (ADR-006 Q7)', async () => {
     const { rows } = await db.query<{ value: string }>(
       `SELECT unnest(enum_range(NULL::professional_type))::text AS value`,

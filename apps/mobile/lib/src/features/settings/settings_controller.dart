@@ -14,6 +14,9 @@ class SettingsController extends AsyncNotifier<AppSettings> {
   static const _appearanceKey = 'appearance';
   static const _languageKey = 'language';
 
+  /// Preferences of the device, not of an account: they survive an account deletion.
+  static const deviceKeys = {_appearanceKey, _languageKey};
+
   AppDatabase get _database => ref.read(appDatabaseProvider);
 
   @override

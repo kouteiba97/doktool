@@ -2938,6 +2938,17 @@
         ],
         "type": "object"
       },
+      "DeleteAccountDto": {
+        "properties": {
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "password"
+        ],
+        "type": "object"
+      },
       "DemoContext": {
         "description": "Médecin or Résident.",
         "enum": [
@@ -13235,6 +13246,45 @@
         ],
         "tags": [
           "activity"
+        ]
+      }
+    },
+    "/v1/me/deletion": {
+      "post": {
+        "operationId": "AccountDeletionController_delete",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteAccountDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "account"
         ]
       }
     },

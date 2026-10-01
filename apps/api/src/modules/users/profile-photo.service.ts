@@ -88,12 +88,12 @@ export class ProfilePhotoService {
     const key = StorageKeys.profileImage(userId, randomUUID());
     await this.storage.upload({ bucket: 'CONTENT', key, body: encoded, contentType: 'image/webp' });
     const previous = await this.replaceKey(userId, key);
-    if (previous) await this.deleteQuietly(previous);
+    if (previous) await this.deleteObject(previous);
   }
 
   async remove(userId: string): Promise<void> {
     const previous = await this.replaceKey(userId, null);
-    if (previous) await this.deleteQuietly(previous);
+    if (previous) await this.deleteObject(previous);
   }
 
   /** A signed URL for the photo (1 hour), or null without one. */
@@ -113,11 +113,12 @@ export class ProfilePhotoService {
     return user.avatarStorageKey;
   }
 
-  private async deleteQuietly(key: string): Promise<void> {
+  /** Deletes a photo no row points to any more; a failure is logged with the key, not raised. */
+  async deleteObject(key: string): Promise<void> {
     try {
       await this.storage.delete('CONTENT', key);
     } catch (error) {
-      this.logger.error(`Could not delete replaced profile photo ${key}`, error);
+      this.logger.error(`Could not delete profile photo ${key}`, error);
     }
   }
 }

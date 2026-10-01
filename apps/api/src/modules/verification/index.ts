@@ -5,4 +5,5 @@ export {
   type CaseSnapshot,
   type VerificationSnapshot,
 } from './verification-status.service.js';
+export { VerificationMaintenanceService } from './verification-maintenance.service.js';
 export { VERIFICATION_SLA_HOURS } from './verification.policy.js';

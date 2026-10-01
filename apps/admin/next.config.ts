@@ -53,6 +53,9 @@ const config: NextConfig = {
           { key: 'Referrer-Policy', value: 'no-referrer' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
           { key: 'Cache-Control', value: 'no-store' },
+          ...(development
+            ? []
+            : [{ key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' }]),
         ],
       },
     ];

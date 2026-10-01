@@ -44,6 +44,11 @@ const SELECT = {
 export class NotificationsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Account deletion: the person's notifications go with the account. */
+  async eraseUser(userId: string): Promise<void> {
+    await this.prisma.notification.deleteMany({ where: { userId } });
+  }
+
   async notify(input: NewNotification): Promise<void> {
     if (!input.messageKey.startsWith('mobile.notifications.') || !(input.messageKey in CATALOGUE)) {
       throw new Error(`Unknown notification message key "${input.messageKey}"`);

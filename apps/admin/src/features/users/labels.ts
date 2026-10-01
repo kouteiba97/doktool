@@ -1,5 +1,5 @@
 import type { Schemas } from '@/api/client';
-import type { MessageKey } from '@/i18n/messages';
+import type { MessageKey, Translate } from '@/i18n/messages';
 
 export type EntitlementTier = Schemas['EntitlementTier'];
 export type FeatureKey = Schemas['FeatureKey'];
@@ -47,3 +47,12 @@ export const FAVORITE_TYPE_LABELS: Record<Schemas['FavoriteTargetType'], Message
 };
 
 export const usersKey = ['admin', 'users'] as const;
+
+/**
+ * A person's name in the ledgers. A deleted account is an anonymous tombstone whose payments are
+ * kept (ADR-005): it reads « Compte supprimé ».
+ */
+export function personName(person: { firstName: string; lastName: string }, t: Translate): string {
+  const name = `${person.firstName} ${person.lastName}`.trim();
+  return name || t('admin.users.deletedAccount');
+}

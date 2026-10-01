@@ -107,6 +107,14 @@ class AppDatabase extends _$AppDatabase {
       into(localSettings).insertOnConflictUpdate(LocalSettingsCompanion.insert(key: key, value: value));
 
   Future<void> deleteSetting(String key) => (delete(localSettings)..where((s) => s.key.equals(key))).go();
+
+  /// After an account deletion: everything the account left on the device goes — cached account,
+  /// recent searches, queued history and analytics, last calculator inputs, the remembered
+  /// identifier — except the device preferences in [keep].
+  Future<void> forgetAccountData({required Set<String> keep}) => transaction(() async {
+    await (delete(localSettings)..where((s) => s.key.isNotIn(keep))).go();
+    await delete(analyticsQueue).go();
+  });
 }
 
 /// Overridden in tests with an in-memory database.

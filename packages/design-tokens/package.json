@@ -5,13 +5,17 @@
   "type": "module",
   "description": "Token gates and generators: tokens.json → CSS/Tailwind/TS drift checks, and the generated Flutter theme.",
   "scripts": {
-    "check": "node scripts/check-drift.mjs",
+    "check": "node scripts/check-drift.mjs && node scripts/check-literals.mjs",
     "test": "node --test \"scripts/*.test.mjs\"",
     "generate:dart": "node scripts/generate-dart.mjs",
-    "generate:web": "node scripts/generate-web.mjs"
+    "generate:web": "node scripts/generate-web.mjs",
+    "generate:app-icons": "node scripts/generate-app-icons.mjs"
   },
   "exports": {
     "./tailwind-preset": "./web/tailwind-preset.mjs",
     "./tokens.css": "./web/tokens.css"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.4"
   }
 }

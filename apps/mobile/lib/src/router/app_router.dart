@@ -21,6 +21,7 @@ import '../features/onboarding/welcome_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/reference/reference_viewer_screen.dart';
 import '../features/search/search_screen.dart';
+import '../features/settings/delete_account_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/shell/app_shell.dart';
 import '../features/verification/identity_step_screen.dart';
@@ -60,6 +61,7 @@ abstract final class Routes {
   static const profile = '/profile';
   static const settings = '/settings';
   static const offlineSettings = '/settings/offline';
+  static const deleteAccount = '/settings/account/delete';
   static const notifications = '/notifications';
   static const plans = '/subscription/plans';
   static const subscription = '/subscription';
@@ -78,6 +80,7 @@ abstract final class Routes {
   /// Only for real accounts (never a demo token, section 27).
   static const accountOnly = [
     '/verification',
+    '/settings/account',
     notifications,
     '/subscription/review',
     '/subscription/result',
@@ -156,6 +159,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: Routes.search, builder: (context, state) => const SearchScreen()),
       GoRoute(path: Routes.settings, builder: (context, state) => const SettingsScreen()),
       GoRoute(path: Routes.offlineSettings, builder: (context, state) => const OfflineSettingsScreen()),
+      GoRoute(path: Routes.deleteAccount, builder: (context, state) => const DeleteAccountScreen()),
       GoRoute(path: Routes.notifications, builder: (context, state) => const NotificationsScreen()),
       GoRoute(path: Routes.plans, builder: (context, state) => const PlansScreen()),
       GoRoute(path: Routes.subscription, builder: (context, state) => const SubscriptionScreen()),

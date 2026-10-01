@@ -19,6 +19,7 @@ import {
   TRANSACTION_STATUS_TONES,
   type TransactionStatus,
 } from '../subscriptions/labels';
+import { personName } from '../users/labels';
 import { TransactionDrawer } from './transaction-drawer';
 
 type Transaction = Schemas['AdminTransactionDto'];
@@ -76,7 +77,7 @@ export function TransactionsPage() {
       {
         id: 'user',
         header: t('admin.transactions.colUser'),
-        cell: (row) => `${row.user.firstName} ${row.user.lastName}`,
+        cell: (row) => personName(row.user, t),
       },
       {
         id: 'plan',

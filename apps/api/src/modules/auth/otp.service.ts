@@ -203,6 +203,11 @@ export class OtpService {
   }
 
   /** Deletes challenges expired for more than a day (hourly maintenance job). */
+  /** Account deletion: no code of the person is left to confirm. */
+  async eraseUser(userId: string): Promise<void> {
+    await this.prisma.otpChallenge.deleteMany({ where: { userId } });
+  }
+
   async purgeExpired(): Promise<number> {
     const { count } = await this.prisma.otpChallenge.deleteMany({
       where: { expiresAt: { lt: new Date(Date.now() - 24 * 3600 * 1000) } },

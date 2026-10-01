@@ -246,3 +246,12 @@ export class SessionDto {
     };
   }
 }
+
+/** « Supprimer le compte »: the password confirms it is the person. */
+export class DeleteAccountDto {
+  @ApiProperty()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(PASSWORD_MAX_LENGTH)
+  password!: string;
+}

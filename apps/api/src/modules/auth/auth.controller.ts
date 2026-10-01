@@ -26,6 +26,7 @@ import type { UserPrincipal } from '../../infrastructure/security/user-tokens.js
 import {
   AuthTokensDto,
   ConfirmSignUpDto,
+  DeleteAccountDto,
   OtpChallengeDto,
   PasswordResetConfirmDto,
   PasswordResetRequestDto,
@@ -35,6 +36,7 @@ import {
   SignInDto,
   SignUpDto,
 } from './auth.dto.js';
+import { AccountDeletionService } from './account-deletion.service.js';
 import { AuthService } from './auth.service.js';
 import { SessionsService } from './sessions.service.js';
 
@@ -163,5 +165,26 @@ export class SessionsController {
     @Param('sessionId', new ParseUUIDPipe()) sessionId: string,
   ): Promise<void> {
     await this.sessions.revoke(user.userId, sessionId, 'USER_REVOKED');
+  }
+}
+
+/** Settings « Supprimer le compte » (section 08): confirmed with the password, not reversible. */
+@ApiTags('account')
+@Controller(`${USER_API_PREFIX}/me`)
+@UseGuards(UserAuthGuard)
+@ApiBearerAuth('user')
+export class AccountDeletionController {
+  constructor(private readonly deletion: AccountDeletionService) {}
+
+  @Post('deletion')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  @errors
+  async delete(
+    @CurrentUser() user: UserPrincipal,
+    @Body() body: DeleteAccountDto,
+    @Client() client: ClientInfo,
+  ): Promise<void> {
+    await this.deletion.delete(user.userId, body.password, client);
   }
 }

@@ -351,6 +351,54 @@
       }
     }
   },
+  "deleteAccountConfirm": "Delete account",
+  "@deleteAccountConfirm": {
+    "description": "mobile.deleteAccount.confirm"
+  },
+  "deleteAccountDone": "Your account has been deleted.",
+  "@deleteAccountDone": {
+    "description": "mobile.deleteAccount.done"
+  },
+  "deleteAccountErased": "Your profile, favorites, history, notifications and verification documents.",
+  "@deleteAccountErased": {
+    "description": "mobile.deleteAccount.erased"
+  },
+  "deleteAccountErasedTitle": "What is erased",
+  "@deleteAccountErasedTitle": {
+    "description": "mobile.deleteAccount.erasedTitle"
+  },
+  "deleteAccountIntro": "Deletion is permanent: you will no longer be able to sign in with this account.",
+  "@deleteAccountIntro": {
+    "description": "mobile.deleteAccount.intro"
+  },
+  "deleteAccountKept": "Your payments, without your name, for the accounting the law requires.",
+  "@deleteAccountKept": {
+    "description": "mobile.deleteAccount.kept"
+  },
+  "deleteAccountKeptTitle": "What is kept",
+  "@deleteAccountKeptTitle": {
+    "description": "mobile.deleteAccount.keptTitle"
+  },
+  "deleteAccountPassword": "Password",
+  "@deleteAccountPassword": {
+    "description": "mobile.deleteAccount.password"
+  },
+  "deleteAccountPasswordHelp": "Enter your password to confirm.",
+  "@deleteAccountPasswordHelp": {
+    "description": "mobile.deleteAccount.passwordHelp"
+  },
+  "deleteAccountSubscription": "A current subscription ends today, without refund.",
+  "@deleteAccountSubscription": {
+    "description": "mobile.deleteAccount.subscription"
+  },
+  "deleteAccountTitle": "Delete the account",
+  "@deleteAccountTitle": {
+    "description": "mobile.deleteAccount.title"
+  },
+  "deleteAccountWrongPassword": "Wrong password.",
+  "@deleteAccountWrongPassword": {
+    "description": "mobile.deleteAccount.wrongPassword"
+  },
   "demoBar": "Demo mode · real sample content",
   "@demoBar": {
     "description": "mobile.demo.bar"
@@ -1326,6 +1374,10 @@
   "@searchUnavailable": {
     "description": "mobile.search.unavailable"
   },
+  "settingsAccount": "Account",
+  "@settingsAccount": {
+    "description": "mobile.settings.account"
+  },
   "settingsAppearanceDark": "Dark",
   "@settingsAppearanceDark": {
     "description": "mobile.settings.appearance.dark"
@@ -1341,6 +1393,10 @@
   "settingsAppearanceTitle": "Appearance",
   "@settingsAppearanceTitle": {
     "description": "mobile.settings.appearance.title"
+  },
+  "settingsDeleteAccount": "Delete my account",
+  "@settingsDeleteAccount": {
+    "description": "mobile.settings.deleteAccount"
   },
   "settingsLanguageEnglish": "English",
   "@settingsLanguageEnglish": {

@@ -13,6 +13,18 @@ export interface SubscriptionSnapshot {
 export class SubscriptionStatusService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Account deletion: a live subscription ends now, without refund (ADR-005). Its payments stay in
+   * the ledger; a checkout still waiting for the provider is left to the payment flow.
+   */
+  async endForDeletedAccount(userId: string): Promise<number> {
+    const { count } = await this.prisma.subscription.updateMany({
+      where: { userId, status: { in: ['ACTIVE', 'GRACE', 'CANCELED'] } },
+      data: { status: 'EXPIRED', graceEndsAt: null },
+    });
+    return count;
+  }
+
   /** The user's most relevant subscription: a live one first, otherwise the most recent. */
   async current(userId: string): Promise<SubscriptionSnapshot | null> {
     const select = { status: true, currentPeriodEnd: true, graceEndsAt: true } as const;

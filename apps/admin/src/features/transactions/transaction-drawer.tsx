@@ -19,6 +19,7 @@ import { ReasonDialog } from '@/ui/reason-dialog';
 import { useToast } from '@/ui/toast';
 import { AuditHistory } from '../audit/audit-history';
 import { parsePrice } from '../subscriptions/plan-form';
+import { personName } from '../users/labels';
 import {
   PROVIDER_LABELS,
   TRANSACTION_STATUS_LABELS,
@@ -86,7 +87,7 @@ export function TransactionDrawer({
           t('admin.transactions.transaction')
         )
       }
-      caption={row ? `${row.user.firstName} ${row.user.lastName}` : null}
+      caption={row ? personName(row.user, t) : null}
       status={
         row ? (
           <Badge tone={TRANSACTION_STATUS_TONES[row.status]}>

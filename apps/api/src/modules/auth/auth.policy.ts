@@ -26,6 +26,7 @@ export const RATE_LIMITS = {
   otpResendPerDestination: { name: 'otp-resend:destination', limit: 5, windowSeconds: 3600 },
   resetPerIdentifier: { name: 'reset:identifier', limit: 5, windowSeconds: 3600 },
   resetPerIp: { name: 'reset:ip', limit: 20, windowSeconds: 3600 },
+  deleteAccountPerUser: { name: 'account-delete:user', limit: 5, windowSeconds: 3600 },
 } as const satisfies Record<string, RateLimitRule>;
 
 export const DAY_MS = 24 * 3600 * 1000;

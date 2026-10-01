@@ -167,7 +167,8 @@ class OfflineSyncController extends AsyncNotifier<OfflineStatus> {
         final hadCopies = (await _store.documents()).isNotEmpty || (await _store.calculators()).isNotEmpty;
         await _store.purge();
         if (hadCopies) await _database.writeSetting(_lostKey, 'true');
-        state = AsyncData(await _load(enabled: true));
+        final status = await _load(enabled: true);
+        if (ref.mounted) state = AsyncData(status);
         return;
       }
       await _database.deleteSetting(_lostKey);
@@ -187,8 +188,11 @@ class OfflineSyncController extends AsyncNotifier<OfflineStatus> {
       await _database.writeSetting(_dataVersionKey, manifest.dataVersion);
       await _database.writeSetting(_syncedAtKey, DateTime.now().toIso8601String());
       await _database.writeSetting(_pendingKey, '$pending');
-      state = AsyncData(await _load(enabled: true));
+      final loaded = await _load(enabled: true);
+      if (ref.mounted) state = AsyncData(loaded);
     } catch (error) {
+      // Signed out (or the account changed) while syncing: this controller is gone.
+      if (!ref.mounted) return;
       final current = state.value ?? const OfflineStatus(enabled: true);
       state = AsyncData(current.copyWith(phase: SyncPhase.failed, clearProgress: true, failure: ApiError.from(error)));
     }
@@ -210,6 +214,7 @@ class OfflineSyncController extends AsyncNotifier<OfflineStatus> {
     final skipped = items.where((item) => existing[item.id]?.sha256 != item.sha256 && !wanted(item)).length;
     final directory = await _store.filesDirectory();
     for (final (index, item) in toDownload.indexed) {
+      if (!ref.mounted) return skipped;
       final file = await ref.read(referenceFilesProvider).download(item.id);
       final path = '${directory.path}${Platform.pathSeparator}${item.id}-v${file.fileVersion}.pdf';
       await File(path).writeAsBytes(file.bytes, flush: true);
@@ -233,7 +238,7 @@ class OfflineSyncController extends AsyncNotifier<OfflineStatus> {
           downloadedAt: DateTime.now(),
         ),
       );
-      state = AsyncData(state.value!.copyWith(progress: (index + 1) / toDownload.length));
+      if (ref.mounted) state = AsyncData(state.value!.copyWith(progress: (index + 1) / toDownload.length));
     }
     return skipped;
   }

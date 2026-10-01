@@ -1520,6 +1520,22 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/me/deletion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AccountDeletionController_delete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/me/favorites": {
         parameters: {
             query?: never;
@@ -2834,6 +2850,9 @@ export type components = {
             day: string;
             /** @description null when fewer than 10 people (« < 10 »). */
             subjects: number | null;
+        };
+        DeleteAccountDto: {
+            password: string;
         };
         /**
          * @description Médecin or Résident.
@@ -7579,6 +7598,36 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AccountDeletionController_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteAccountDto"];
+            };
+        };
         responses: {
             204: {
                 headers: {

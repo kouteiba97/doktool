@@ -9,6 +9,7 @@ import {
 } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 import type { Identifier } from './identifier.js';
+import { ProfilePhotoService } from './profile-photo.service.js';
 
 /** Sign-in lockout (ADR-009): 5 wrong passwords lock the account for 15 minutes. */
 export const SIGN_IN_MAX_FAILURES = 5;
@@ -116,7 +117,10 @@ export type MeRecord = Prisma.UserGetPayload<{ select: typeof ME_SELECT }>;
 /** Owner of `users`, `professional_profiles`, `user_preferences` and the reference pickers. */
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly photos: ProfilePhotoService,
+  ) {}
 
   /**
    * Creates the account, or restarts an unconfirmed one with the new details.
@@ -534,6 +538,52 @@ export class UsersService {
     return count === 1;
   }
 
+  /** The password hash of a live account, for a re-authentication (account deletion). */
+  async passwordHashOf(userId: string): Promise<string | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { status: true, passwordHash: true },
+    });
+    return user && user.status !== 'DELETED' ? user.passwordHash : null;
+  }
+
+  /**
+   * Account deletion (section 08, Settings « Supprimer le compte »): the person's details,
+   * professional profile and preferences are erased and the identifiers freed for a new account.
+   * The row stays as a tombstone because payments and past verification decisions keep pointing at
+   * it (legal retention, ADR-005). Returns false when the account was already deleted.
+   */
+  async eraseAccount(userId: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { status: true, avatarStorageKey: true },
+    });
+    if (!user || user.status === 'DELETED') return false;
+    await this.prisma.$transaction([
+      this.prisma.professionalProfile.deleteMany({ where: { userId } }),
+      this.prisma.userPreference.deleteMany({ where: { userId } }),
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          status: 'DELETED',
+          email: null,
+          phone: null,
+          emailConfirmedAt: null,
+          phoneConfirmedAt: null,
+          firstName: '',
+          lastName: '',
+          bio: null,
+          avatarStorageKey: null,
+          passwordHash: '',
+          failedSignInCount: 0,
+          lockedUntil: null,
+        },
+      }),
+    ]);
+    if (user.avatarStorageKey) await this.photos.deleteObject(user.avatarStorageKey);
+    return true;
+  }
+
   /** What a verification reviewer sees about the person (never the password or tokens). */
   async reviewSummary(userId: string) {
     return this.prisma.user.findUniqueOrThrow({
@@ -638,7 +688,12 @@ export class UsersService {
   async purgeUnconfirmedAccounts(): Promise<number> {
     const cutoff = new Date(Date.now() - UNCONFIRMED_ACCOUNT_TTL_DAYS * 24 * 3600 * 1000);
     const { count } = await this.prisma.user.deleteMany({
-      where: { emailConfirmedAt: null, phoneConfirmedAt: null, createdAt: { lt: cutoff } },
+      where: {
+        emailConfirmedAt: null,
+        phoneConfirmedAt: null,
+        createdAt: { lt: cutoff },
+        status: { not: 'DELETED' },
+      },
     });
     return count;
   }

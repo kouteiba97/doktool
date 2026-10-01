@@ -215,6 +215,10 @@
     border-color: var(--brand-soft);
     color: var(--brand-strong);
   }
+  /* A count inside a pressed chip keeps the chip's text colour (muted ink is 4.2:1 on brand-soft). */
+  .dt-chip[aria-pressed='true'] .dt-cap {
+    color: inherit;
+  }
   .dt-chip button {
     border: 0;
     background: transparent;

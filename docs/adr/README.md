@@ -21,5 +21,6 @@ One file per decision, numbered, never rewritten after acceptance — a changed 
 | [015](ADR-015-billing-and-payments.md) | Billing and payments (SATIM, renewal, no refund) | Accepted |
 | [016](ADR-016-admin-web.md) | Admin Web (Next.js console, same-origin API proxy) | Accepted |
 | [017](ADR-017-analytics-finance-audit.md) | Analytics, finance, audit log and permissions | Accepted |
+| [018](ADR-018-account-deletion.md) | Account deletion (erasure, tombstone, legal retention) | Accepted |
 
 Source of the architecture: [`docs/ARCHITECTURE-AUDIT.md`](../ARCHITECTURE-AUDIT.md). Where an ADR and the design system disagree, the ADR wins; where ADR-006 and the audit disagree, ADR-006 wins.
