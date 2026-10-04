@@ -41,6 +41,15 @@ export default {
       "focus": "var(--focus)",
       "glass": "var(--glass)",
       "glass-border": "var(--glass-border)",
+      "hero-start": "var(--hero-start)",
+      "hero-mid": "var(--hero-mid)",
+      "hero-end": "var(--hero-end)",
+      "on-hero": "var(--on-hero)",
+      "on-hero-muted": "var(--on-hero-muted)",
+      "glass-on-hero": "var(--glass-on-hero)",
+      "glass-on-hero-border": "var(--glass-on-hero-border)",
+      "glass-tint": "var(--glass-tint)",
+      "glass-highlight": "var(--glass-highlight)",
       "scrim": "var(--scrim)",
       "skeleton": "var(--skeleton)",
       "viz-3": "var(--viz-3)",
@@ -74,13 +83,15 @@ export default {
       "md": "var(--radius-md)",
       "lg": "var(--radius-lg)",
       "xl": "var(--radius-xl)",
+      "xxl": "var(--radius-xxl)",
       "full": "var(--radius-full)"
     },
     "boxShadow": {
       "none": "none",
       "sm": "var(--shadow-sm)",
       "md": "var(--shadow-md)",
-      "glass": "var(--shadow-glass)"
+      "glass": "var(--shadow-glass)",
+      "float": "var(--shadow-float)"
     },
     "fontFamily": {
       "sans": "var(--font-sans)",

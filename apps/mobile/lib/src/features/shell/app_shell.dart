@@ -1,5 +1,3 @@
-import 'dart:ui' show ImageFilter;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../router/app_router.dart';
 import '../../theme/doktool_tokens.dart';
+import '../../ui/glass.dart';
 import '../../ui/tokens.dart';
 import '../offline/offline_bar.dart';
 
@@ -69,70 +68,72 @@ class _GlassBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = AppLocalizations.of(context);
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(DtRadius.lg)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: DtBlur.glass, sigmaY: DtBlur.glass),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.glass,
-            border: Border(
-              top: BorderSide(color: colors.glassBorder, width: DtBorder.hairline),
-            ),
-          ),
-          child: SafeArea(
-            top: false,
-            child: SizedBox(
-              height: DtSize.bottomnav,
-              child: Semantics(
-                container: true,
-                explicitChildNodes: true,
-                child: Row(
-                  children: [
-                    _Destination(
-                      icon: LucideIcons.house,
-                      label: l10n.navHome,
-                      selected: current == 0,
-                      onTap: () => onSelect(0),
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: Semantics(
-                          button: true,
-                          label: l10n.navSearch,
-                          child: InkResponse(
-                            onTap: onSearch,
-                            radius: DtSize.controlLg,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: DtSize.controlLg,
-                                  height: DtSize.controlLg,
-                                  decoration: BoxDecoration(color: colors.brand, shape: BoxShape.circle),
-                                  child: Icon(LucideIcons.search, color: colors.onBrand),
+    // A floating pill of frosted glass, lifted off the content (ADR-020).
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.only(bottom: DtSpace.s3),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: DtSpace.s4),
+        child: DtGlass(
+          radius: DtRadius.xxl,
+          color: colors.glass,
+          borderColor: colors.glassHighlight,
+          shadow: context.elevation.float,
+          blur: DtBlur.strong,
+          child: SizedBox(
+            height: DtSize.bottomnav,
+            child: Semantics(
+              container: true,
+              explicitChildNodes: true,
+              child: Row(
+                children: [
+                  _Destination(
+                    icon: LucideIcons.house,
+                    label: l10n.navHome,
+                    selected: current == 0,
+                    onTap: () => onSelect(0),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Semantics(
+                        button: true,
+                        label: l10n.navSearch,
+                        child: InkResponse(
+                          onTap: onSearch,
+                          radius: DtSize.controlLg,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: DtSize.controlLg,
+                                height: DtSize.controlLg,
+                                decoration: BoxDecoration(
+                                  color: colors.brand,
+                                  shape: BoxShape.circle,
+                                  boxShadow: context.elevation.float,
                                 ),
-                              ],
-                            ),
+                                child: Icon(LucideIcons.search, color: colors.onBrand),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
-                    _Destination(
-                      icon: LucideIcons.libraryBig,
-                      label: l10n.navLibrary,
-                      selected: current == 1,
-                      onTap: () => onSelect(1),
-                    ),
-                    _Destination(
-                      icon: LucideIcons.circleUser,
-                      label: l10n.navProfile,
-                      selected: current == 2,
-                      attention: profileAttention,
-                      onTap: () => onSelect(2),
-                    ),
-                  ],
-                ),
+                  ),
+                  _Destination(
+                    icon: LucideIcons.libraryBig,
+                    label: l10n.navLibrary,
+                    selected: current == 1,
+                    onTap: () => onSelect(1),
+                  ),
+                  _Destination(
+                    icon: LucideIcons.circleUser,
+                    label: l10n.navProfile,
+                    selected: current == 2,
+                    attention: profileAttention,
+                    onTap: () => onSelect(2),
+                  ),
+                ],
               ),
             ),
           ),
@@ -175,11 +176,21 @@ class _Destination extends StatelessWidget {
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  Icon(icon, color: color, size: DtSpace.s6),
+                  AnimatedContainer(
+                    duration: DtMotion.fast,
+                    curve: DtMotion.easeOut,
+                    width: DtSize.control,
+                    height: DtSpace.s8,
+                    decoration: BoxDecoration(
+                      color: selected ? colors.brandSoft : Colors.transparent,
+                      borderRadius: BorderRadius.circular(DtRadius.full),
+                    ),
+                    child: Icon(icon, color: color, size: DtSpace.s6),
+                  ),
                   if (attention)
                     Positioned(
-                      right: -2,
-                      top: -2,
+                      right: DtSpace.s1,
+                      top: 0,
                       child: Container(
                         width: DtSpace.s2,
                         height: DtSpace.s2,
@@ -188,7 +199,6 @@ class _Destination extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: 2),
               Text(label, style: DtType.caption.copyWith(color: color)),
             ],
           ),

@@ -13,7 +13,8 @@ import '../../ui/content_row.dart';
 import '../../ui/dt_alert.dart';
 import '../../ui/dt_button.dart';
 import '../../ui/error_text.dart';
-import '../../ui/segmented_control.dart';
+import '../../ui/glass.dart';
+import '../../ui/pill_tabs.dart';
 import '../../ui/skeleton.dart';
 import '../../ui/text_match.dart';
 import '../../ui/tokens.dart';
@@ -102,16 +103,24 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(DtSpace.s4, 0, DtSpace.s4, DtSpace.s3),
-            child: DtSegmentedControl<LibrarySection>(
+            padding: const EdgeInsets.only(bottom: DtSpace.s3),
+            child: DtPillTabs<LibrarySection>(
               semanticLabel: l10n.libraryTitle,
               selected: section,
               onChanged: (next) => context.go(Routes.library(next)),
-              segments: [
-                DtSegment(value: LibrarySection.ordonnances, label: l10n.typesOrdonnances),
-                DtSegment(value: LibrarySection.certificates, label: l10n.typesCertificates),
-                DtSegment(value: LibrarySection.calculators, label: l10n.typesCalculators),
-                DtSegment(value: LibrarySection.pregnancy, label: l10n.typesPregnancy),
+              tabs: [
+                DtPillTab(value: LibrarySection.ordonnances, label: l10n.typesOrdonnances, icon: LucideIcons.fileText),
+                DtPillTab(
+                  value: LibrarySection.certificates,
+                  label: l10n.typesCertificates,
+                  icon: LucideIcons.fileBadge,
+                ),
+                DtPillTab(
+                  value: LibrarySection.calculators,
+                  label: l10n.typesCalculators,
+                  icon: LucideIcons.calculator,
+                ),
+                DtPillTab(value: LibrarySection.pregnancy, label: l10n.typesPregnancy, icon: LucideIcons.baby),
               ],
             ),
           ),
@@ -311,7 +320,7 @@ class _ListState extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
-        padding: const EdgeInsets.only(bottom: DtSize.bottomnav + DtSpace.s6),
+        padding: const EdgeInsets.fromLTRB(DtSpace.s4, DtSpace.s2, DtSpace.s4, DtSize.bottomnav + DtSpace.s10),
         children: [
           if (message != null)
             Padding(
@@ -322,10 +331,22 @@ class _ListState extends StatelessWidget {
                 style: DtType.body.copyWith(color: colors.inkMuted),
               ),
             ),
-          for (final (index, row) in rows.indexed) ...[
-            if (index > 0) Divider(height: DtBorder.hairline, thickness: DtBorder.hairline, color: colors.border),
-            row,
-          ],
+          if (rows.isNotEmpty)
+            DtLiftedCard(
+              padding: EdgeInsets.zero,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(DtRadius.xl),
+                child: Column(
+                  children: [
+                    for (final (index, row) in rows.indexed) ...[
+                      if (index > 0)
+                        Divider(height: DtBorder.hairline, thickness: DtBorder.hairline, color: colors.border),
+                      row,
+                    ],
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

@@ -361,11 +361,11 @@ class _Chip extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: DtSpace.s2),
       child: ChoiceChip(
-        label: Text(label, style: DtType.label.copyWith(color: selected ? colors.brandStrong : colors.inkSecondary)),
+        label: Text(label, style: DtType.label.copyWith(color: selected ? colors.onBrand : colors.inkSecondary)),
         selected: selected,
         onSelected: (_) => onTap(),
         showCheckmark: false,
-        selectedColor: colors.brandSoft,
+        selectedColor: colors.brand,
         backgroundColor: colors.surface,
         side: BorderSide(color: selected ? colors.brand : colors.border, width: DtBorder.hairline),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DtRadius.full)),

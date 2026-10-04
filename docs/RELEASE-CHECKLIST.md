@@ -6,10 +6,10 @@ Phase 18's exit criterion is this checklist, signed. **Engineering** items are d
 
 | Gate | Evidence |
 |---|---|
-| Root CI green: format, lint, types, i18n parity (FR/EN), token drift, **raw colour / radius / blur / duration literals** (Flutter + Admin Web), OpenAPI contract, Admin Web client freshness, tests | `npm run ci` — API 457 tests, Admin Web 21, tokens 27 |
+| Root CI green: format, lint, types, i18n parity (FR/EN), token drift, **raw colour / radius / blur / duration literals** (Flutter + Admin Web), OpenAPI contract, Admin Web client freshness, tests | `npm run ci` — API 484 tests, Admin Web 21, tokens 27 |
 | Database migrations apply and match the schema | CI steps "Prisma schema is valid…" and "Migrations match the schema" |
 | No known high/critical npm advisory | `npm audit --audit-level=high` in CI — 0 vulnerabilities |
-| Flutter analyze clean, tests green (including WCAG checks) | `flutter analyze`, `flutter test` — 132 tests |
+| Flutter analyze clean, tests green (including WCAG checks) | `flutter analyze`, `flutter test` — 139 tests |
 | Android release build | `flutter build apk --release` succeeds (R8 rules for ML Kit in `android/app/proguard-rules.pro`) |
 | Admin Web production build | `npm run build -w @doktool/admin` |
 | Threat model reviewed | [`docs/security/THREAT-MODEL.md`](security/THREAT-MODEL.md) |

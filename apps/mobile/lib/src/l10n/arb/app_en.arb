@@ -1337,25 +1337,13 @@
   "@pregnancyT1": {
     "description": "mobile.pregnancy.t1"
   },
-  "pregnancyT1Short": "1st trim.",
-  "@pregnancyT1Short": {
-    "description": "mobile.pregnancy.t1Short"
-  },
   "pregnancyT2": "2nd trimester",
   "@pregnancyT2": {
     "description": "mobile.pregnancy.t2"
   },
-  "pregnancyT2Short": "2nd trim.",
-  "@pregnancyT2Short": {
-    "description": "mobile.pregnancy.t2Short"
-  },
   "pregnancyT3": "3rd trimester",
   "@pregnancyT3": {
     "description": "mobile.pregnancy.t3"
-  },
-  "pregnancyT3Short": "3rd trim.",
-  "@pregnancyT3Short": {
-    "description": "mobile.pregnancy.t3Short"
   },
   "pregnancyUnderReview": "A newer version is in review. This one remains the reference.",
   "@pregnancyUnderReview": {

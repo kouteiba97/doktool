@@ -25,6 +25,7 @@ import '../../ui/dt_badge.dart';
 import '../../ui/dt_button.dart';
 import '../../ui/error_text.dart';
 import '../../ui/locks.dart';
+import '../../ui/pill_tabs.dart';
 import '../../ui/segmented_control.dart';
 import '../../ui/skeleton.dart';
 import '../../ui/tokens.dart';
@@ -338,8 +339,9 @@ class _Section extends StatelessWidget {
       padding: const EdgeInsets.all(DtSpace.s4),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(DtRadius.lg),
-        border: Border.all(color: colors.border, width: DtBorder.hairline),
+        borderRadius: BorderRadius.circular(DtRadius.xl),
+        border: Border.all(color: colors.glassHighlight, width: DtBorder.hairline),
+        boxShadow: context.elevation.glass,
       ),
       child: child,
     );
@@ -484,10 +486,10 @@ class _PregnancyBlockState extends State<_PregnancyBlock> {
     _Period.peripartum => widget.block.periods.peripartum,
   };
 
-  String _label(AppLocalizations l10n, _Period period, {bool short = false}) => switch (period) {
-    _Period.t1 => short ? l10n.pregnancyT1Short : l10n.pregnancyT1,
-    _Period.t2 => short ? l10n.pregnancyT2Short : l10n.pregnancyT2,
-    _Period.t3 => short ? l10n.pregnancyT3Short : l10n.pregnancyT3,
+  String _label(AppLocalizations l10n, _Period period) => switch (period) {
+    _Period.t1 => l10n.pregnancyT1,
+    _Period.t2 => l10n.pregnancyT2,
+    _Period.t3 => l10n.pregnancyT3,
     _Period.peripartum => l10n.pregnancyPeripartum,
   };
 
@@ -501,13 +503,12 @@ class _PregnancyBlockState extends State<_PregnancyBlock> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _ConflictAlert(conflict: widget.block.conflict, sources: widget.profile.sources),
-        DtSegmentedControl<_Period>(
+        DtPillTabs<_Period>(
           semanticLabel: l10n.pregnancyPeriods,
           selected: _period,
+          padding: EdgeInsets.zero,
           onChanged: (period) => setState(() => _period = period),
-          segments: [
-            for (final period in _Period.values) DtSegment(value: period, label: _label(l10n, period, short: true)),
-          ],
+          tabs: [for (final period in _Period.values) DtPillTab(value: period, label: _label(l10n, period))],
         ),
         const SizedBox(height: DtSpace.s3),
         _Section(

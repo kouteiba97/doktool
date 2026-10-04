@@ -39,7 +39,11 @@ class DtSegmentedControl<T> extends StatelessWidget {
       label: semanticLabel,
       child: Container(
         constraints: const BoxConstraints(minHeight: DtSize.touchMin),
-        decoration: BoxDecoration(color: colors.surfaceSunken, borderRadius: BorderRadius.circular(DtRadius.full)),
+        decoration: BoxDecoration(
+          color: colors.glassTint,
+          borderRadius: BorderRadius.circular(DtRadius.full),
+          border: Border.all(color: colors.glassHighlight, width: DtBorder.hairline),
+        ),
         // Each segment is tappable over the control's full height; the inset is drawn inside it.
         child: IntrinsicHeight(
           child: Row(
@@ -96,9 +100,9 @@ class _SegmentButton extends StatelessWidget {
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(horizontal: DtSpace.s3),
             decoration: BoxDecoration(
-              color: selected ? colors.surface : colors.surfaceSunken,
+              color: selected ? colors.surface : Colors.transparent,
               borderRadius: BorderRadius.circular(DtRadius.full),
-              boxShadow: selected ? context.elevation.sm : const [],
+              boxShadow: selected ? context.elevation.glass : const [],
             ),
             child: Text(
               label,

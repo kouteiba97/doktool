@@ -140,7 +140,7 @@ void main() {
   testWidgets('keeps the conduct (instruction) apart from the evidence level (how sure)', (tester) async {
     final semantics = tester.ensureSemantics();
     await pump(tester, _profile());
-    await tester.tap(find.text('3e trim.'));
+    await tester.tap(find.text('3e trimestre').first);
     await tester.pumpAndSettle();
     expect(find.text('Contre-indiqué'), findsWidgets);
     expect(find.text('Contre-indiqué à partir de 24 SA.'), findsOneWidget);

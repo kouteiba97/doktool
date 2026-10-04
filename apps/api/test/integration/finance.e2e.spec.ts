@@ -10,9 +10,30 @@ let superAdmin: AdminActor;
 let secondSuperAdmin: AdminActor;
 let financeAdmin: AdminActor;
 
-/** A month of a past year no other test writes to. */
-const year = 1981 + randomInt(0, 17);
-const window = { from: new Date(Date.UTC(year, 2, 1)), to: new Date(Date.UTC(year, 3, 1)) };
+/**
+ * March of a past year no earlier run wrote to: the totals below are exact, so the window must
+ * hold this run's payments and expenses only, also on a developer database that is not reset.
+ */
+let year: number;
+let window: { from: Date; to: Date };
+
+async function freeMarch(): Promise<number> {
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const candidate = 1901 + randomInt(0, 98);
+    const from = new Date(Date.UTC(candidate, 2, 1));
+    const to = new Date(Date.UTC(candidate, 3, 1));
+    const [payments, expenses] = await Promise.all([
+      app.prisma().transaction.count({
+        where: {
+          OR: [{ paymentDate: { gte: from, lt: to } }, { createdAt: { gte: from, lt: to } }],
+        },
+      }),
+      app.prisma().operatingExpense.count({ where: { incurredOn: { gte: from, lt: to } } }),
+    ]);
+    if (payments === 0 && expenses === 0) return candidate;
+  }
+  throw new Error('No free test month left in 1901-1998');
+}
 const query = (period: { from: Date; to: Date }) =>
   `from=${period.from.toISOString()}&to=${period.to.toISOString()}`;
 
@@ -21,6 +42,8 @@ let planCode: string;
 let userId: string;
 
 beforeAll(async () => {
+  year = await freeMarch();
+  window = { from: new Date(Date.UTC(year, 2, 1)), to: new Date(Date.UTC(year, 3, 1)) };
   superAdmin = await adminActor(app);
   secondSuperAdmin = await adminActor(app);
   financeAdmin = await adminActor(app, 'FINANCE_ADMIN');

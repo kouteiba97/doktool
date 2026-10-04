@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 @immutable
 class DtColors extends ThemeExtension<DtColors> {
-  const DtColors({required this.bg, required this.surface, required this.surfaceRaised, required this.surfaceSunken, required this.border, required this.borderStrong, required this.ink, required this.inkSecondary, required this.inkMuted, required this.brand, required this.brandHover, required this.brandStrong, required this.brandSoft, required this.onBrand, required this.teal, required this.tealStrong, required this.tealSoft, required this.onTeal, required this.navy, required this.onNavy, required this.success, required this.successSoft, required this.warning, required this.warningSoft, required this.critical, required this.criticalSoft, required this.info, required this.infoSoft, required this.sponsored, required this.sponsoredSoft, required this.focus, required this.glass, required this.glassBorder, required this.scrim, required this.skeleton, required this.viz3, required this.viz4, required this.viz5, required this.trace, required this.chartGrid, required this.chartAxis, required this.selection, required this.onNavySubtle, required this.paper, required this.paperInk, required this.paperRule});
+  const DtColors({required this.bg, required this.surface, required this.surfaceRaised, required this.surfaceSunken, required this.border, required this.borderStrong, required this.ink, required this.inkSecondary, required this.inkMuted, required this.brand, required this.brandHover, required this.brandStrong, required this.brandSoft, required this.onBrand, required this.teal, required this.tealStrong, required this.tealSoft, required this.onTeal, required this.navy, required this.onNavy, required this.success, required this.successSoft, required this.warning, required this.warningSoft, required this.critical, required this.criticalSoft, required this.info, required this.infoSoft, required this.sponsored, required this.sponsoredSoft, required this.focus, required this.glass, required this.glassBorder, required this.heroStart, required this.heroMid, required this.heroEnd, required this.onHero, required this.onHeroMuted, required this.glassOnHero, required this.glassOnHeroBorder, required this.glassTint, required this.glassHighlight, required this.scrim, required this.skeleton, required this.viz3, required this.viz4, required this.viz5, required this.trace, required this.chartGrid, required this.chartAxis, required this.selection, required this.onNavySubtle, required this.paper, required this.paperInk, required this.paperRule});
 
   /// Page ground of every screen. Never pure white; never OLED black.
   final Color bg;
@@ -73,6 +73,24 @@ class DtColors extends ThemeExtension<DtColors> {
   final Color glass;
   /// 1px border of every glass surface.
   final Color glassBorder;
+  /// Top of the hero gradient (Home, Welcome, profile headers): the brand, deepest shade.
+  final Color heroStart;
+  /// Middle stop of the hero gradient: the brand, lightened.
+  final Color heroMid;
+  /// Bottom of the hero gradient, fading into the page ground.
+  final Color heroEnd;
+  /// Text and icons on the deep part of the hero gradient.
+  final Color onHero;
+  /// Secondary text on the hero (greeting line, metadata).
+  final Color onHeroMuted;
+  /// Frosted controls on the hero: icon buttons, quick actions, avatar ring. Always with blur-glass.
+  final Color glassOnHero;
+  /// Hairline edge of glass-on-hero surfaces: the light catching the glass.
+  final Color glassOnHeroBorder;
+  /// Brand-tinted frosted panels: segmented tracks, summary panels, the floating bar.
+  final Color glassTint;
+  /// Inner top edge of floating glass (bottom bar, hero cards).
+  final Color glassHighlight;
   /// Behind modals, sheets and the command palette.
   final Color scrim;
   /// Skeleton blocks. Static fill; no shimmer (motion rule L9).
@@ -134,6 +152,15 @@ class DtColors extends ThemeExtension<DtColors> {
     focus: Color(0xFF0A5C78),
     glass: Color(0xC7FFFFFF),
     glassBorder: Color(0x1A0F1F2D),
+    heroStart: Color(0xFF0A5C78),
+    heroMid: Color(0xFF2B7A96),
+    heroEnd: Color(0xFFF4F7F9),
+    onHero: Color(0xFFFFFFFF),
+    onHeroMuted: Color(0xDBFFFFFF),
+    glassOnHero: Color(0x33FFFFFF),
+    glassOnHeroBorder: Color(0x6BFFFFFF),
+    glassTint: Color(0xB8E2EFF4),
+    glassHighlight: Color(0xCCFFFFFF),
     scrim: Color(0x520B1F33),
     skeleton: Color(0xFFE6EDF1),
     viz3: Color(0xFFC2410C),
@@ -183,6 +210,15 @@ class DtColors extends ThemeExtension<DtColors> {
     focus: Color(0xFF74C0DA),
     glass: Color(0xBD121F2B),
     glassBorder: Color(0x17FFFFFF),
+    heroStart: Color(0xFF0B3446),
+    heroMid: Color(0xFF0F2C3B),
+    heroEnd: Color(0xFF0C1620),
+    onHero: Color(0xFFE7EEF3),
+    onHeroMuted: Color(0xCCE7EEF3),
+    glassOnHero: Color(0x14FFFFFF),
+    glassOnHeroBorder: Color(0x29FFFFFF),
+    glassTint: Color(0x9E123243),
+    glassHighlight: Color(0x1AFFFFFF),
     scrim: Color(0x8C030A10),
     skeleton: Color(0xFF1E3040),
     viz3: Color(0xFFE08A5A),
@@ -199,45 +235,48 @@ class DtColors extends ThemeExtension<DtColors> {
   );
 
   @override
-  DtColors copyWith({Color? bg, Color? surface, Color? surfaceRaised, Color? surfaceSunken, Color? border, Color? borderStrong, Color? ink, Color? inkSecondary, Color? inkMuted, Color? brand, Color? brandHover, Color? brandStrong, Color? brandSoft, Color? onBrand, Color? teal, Color? tealStrong, Color? tealSoft, Color? onTeal, Color? navy, Color? onNavy, Color? success, Color? successSoft, Color? warning, Color? warningSoft, Color? critical, Color? criticalSoft, Color? info, Color? infoSoft, Color? sponsored, Color? sponsoredSoft, Color? focus, Color? glass, Color? glassBorder, Color? scrim, Color? skeleton, Color? viz3, Color? viz4, Color? viz5, Color? trace, Color? chartGrid, Color? chartAxis, Color? selection, Color? onNavySubtle, Color? paper, Color? paperInk, Color? paperRule}) =>
-      DtColors(bg: bg ?? this.bg, surface: surface ?? this.surface, surfaceRaised: surfaceRaised ?? this.surfaceRaised, surfaceSunken: surfaceSunken ?? this.surfaceSunken, border: border ?? this.border, borderStrong: borderStrong ?? this.borderStrong, ink: ink ?? this.ink, inkSecondary: inkSecondary ?? this.inkSecondary, inkMuted: inkMuted ?? this.inkMuted, brand: brand ?? this.brand, brandHover: brandHover ?? this.brandHover, brandStrong: brandStrong ?? this.brandStrong, brandSoft: brandSoft ?? this.brandSoft, onBrand: onBrand ?? this.onBrand, teal: teal ?? this.teal, tealStrong: tealStrong ?? this.tealStrong, tealSoft: tealSoft ?? this.tealSoft, onTeal: onTeal ?? this.onTeal, navy: navy ?? this.navy, onNavy: onNavy ?? this.onNavy, success: success ?? this.success, successSoft: successSoft ?? this.successSoft, warning: warning ?? this.warning, warningSoft: warningSoft ?? this.warningSoft, critical: critical ?? this.critical, criticalSoft: criticalSoft ?? this.criticalSoft, info: info ?? this.info, infoSoft: infoSoft ?? this.infoSoft, sponsored: sponsored ?? this.sponsored, sponsoredSoft: sponsoredSoft ?? this.sponsoredSoft, focus: focus ?? this.focus, glass: glass ?? this.glass, glassBorder: glassBorder ?? this.glassBorder, scrim: scrim ?? this.scrim, skeleton: skeleton ?? this.skeleton, viz3: viz3 ?? this.viz3, viz4: viz4 ?? this.viz4, viz5: viz5 ?? this.viz5, trace: trace ?? this.trace, chartGrid: chartGrid ?? this.chartGrid, chartAxis: chartAxis ?? this.chartAxis, selection: selection ?? this.selection, onNavySubtle: onNavySubtle ?? this.onNavySubtle, paper: paper ?? this.paper, paperInk: paperInk ?? this.paperInk, paperRule: paperRule ?? this.paperRule);
+  DtColors copyWith({Color? bg, Color? surface, Color? surfaceRaised, Color? surfaceSunken, Color? border, Color? borderStrong, Color? ink, Color? inkSecondary, Color? inkMuted, Color? brand, Color? brandHover, Color? brandStrong, Color? brandSoft, Color? onBrand, Color? teal, Color? tealStrong, Color? tealSoft, Color? onTeal, Color? navy, Color? onNavy, Color? success, Color? successSoft, Color? warning, Color? warningSoft, Color? critical, Color? criticalSoft, Color? info, Color? infoSoft, Color? sponsored, Color? sponsoredSoft, Color? focus, Color? glass, Color? glassBorder, Color? heroStart, Color? heroMid, Color? heroEnd, Color? onHero, Color? onHeroMuted, Color? glassOnHero, Color? glassOnHeroBorder, Color? glassTint, Color? glassHighlight, Color? scrim, Color? skeleton, Color? viz3, Color? viz4, Color? viz5, Color? trace, Color? chartGrid, Color? chartAxis, Color? selection, Color? onNavySubtle, Color? paper, Color? paperInk, Color? paperRule}) =>
+      DtColors(bg: bg ?? this.bg, surface: surface ?? this.surface, surfaceRaised: surfaceRaised ?? this.surfaceRaised, surfaceSunken: surfaceSunken ?? this.surfaceSunken, border: border ?? this.border, borderStrong: borderStrong ?? this.borderStrong, ink: ink ?? this.ink, inkSecondary: inkSecondary ?? this.inkSecondary, inkMuted: inkMuted ?? this.inkMuted, brand: brand ?? this.brand, brandHover: brandHover ?? this.brandHover, brandStrong: brandStrong ?? this.brandStrong, brandSoft: brandSoft ?? this.brandSoft, onBrand: onBrand ?? this.onBrand, teal: teal ?? this.teal, tealStrong: tealStrong ?? this.tealStrong, tealSoft: tealSoft ?? this.tealSoft, onTeal: onTeal ?? this.onTeal, navy: navy ?? this.navy, onNavy: onNavy ?? this.onNavy, success: success ?? this.success, successSoft: successSoft ?? this.successSoft, warning: warning ?? this.warning, warningSoft: warningSoft ?? this.warningSoft, critical: critical ?? this.critical, criticalSoft: criticalSoft ?? this.criticalSoft, info: info ?? this.info, infoSoft: infoSoft ?? this.infoSoft, sponsored: sponsored ?? this.sponsored, sponsoredSoft: sponsoredSoft ?? this.sponsoredSoft, focus: focus ?? this.focus, glass: glass ?? this.glass, glassBorder: glassBorder ?? this.glassBorder, heroStart: heroStart ?? this.heroStart, heroMid: heroMid ?? this.heroMid, heroEnd: heroEnd ?? this.heroEnd, onHero: onHero ?? this.onHero, onHeroMuted: onHeroMuted ?? this.onHeroMuted, glassOnHero: glassOnHero ?? this.glassOnHero, glassOnHeroBorder: glassOnHeroBorder ?? this.glassOnHeroBorder, glassTint: glassTint ?? this.glassTint, glassHighlight: glassHighlight ?? this.glassHighlight, scrim: scrim ?? this.scrim, skeleton: skeleton ?? this.skeleton, viz3: viz3 ?? this.viz3, viz4: viz4 ?? this.viz4, viz5: viz5 ?? this.viz5, trace: trace ?? this.trace, chartGrid: chartGrid ?? this.chartGrid, chartAxis: chartAxis ?? this.chartAxis, selection: selection ?? this.selection, onNavySubtle: onNavySubtle ?? this.onNavySubtle, paper: paper ?? this.paper, paperInk: paperInk ?? this.paperInk, paperRule: paperRule ?? this.paperRule);
 
   @override
   DtColors lerp(ThemeExtension<DtColors>? other, double t) {
     if (other is! DtColors) return this;
-    return DtColors(bg: Color.lerp(bg, other.bg, t)!, surface: Color.lerp(surface, other.surface, t)!, surfaceRaised: Color.lerp(surfaceRaised, other.surfaceRaised, t)!, surfaceSunken: Color.lerp(surfaceSunken, other.surfaceSunken, t)!, border: Color.lerp(border, other.border, t)!, borderStrong: Color.lerp(borderStrong, other.borderStrong, t)!, ink: Color.lerp(ink, other.ink, t)!, inkSecondary: Color.lerp(inkSecondary, other.inkSecondary, t)!, inkMuted: Color.lerp(inkMuted, other.inkMuted, t)!, brand: Color.lerp(brand, other.brand, t)!, brandHover: Color.lerp(brandHover, other.brandHover, t)!, brandStrong: Color.lerp(brandStrong, other.brandStrong, t)!, brandSoft: Color.lerp(brandSoft, other.brandSoft, t)!, onBrand: Color.lerp(onBrand, other.onBrand, t)!, teal: Color.lerp(teal, other.teal, t)!, tealStrong: Color.lerp(tealStrong, other.tealStrong, t)!, tealSoft: Color.lerp(tealSoft, other.tealSoft, t)!, onTeal: Color.lerp(onTeal, other.onTeal, t)!, navy: Color.lerp(navy, other.navy, t)!, onNavy: Color.lerp(onNavy, other.onNavy, t)!, success: Color.lerp(success, other.success, t)!, successSoft: Color.lerp(successSoft, other.successSoft, t)!, warning: Color.lerp(warning, other.warning, t)!, warningSoft: Color.lerp(warningSoft, other.warningSoft, t)!, critical: Color.lerp(critical, other.critical, t)!, criticalSoft: Color.lerp(criticalSoft, other.criticalSoft, t)!, info: Color.lerp(info, other.info, t)!, infoSoft: Color.lerp(infoSoft, other.infoSoft, t)!, sponsored: Color.lerp(sponsored, other.sponsored, t)!, sponsoredSoft: Color.lerp(sponsoredSoft, other.sponsoredSoft, t)!, focus: Color.lerp(focus, other.focus, t)!, glass: Color.lerp(glass, other.glass, t)!, glassBorder: Color.lerp(glassBorder, other.glassBorder, t)!, scrim: Color.lerp(scrim, other.scrim, t)!, skeleton: Color.lerp(skeleton, other.skeleton, t)!, viz3: Color.lerp(viz3, other.viz3, t)!, viz4: Color.lerp(viz4, other.viz4, t)!, viz5: Color.lerp(viz5, other.viz5, t)!, trace: Color.lerp(trace, other.trace, t)!, chartGrid: Color.lerp(chartGrid, other.chartGrid, t)!, chartAxis: Color.lerp(chartAxis, other.chartAxis, t)!, selection: Color.lerp(selection, other.selection, t)!, onNavySubtle: Color.lerp(onNavySubtle, other.onNavySubtle, t)!, paper: Color.lerp(paper, other.paper, t)!, paperInk: Color.lerp(paperInk, other.paperInk, t)!, paperRule: Color.lerp(paperRule, other.paperRule, t)!);
+    return DtColors(bg: Color.lerp(bg, other.bg, t)!, surface: Color.lerp(surface, other.surface, t)!, surfaceRaised: Color.lerp(surfaceRaised, other.surfaceRaised, t)!, surfaceSunken: Color.lerp(surfaceSunken, other.surfaceSunken, t)!, border: Color.lerp(border, other.border, t)!, borderStrong: Color.lerp(borderStrong, other.borderStrong, t)!, ink: Color.lerp(ink, other.ink, t)!, inkSecondary: Color.lerp(inkSecondary, other.inkSecondary, t)!, inkMuted: Color.lerp(inkMuted, other.inkMuted, t)!, brand: Color.lerp(brand, other.brand, t)!, brandHover: Color.lerp(brandHover, other.brandHover, t)!, brandStrong: Color.lerp(brandStrong, other.brandStrong, t)!, brandSoft: Color.lerp(brandSoft, other.brandSoft, t)!, onBrand: Color.lerp(onBrand, other.onBrand, t)!, teal: Color.lerp(teal, other.teal, t)!, tealStrong: Color.lerp(tealStrong, other.tealStrong, t)!, tealSoft: Color.lerp(tealSoft, other.tealSoft, t)!, onTeal: Color.lerp(onTeal, other.onTeal, t)!, navy: Color.lerp(navy, other.navy, t)!, onNavy: Color.lerp(onNavy, other.onNavy, t)!, success: Color.lerp(success, other.success, t)!, successSoft: Color.lerp(successSoft, other.successSoft, t)!, warning: Color.lerp(warning, other.warning, t)!, warningSoft: Color.lerp(warningSoft, other.warningSoft, t)!, critical: Color.lerp(critical, other.critical, t)!, criticalSoft: Color.lerp(criticalSoft, other.criticalSoft, t)!, info: Color.lerp(info, other.info, t)!, infoSoft: Color.lerp(infoSoft, other.infoSoft, t)!, sponsored: Color.lerp(sponsored, other.sponsored, t)!, sponsoredSoft: Color.lerp(sponsoredSoft, other.sponsoredSoft, t)!, focus: Color.lerp(focus, other.focus, t)!, glass: Color.lerp(glass, other.glass, t)!, glassBorder: Color.lerp(glassBorder, other.glassBorder, t)!, heroStart: Color.lerp(heroStart, other.heroStart, t)!, heroMid: Color.lerp(heroMid, other.heroMid, t)!, heroEnd: Color.lerp(heroEnd, other.heroEnd, t)!, onHero: Color.lerp(onHero, other.onHero, t)!, onHeroMuted: Color.lerp(onHeroMuted, other.onHeroMuted, t)!, glassOnHero: Color.lerp(glassOnHero, other.glassOnHero, t)!, glassOnHeroBorder: Color.lerp(glassOnHeroBorder, other.glassOnHeroBorder, t)!, glassTint: Color.lerp(glassTint, other.glassTint, t)!, glassHighlight: Color.lerp(glassHighlight, other.glassHighlight, t)!, scrim: Color.lerp(scrim, other.scrim, t)!, skeleton: Color.lerp(skeleton, other.skeleton, t)!, viz3: Color.lerp(viz3, other.viz3, t)!, viz4: Color.lerp(viz4, other.viz4, t)!, viz5: Color.lerp(viz5, other.viz5, t)!, trace: Color.lerp(trace, other.trace, t)!, chartGrid: Color.lerp(chartGrid, other.chartGrid, t)!, chartAxis: Color.lerp(chartAxis, other.chartAxis, t)!, selection: Color.lerp(selection, other.selection, t)!, onNavySubtle: Color.lerp(onNavySubtle, other.onNavySubtle, t)!, paper: Color.lerp(paper, other.paper, t)!, paperInk: Color.lerp(paperInk, other.paperInk, t)!, paperRule: Color.lerp(paperRule, other.paperRule, t)!);
   }
 }
 
 /// Shadows per theme (tokens "shadow-*").
 @immutable
 class DtElevation extends ThemeExtension<DtElevation> {
-  const DtElevation({required this.sm, required this.md, required this.glass});
+  const DtElevation({required this.sm, required this.md, required this.glass, required this.float});
 
   final List<BoxShadow> sm;
   final List<BoxShadow> md;
   final List<BoxShadow> glass;
+  final List<BoxShadow> float;
 
   static const light = DtElevation(
     sm: <BoxShadow>[BoxShadow(offset: Offset(0.0, 1.0), blurRadius: 2.0, spreadRadius: 0.0, color: Color(0x0F0B1F33)), BoxShadow(offset: Offset(0.0, 1.0), blurRadius: 1.0, spreadRadius: 0.0, color: Color(0x0A0B1F33))],
     md: <BoxShadow>[BoxShadow(offset: Offset(0.0, 8.0), blurRadius: 24.0, spreadRadius: 0.0, color: Color(0x1A0B1F33)), BoxShadow(offset: Offset(0.0, 2.0), blurRadius: 6.0, spreadRadius: 0.0, color: Color(0x0F0B1F33))],
     glass: <BoxShadow>[BoxShadow(offset: Offset(0.0, 4.0), blurRadius: 16.0, spreadRadius: 0.0, color: Color(0x140B1F33))],
+    float: <BoxShadow>[BoxShadow(offset: Offset(0.0, 12.0), blurRadius: 32.0, spreadRadius: 0.0, color: Color(0x290A5C78)), BoxShadow(offset: Offset(0.0, 2.0), blurRadius: 8.0, spreadRadius: 0.0, color: Color(0x140A5C78))],
   );
 
   static const dark = DtElevation(
     sm: <BoxShadow>[BoxShadow(offset: Offset(0.0, 1.0), blurRadius: 2.0, spreadRadius: 0.0, color: Color(0x66000000))],
     md: <BoxShadow>[BoxShadow(offset: Offset(0.0, 8.0), blurRadius: 24.0, spreadRadius: 0.0, color: Color(0x80000000))],
     glass: <BoxShadow>[BoxShadow(offset: Offset(0.0, 4.0), blurRadius: 16.0, spreadRadius: 0.0, color: Color(0x73000000))],
+    float: <BoxShadow>[BoxShadow(offset: Offset(0.0, 12.0), blurRadius: 32.0, spreadRadius: 0.0, color: Color(0x8C000000))],
   );
 
   @override
-  DtElevation copyWith({List<BoxShadow>? sm, List<BoxShadow>? md, List<BoxShadow>? glass}) =>
-      DtElevation(sm: sm ?? this.sm, md: md ?? this.md, glass: glass ?? this.glass);
+  DtElevation copyWith({List<BoxShadow>? sm, List<BoxShadow>? md, List<BoxShadow>? glass, List<BoxShadow>? float}) =>
+      DtElevation(sm: sm ?? this.sm, md: md ?? this.md, glass: glass ?? this.glass, float: float ?? this.float);
 
   @override
   DtElevation lerp(ThemeExtension<DtElevation>? other, double t) {
     if (other is! DtElevation) return this;
-    return DtElevation(sm: BoxShadow.lerpList(sm, other.sm, t)!, md: BoxShadow.lerpList(md, other.md, t)!, glass: BoxShadow.lerpList(glass, other.glass, t)!);
+    return DtElevation(sm: BoxShadow.lerpList(sm, other.sm, t)!, md: BoxShadow.lerpList(md, other.md, t)!, glass: BoxShadow.lerpList(glass, other.glass, t)!, float: BoxShadow.lerpList(float, other.float, t)!);
   }
 }
 
@@ -261,6 +300,7 @@ abstract final class DtRadius {
   static const double md = 10.0; // Buttons, inputs, list rows, selection cards, result blocks.
   static const double lg = 14.0; // Glass panels, drawers, popovers, command palette.
   static const double xl = 20.0; // Bottom-sheet top corners, mobile search overlay.
+  static const double xxl = 28.0; // Hero cards, the content sheet over the hero, the floating bottom bar.
   static const double full = 999.0; // Pills, avatars, segmented controls, the raised search tab.
 }
 

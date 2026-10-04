@@ -1,6 +1,7 @@
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +18,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../router/app_router.dart';
 import '../../theme/doktool_tokens.dart';
 import '../../ui/dt_alert.dart';
+import '../../ui/glass.dart';
 import '../../ui/tokens.dart';
 import '../access/access_controller.dart';
 import '../account/account_controller.dart';
@@ -56,40 +58,69 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: colors.bg,
-      body: SafeArea(
-        bottom: false,
+      // Light status bar icons over the deep top of the hero (ADR-020).
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
         child: RefreshIndicator(
           onRefresh: () async {
             await ref.read(accessControllerProvider.notifier).reload();
             if (session is UserSession) await ref.read(verificationControllerProvider.notifier).reload();
           },
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(DtSpace.s4, DtSpace.s3, DtSpace.s4, DtSize.bottomnav + DtSpace.s6),
+            padding: EdgeInsets.zero,
             children: [
-              if (demo != null) ...[_DemoBar(), const SizedBox(height: DtSpace.s3)],
-              _IdentityLine(
-                name: demo != null
-                    ? l10n.demoLabel(demo.demoContext == DemoContext.resident ? l10n.roleResident : l10n.roleDoctor)
-                    : account == null
-                    ? ''
-                    : '${account.firstName} ${account.lastName}',
-                line: [
-                  if (account?.professionalType != null) _roleName(l10n, account!.professionalType!),
-                  if (access != null) _accessName(l10n, access),
-                ].join(' · '),
-                showBell: session is UserSession,
+              DtHeroBackground(
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(DtSpace.s4, DtSpace.s3, DtSpace.s4, DtSpace.s12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (demo != null) ...[_DemoBar(), const SizedBox(height: DtSpace.s4)],
+                        _IdentityLine(
+                          name: demo != null
+                              ? l10n.demoLabel(
+                                  demo.demoContext == DemoContext.resident ? l10n.roleResident : l10n.roleDoctor,
+                                )
+                              : account == null
+                              ? ''
+                              : '${account.firstName} ${account.lastName}',
+                          line: [
+                            if (account?.professionalType != null) _roleName(l10n, account!.professionalType!),
+                            if (access != null) _accessName(l10n, access),
+                          ].join(' · '),
+                          showBell: session is UserSession,
+                        ),
+                        const SizedBox(height: DtSpace.s5),
+                        _GlassSearchField(label: l10n.homeSearchHint, onTap: () => context.push(Routes.search)),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(height: DtSpace.s4),
-              _GlassSearchField(label: l10n.homeSearchHint, onTap: () => context.push(Routes.search)),
-              const SizedBox(height: DtSpace.s4),
-              _QuickActions(items: quick),
-              if (session is UserSession) ...[const SizedBox(height: DtSpace.s4), const _VerificationLine()],
-              if (studentTier) ...[
-                const SizedBox(height: DtSpace.s4),
-                Text(l10n.homeStudentNote, style: DtType.body.copyWith(color: colors.inkSecondary)),
-              ],
-              const SizedBox(height: DtSpace.s6),
-              const _RecentsAndFavorites(),
+              // The shortcuts card lifts over the pale end of the hero, as a card over glass.
+              Transform.translate(
+                offset: const Offset(0, -DtSpace.s8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: DtSpace.s4),
+                  child: _QuickActions(items: quick),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(DtSpace.s4, 0, DtSpace.s4, DtSize.bottomnav + DtSpace.s10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (session is UserSession) ...[const _VerificationLine(), const SizedBox(height: DtSpace.s4)],
+                    if (studentTier) ...[
+                      Text(l10n.homeStudentNote, style: DtType.body.copyWith(color: colors.inkSecondary)),
+                      const SizedBox(height: DtSpace.s4),
+                    ],
+                    const _RecentsAndFavorites(),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -127,10 +158,16 @@ class _IdentityLine extends ConsumerWidget {
     final unread = showBell ? ref.watch(notificationsProvider).value?.unreadCount ?? 0 : 0;
     return Row(
       children: [
-        SvgPicture.asset(
-          dark ? 'assets/logos/doktool-mark-small-dark.svg' : 'assets/logos/doktool-mark-small.svg',
-          height: DtSize.control,
-          excludeFromSemantics: true,
+        SizedBox.square(
+          dimension: DtSize.controlLg,
+          child: DtGlass.onHero(
+            radius: DtRadius.full,
+            padding: const EdgeInsets.all(DtSpace.s2),
+            child: SvgPicture.asset(
+              dark ? 'assets/logos/doktool-mark-small-dark.svg' : 'assets/logos/doktool-mark-small.svg',
+              excludeFromSemantics: true,
+            ),
+          ),
         ),
         const SizedBox(width: DtSpace.s3),
         Expanded(
@@ -142,18 +179,18 @@ class _IdentityLine extends ConsumerWidget {
                 child: Text(
                   name,
                   overflow: TextOverflow.ellipsis,
-                  style: DtType.heading.copyWith(color: colors.ink),
+                  style: DtType.title.copyWith(color: colors.onHero),
                 ),
               ),
-              if (line.isNotEmpty) Text(line, style: DtType.caption.copyWith(color: colors.inkSecondary)),
+              if (line.isNotEmpty) Text(line, style: DtType.label.copyWith(color: colors.onHeroMuted)),
             ],
           ),
         ),
         if (showBell)
-          IconButton(
+          DtGlassIconButton(
             tooltip: l10n.homeNotifications,
             onPressed: () => context.push(Routes.notifications),
-            icon: Icon(unread > 0 ? LucideIcons.bellDot : LucideIcons.bell, color: colors.inkSecondary),
+            icon: unread > 0 ? LucideIcons.bellDot : LucideIcons.bell,
           ),
       ],
     );
@@ -173,29 +210,35 @@ class _GlassSearchField extends StatelessWidget {
       button: true,
       label: label,
       excludeSemantics: true,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(DtRadius.full),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: DtBlur.glass, sigmaY: DtBlur.glass),
-          child: Material(
-            color: colors.glass,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DtRadius.full),
-              side: BorderSide(color: colors.glassBorder, width: DtBorder.hairline),
-            ),
-            child: InkWell(
-              onTap: onTap,
-              child: SizedBox(
-                height: DtSize.controlLg,
-                child: Row(
-                  children: [
-                    const SizedBox(width: DtSpace.s4),
-                    Icon(LucideIcons.search, color: colors.inkMuted),
-                    const SizedBox(width: DtSpace.s2),
-                    Expanded(
-                      child: Text(label, style: DtType.body.copyWith(color: colors.inkMuted)),
-                    ),
-                  ],
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(DtRadius.full),
+          boxShadow: context.elevation.float,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(DtRadius.full),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: DtBlur.glass, sigmaY: DtBlur.glass),
+            child: Material(
+              color: colors.glass,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(DtRadius.full),
+                side: BorderSide(color: colors.glassHighlight, width: DtBorder.hairline),
+              ),
+              child: InkWell(
+                onTap: onTap,
+                child: SizedBox(
+                  height: DtSize.controlLg,
+                  child: Row(
+                    children: [
+                      const SizedBox(width: DtSpace.s4),
+                      Icon(LucideIcons.search, color: colors.inkMuted),
+                      const SizedBox(width: DtSpace.s2),
+                      Expanded(
+                        child: Text(label, style: DtType.body.copyWith(color: colors.inkSecondary)),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -214,13 +257,10 @@ class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.glass,
-        borderRadius: BorderRadius.circular(DtRadius.lg),
-        border: Border.all(color: colors.glassBorder, width: DtBorder.hairline),
-      ),
+    return DtLiftedCard(
+      padding: const EdgeInsets.symmetric(vertical: DtSpace.s3, horizontal: DtSpace.s1),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (final (section, label, icon) in items)
             Expanded(
@@ -232,19 +272,24 @@ class _QuickActions extends StatelessWidget {
                   borderRadius: BorderRadius.circular(DtRadius.lg),
                   onTap: () => context.go(Routes.library(section)),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: DtSpace.s3),
+                    padding: const EdgeInsets.symmetric(vertical: DtSpace.s2),
                     child: Column(
                       children: [
-                        Icon(icon, color: colors.brand),
-                        const SizedBox(height: DtSpace.s1),
+                        Container(
+                          width: DtSize.controlLg,
+                          height: DtSize.controlLg,
+                          decoration: BoxDecoration(color: colors.brandSoft, shape: BoxShape.circle),
+                          child: Icon(icon, color: colors.brand, size: DtSpace.s5),
+                        ),
+                        const SizedBox(height: DtSpace.s2),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: DtSpace.s1),
                           child: Text(
                             label,
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
-                            style: DtType.label.copyWith(color: colors.ink),
+                            style: DtType.caption.copyWith(color: colors.ink),
                           ),
                         ),
                       ],
@@ -299,19 +344,27 @@ class _DemoBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: DtSpace.s3, vertical: DtSpace.s2),
-      decoration: BoxDecoration(color: colors.surfaceSunken, borderRadius: BorderRadius.circular(DtRadius.md)),
+    return DtGlass.onHero(
+      radius: DtRadius.full,
+      padding: const EdgeInsets.only(left: DtSpace.s4),
       child: Row(
         children: [
-          Icon(LucideIcons.eye, size: DtSpace.s4, color: colors.inkSecondary),
+          Icon(LucideIcons.eye, size: DtSpace.s4, color: colors.onHero),
           const SizedBox(width: DtSpace.s2),
           Expanded(
-            child: Text(l10n.demoBar, style: DtType.caption.copyWith(color: colors.inkSecondary)),
+            child: Text(l10n.demoBar, style: DtType.caption.copyWith(color: colors.onHero)),
           ),
-          InkWell(
-            onTap: () => context.push(Routes.plans),
-            child: Text(l10n.lockSeePlans, style: DtType.label.copyWith(color: colors.brand)),
+          TextButton(
+            onPressed: () => context.push(Routes.plans),
+            style: TextButton.styleFrom(minimumSize: const Size(0, DtSize.touchMin)),
+            child: Text(
+              l10n.lockSeePlans,
+              style: DtType.label.copyWith(
+                color: colors.onHero,
+                decoration: TextDecoration.underline,
+                decorationColor: colors.onHero,
+              ),
+            ),
           ),
         ],
       ),
@@ -349,21 +402,27 @@ class _RecentsAndFavorites extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.homeStartTitle, style: DtType.heading.copyWith(color: colors.ink)),
-          const SizedBox(height: DtSpace.s2),
-          for (final (section, label, icon) in [
-            (LibrarySection.ordonnances, l10n.homeStartOrdonnances, LucideIcons.fileText),
-            (LibrarySection.certificates, l10n.homeStartCertificates, LucideIcons.fileBadge),
-            (LibrarySection.calculators, l10n.homeStartCalculators, LucideIcons.calculator),
-            (LibrarySection.pregnancy, l10n.homeStartPregnancy, LucideIcons.baby),
-          ])
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              minTileHeight: DtSize.row,
-              leading: Icon(icon, color: colors.brand),
-              title: Text(label, style: DtType.body.copyWith(color: colors.ink)),
-              trailing: Icon(LucideIcons.chevronRight, color: colors.inkMuted),
-              onTap: () => context.go(Routes.library(section)),
+          const SizedBox(height: DtSpace.s3),
+          DtLiftedCard(
+            padding: const EdgeInsets.symmetric(vertical: DtSpace.s1),
+            child: Column(
+              children: [
+                for (final (section, label, icon) in [
+                  (LibrarySection.ordonnances, l10n.homeStartOrdonnances, LucideIcons.fileText),
+                  (LibrarySection.certificates, l10n.homeStartCertificates, LucideIcons.fileBadge),
+                  (LibrarySection.calculators, l10n.homeStartCalculators, LucideIcons.calculator),
+                  (LibrarySection.pregnancy, l10n.homeStartPregnancy, LucideIcons.baby),
+                ])
+                  ListTile(
+                    minTileHeight: DtSize.row,
+                    leading: Icon(icon, color: colors.brand),
+                    title: Text(label, style: DtType.body.copyWith(color: colors.ink)),
+                    trailing: Icon(LucideIcons.chevronRight, color: colors.inkMuted),
+                    onTap: () => context.go(Routes.library(section)),
+                  ),
+              ],
             ),
+          ),
         ],
       );
     }
@@ -372,12 +431,20 @@ class _RecentsAndFavorites extends ConsumerWidget {
       children: [
         if (recents.isNotEmpty) ...[
           Text(l10n.homeRecents, style: DtType.heading.copyWith(color: colors.ink)),
-          for (final content in recents) row(content),
-          const SizedBox(height: DtSpace.s4),
+          const SizedBox(height: DtSpace.s3),
+          DtLiftedCard(
+            padding: EdgeInsets.zero,
+            child: Column(children: [for (final content in recents) row(content)]),
+          ),
+          const SizedBox(height: DtSpace.s5),
         ],
         if (favorites.isNotEmpty) ...[
           Text(l10n.homeFavorites, style: DtType.heading.copyWith(color: colors.ink)),
-          for (final content in favorites) row(content),
+          const SizedBox(height: DtSpace.s3),
+          DtLiftedCard(
+            padding: EdgeInsets.zero,
+            child: Column(children: [for (final content in favorites) row(content)]),
+          ),
         ],
       ],
     );
