@@ -44,6 +44,9 @@ export class ContentRulesDto {
 
   @ApiProperty({ type: ContentRuleDto })
   referenceDocuments!: ContentRuleDto;
+
+  @ApiProperty({ type: ContentRuleDto })
+  pregnancyProfiles!: ContentRuleDto;
 }
 
 export class AccessProfileDto {

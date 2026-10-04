@@ -594,6 +594,74 @@
         ],
         "type": "string"
       },
+      "AdminContentReportDto": {
+        "properties": {
+          "comment": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContentReportReason"
+              }
+            ]
+          },
+          "resolution": {
+            "nullable": true,
+            "type": "string"
+          },
+          "resolvedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "resolvedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfilePersonDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "section": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileSection"
+              }
+            ]
+          },
+          "substance": {
+            "$ref": "#/components/schemas/SubstanceRefDto"
+          },
+          "version": {
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "substance",
+          "version",
+          "section",
+          "reason",
+          "comment",
+          "createdAt",
+          "resolvedAt",
+          "resolvedBy",
+          "resolution"
+        ],
+        "type": "object"
+      },
       "AdminFileDto": {
         "properties": {
           "id": {
@@ -673,6 +741,9 @@
               "calculators.review",
               "calculators.publish",
               "calculators.retire",
+              "pregnancy.read",
+              "pregnancy.draft",
+              "pregnancy.review",
               "subscriptions.read",
               "subscriptions.plans.write",
               "transactions.read",
@@ -707,6 +778,9 @@
               "calculatorsReview",
               "calculatorsPublish",
               "calculatorsRetire",
+              "pregnancyRead",
+              "pregnancyDraft",
+              "pregnancyReview",
               "subscriptionsRead",
               "subscriptionsPlansWrite",
               "transactionsRead",
@@ -740,6 +814,9 @@
               "calculatorsReview",
               "calculatorsPublish",
               "calculatorsRetire",
+              "pregnancyRead",
+              "pregnancyDraft",
+              "pregnancyReview",
               "subscriptionsRead",
               "subscriptionsPlansWrite",
               "transactionsRead",
@@ -803,6 +880,9 @@
                 "calculators.review",
                 "calculators.publish",
                 "calculators.retire",
+                "pregnancy.read",
+                "pregnancy.draft",
+                "pregnancy.review",
                 "subscriptions.read",
                 "subscriptions.plans.write",
                 "transactions.read",
@@ -837,6 +917,9 @@
                 "calculatorsReview",
                 "calculatorsPublish",
                 "calculatorsRetire",
+                "pregnancyRead",
+                "pregnancyDraft",
+                "pregnancyReview",
                 "subscriptionsRead",
                 "subscriptionsPlansWrite",
                 "transactionsRead",
@@ -870,6 +953,9 @@
                 "calculatorsReview",
                 "calculatorsPublish",
                 "calculatorsRetire",
+                "pregnancyRead",
+                "pregnancyDraft",
+                "pregnancyReview",
                 "subscriptionsRead",
                 "subscriptionsPlansWrite",
                 "transactionsRead",
@@ -931,6 +1017,98 @@
           "ANALYST"
         ],
         "type": "string"
+      },
+      "AdminProfileVersionDto": {
+        "properties": {
+          "authoredBy": {
+            "$ref": "#/components/schemas/ProfilePersonDto"
+          },
+          "changeReason": {
+            "type": "string"
+          },
+          "content": {
+            "$ref": "#/components/schemas/ProfileContentDto"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "problems": {
+            "description": "What still prevents submission for review (empty = ready).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewComment": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfilePersonDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/ClinicalSourceDto"
+            },
+            "type": "array"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileVersionStatus"
+              }
+            ]
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "substance": {
+            "$ref": "#/components/schemas/SubstanceRefDto"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "status",
+          "changeReason",
+          "authoredBy",
+          "reviewedBy",
+          "reviewComment",
+          "submittedAt",
+          "publishedAt",
+          "createdAt",
+          "updatedAt",
+          "substance",
+          "content",
+          "sources",
+          "problems"
+        ],
+        "type": "object"
       },
       "AdminReasonBody": {
         "properties": {
@@ -1218,6 +1396,155 @@
           "currentPeriodEnd",
           "graceEndsAt",
           "lastTransaction"
+        ],
+        "type": "object"
+      },
+      "AdminSubstanceDetailDto": {
+        "properties": {
+          "atcCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "demoSample": {
+            "type": "boolean"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "nameFr": {
+            "type": "string"
+          },
+          "open": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileVersionStateDto"
+              }
+            ],
+            "description": "Draft or review.",
+            "nullable": true,
+            "type": "object"
+          },
+          "openReports": {
+            "type": "number"
+          },
+          "published": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileVersionStateDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "synonyms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/ProfileVersionSummaryDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "nameFr",
+          "nameEn",
+          "atcCode",
+          "synonyms",
+          "demoSample",
+          "enabled",
+          "published",
+          "open",
+          "openReports",
+          "updatedAt",
+          "versions"
+        ],
+        "type": "object"
+      },
+      "AdminSubstanceDto": {
+        "properties": {
+          "atcCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "demoSample": {
+            "type": "boolean"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "nameFr": {
+            "type": "string"
+          },
+          "open": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileVersionStateDto"
+              }
+            ],
+            "description": "Draft or review.",
+            "nullable": true,
+            "type": "object"
+          },
+          "openReports": {
+            "type": "number"
+          },
+          "published": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileVersionStateDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "synonyms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameFr",
+          "nameEn",
+          "atcCode",
+          "synonyms",
+          "demoSample",
+          "enabled",
+          "published",
+          "open",
+          "openReports",
+          "updatedAt"
         ],
         "type": "object"
       },
@@ -2610,11 +2937,74 @@
           "REFERENCE_VIEWED",
           "CALCULATOR_STARTED",
           "CALCULATOR_COMPLETED",
+          "PREGNANCY_VIEWED",
           "FAVORITE_ADDED",
           "FAVORITE_REMOVED",
           "SUBSCRIPTION_VIEWED",
           "DEMO_STARTED",
           "DEMO_FEATURE_VIEWED"
+        ],
+        "type": "string"
+      },
+      "ClinicalSourceDto": {
+        "properties": {
+          "edition": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "publisher": {
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClinicalSourceType"
+              }
+            ]
+          },
+          "url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "year": {
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "publisher",
+          "type",
+          "edition",
+          "year",
+          "url"
+        ],
+        "type": "object"
+      },
+      "ClinicalSourceType": {
+        "enum": [
+          "REGULATORY",
+          "GUIDELINE",
+          "REFERENCE",
+          "LITERATURE",
+          "NATIONAL_FORMULARY"
+        ],
+        "type": "string"
+      },
+      "Conduct": {
+        "enum": [
+          "CONTRAINDICATED",
+          "AVOID",
+          "OCCASIONAL_USE"
         ],
         "type": "string"
       },
@@ -2638,6 +3028,43 @@
           "device"
         ],
         "type": "object"
+      },
+      "ContentReportDto": {
+        "properties": {
+          "comment": {
+            "description": "Never patient data.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContentReportReason"
+              }
+            ]
+          },
+          "section": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileSection"
+              }
+            ]
+          }
+        },
+        "required": [
+          "section",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "ContentReportReason": {
+        "enum": [
+          "INCORRECT",
+          "OUTDATED",
+          "UNCLEAR",
+          "OTHER"
+        ],
+        "type": "string"
       },
       "ContentRuleDto": {
         "properties": {
@@ -2676,13 +3103,17 @@
           "calculators": {
             "$ref": "#/components/schemas/ContentRuleDto"
           },
+          "pregnancyProfiles": {
+            "$ref": "#/components/schemas/ContentRuleDto"
+          },
           "referenceDocuments": {
             "$ref": "#/components/schemas/ContentRuleDto"
           }
         },
         "required": [
           "calculators",
-          "referenceDocuments"
+          "referenceDocuments",
+          "pregnancyProfiles"
         ],
         "type": "object"
       },
@@ -2885,6 +3316,42 @@
           "code",
           "nameFr",
           "nameEn"
+        ],
+        "type": "object"
+      },
+      "CreateSubstanceDto": {
+        "properties": {
+          "atcCode": {
+            "example": "M01AE01",
+            "nullable": true,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 120,
+            "nullable": true,
+            "type": "string"
+          },
+          "nameFr": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Audit log.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "synonyms": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 30,
+            "type": "array"
+          }
+        },
+        "required": [
+          "reason",
+          "nameFr"
         ],
         "type": "object"
       },
@@ -3543,6 +4010,7 @@
           "search",
           "reference.view",
           "calculator.use",
+          "pregnancy.view",
           "favorites",
           "activity.history",
           "offline.sync",
@@ -3554,6 +4022,7 @@
           "search",
           "referenceView",
           "calculatorUse",
+          "pregnancyView",
           "favorites",
           "activityHistory",
           "offlineSync",
@@ -3564,6 +4033,7 @@
           "search",
           "referenceView",
           "calculatorUse",
+          "pregnancyView",
           "favorites",
           "activityHistory",
           "offlineSync",
@@ -3867,6 +4337,9 @@
                 "calculators.review",
                 "calculators.publish",
                 "calculators.retire",
+                "pregnancy.read",
+                "pregnancy.draft",
+                "pregnancy.review",
                 "subscriptions.read",
                 "subscriptions.plans.write",
                 "transactions.read",
@@ -3901,6 +4374,9 @@
                 "calculatorsReview",
                 "calculatorsPublish",
                 "calculatorsRetire",
+                "pregnancyRead",
+                "pregnancyDraft",
+                "pregnancyReview",
                 "subscriptionsRead",
                 "subscriptionsPlansWrite",
                 "transactionsRead",
@@ -3934,6 +4410,9 @@
                 "calculatorsReview",
                 "calculatorsPublish",
                 "calculatorsRetire",
+                "pregnancyRead",
+                "pregnancyDraft",
+                "pregnancyReview",
                 "subscriptionsRead",
                 "subscriptionsPlansWrite",
                 "transactionsRead",
@@ -4156,6 +4635,57 @@
           "state",
           "lockReason",
           "unlockPath"
+        ],
+        "type": "object"
+      },
+      "LactationBlockDto": {
+        "properties": {
+          "alternatives": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "conduct": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Conduct"
+              }
+            ],
+            "nullable": true
+          },
+          "conductText": {
+            "$ref": "#/components/schemas/ProfileTextDto"
+          },
+          "conflict": {
+            "$ref": "#/components/schemas/ProfileConflictDto"
+          },
+          "considerations": {
+            "$ref": "#/components/schemas/ProfileTextDto"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/ProfileEvidenceDto"
+          },
+          "maternalHalfLife": {
+            "example": "1 – 1,5 h",
+            "type": "string"
+          },
+          "relativeInfantDose": {
+            "example": "0,5 – 1 %",
+            "type": "string"
+          },
+          "reportedEffects": {
+            "$ref": "#/components/schemas/ProfileTextDto"
+          },
+          "specialPopulations": {
+            "$ref": "#/components/schemas/ProfileTextDto"
+          }
+        },
+        "required": [
+          "conduct",
+          "evidence",
+          "alternatives"
         ],
         "type": "object"
       },
@@ -5388,6 +5918,118 @@
         ],
         "type": "object"
       },
+      "PregnancyBlockDto": {
+        "properties": {
+          "alternatives": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "conflict": {
+            "$ref": "#/components/schemas/ProfileConflictDto"
+          },
+          "periods": {
+            "$ref": "#/components/schemas/PregnancyPeriodsDto"
+          }
+        },
+        "required": [
+          "periods",
+          "alternatives"
+        ],
+        "type": "object"
+      },
+      "PregnancyPeriodDto": {
+        "properties": {
+          "conduct": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Conduct"
+              }
+            ],
+            "nullable": true
+          },
+          "conductDetail": {
+            "$ref": "#/components/schemas/ProfileTextDto"
+          },
+          "considerations": {
+            "$ref": "#/components/schemas/ProfileTextDto"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/ProfileEvidenceDto"
+          },
+          "riskContext": {
+            "$ref": "#/components/schemas/ProfileTextDto"
+          }
+        },
+        "required": [
+          "conduct",
+          "evidence"
+        ],
+        "type": "object"
+      },
+      "PregnancyPeriodsDto": {
+        "properties": {
+          "PERIPARTUM": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PregnancyPeriodDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "T1": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PregnancyPeriodDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "T2": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PregnancyPeriodDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "T3": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PregnancyPeriodDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "T1",
+          "T2",
+          "T3",
+          "PERIPARTUM"
+        ],
+        "type": "object"
+      },
+      "PregnancyReasonDto": {
+        "properties": {
+          "reason": {
+            "description": "Audit log.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
       "ProfessionalProfileDto": {
         "properties": {
           "academicYear": {
@@ -5441,6 +6083,216 @@
           "STUDENT"
         ],
         "type": "string"
+      },
+      "ProfileConflictDto": {
+        "properties": {
+          "sourceIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "synthesis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileTextDto"
+              }
+            ],
+            "description": "The reviewers' synthesis."
+          }
+        },
+        "required": [
+          "sourceIds",
+          "synthesis"
+        ],
+        "type": "object"
+      },
+      "ProfileContentDto": {
+        "properties": {
+          "lactation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LactationBlockDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "pregnancy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PregnancyBlockDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "pregnancy",
+          "lactation"
+        ],
+        "type": "object"
+      },
+      "ProfileEvidenceDto": {
+        "properties": {
+          "level": {
+            "description": "4 robustes · 3 modérées · 2 limitées · 1 très limitées · 0 absence de données",
+            "maximum": 4,
+            "minimum": 0,
+            "type": "number"
+          },
+          "population": {
+            "$ref": "#/components/schemas/ProfileTextDto"
+          }
+        },
+        "required": [
+          "level"
+        ],
+        "type": "object"
+      },
+      "ProfilePersonDto": {
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ],
+        "type": "object"
+      },
+      "ProfileSection": {
+        "enum": [
+          "PREGNANCY",
+          "LACTATION"
+        ],
+        "type": "string"
+      },
+      "ProfileTextDto": {
+        "properties": {
+          "en": {
+            "type": "string"
+          },
+          "fr": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fr"
+        ],
+        "type": "object"
+      },
+      "ProfileVersionStateDto": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileVersionStatus"
+              }
+            ]
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "status"
+        ],
+        "type": "object"
+      },
+      "ProfileVersionStatus": {
+        "enum": [
+          "DRAFT",
+          "IN_REVIEW",
+          "CHANGES_REQUESTED",
+          "PUBLISHED",
+          "SUPERSEDED"
+        ],
+        "type": "string"
+      },
+      "ProfileVersionSummaryDto": {
+        "properties": {
+          "authoredBy": {
+            "$ref": "#/components/schemas/ProfilePersonDto"
+          },
+          "changeReason": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewComment": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfilePersonDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileVersionStatus"
+              }
+            ]
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "status",
+          "changeReason",
+          "authoredBy",
+          "reviewedBy",
+          "reviewComment",
+          "submittedAt",
+          "publishedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
       },
       "PublishDto": {
         "properties": {
@@ -5912,6 +6764,32 @@
         ],
         "type": "object"
       },
+      "ResolveReportDto": {
+        "properties": {
+          "resolution": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "resolution"
+        ],
+        "type": "object"
+      },
+      "ReviewCommentDto": {
+        "properties": {
+          "comment": {
+            "maxLength": 2000,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "comment"
+        ],
+        "type": "object"
+      },
       "ReviewDto": {
         "properties": {
           "reviewedAt": {
@@ -5942,6 +6820,31 @@
         },
         "required": [
           "definition"
+        ],
+        "type": "object"
+      },
+      "SaveProfileVersionDto": {
+        "properties": {
+          "content": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileContentDto"
+              }
+            ],
+            "description": "Validated against the profile structure."
+          },
+          "sourceIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 30,
+            "type": "array"
+          }
+        },
+        "required": [
+          "content",
+          "sourceIds"
         ],
         "type": "object"
       },
@@ -6051,7 +6954,8 @@
         "enum": [
           "ORDONNANCE",
           "CERTIFICATE",
-          "CALCULATOR"
+          "CALCULATOR",
+          "PREGNANCY"
         ],
         "type": "string"
       },
@@ -6313,6 +7217,47 @@
         ],
         "type": "object"
       },
+      "SourceInputDto": {
+        "properties": {
+          "edition": {
+            "example": "09/2026",
+            "maxLength": 40,
+            "nullable": true,
+            "type": "string"
+          },
+          "publisher": {
+            "maxLength": 120,
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 200,
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClinicalSourceType"
+              }
+            ]
+          },
+          "url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "year": {
+            "maximum": 2100,
+            "minimum": 1900,
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "title",
+          "type"
+        ],
+        "type": "object"
+      },
       "SpecialtyDto": {
         "properties": {
           "code": {
@@ -6532,6 +7477,168 @@
         "required": [
           "planViews",
           "byPlan"
+        ],
+        "type": "object"
+      },
+      "SubstanceItemDto": {
+        "properties": {
+          "access": {
+            "$ref": "#/components/schemas/ItemAccessDto"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "nameFr": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "synonyms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "nameFr",
+          "nameEn",
+          "synonyms",
+          "version",
+          "publishedAt",
+          "access"
+        ],
+        "type": "object"
+      },
+      "SubstanceProfileDto": {
+        "properties": {
+          "access": {
+            "$ref": "#/components/schemas/ItemAccessDto"
+          },
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/SubstanceRefDto"
+            },
+            "type": "array"
+          },
+          "content": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileContentDto"
+              }
+            ],
+            "description": "Null while the profile is locked for this viewer.",
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "nameFr": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reviewedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reviewerName": {
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/ClinicalSourceDto"
+            },
+            "type": "array"
+          },
+          "synonyms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "underReview": {
+            "description": "A newer version is in review; this one remains the reference.",
+            "type": "boolean"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "nameFr",
+          "nameEn",
+          "synonyms",
+          "version",
+          "publishedAt",
+          "access",
+          "content",
+          "alternatives",
+          "sources",
+          "reviewedAt",
+          "reviewerName",
+          "underReview"
+        ],
+        "type": "object"
+      },
+      "SubstanceRefDto": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "nameFr": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameFr",
+          "nameEn"
+        ],
+        "type": "object"
+      },
+      "SubstanceVisibilityDto": {
+        "properties": {
+          "demoSample": {
+            "type": "boolean"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "reason": {
+            "description": "Audit log.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
         ],
         "type": "object"
       },
@@ -6844,6 +7951,40 @@
           "titleFr": {
             "maxLength": 200,
             "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
+      "UpdateSubstanceDto": {
+        "properties": {
+          "atcCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 120,
+            "nullable": true,
+            "type": "string"
+          },
+          "nameFr": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Audit log.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "synonyms": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 30,
+            "type": "array"
           }
         },
         "required": [
@@ -10383,6 +11524,854 @@
         ],
         "tags": [
           "admin-plans"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/reports": {
+      "get": {
+        "operationId": "PregnancyAdminController_reports",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "open",
+              "enum": [
+                "open",
+                "all"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "substanceId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminContentReportDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/reports/{id}/resolve": {
+      "post": {
+        "operationId": "PregnancyAdminController_resolve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveReportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/sources": {
+      "get": {
+        "operationId": "PregnancyAdminController_sources",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClinicalSourceDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      },
+      "post": {
+        "operationId": "PregnancyAdminController_createSource",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceInputDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalSourceDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/sources/{id}": {
+      "put": {
+        "operationId": "PregnancyAdminController_updateSource",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceInputDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalSourceDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/substances": {
+      "get": {
+        "operationId": "PregnancyAdminController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminSubstanceDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      },
+      "post": {
+        "operationId": "PregnancyAdminController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubstanceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSubstanceDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/substances/{id}": {
+      "get": {
+        "operationId": "PregnancyAdminController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSubstanceDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      },
+      "patch": {
+        "operationId": "PregnancyAdminController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSubstanceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSubstanceDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/substances/{id}/versions": {
+      "post": {
+        "operationId": "PregnancyAdminController_createVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PregnancyReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProfileVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/substances/{id}/visibility": {
+      "patch": {
+        "operationId": "PregnancyAdminController_visibility",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubstanceVisibilityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSubstanceDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/versions/{versionId}": {
+      "delete": {
+        "operationId": "PregnancyAdminController_discard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PregnancyReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      },
+      "get": {
+        "operationId": "PregnancyAdminController_version",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProfileVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      },
+      "put": {
+        "operationId": "PregnancyAdminController_save",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveProfileVersionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProfileVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/versions/{versionId}/approve": {
+      "post": {
+        "operationId": "PregnancyAdminController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewCommentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProfileVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/versions/{versionId}/request-changes": {
+      "post": {
+        "operationId": "PregnancyAdminController_requestChanges",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewCommentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProfileVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/versions/{versionId}/submit": {
+      "post": {
+        "operationId": "PregnancyAdminController_submit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PregnancyReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProfileVersionDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
         ]
       }
     },
@@ -14325,6 +16314,157 @@
         ],
         "tags": [
           "offline"
+        ]
+      }
+    },
+    "/v1/pregnancy/substances": {
+      "get": {
+        "operationId": "PregnancyController_list",
+        "parameters": [
+          {
+            "description": "Words of the name or a synonym.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SubstanceItemDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          },
+          {
+            "demo": []
+          }
+        ],
+        "tags": [
+          "pregnancy"
+        ]
+      }
+    },
+    "/v1/pregnancy/substances/{id}": {
+      "get": {
+        "operationId": "PregnancyController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubstanceProfileDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          },
+          {
+            "demo": []
+          }
+        ],
+        "tags": [
+          "pregnancy"
+        ]
+      }
+    },
+    "/v1/pregnancy/substances/{id}/reports": {
+      "post": {
+        "operationId": "PregnancyController_report",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContentReportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          },
+          {
+            "demo": []
+          }
+        ],
+        "tags": [
+          "pregnancy"
         ]
       }
     },

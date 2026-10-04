@@ -1,5 +1,6 @@
 import {
   ArrowLeftRight,
+  Baby,
   BadgeCheck,
   BookOpen,
   Calculator,
@@ -63,6 +64,12 @@ export const NAVIGATION: NavGroup[] = [
         label: 'admin.nav.calculators',
         icon: Calculator,
         grant: 'calculators.read',
+      },
+      {
+        href: '/admin/pregnancy',
+        label: 'admin.nav.pregnancy',
+        icon: Baby,
+        grant: 'pregnancy.read',
       },
     ],
   },

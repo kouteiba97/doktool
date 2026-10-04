@@ -7,6 +7,7 @@ import { ActivityService } from '../activity/index.js';
 import { AuditService } from '../audit/index.js';
 import { SubscriptionStatusService } from '../billing/index.js';
 import { NotificationsService } from '../notifications/index.js';
+import { PregnancyService } from '../pregnancy/index.js';
 import { UsersService } from '../users/index.js';
 import { VerificationMaintenanceService } from '../verification/index.js';
 import { RATE_LIMITS } from './auth.policy.js';
@@ -28,6 +29,7 @@ export class AccountDeletionService {
     private readonly otp: OtpService,
     private readonly activity: ActivityService,
     private readonly notifications: NotificationsService,
+    private readonly pregnancy: PregnancyService,
     private readonly verification: VerificationMaintenanceService,
     private readonly subscriptions: SubscriptionStatusService,
     private readonly audit: AuditService,
@@ -50,6 +52,7 @@ export class AccountDeletionService {
     const documentsDeleted = await this.verification.eraseUser(userId);
     await this.activity.eraseUser(userId);
     await this.notifications.eraseUser(userId);
+    await this.pregnancy.eraseUser(userId);
     await this.otp.eraseUser(userId);
     await this.users.eraseAccount(userId);
     await this.sessions.revokeAll(userId, 'ACCOUNT_DELETED');

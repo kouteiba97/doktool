@@ -16,6 +16,9 @@ export const GRANTS = [
   'calculators.review',
   'calculators.publish',
   'calculators.retire',
+  'pregnancy.read',
+  'pregnancy.draft',
+  'pregnancy.review',
   'subscriptions.read',
   'subscriptions.plans.write',
   'transactions.read',
@@ -41,8 +44,16 @@ export const PRESETS = {
   /** `verification.documents.view` is granted separately, time-limited (default 2 h). */
   VERIFICATION_REVIEWER: ['verification.queue.read', 'verification.review'],
   LIBRARY_MANAGER: ['library.read', 'library.write', 'library.disable'],
-  CALCULATOR_EDITOR: ['calculators.read', 'calculators.draft'],
-  CLINICAL_REVIEWER: ['calculators.read', 'calculators.review', 'calculators.publish'],
+  /** Authors clinical content: calculator drafts and pregnancy · lactation profiles (ADR-019). */
+  CALCULATOR_EDITOR: ['calculators.read', 'calculators.draft', 'pregnancy.read', 'pregnancy.draft'],
+  /** Reviews and publishes clinical content, never their own (author ≠ reviewer). */
+  CLINICAL_REVIEWER: [
+    'calculators.read',
+    'calculators.review',
+    'calculators.publish',
+    'pregnancy.read',
+    'pregnancy.review',
+  ],
   FINANCE_ADMIN: [
     'finance.read',
     'transactions.read',
@@ -71,8 +82,8 @@ export function separationOfDutiesViolations(
   if (isSuperAdmin) return [];
   const violations: string[] = [];
   const has = (prefix: string) => grants.some((grant) => grant.startsWith(prefix));
-  if (has('finance.') && (has('calculators.') || has('library.'))) {
-    violations.push('finance grants cannot be combined with calculators or library grants');
+  if (has('finance.') && (has('calculators.') || has('library.') || has('pregnancy.'))) {
+    violations.push('finance grants cannot be combined with clinical content grants');
   }
   if (grants.includes('transactions.adjustment.approve')) {
     violations.push('only the Super Admin approves exceptional adjustments');

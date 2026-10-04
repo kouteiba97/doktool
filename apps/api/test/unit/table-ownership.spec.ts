@@ -38,8 +38,8 @@ describe('module registry', () => {
     expect(registered).toEqual(moduleDirectories.map((name) => `${pascal(name)}Module`).sort());
   });
 
-  it('has the 18 modules of the target architecture (audit §4)', () => {
-    expect(moduleDirectories).toHaveLength(18);
+  it('has the 18 modules of the target architecture (audit §4) plus pregnancy (ADR-019)', () => {
+    expect(moduleDirectories).toHaveLength(19);
   });
 });
 

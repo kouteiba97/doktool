@@ -8,6 +8,7 @@ export const FEATURE_KEYS = [
   'search',
   'reference.view',
   'calculator.use',
+  'pregnancy.view',
   'favorites',
   'activity.history',
   'offline.sync',
@@ -60,7 +61,7 @@ export interface ContentRule {
   unlockPath: UnlockPath | null;
 }
 
-export type ContentType = 'calculators' | 'referenceDocuments';
+export type ContentType = 'calculators' | 'referenceDocuments' | 'pregnancyProfiles';
 
 export interface AccessProfile {
   accessContext: 'AUTHENTICATED' | 'DEMO';

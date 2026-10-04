@@ -74,8 +74,13 @@ describe('GET /v1/me/access', () => {
         lockReason: 'PROFESSIONAL_ONLY',
         unlockPath: null,
       },
+      pregnancyProfiles: {
+        scope: 'DEMO_SAMPLE',
+        lockReason: 'PROFESSIONAL_ONLY',
+        unlockPath: null,
+      },
     });
-    expect(student.features).toHaveLength(8);
+    expect(student.features).toHaveLength(9);
     expect(
       student.features.find((f: { key: string }) => f.key === 'subscription.purchase'),
     ).toMatchObject({

@@ -219,6 +219,33 @@
   .dt-chip[aria-pressed='true'] .dt-cap {
     color: inherit;
   }
+  /* Evidence (section 25 Appendix B): neutral meter, the word carries the level (Lock L6). */
+  .dt-meter {
+    display: flex;
+    gap: 3px;
+    direction: ltr;
+  }
+  .dt-meter i {
+    width: 22px;
+    height: 6px;
+    border-radius: var(--radius-full);
+    background: var(--border);
+  }
+  .dt-meter i.on {
+    background: var(--ink-secondary);
+  }
+  .dt-evidence {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    align-items: center;
+    padding-top: var(--space-3);
+    margin-top: var(--space-3);
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--ink-muted);
+  }
   .dt-chip button {
     border: 0;
     background: transparent;

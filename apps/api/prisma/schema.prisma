@@ -248,6 +248,46 @@ enum EntitlementTier {
 }
 
 /// V1 analytics vocabulary (audit Appendix B).
+/// Lifecycle of a pregnancy · lactation profile version (section 25 Appendix B, ADR-019).
+enum ProfileVersionStatus {
+  DRAFT
+  IN_REVIEW
+  CHANGES_REQUESTED
+  PUBLISHED
+  /// A later version was published; kept for history, never shown to users.
+  SUPERSEDED
+
+  @@map("profile_version_status")
+}
+
+/// Kind of a clinical source in the registry (section 25 Appendix B).
+enum ClinicalSourceType {
+  REGULATORY
+  GUIDELINE
+  REFERENCE
+  LITERATURE
+  NATIONAL_FORMULARY
+
+  @@map("clinical_source_type")
+}
+
+/// The block of a profile a user report is about.
+enum ProfileSection {
+  PREGNANCY
+  LACTATION
+
+  @@map("profile_section")
+}
+
+enum ContentReportReason {
+  INCORRECT
+  OUTDATED
+  UNCLEAR
+  OTHER
+
+  @@map("content_report_reason")
+}
+
 enum AnalyticsEventType {
   SEARCH_PERFORMED
   REFERENCE_SEARCHED
@@ -263,6 +303,7 @@ enum AnalyticsEventType {
   SUBSCRIPTION_RENEWED
   DEMO_STARTED
   DEMO_FEATURE_VIEWED
+  PREGNANCY_VIEWED
 
   @@map("analytics_event_type")
 }
@@ -815,6 +856,114 @@ model CalculatorTestCase {
   @@map("calculator_test_cases")
 }
 
+// ─────────────────────────────── [pregnancy] ───────────────────────────────
+
+/// A medicine (DCI) of « Grossesse · Allaitement » (ADR-019). Only what the profiles need, not a
+/// drug database entry: no posology, products or interactions.
+model Substance {
+  id          String                    @id @default(uuid(7)) @db.Uuid
+  nameFr      String                    @map("name_fr")
+  nameEn      String?                   @map("name_en")
+  /// WHO ATC code, e.g. M01AE01.
+  atcCode     String?                   @map("atc_code")
+  /// Other names people search with (brand names, spellings).
+  synonyms    String[]                  @default([])
+  demoSample  Boolean                   @default(false) @map("demo_sample")
+  /// A disabled substance is gone from the app; its versions are kept.
+  enabled     Boolean                   @default(true)
+  createdById String                    @map("created_by_id") @db.Uuid
+  createdBy   AdminAccount              @relation("SubstanceCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedById String                    @map("updated_by_id") @db.Uuid
+  updatedBy   AdminAccount              @relation("SubstanceUpdater", fields: [updatedById], references: [id], onDelete: Restrict)
+  versions    SubstanceProfileVersion[]
+  reports     ContentReport[]
+  createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("substances")
+}
+
+/// One version of a substance's pregnancy and lactation profile. Published versions are immutable;
+/// a correction is a new version (section 25 Appendix B).
+model SubstanceProfileVersion {
+  id            String                 @id @default(uuid(7)) @db.Uuid
+  substanceId   String                 @map("substance_id") @db.Uuid
+  substance     Substance              @relation(fields: [substanceId], references: [id], onDelete: Restrict)
+  version       Int
+  status        ProfileVersionStatus   @default(DRAFT)
+  /// Structured pregnancy and lactation content, validated by pregnancy.content.ts.
+  content       Json
+  changeReason  String                 @map("change_reason")
+  authoredById  String                 @map("authored_by_id") @db.Uuid
+  authoredBy    AdminAccount           @relation("ProfileVersionAuthor", fields: [authoredById], references: [id], onDelete: Restrict)
+  submittedAt   DateTime?              @map("submitted_at") @db.Timestamptz(3)
+  reviewedById  String?                @map("reviewed_by_id") @db.Uuid
+  reviewedBy    AdminAccount?          @relation("ProfileVersionReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+  reviewComment String?                @map("review_comment")
+  reviewedAt    DateTime?              @map("reviewed_at") @db.Timestamptz(3)
+  publishedAt   DateTime?              @map("published_at") @db.Timestamptz(3)
+  sources       ProfileVersionSource[]
+  reports       ContentReport[]
+  createdAt     DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([substanceId, version])
+  @@index([status])
+  @@map("substance_profile_versions")
+}
+
+/// The sources registry (section 25 Appendix B): CRAT, LactMed, RCP ANSM, Briggs...
+model ClinicalSource {
+  id          String                 @id @default(uuid(7)) @db.Uuid
+  title       String
+  publisher   String?
+  type        ClinicalSourceType
+  /// Edition or date as the source states it: « 09/2026 », « 12e éd. ».
+  edition     String?
+  year        Int?
+  url         String?
+  createdById String                 @map("created_by_id") @db.Uuid
+  createdBy   AdminAccount           @relation("ClinicalSourceCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  versions    ProfileVersionSource[]
+  createdAt   DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("clinical_sources")
+}
+
+model ProfileVersionSource {
+  versionId String                  @map("version_id") @db.Uuid
+  version   SubstanceProfileVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  sourceId  String                  @map("source_id") @db.Uuid
+  source    ClinicalSource          @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+
+  @@id([versionId, sourceId])
+  @@map("profile_version_sources")
+}
+
+/// « Signaler une erreur » on a profile block. The comment is optional and must hold no patient
+/// data (the app says so); the reporter is forgotten when their account is deleted.
+model ContentReport {
+  id           String                   @id @default(uuid(7)) @db.Uuid
+  substanceId  String                   @map("substance_id") @db.Uuid
+  substance    Substance                @relation(fields: [substanceId], references: [id], onDelete: Restrict)
+  versionId    String?                  @map("version_id") @db.Uuid
+  version      SubstanceProfileVersion? @relation(fields: [versionId], references: [id], onDelete: SetNull)
+  section      ProfileSection
+  reason       ContentReportReason
+  comment      String?                  @db.VarChar(500)
+  /// The reporting account (null for a demo, or once the account is deleted).
+  userId       String?                  @map("user_id") @db.Uuid
+  resolvedById String?                  @map("resolved_by_id") @db.Uuid
+  resolvedBy   AdminAccount?            @relation("ContentReportResolver", fields: [resolvedById], references: [id], onDelete: Restrict)
+  resolvedAt   DateTime?                @map("resolved_at") @db.Timestamptz(3)
+  resolution   String?
+  createdAt    DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([resolvedAt, createdAt])
+  @@map("content_reports")
+}
+
 // ──────────────────────────────── [search] ────────────────────────────────
 
 enum SearchEntityType {
@@ -1047,22 +1196,28 @@ model AdminAccount {
   createdAt           DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt           DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  grants                     AdminGrant[]            @relation("AdminGrantHolder")
+  grants                     AdminGrant[]              @relation("AdminGrantHolder")
   sessions                   AdminSession[]
   authChallenges             AdminAuthChallenge[]
-  grantsGiven                AdminGrant[]            @relation("AdminGrantGrantor")
-  verificationReviews        VerificationCase[]      @relation("VerificationReviewer")
-  appealedRejections         VerificationCase[]      @relation("VerificationRejecter")
-  adjustmentsRequested       TransactionAdjustment[] @relation("AdjustmentRequester")
-  adjustmentsApproved        TransactionAdjustment[] @relation("AdjustmentApprover")
-  expensesCreated            OperatingExpense[]      @relation("ExpenseCreator")
-  expensesVoided             OperatingExpense[]      @relation("ExpenseVoider")
-  feeRatesUpdated            PaymentFeeRate[]        @relation("FeeRateUpdater")
-  referenceDocumentsCreated  ReferenceDocument[]     @relation("ReferenceDocumentCreator")
-  referenceDocumentsUpdated  ReferenceDocument[]     @relation("ReferenceDocumentUpdater")
-  referenceFilesUploaded     ReferenceDocumentFile[] @relation("ReferenceDocumentFileUploader")
-  calculatorVersionsAuthored CalculatorVersion[]     @relation("CalculatorVersionAuthor")
-  calculatorVersionsReviewed CalculatorVersion[]     @relation("CalculatorVersionReviewer")
+  grantsGiven                AdminGrant[]              @relation("AdminGrantGrantor")
+  verificationReviews        VerificationCase[]        @relation("VerificationReviewer")
+  appealedRejections         VerificationCase[]        @relation("VerificationRejecter")
+  adjustmentsRequested       TransactionAdjustment[]   @relation("AdjustmentRequester")
+  adjustmentsApproved        TransactionAdjustment[]   @relation("AdjustmentApprover")
+  expensesCreated            OperatingExpense[]        @relation("ExpenseCreator")
+  expensesVoided             OperatingExpense[]        @relation("ExpenseVoider")
+  feeRatesUpdated            PaymentFeeRate[]          @relation("FeeRateUpdater")
+  referenceDocumentsCreated  ReferenceDocument[]       @relation("ReferenceDocumentCreator")
+  referenceDocumentsUpdated  ReferenceDocument[]       @relation("ReferenceDocumentUpdater")
+  referenceFilesUploaded     ReferenceDocumentFile[]   @relation("ReferenceDocumentFileUploader")
+  calculatorVersionsAuthored CalculatorVersion[]       @relation("CalculatorVersionAuthor")
+  calculatorVersionsReviewed CalculatorVersion[]       @relation("CalculatorVersionReviewer")
+  substancesCreated          Substance[]               @relation("SubstanceCreator")
+  substancesUpdated          Substance[]               @relation("SubstanceUpdater")
+  profileVersionsAuthored    SubstanceProfileVersion[] @relation("ProfileVersionAuthor")
+  profileVersionsReviewed    SubstanceProfileVersion[] @relation("ProfileVersionReviewer")
+  clinicalSourcesCreated     ClinicalSource[]          @relation("ClinicalSourceCreator")
+  contentReportsResolved     ContentReport[]           @relation("ContentReportResolver")
 
   @@map("admin_accounts")
 }

@@ -24,6 +24,9 @@ export const GRANT_LABELS: Record<Grant, MessageKey> = {
   'calculators.review': 'admin.permissions.grants.calculatorsReview',
   'calculators.publish': 'admin.permissions.grants.calculatorsPublish',
   'calculators.retire': 'admin.permissions.grants.calculatorsRetire',
+  'pregnancy.read': 'admin.permissions.grants.pregnancyRead',
+  'pregnancy.draft': 'admin.permissions.grants.pregnancyDraft',
+  'pregnancy.review': 'admin.permissions.grants.pregnancyReview',
   'subscriptions.read': 'admin.permissions.grants.subscriptionsRead',
   'subscriptions.plans.write': 'admin.permissions.grants.subscriptionsPlansWrite',
   'transactions.read': 'admin.permissions.grants.transactionsRead',
@@ -50,6 +53,7 @@ export const GRANT_GROUPS: { domain: string; label: MessageKey; grants: Grant[] 
   { domain: 'verification', label: 'admin.nav.verification' },
   { domain: 'library', label: 'admin.nav.referenceLibrary' },
   { domain: 'calculators', label: 'admin.nav.calculators' },
+  { domain: 'pregnancy', label: 'admin.nav.pregnancy' },
   { domain: 'subscriptions', label: 'admin.nav.subscriptions' },
   { domain: 'transactions', label: 'admin.nav.transactions' },
   { domain: 'finance', label: 'admin.nav.finance' },
@@ -79,7 +83,7 @@ export function separationProblems(grants: readonly Grant[]): MessageKey[] {
   if (ALL_GRANTS.every((grant) => grants.includes(grant))) return [];
   const problems: MessageKey[] = [];
   const has = (prefix: string) => grants.some((grant) => grant.startsWith(prefix));
-  if (has('finance.') && (has('calculators.') || has('library.'))) {
+  if (has('finance.') && (has('calculators.') || has('library.') || has('pregnancy.'))) {
     problems.push('admin.permissions.ruleFinanceContent');
   }
   if (grants.includes('transactions.adjustment.approve'))

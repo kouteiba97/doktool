@@ -17,6 +17,7 @@ export const FEATURE_LABELS: Record<FeatureKey, MessageKey> = {
   search: 'admin.users.featureSearch',
   'reference.view': 'admin.users.featureReferenceView',
   'calculator.use': 'admin.users.featureCalculatorUse',
+  'pregnancy.view': 'admin.users.featurePregnancyView',
   favorites: 'admin.users.featureFavorites',
   'activity.history': 'admin.users.featureActivityHistory',
   'offline.sync': 'admin.users.featureOfflineSync',

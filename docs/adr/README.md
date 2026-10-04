@@ -22,5 +22,6 @@ One file per decision, numbered, never rewritten after acceptance — a changed 
 | [016](ADR-016-admin-web.md) | Admin Web (Next.js console, same-origin API proxy) | Accepted |
 | [017](ADR-017-analytics-finance-audit.md) | Analytics, finance, audit log and permissions | Accepted |
 | [018](ADR-018-account-deletion.md) | Account deletion (erasure, tombstone, legal retention) | Accepted |
+| [019](ADR-019-pregnancy-lactation.md) | Grossesse · Allaitement (pregnancy and lactation profiles) | Accepted |
 
 Source of the architecture: [`docs/ARCHITECTURE-AUDIT.md`](../ARCHITECTURE-AUDIT.md). Where an ADR and the design system disagree, the ADR wins; where ADR-006 and the audit disagree, ADR-006 wins.

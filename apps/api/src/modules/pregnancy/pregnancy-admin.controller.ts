@@ -1,0 +1,274 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
+import { ApiNoContentResponse, ApiOkResponse, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ErrorResponse } from '../../common/errors/error-response.js';
+import { Client, type ClientInfo } from '../../common/http/client-info.js';
+import { ADMIN_API_PREFIX } from '../../http/api-prefix.js';
+import { type AdminPrincipal, CurrentAdmin, RequireGrants } from '../admin-auth/index.js';
+import { PregnancyAdminService } from './pregnancy-admin.service.js';
+import {
+  AdminContentReportDto,
+  AdminProfileVersionDto,
+  AdminSubstanceDetailDto,
+  AdminSubstanceDto,
+  ClinicalSourceDto,
+  CreateSubstanceDto,
+  PregnancyReasonDto,
+  ReportsQuery,
+  ResolveReportDto,
+  ReviewCommentDto,
+  SaveProfileVersionDto,
+  SourceInputDto,
+  SubstanceVisibilityDto,
+  UpdateSubstanceDto,
+} from './pregnancy.dto.js';
+
+const errors = ApiResponse({
+  status: 'default',
+  type: ErrorResponse,
+  description: 'Error envelope',
+});
+const uuid = new ParseUUIDPipe();
+
+/** « Grossesse · Allaitement » governance for Admin Web (ADR-019, grants `pregnancy.*`). */
+@ApiTags('admin-pregnancy')
+@Controller(`${ADMIN_API_PREFIX}/pregnancy`)
+@errors
+export class PregnancyAdminController {
+  constructor(private readonly pregnancy: PregnancyAdminService) {}
+
+  // ─────────────────────────────── substances ───────────────────────────────
+
+  @Get('substances')
+  @RequireGrants('pregnancy.read')
+  @ApiOkResponse({ type: [AdminSubstanceDto] })
+  async list(): Promise<AdminSubstanceDto[]> {
+    return (await this.pregnancy.listSubstances()).map((row) => AdminSubstanceDto.from(row));
+  }
+
+  @Get('substances/:id')
+  @RequireGrants('pregnancy.read')
+  @ApiOkResponse({ type: AdminSubstanceDetailDto })
+  async detail(@Param('id', uuid) id: string): Promise<AdminSubstanceDetailDto> {
+    return this.detailDto(id);
+  }
+
+  @Post('substances')
+  @HttpCode(HttpStatus.OK)
+  @RequireGrants('pregnancy.draft')
+  @ApiOkResponse({ type: AdminSubstanceDetailDto })
+  async create(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Body() body: CreateSubstanceDto,
+    @Client() client: ClientInfo,
+  ): Promise<AdminSubstanceDetailDto> {
+    const created = await this.pregnancy.createSubstance(admin, body, client);
+    return this.detailDto(created.id);
+  }
+
+  /** Names, ATC and synonyms. */
+  @Patch('substances/:id')
+  @RequireGrants('pregnancy.draft')
+  @ApiOkResponse({ type: AdminSubstanceDetailDto })
+  async update(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Param('id', uuid) id: string,
+    @Body() body: UpdateSubstanceDto,
+    @Client() client: ClientInfo,
+  ): Promise<AdminSubstanceDetailDto> {
+    await this.pregnancy.updateSubstance(admin, id, body, client);
+    return this.detailDto(id);
+  }
+
+  /** Who sees the profile: demo sample, enabled. A reviewer's decision. */
+  @Patch('substances/:id/visibility')
+  @RequireGrants('pregnancy.review')
+  @ApiOkResponse({ type: AdminSubstanceDetailDto })
+  async visibility(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Param('id', uuid) id: string,
+    @Body() body: SubstanceVisibilityDto,
+    @Client() client: ClientInfo,
+  ): Promise<AdminSubstanceDetailDto> {
+    await this.pregnancy.updateSubstance(admin, id, body, client);
+    return this.detailDto(id);
+  }
+
+  // ──────────────────────────────── versions ────────────────────────────────
+
+  @Post('substances/:id/versions')
+  @HttpCode(HttpStatus.OK)
+  @RequireGrants('pregnancy.draft')
+  @ApiOkResponse({ type: AdminProfileVersionDto })
+  async createVersion(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Param('id', uuid) id: string,
+    @Body() body: PregnancyReasonDto,
+    @Client() client: ClientInfo,
+  ): Promise<AdminProfileVersionDto> {
+    return AdminProfileVersionDto.fromVersion(
+      await this.pregnancy.createVersion(admin, id, body.reason, client),
+    );
+  }
+
+  @Get('versions/:versionId')
+  @RequireGrants('pregnancy.read')
+  @ApiOkResponse({ type: AdminProfileVersionDto })
+  async version(@Param('versionId', uuid) versionId: string): Promise<AdminProfileVersionDto> {
+    return AdminProfileVersionDto.fromVersion(await this.pregnancy.version(versionId));
+  }
+
+  @Put('versions/:versionId')
+  @RequireGrants('pregnancy.draft')
+  @ApiOkResponse({ type: AdminProfileVersionDto })
+  async save(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Param('versionId', uuid) versionId: string,
+    @Body() body: SaveProfileVersionDto,
+    @Client() client: ClientInfo,
+  ): Promise<AdminProfileVersionDto> {
+    return AdminProfileVersionDto.fromVersion(
+      await this.pregnancy.saveVersion(admin, versionId, body, client),
+    );
+  }
+
+  @Post('versions/:versionId/submit')
+  @HttpCode(HttpStatus.OK)
+  @RequireGrants('pregnancy.draft')
+  @ApiOkResponse({ type: AdminProfileVersionDto })
+  async submit(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Param('versionId', uuid) versionId: string,
+    @Body() body: PregnancyReasonDto,
+    @Client() client: ClientInfo,
+  ): Promise<AdminProfileVersionDto> {
+    return AdminProfileVersionDto.fromVersion(
+      await this.pregnancy.submit(admin, versionId, body.reason, client),
+    );
+  }
+
+  /** Approve and publish (never the author); the previous version is superseded. */
+  @Post('versions/:versionId/approve')
+  @HttpCode(HttpStatus.OK)
+  @RequireGrants('pregnancy.review')
+  @ApiOkResponse({ type: AdminProfileVersionDto })
+  async approve(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Param('versionId', uuid) versionId: string,
+    @Body() body: ReviewCommentDto,
+    @Client() client: ClientInfo,
+  ): Promise<AdminProfileVersionDto> {
+    return AdminProfileVersionDto.fromVersion(
+      await this.pregnancy.approve(admin, versionId, body.comment, client),
+    );
+  }
+
+  @Post('versions/:versionId/request-changes')
+  @HttpCode(HttpStatus.OK)
+  @RequireGrants('pregnancy.review')
+  @ApiOkResponse({ type: AdminProfileVersionDto })
+  async requestChanges(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Param('versionId', uuid) versionId: string,
+    @Body() body: ReviewCommentDto,
+    @Client() client: ClientInfo,
+  ): Promise<AdminProfileVersionDto> {
+    return AdminProfileVersionDto.fromVersion(
+      await this.pregnancy.requestChanges(admin, versionId, body.comment, client),
+    );
+  }
+
+  @Delete('versions/:versionId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RequireGrants('pregnancy.draft')
+  @ApiNoContentResponse()
+  async discard(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Param('versionId', uuid) versionId: string,
+    @Body() body: PregnancyReasonDto,
+    @Client() client: ClientInfo,
+  ): Promise<void> {
+    await this.pregnancy.discard(admin, versionId, body.reason, client);
+  }
+
+  // ───────────────────────────────── sources ─────────────────────────────────
+
+  @Get('sources')
+  @RequireGrants('pregnancy.read')
+  @ApiOkResponse({ type: [ClinicalSourceDto] })
+  async sources(): Promise<ClinicalSourceDto[]> {
+    return (await this.pregnancy.listSources()).map((source) => ClinicalSourceDto.from(source));
+  }
+
+  @Post('sources')
+  @HttpCode(HttpStatus.OK)
+  @RequireGrants('pregnancy.draft')
+  @ApiOkResponse({ type: ClinicalSourceDto })
+  async createSource(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Body() body: SourceInputDto,
+    @Client() client: ClientInfo,
+  ): Promise<ClinicalSourceDto> {
+    return ClinicalSourceDto.from(await this.pregnancy.createSource(admin, body, client));
+  }
+
+  @Put('sources/:id')
+  @RequireGrants('pregnancy.draft')
+  @ApiOkResponse({ type: ClinicalSourceDto })
+  async updateSource(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Param('id', uuid) id: string,
+    @Body() body: SourceInputDto,
+    @Client() client: ClientInfo,
+  ): Promise<ClinicalSourceDto> {
+    return ClinicalSourceDto.from(await this.pregnancy.updateSource(admin, id, body, client));
+  }
+
+  // ───────────────────────────────── reports ─────────────────────────────────
+
+  @Get('reports')
+  @RequireGrants('pregnancy.read')
+  @ApiOkResponse({ type: [AdminContentReportDto] })
+  async reports(@Query() query: ReportsQuery): Promise<AdminContentReportDto[]> {
+    const rows = await this.pregnancy.listReports({
+      open: (query.status ?? 'open') === 'open',
+      substanceId: query.substanceId,
+    });
+    return rows.map((row) => AdminContentReportDto.from(row));
+  }
+
+  @Post('reports/:id/resolve')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RequireGrants('pregnancy.draft')
+  @ApiNoContentResponse()
+  async resolve(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Param('id', uuid) id: string,
+    @Body() body: ResolveReportDto,
+    @Client() client: ClientInfo,
+  ): Promise<void> {
+    await this.pregnancy.resolveReport(admin, id, body.resolution, client);
+  }
+
+  private async detailDto(id: string): Promise<AdminSubstanceDetailDto> {
+    const row = await this.pregnancy.substance(id);
+    const published = row.versions.find((version) => version.status === 'PUBLISHED') ?? null;
+    const open =
+      row.versions.find((version) =>
+        ['DRAFT', 'IN_REVIEW', 'CHANGES_REQUESTED'].includes(version.status),
+      ) ?? null;
+    return AdminSubstanceDetailDto.fromDetail({ ...row, published, open });
+  }
+}

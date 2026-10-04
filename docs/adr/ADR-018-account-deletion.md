@@ -15,6 +15,7 @@
    | verification | Every document is deleted from the private bucket now. Cases not yet decided are deleted; decided cases keep only the decision (who, when, outcome) with their declared details cleared. |
    | activity | Favorites and research history are deleted. |
    | notifications | Deleted. |
+   | pregnancy | Error reports stay for the clinical team, detached from the account (ADR-019). |
    | auth | Pending OTP codes deleted; every session revoked (`ACCOUNT_DELETED`) last. |
    | users | Professional profile and preferences deleted; the profile photo object deleted; the row becomes a **tombstone**. |
 

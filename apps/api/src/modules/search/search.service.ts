@@ -9,6 +9,7 @@ import type { ItemAccess } from '../access/index.js';
 import type { AdminPrincipal } from '../admin-auth/index.js';
 import { AuditService } from '../audit/index.js';
 import { CalculatorsService } from '../calculators/index.js';
+import { PregnancyService } from '../pregnancy/index.js';
 import { ReferenceDocumentsService } from '../reference-library/index.js';
 import {
   intentOf,
@@ -31,6 +32,8 @@ export interface SearchHit {
   purposeFr: string | null;
   purposeEn: string | null;
   access: ItemAccess;
+  /** Other names the item is found by (substance synonyms); not returned to the app. */
+  terms?: string[];
 }
 
 export interface SearchGroup {
@@ -65,6 +68,7 @@ export class SearchService {
     private readonly prisma: PrismaService,
     private readonly references: ReferenceDocumentsService,
     private readonly calculators: CalculatorsService,
+    private readonly pregnancy: PregnancyService,
     private readonly limiter: RateLimiter,
     private readonly audit: AuditService,
   ) {}
@@ -77,7 +81,7 @@ export class SearchService {
     if (!normalize(query)) return { groups: [], suggestions: [] };
 
     const intent = intentOf(query);
-    const matchQuery = intent ? withoutIntent(query) : query;
+    const matchQuery = intent ? withoutIntent(query, intent) : query;
     const synonyms = await this.synonyms();
     const candidates = await this.candidates(viewer, type);
     const scored = candidates
@@ -226,6 +230,21 @@ export class SearchService {
         });
       }
     }
+    if (!type || type === 'PREGNANCY') {
+      for (const substance of await this.pregnancy.searchable(viewer)) {
+        hits.push({
+          type: 'PREGNANCY',
+          id: substance.id,
+          slug: null,
+          titleFr: substance.nameFr,
+          titleEn: substance.nameEn,
+          purposeFr: null,
+          purposeEn: null,
+          access: substance.access,
+          terms: substance.synonyms,
+        });
+      }
+    }
     return hits;
   }
 
@@ -235,7 +254,7 @@ export class SearchService {
     return {
       type: hit.type,
       titles: [hit.titleFr, hit.titleEn ?? ''],
-      synonyms: synonyms.get(`${entityType}:${hit.id}`) ?? [],
+      synonyms: hit.terms ?? synonyms.get(`${entityType}:${hit.id}`) ?? [],
       purposes: [hit.purposeFr ?? '', hit.purposeEn ?? ''],
     };
   }

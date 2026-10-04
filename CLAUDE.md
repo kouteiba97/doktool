@@ -36,7 +36,8 @@ Shared packages: `packages/design-tokens` (tokens.json → tokens.css, tailwind.
 - **Offline** for every real account (students included) — reference PDFs they are entitled to, published calculator versions, favorites, activity, settings; data version + cached/live + update availability always visible; no deferred packs. (section 18, L44)
 - **No patient data** anywhere; analytics carry no free text, no query text, no calculator inputs. (L42, section 16)
 - **Bilingual FR/EN** from one catalogue; no Arabic/RTL. (section 19)
-- **Deferred — never build, route, list or tease**: Drug Database and everything under it, prescription/certificate generation, pharma partnerships/sponsored content, pharmacist/other-HCP accounts, user web app, admin mobile app. (section 25)
+- **Grossesse · Allaitement** (ADR-019, Product Owner 4 October 2026): pregnancy and lactation profiles per substance — authored in Admin Web, sourced, reviewed by someone other than the author, immutable once published; conduct and evidence level always separate, never a safe/unsafe verdict.
+- **Deferred — never build, route, list or tease**: the rest of the Drug Database (posology, pediatric dosing, interactions, contraindications, products), prescription/certificate generation, pharma partnerships/sponsored content, pharmacist/other-HCP accounts, user web app, admin mobile app. (section 25)
 
 ## Read map
 

@@ -68,6 +68,11 @@ export const CLIENT_EVENTS = {
       engine: z.string().regex(/^(ts|dart)-\d+\.\d+\.\d+$/),
     }),
   },
+  /** A pregnancy · lactation profile opened on one of its two blocks (ADR-019). */
+  PREGNANCY_VIEWED: {
+    entity: true,
+    properties: z.strictObject({ section: z.enum(['pregnancy', 'lactation']), version }),
+  },
   FAVORITE_ADDED: { entity: true, properties: z.strictObject({ targetType }) },
   FAVORITE_REMOVED: { entity: true, properties: z.strictObject({ targetType }) },
   SUBSCRIPTION_VIEWED: {
@@ -134,9 +139,11 @@ export function checkEvent(
     ? 'REFERENCE_DOCUMENT'
     : event.type.startsWith('CALCULATOR_')
       ? 'CALCULATOR'
-      : event.type.startsWith('FAVORITE_')
-        ? (properties.targetType as string)
-        : null;
+      : event.type === 'PREGNANCY_VIEWED'
+        ? 'SUBSTANCE'
+        : event.type.startsWith('FAVORITE_')
+          ? (properties.targetType as string)
+          : null;
   return {
     ok: true,
     columns: {

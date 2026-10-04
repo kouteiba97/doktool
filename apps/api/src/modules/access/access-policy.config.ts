@@ -41,7 +41,7 @@ const everything: ContentRule = {
 };
 
 export const ACCESS_POLICY = {
-  version: '2026-09-25.1',
+  version: '2026-10-04.1',
   /** A student whose status case is submitted keeps student access this long (section 27). */
   studentPendingWindowDays: 14,
   /** ACTIVE past its period end still counts as live this long, if billing has not moved it to GRACE yet. */
@@ -52,10 +52,12 @@ export const ACCESS_POLICY = {
       content: {
         calculators: demoSamplesOnly('DEMO_LIMIT', 'subscription.plans'),
         referenceDocuments: demoSamplesOnly('DEMO_LIMIT', 'subscription.plans'),
+        pregnancyProfiles: demoSamplesOnly('DEMO_LIMIT', 'subscription.plans'),
       },
       features: {
         search: available,
         'reference.view': available,
+        'pregnancy.view': available,
         'calculator.use': available,
         // Kept on the device only; discarded with the demo (section 27).
         favorites: available,
@@ -71,10 +73,13 @@ export const ACCESS_POLICY = {
         calculators: { scope: 'STUDENT_TIER', lockReason: 'PROFESSIONAL_ONLY', unlockPath: null },
         // ADR-006 Q2 + D2: titles only, except the demo samples.
         referenceDocuments: demoSamplesOnly('PROFESSIONAL_ONLY', null),
+        // ADR-019: like the reference models, names only except the demo samples.
+        pregnancyProfiles: demoSamplesOnly('PROFESSIONAL_ONLY', null),
       },
       features: {
         search: available,
         'reference.view': available,
+        'pregnancy.view': available,
         'calculator.use': available,
         favorites: available,
         'activity.history': available,
@@ -89,10 +94,12 @@ export const ACCESS_POLICY = {
         // ADR-006 Q1: the demo sample set, with a real account.
         calculators: demoSamplesOnly('SUBSCRIPTION_REQUIRED', 'subscription.plans'),
         referenceDocuments: demoSamplesOnly('SUBSCRIPTION_REQUIRED', 'subscription.plans'),
+        pregnancyProfiles: demoSamplesOnly('SUBSCRIPTION_REQUIRED', 'subscription.plans'),
       },
       features: {
         search: available,
         'reference.view': available,
+        'pregnancy.view': available,
         'calculator.use': available,
         favorites: available,
         'activity.history': available,
@@ -102,10 +109,15 @@ export const ACCESS_POLICY = {
       },
     },
     PROFESSIONAL: {
-      content: { calculators: everything, referenceDocuments: everything },
+      content: {
+        calculators: everything,
+        referenceDocuments: everything,
+        pregnancyProfiles: everything,
+      },
       features: {
         search: available,
         'reference.view': available,
+        'pregnancy.view': available,
         'calculator.use': available,
         favorites: available,
         'activity.history': available,
@@ -119,10 +131,12 @@ export const ACCESS_POLICY = {
       content: {
         calculators: { scope: 'NONE', fromRestriction: true },
         referenceDocuments: { scope: 'NONE', fromRestriction: true },
+        pregnancyProfiles: { scope: 'NONE', fromRestriction: true },
       },
       features: {
         search: available,
         'reference.view': { state: 'RESTRICTION' },
+        'pregnancy.view': { state: 'RESTRICTION' },
         'calculator.use': { state: 'RESTRICTION' },
         favorites: { state: 'AVAILABLE', readOnly: true },
         'activity.history': { state: 'AVAILABLE', readOnly: true },

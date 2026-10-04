@@ -163,6 +163,7 @@ export function evaluateAccess(
     content: {
       calculators: contentRule('calculators'),
       referenceDocuments: contentRule('referenceDocuments'),
+      pregnancyProfiles: contentRule('pregnancyProfiles'),
     },
     computedAt: now,
     policyVersion: policy.version,

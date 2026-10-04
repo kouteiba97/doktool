@@ -80,12 +80,13 @@ describe('navigation', () => {
   });
 
   it('keeps the library item active on both type pages and calculators on detail pages', () => {
-    const [library, calculators] = NAVIGATION.find(
+    const [library, calculators, pregnancy] = NAVIGATION.find(
       (group) => group.label === 'admin.nav.library',
     )!.items;
     expect(isActive(library!, '/admin/library/certificates')).toBe(true);
     expect(isActive(calculators!, '/admin/calculators/7f0c')).toBe(true);
     expect(isActive(calculators!, '/admin/calculatorsx')).toBe(false);
+    expect(isActive(pregnancy!, '/admin/pregnancy/0199a1b2')).toBe(true);
   });
 
   it('never redirects outside the console after sign-in', () => {

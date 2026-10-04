@@ -71,6 +71,9 @@ describe('search ranking (section 12)', () => {
     expect(intentOf('angine')).toBeNull();
     expect(withoutIntent('certificat grossesse')).toBe('grossesse');
     expect(withoutIntent('certificats')).toBe('certificats');
+    expect(intentOf('ibuprofène grossesse')).toBe('PREGNANCY');
+    expect(intentOf('allaitement amoxicilline')).toBe('PREGNANCY');
+    expect(withoutIntent('ibuprofène grossesse')).toBe('ibuprofene');
   });
 
   it('suggests close titles when nothing matched', () => {

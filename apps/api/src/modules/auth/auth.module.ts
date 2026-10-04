@@ -4,6 +4,7 @@ import { ActivityModule } from '../activity/index.js';
 import { AuditModule } from '../audit/index.js';
 import { BillingModule } from '../billing/index.js';
 import { NotificationsModule } from '../notifications/index.js';
+import { PregnancyModule } from '../pregnancy/index.js';
 import { UsersModule } from '../users/index.js';
 import { VerificationModule } from '../verification/index.js';
 import { AccountDeletionService } from './account-deletion.service.js';
@@ -31,6 +32,7 @@ import { SessionsService } from './sessions.service.js';
     AuditModule,
     BillingModule,
     NotificationsModule,
+    PregnancyModule,
     VerificationModule,
   ],
   controllers: [AuthController, SessionsController, AccountDeletionController],

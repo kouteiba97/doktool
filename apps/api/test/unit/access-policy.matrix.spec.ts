@@ -202,6 +202,11 @@ describe('tier placement', () => {
         lockReason: reason,
         unlockPath: path,
       });
+      expect(profile.content.pregnancyProfiles).toEqual({
+        scope: 'NONE',
+        lockReason: reason,
+        unlockPath: path,
+      });
     }
   });
 });
@@ -229,6 +234,7 @@ const FEATURES: Record<
     search: A,
     'reference.view': A,
     'calculator.use': A,
+    'pregnancy.view': A,
     favorites: A,
     'activity.history': A,
     'offline.sync': L('DEMO_LIMIT', 'auth.sign-up'),
@@ -239,6 +245,7 @@ const FEATURES: Record<
     search: A,
     'reference.view': A,
     'calculator.use': A,
+    'pregnancy.view': A,
     favorites: A,
     'activity.history': A,
     'offline.sync': A,
@@ -249,6 +256,7 @@ const FEATURES: Record<
     search: A,
     'reference.view': A,
     'calculator.use': A,
+    'pregnancy.view': A,
     favorites: A,
     'activity.history': A,
     'offline.sync': L('SUBSCRIPTION_REQUIRED', 'subscription.plans'),
@@ -259,6 +267,7 @@ const FEATURES: Record<
     search: A,
     'reference.view': A,
     'calculator.use': A,
+    'pregnancy.view': A,
     favorites: A,
     'activity.history': A,
     'offline.sync': A,
@@ -269,6 +278,7 @@ const FEATURES: Record<
     search: A,
     'reference.view': RESTRICTED_LOCK,
     'calculator.use': RESTRICTED_LOCK,
+    'pregnancy.view': RESTRICTED_LOCK,
     favorites: RO,
     'activity.history': RO,
     'offline.sync': RESTRICTED_LOCK,
@@ -284,8 +294,8 @@ describe('tier × feature', () => {
     ),
   );
 
-  it('covers all 5 tiers × 8 features', () => {
-    expect(rows).toHaveLength(40);
+  it('covers all 5 tiers × 9 features', () => {
+    expect(rows).toHaveLength(45);
   });
 
   it.each(rows)('%s · %s', (tier, key, [state, lockReason, unlockPath, readOnly]) => {
@@ -331,6 +341,8 @@ const ITEMS: Record<string, AccessibleItem> = {
   },
   'reference document': { type: 'referenceDocuments', demoSample: false },
   'reference document (demo sample)': { type: 'referenceDocuments', demoSample: true },
+  'pregnancy profile': { type: 'pregnancyProfiles', demoSample: false },
+  'pregnancy profile (demo sample)': { type: 'pregnancyProfiles', demoSample: true },
 };
 
 type Outcome = 'OPEN' | readonly [LockReason, UnlockPath | null];
@@ -346,6 +358,8 @@ const ITEM_MATRIX: Record<Tier, Record<keyof typeof ITEMS, Outcome>> = {
     'calculator (professional tier, demo sample)': 'OPEN',
     'reference document': DEMO_LOCK,
     'reference document (demo sample)': 'OPEN',
+    'pregnancy profile': DEMO_LOCK,
+    'pregnancy profile (demo sample)': 'OPEN',
   },
   STUDENT: {
     'calculator (student tier)': 'OPEN',
@@ -353,6 +367,8 @@ const ITEM_MATRIX: Record<Tier, Record<keyof typeof ITEMS, Outcome>> = {
     'calculator (professional tier, demo sample)': 'OPEN',
     'reference document': PRO_ONLY,
     'reference document (demo sample)': 'OPEN',
+    'pregnancy profile': PRO_ONLY,
+    'pregnancy profile (demo sample)': 'OPEN',
   },
   PROFESSIONAL_UNPAID: {
     'calculator (student tier)': PAY,
@@ -360,6 +376,8 @@ const ITEM_MATRIX: Record<Tier, Record<keyof typeof ITEMS, Outcome>> = {
     'calculator (professional tier, demo sample)': 'OPEN',
     'reference document': PAY,
     'reference document (demo sample)': 'OPEN',
+    'pregnancy profile': PAY,
+    'pregnancy profile (demo sample)': 'OPEN',
   },
   PROFESSIONAL: {
     'calculator (student tier)': 'OPEN',
@@ -367,6 +385,8 @@ const ITEM_MATRIX: Record<Tier, Record<keyof typeof ITEMS, Outcome>> = {
     'calculator (professional tier, demo sample)': 'OPEN',
     'reference document': 'OPEN',
     'reference document (demo sample)': 'OPEN',
+    'pregnancy profile': 'OPEN',
+    'pregnancy profile (demo sample)': 'OPEN',
   },
   RESTRICTED: {
     'calculator (student tier)': VERIFY,
@@ -374,6 +394,8 @@ const ITEM_MATRIX: Record<Tier, Record<keyof typeof ITEMS, Outcome>> = {
     'calculator (professional tier, demo sample)': VERIFY,
     'reference document': VERIFY,
     'reference document (demo sample)': VERIFY,
+    'pregnancy profile': VERIFY,
+    'pregnancy profile (demo sample)': VERIFY,
   },
 };
 
@@ -382,8 +404,8 @@ describe('tier × item', () => {
     Object.entries(items).map(([item, outcome]) => [tier as Tier, item, outcome] as const),
   );
 
-  it('covers all 5 tiers × 5 item kinds', () => {
-    expect(rows).toHaveLength(25);
+  it('covers all 5 tiers × 7 item kinds', () => {
+    expect(rows).toHaveLength(35);
   });
 
   it.each(rows)('%s · %s', (tier, itemName, outcome) => {
@@ -401,6 +423,6 @@ describe('profile envelope', () => {
     const profile = evaluateAccess(REPRESENTATIVE.PROFESSIONAL, NOW);
     expect(profile.policyVersion).toBe(ACCESS_POLICY.version);
     expect(profile.computedAt).toEqual(NOW);
-    expect(new Set(profile.features.map((f) => f.key)).size).toBe(8);
+    expect(new Set(profile.features.map((f) => f.key)).size).toBe(9);
   });
 });

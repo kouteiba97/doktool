@@ -1,9 +1,14 @@
 // V1 search ranking (section 12): exact → prefix → synonym → fuzzy, bilingual, accent-insensitive.
 // Pure functions, so the ranking contract is unit-tested apart from the database.
 
-export type SearchType = 'ORDONNANCE' | 'CERTIFICATE' | 'CALCULATOR';
+export type SearchType = 'ORDONNANCE' | 'CERTIFICATE' | 'CALCULATOR' | 'PREGNANCY';
 
-export const SEARCH_TYPES: readonly SearchType[] = ['ORDONNANCE', 'CERTIFICATE', 'CALCULATOR'];
+export const SEARCH_TYPES: readonly SearchType[] = [
+  'ORDONNANCE',
+  'CERTIFICATE',
+  'CALCULATOR',
+  'PREGNANCY',
+];
 
 export interface SearchEntry {
   type: SearchType;
@@ -136,6 +141,16 @@ const INTENT: Record<SearchType, string[]> = {
   ORDONNANCE: ['ordonnance', 'ordonnances', 'ordo', 'prescription', 'prescriptions'],
   CERTIFICATE: ['certificat', 'certificats', 'certificate', 'certificates', 'attestation', 'arret'],
   CALCULATOR: ['calcul', 'calculateur', 'calculateurs', 'calculator', 'calculators', 'score'],
+  PREGNANCY: [
+    'grossesse',
+    'enceinte',
+    'allaitement',
+    'allaiter',
+    'lactation',
+    'pregnancy',
+    'pregnant',
+    'breastfeeding',
+  ],
 };
 
 /** A query naming a category puts that group first (section 12 « intent boosts »). */
@@ -148,12 +163,13 @@ export function intentOf(query: string): SearchType | null {
 }
 
 /**
- * The query without the words naming a category, so « certificat grossesse » matches the model
- * « Grossesse … » in the certificates group. A query made only of such words stays whole.
+ * The query without the words naming the detected category, so « certificat grossesse » matches
+ * the model « Grossesse … » in the certificates group and « ibuprofène grossesse » matches the
+ * substance. A query made only of such words stays whole.
  */
-export function withoutIntent(query: string): string {
-  const all = Object.values(INTENT).flat();
-  const kept = words(query).filter((word) => !all.includes(word));
+export function withoutIntent(query: string, intent: SearchType | null = intentOf(query)): string {
+  if (!intent) return normalize(query);
+  const kept = words(query).filter((word) => !INTENT[intent].includes(word));
   return kept.length > 0 ? kept.join(' ') : normalize(query);
 }
 

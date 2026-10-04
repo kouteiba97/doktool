@@ -62,8 +62,8 @@ export class SearchHitDto {
   @ApiProperty({ type: ItemAccessDto })
   access!: ItemAccessDto;
 
-  static from(hit: SearchHit): SearchHitDto {
-    return { ...hit };
+  static from({ terms: _terms, ...hit }: SearchHit): SearchHitDto {
+    return hit;
   }
 }
 
