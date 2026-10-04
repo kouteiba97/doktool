@@ -7,6 +7,9 @@ import '../../core/api/generated/models/search_type.dart';
 /// Screens a demo can open or be stopped at (DEMO_FEATURE_VIEWED `module`, API `DEMO_MODULES`).
 enum DemoModule { home, search, library, reference, calculator, favorites, offline, subscription, profile }
 
+/// The two blocks of a pregnancy · lactation profile (PREGNANCY_VIEWED `section`).
+enum PregnancySection { pregnancy, lactation }
+
 /// The plan screens SUBSCRIPTION_VIEWED reports.
 enum SubscriptionScreen { plans, subscription, review }
 
@@ -73,6 +76,16 @@ final class AnalyticsEvent {
         'targetType': targetType.json,
       }, entityId: id);
 
+  /// A pregnancy · lactation profile was read on one of its two blocks (ADR-019).
+  factory AnalyticsEvent.pregnancyViewed({
+    required String id,
+    required PregnancySection section,
+    required int version,
+  }) => AnalyticsEvent._(ClientAnalyticsEventType.pregnancyViewed, {
+    'section': section.name,
+    'version': version,
+  }, entityId: id);
+
   /// A plan screen was shown.
   factory AnalyticsEvent.subscriptionViewed(SubscriptionScreen screen) =>
       AnalyticsEvent._(ClientAnalyticsEventType.subscriptionViewed, {'screen': screen.name});
@@ -135,6 +148,8 @@ final class AnalyticsEvent {
       ]),
       ClientAnalyticsEventType.demoFeatureViewed =>
         oneOf(p['module'], DemoModule.values.map((module) => module.name)) && p['locked'] is bool,
+      ClientAnalyticsEventType.pregnancyViewed =>
+        oneOf(p['section'], PregnancySection.values.map((section) => section.name)) && version(p['version']),
       ClientAnalyticsEventType.$unknown => false,
     };
     return keysOk && (entityId == null ? !_hasEntity : _hasEntity && _uuid.hasMatch(entityId!));
@@ -146,7 +161,8 @@ final class AnalyticsEvent {
     ClientAnalyticsEventType.calculatorStarted ||
     ClientAnalyticsEventType.calculatorCompleted ||
     ClientAnalyticsEventType.favoriteAdded ||
-    ClientAnalyticsEventType.favoriteRemoved => true,
+    ClientAnalyticsEventType.favoriteRemoved ||
+    ClientAnalyticsEventType.pregnancyViewed => true,
     _ => false,
   };
 }

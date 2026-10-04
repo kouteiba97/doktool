@@ -31,3 +31,4 @@ swagger_parser:
     - activity
     - subscription
     - analytics
+    - pregnancy

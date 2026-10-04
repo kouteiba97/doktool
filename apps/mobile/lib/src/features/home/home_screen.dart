@@ -49,8 +49,10 @@ class HomeScreen extends ConsumerWidget {
       (LibrarySection.ordonnances, l10n.typesOrdonnances, LucideIcons.fileText),
       (LibrarySection.certificates, l10n.typesCertificates, LucideIcons.fileBadge),
       (LibrarySection.calculators, l10n.typesCalculators, LucideIcons.calculator),
+      (LibrarySection.pregnancy, l10n.typesPregnancy, LucideIcons.baby),
     ];
-    if (studentTier) quick.insert(0, quick.removeLast());
+    // Students lead with the calculators, the content open to them (ADR-006 Q2).
+    if (studentTier) quick.insert(0, quick.removeAt(2));
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -235,7 +237,16 @@ class _QuickActions extends StatelessWidget {
                       children: [
                         Icon(icon, color: colors.brand),
                         const SizedBox(height: DtSpace.s1),
-                        Text(label, style: DtType.label.copyWith(color: colors.ink)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: DtSpace.s1),
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: DtType.label.copyWith(color: colors.ink),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -343,6 +354,7 @@ class _RecentsAndFavorites extends ConsumerWidget {
             (LibrarySection.ordonnances, l10n.homeStartOrdonnances, LucideIcons.fileText),
             (LibrarySection.certificates, l10n.homeStartCertificates, LucideIcons.fileBadge),
             (LibrarySection.calculators, l10n.homeStartCalculators, LucideIcons.calculator),
+            (LibrarySection.pregnancy, l10n.homeStartPregnancy, LucideIcons.baby),
           ])
             ListTile(
               contentPadding: EdgeInsets.zero,

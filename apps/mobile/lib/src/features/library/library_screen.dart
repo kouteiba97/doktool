@@ -17,6 +17,7 @@ import '../../ui/segmented_control.dart';
 import '../../ui/skeleton.dart';
 import '../../ui/text_match.dart';
 import '../../ui/tokens.dart';
+import '../../core/api/generated/models/substance_item_dto.dart';
 import 'library_data.dart';
 import '../../core/api/generated/models/favorite_target_type.dart';
 import '../activity/activity_screen.dart';
@@ -87,6 +88,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       LibrarySection.ordonnances => l10n.librarySearchOrdonnances,
       LibrarySection.certificates => l10n.librarySearchCertificates,
       LibrarySection.calculators => l10n.librarySearchCalculators,
+      LibrarySection.pregnancy => l10n.librarySearchPregnancy,
     };
     return Scaffold(
       backgroundColor: colors.bg,
@@ -109,6 +111,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 DtSegment(value: LibrarySection.ordonnances, label: l10n.typesOrdonnances),
                 DtSegment(value: LibrarySection.certificates, label: l10n.typesCertificates),
                 DtSegment(value: LibrarySection.calculators, label: l10n.typesCalculators),
+                DtSegment(value: LibrarySection.pregnancy, label: l10n.typesPregnancy),
               ],
             ),
           ),
@@ -133,9 +136,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             ),
           ),
           Expanded(
-            child: section == LibrarySection.calculators
-                ? _CalculatorList(query: _query.text)
-                : _ReferenceList(section: section, query: _query.text),
+            child: switch (section) {
+              LibrarySection.calculators => _CalculatorList(query: _query.text),
+              LibrarySection.pregnancy => _SubstanceList(query: _query.text),
+              _ => _ReferenceList(section: section, query: _query.text),
+            },
           ),
         ],
       ),
@@ -219,6 +224,40 @@ class _CalculatorList extends ConsumerWidget {
               actionLabel: l10n.libraryOpen,
               highlight: query,
               onOpen: () => context.push(Routes.calculator(item.slug)),
+            ),
+      ],
+      total: items.value?.length ?? 0,
+    );
+  }
+}
+
+/// « Grossesse · Allaitement »: substances A–Z, found by name or synonym (ADR-019).
+class _SubstanceList extends ConsumerWidget {
+  const _SubstanceList({required this.query});
+
+  final String query;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final items = ref.watch(substanceListProvider);
+    return _ListState(
+      loading: items.isLoading && !items.hasValue,
+      error: items.hasError && !items.hasValue ? ApiError.from(items.error!) : null,
+      onRetry: () => ref.invalidate(substanceListProvider),
+      onRefresh: () => ref.refresh(substanceListProvider.future),
+      emptyText: l10n.libraryEmptyPregnancy,
+      query: query,
+      rows: [
+        for (final item in items.value ?? const <SubstanceItemDto>[])
+          if (matchesAllWords(query, [item.nameFr, item.nameEn, ...item.synonyms]))
+            ContentRow(
+              icon: LucideIcons.baby,
+              title: localizedTitle(context, item.nameFr, item.nameEn),
+              access: item.access,
+              actionLabel: l10n.libraryOpen,
+              highlight: query,
+              onOpen: () => context.push(Routes.substance(item.id)),
             ),
       ],
       total: items.value?.length ?? 0,

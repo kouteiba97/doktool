@@ -150,6 +150,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     ref.read(activityRecorderProvider).search(_query.text);
     if (hit.type == SearchType.calculator && hit.slug != null) {
       context.push(Routes.calculator(hit.slug!));
+    } else if (hit.type == SearchType.pregnancy) {
+      context.push(Routes.substance(hit.id));
     } else {
       openReference(
         context,
@@ -162,6 +164,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   String _typeLabel(AppLocalizations l10n, SearchType type) => switch (type) {
     SearchType.ordonnance => l10n.typesOrdonnances,
     SearchType.certificate => l10n.typesCertificates,
+    SearchType.pregnancy => l10n.typesPregnancy,
     _ => l10n.typesCalculators,
   };
 
@@ -229,7 +232,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: DtSpace.s4),
                   children: [
                     _Chip(label: l10n.searchAll, selected: _filter == null, onTap: () => _setFilter(null)),
-                    for (final type in [SearchType.ordonnance, SearchType.certificate, SearchType.calculator])
+                    for (final type in [
+                      SearchType.ordonnance,
+                      SearchType.certificate,
+                      SearchType.calculator,
+                      SearchType.pregnancy,
+                    ])
                       if ((_totals[type] ?? 0) > 0)
                         _Chip(
                           label: '${_typeLabel(l10n, type)} · ${_totals[type]}',
@@ -314,12 +322,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               icon: switch (hit.type) {
                 SearchType.calculator => LucideIcons.calculator,
                 SearchType.certificate => LucideIcons.fileBadge,
+                SearchType.pregnancy => LucideIcons.baby,
                 _ => LucideIcons.fileText,
               },
               title: localizedTitle(context, hit.titleFr, hit.titleEn),
               subtitle: hit.purposeFr == null ? null : localizedTitle(context, hit.purposeFr!, hit.purposeEn),
               access: hit.access,
-              actionLabel: hit.type == SearchType.calculator ? l10n.libraryOpen : l10n.libraryViewModel,
+              actionLabel: hit.type == SearchType.calculator || hit.type == SearchType.pregnancy
+                  ? l10n.libraryOpen
+                  : l10n.libraryViewModel,
               highlight: query,
               onOpen: () => _open(hit),
             ),
@@ -413,6 +424,7 @@ class _EmptyQuery extends ConsumerWidget {
               (LibrarySection.ordonnances, l10n.typesOrdonnances),
               (LibrarySection.certificates, l10n.typesCertificates),
               (LibrarySection.calculators, l10n.typesCalculators),
+              (LibrarySection.pregnancy, l10n.typesPregnancy),
             ])
               ActionChip(
                 label: Text(label, style: DtType.label.copyWith(color: colors.inkSecondary)),

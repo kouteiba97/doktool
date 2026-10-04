@@ -20,6 +20,7 @@ import '../features/onboarding/sign_up_screen.dart';
 import '../features/onboarding/welcome_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/reference/reference_viewer_screen.dart';
+import '../features/pregnancy/substance_screen.dart';
 import '../features/search/search_screen.dart';
 import '../features/settings/delete_account_screen.dart';
 import '../features/settings/settings_screen.dart';
@@ -71,6 +72,7 @@ abstract final class Routes {
   static String library(LibrarySection section) => '/library/${section.slug}';
   static String reference(String id) => '/reference/$id';
   static String calculator(String slug) => '/calculators/$slug';
+  static String substance(String id) => '/pregnancy/$id';
   static String subscriptionReview(String planId) => '/subscription/review/$planId';
   static String subscriptionResult(String transactionId) => '/subscription/result/$transactionId';
 
@@ -176,6 +178,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/reference/:id',
         builder: (context, state) => ReferenceViewerScreen(id: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/pregnancy/:id',
+        builder: (context, state) => SubstanceScreen(id: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/calculators/:slug',

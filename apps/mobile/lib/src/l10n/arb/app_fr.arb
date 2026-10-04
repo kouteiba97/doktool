@@ -524,6 +524,10 @@
   "@homeStartOrdonnances": {
     "description": "mobile.home.startOrdonnances"
   },
+  "homeStartPregnancy": "Grossesse et allaitement",
+  "@homeStartPregnancy": {
+    "description": "mobile.home.startPregnancy"
+  },
   "homeStartTitle": "Commencer",
   "@homeStartTitle": {
     "description": "mobile.home.startTitle"
@@ -556,6 +560,10 @@
   "@libraryEmptyCalculators": {
     "description": "mobile.library.emptyCalculators"
   },
+  "libraryEmptyPregnancy": "Aucun profil publié pour l'instant.",
+  "@libraryEmptyPregnancy": {
+    "description": "mobile.library.emptyPregnancy"
+  },
   "libraryNoResults": "Aucun résultat pour « {query} ».",
   "@libraryNoResults": {
     "description": "mobile.library.noResults",
@@ -580,6 +588,10 @@
   "librarySearchOrdonnances": "Rechercher une ordonnance",
   "@librarySearchOrdonnances": {
     "description": "mobile.library.searchOrdonnances"
+  },
+  "librarySearchPregnancy": "Rechercher une substance",
+  "@librarySearchPregnancy": {
+    "description": "mobile.library.searchPregnancy"
   },
   "libraryTitle": "Bibliothèque",
   "@libraryTitle": {
@@ -1106,6 +1118,252 @@
   "plansVerificationRequired": "Vérification requise",
   "@plansVerificationRequired": {
     "description": "mobile.plans.verificationRequired"
+  },
+  "pregnancyAlternatives": "Alternatives documentées",
+  "@pregnancyAlternatives": {
+    "description": "mobile.pregnancy.alternatives"
+  },
+  "pregnancyBlockMissing": "Ce bloc n'est pas encore rédigé.",
+  "@pregnancyBlockMissing": {
+    "description": "mobile.pregnancy.blockMissing"
+  },
+  "pregnancyByPeriod": "Par période",
+  "@pregnancyByPeriod": {
+    "description": "mobile.pregnancy.byPeriod"
+  },
+  "pregnancyConduct": "Conduite",
+  "@pregnancyConduct": {
+    "description": "mobile.pregnancy.conduct"
+  },
+  "pregnancyConductAvoid": "Éviter",
+  "@pregnancyConductAvoid": {
+    "description": "mobile.pregnancy.conductAvoid"
+  },
+  "pregnancyConductContraindicated": "Contre-indiqué",
+  "@pregnancyConductContraindicated": {
+    "description": "mobile.pregnancy.conductContraindicated"
+  },
+  "pregnancyConductOccasional": "Prise ponctuelle",
+  "@pregnancyConductOccasional": {
+    "description": "mobile.pregnancy.conductOccasional"
+  },
+  "pregnancyConflict": "Sources divergentes : {first} et {second}",
+  "@pregnancyConflict": {
+    "description": "mobile.pregnancy.conflict",
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "second": {
+        "type": "String"
+      }
+    }
+  },
+  "pregnancyConsiderations": "Considérations cliniques",
+  "@pregnancyConsiderations": {
+    "description": "mobile.pregnancy.considerations"
+  },
+  "pregnancyEvidence": "Niveau de preuve",
+  "@pregnancyEvidence": {
+    "description": "mobile.pregnancy.evidence"
+  },
+  "pregnancyEvidence0": "Absence de données",
+  "@pregnancyEvidence0": {
+    "description": "mobile.pregnancy.evidence0"
+  },
+  "pregnancyEvidence1": "Données très limitées",
+  "@pregnancyEvidence1": {
+    "description": "mobile.pregnancy.evidence1"
+  },
+  "pregnancyEvidence2": "Données limitées",
+  "@pregnancyEvidence2": {
+    "description": "mobile.pregnancy.evidence2"
+  },
+  "pregnancyEvidence3": "Données modérées",
+  "@pregnancyEvidence3": {
+    "description": "mobile.pregnancy.evidence3"
+  },
+  "pregnancyEvidence4": "Données robustes",
+  "@pregnancyEvidence4": {
+    "description": "mobile.pregnancy.evidence4"
+  },
+  "pregnancyGone": "Ce profil n'est plus disponible.",
+  "@pregnancyGone": {
+    "description": "mobile.pregnancy.gone"
+  },
+  "pregnancyHalfLife": "Demi-vie maternelle",
+  "@pregnancyHalfLife": {
+    "description": "mobile.pregnancy.halfLife"
+  },
+  "pregnancyInfantExposure": "Exposition du nourrisson",
+  "@pregnancyInfantExposure": {
+    "description": "mobile.pregnancy.infantExposure"
+  },
+  "pregnancyMeta": "Grossesse · Allaitement · v{version}",
+  "@pregnancyMeta": {
+    "description": "mobile.pregnancy.meta",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "pregnancyMeterLabel": "Niveau de preuve : {word}, {level} sur 4",
+  "@pregnancyMeterLabel": {
+    "description": "mobile.pregnancy.meterLabel",
+    "placeholders": {
+      "word": {
+        "type": "String"
+      },
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "pregnancyNoDataBody": "Ce n'est pas une preuve d'innocuité.",
+  "@pregnancyNoDataBody": {
+    "description": "mobile.pregnancy.noDataBody"
+  },
+  "pregnancyNoDataTitle": "Absence de données",
+  "@pregnancyNoDataTitle": {
+    "description": "mobile.pregnancy.noDataTitle"
+  },
+  "pregnancyOnline": "Les profils grossesse et allaitement s'ouvrent avec une connexion.",
+  "@pregnancyOnline": {
+    "description": "mobile.pregnancy.online"
+  },
+  "pregnancyPeriodMissing": "Cette période n'est pas encore renseignée.",
+  "@pregnancyPeriodMissing": {
+    "description": "mobile.pregnancy.periodMissing"
+  },
+  "pregnancyPeriods": "Périodes de la grossesse",
+  "@pregnancyPeriods": {
+    "description": "mobile.pregnancy.periods"
+  },
+  "pregnancyPeripartum": "Péri-partum",
+  "@pregnancyPeripartum": {
+    "description": "mobile.pregnancy.peripartum"
+  },
+  "pregnancyReasonIncorrect": "Information incorrecte",
+  "@pregnancyReasonIncorrect": {
+    "description": "mobile.pregnancy.reasonIncorrect"
+  },
+  "pregnancyReasonOther": "Autre",
+  "@pregnancyReasonOther": {
+    "description": "mobile.pregnancy.reasonOther"
+  },
+  "pregnancyReasonOutdated": "Information dépassée",
+  "@pregnancyReasonOutdated": {
+    "description": "mobile.pregnancy.reasonOutdated"
+  },
+  "pregnancyReasonUnclear": "Formulation peu claire",
+  "@pregnancyReasonUnclear": {
+    "description": "mobile.pregnancy.reasonUnclear"
+  },
+  "pregnancyReport": "Signaler une erreur",
+  "@pregnancyReport": {
+    "description": "mobile.pregnancy.report"
+  },
+  "pregnancyReportAboutLactation": "À propos du bloc Allaitement de ce profil.",
+  "@pregnancyReportAboutLactation": {
+    "description": "mobile.pregnancy.reportAboutLactation"
+  },
+  "pregnancyReportAboutPregnancy": "À propos du bloc Grossesse de ce profil.",
+  "@pregnancyReportAboutPregnancy": {
+    "description": "mobile.pregnancy.reportAboutPregnancy"
+  },
+  "pregnancyReportComment": "Commentaire (facultatif)",
+  "@pregnancyReportComment": {
+    "description": "mobile.pregnancy.reportComment"
+  },
+  "pregnancyReportNoPatientData": "N'indiquez aucune donnée patient.",
+  "@pregnancyReportNoPatientData": {
+    "description": "mobile.pregnancy.reportNoPatientData"
+  },
+  "pregnancyReportSend": "Envoyer",
+  "@pregnancyReportSend": {
+    "description": "mobile.pregnancy.reportSend"
+  },
+  "pregnancyReportSent": "Merci. L'équipe clinique va vérifier.",
+  "@pregnancyReportSent": {
+    "description": "mobile.pregnancy.reportSent"
+  },
+  "pregnancyReportedEffects": "Effets rapportés",
+  "@pregnancyReportedEffects": {
+    "description": "mobile.pregnancy.reportedEffects"
+  },
+  "pregnancyReviewed": "Revue le {date} · {name}",
+  "@pregnancyReviewed": {
+    "description": "mobile.pregnancy.reviewed",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pregnancyRid": "Dose relative (RID)",
+  "@pregnancyRid": {
+    "description": "mobile.pregnancy.rid"
+  },
+  "pregnancyRiskContext": "Contexte de risque",
+  "@pregnancyRiskContext": {
+    "description": "mobile.pregnancy.riskContext"
+  },
+  "pregnancySectionLactation": "Allaitement",
+  "@pregnancySectionLactation": {
+    "description": "mobile.pregnancy.sectionLactation"
+  },
+  "pregnancySectionPregnancy": "Grossesse",
+  "@pregnancySectionPregnancy": {
+    "description": "mobile.pregnancy.sectionPregnancy"
+  },
+  "pregnancySources": "Sources : {sources}",
+  "@pregnancySources": {
+    "description": "mobile.pregnancy.sources",
+    "placeholders": {
+      "sources": {
+        "type": "String"
+      }
+    }
+  },
+  "pregnancySpecialPopulations": "Populations particulières",
+  "@pregnancySpecialPopulations": {
+    "description": "mobile.pregnancy.specialPopulations"
+  },
+  "pregnancyT1": "1er trimestre",
+  "@pregnancyT1": {
+    "description": "mobile.pregnancy.t1"
+  },
+  "pregnancyT1Short": "1er trim.",
+  "@pregnancyT1Short": {
+    "description": "mobile.pregnancy.t1Short"
+  },
+  "pregnancyT2": "2e trimestre",
+  "@pregnancyT2": {
+    "description": "mobile.pregnancy.t2"
+  },
+  "pregnancyT2Short": "2e trim.",
+  "@pregnancyT2Short": {
+    "description": "mobile.pregnancy.t2Short"
+  },
+  "pregnancyT3": "3e trimestre",
+  "@pregnancyT3": {
+    "description": "mobile.pregnancy.t3"
+  },
+  "pregnancyT3Short": "3e trim.",
+  "@pregnancyT3Short": {
+    "description": "mobile.pregnancy.t3Short"
+  },
+  "pregnancyUnderReview": "Une version plus récente est en relecture. Celle-ci reste la référence.",
+  "@pregnancyUnderReview": {
+    "description": "mobile.pregnancy.underReview"
+  },
+  "pregnancyUnlock": "Comment y accéder",
+  "@pregnancyUnlock": {
+    "description": "mobile.pregnancy.unlock"
   },
   "profileActivity": "Activité et favoris",
   "@profileActivity": {
@@ -1689,6 +1947,10 @@
   "typesOrdonnances": "Ordonnances",
   "@typesOrdonnances": {
     "description": "mobile.types.ordonnances"
+  },
+  "typesPregnancy": "Grossesse",
+  "@typesPregnancy": {
+    "description": "mobile.types.pregnancy"
   },
   "verificationActionAppeal": "Faire un recours",
   "@verificationActionAppeal": {

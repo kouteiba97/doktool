@@ -5,14 +5,16 @@ import '../../core/api/api_error.dart';
 import '../../core/api/generated/models/calculator_summary_dto.dart';
 import '../../core/api/generated/models/reference_document_type.dart';
 import '../../core/api/generated/models/reference_item_dto.dart';
+import '../../core/api/generated/models/substance_item_dto.dart';
 import '../../core/auth/session_controller.dart';
 import '../offline/offline_store.dart';
 
-/// The three V1 library sections (Lock L32): nothing else is ever listed.
+/// The library sections: the three V1 types and « Grossesse · Allaitement » (ADR-019).
 enum LibrarySection {
   ordonnances('ordonnances'),
   certificates('certificates'),
-  calculators('calculators');
+  calculators('calculators'),
+  pregnancy('grossesse');
 
   const LibrarySection(this.slug);
 
@@ -24,7 +26,7 @@ enum LibrarySection {
   ReferenceDocumentType? get documentType => switch (this) {
     LibrarySection.ordonnances => ReferenceDocumentType.ordonnance,
     LibrarySection.certificates => ReferenceDocumentType.certificate,
-    LibrarySection.calculators => null,
+    LibrarySection.calculators || LibrarySection.pregnancy => null,
   };
 }
 
@@ -56,4 +58,11 @@ final calculatorListProvider = FutureProvider<List<CalculatorSummaryDto>>((ref) 
     if (offline.isEmpty) rethrow;
     return offline;
   }
+});
+
+/// « Grossesse · Allaitement »: substances with a published profile, each with the server's access
+/// decision. Profiles are read online (ADR-019).
+final substanceListProvider = FutureProvider<List<SubstanceItemDto>>((ref) async {
+  ref.watch(sessionControllerProvider);
+  return ref.watch(apiProvider).pregnancy.pregnancyControllerList();
 });
