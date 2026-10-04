@@ -41,6 +41,12 @@
    - A forged, replayed or tampered body can never activate a subscription.
    - The endpoint answers `401` without a valid signature, `404` for an unconfigured gateway, and `200` otherwise, whatever the order (so the gateway does not retry forever).
 
+7. **Paid is not always access.** When a gateway confirms a payment, the transaction is recorded as `SUCCEEDED`: the money was received. Access is withheld, and the API logs an error for the Super Admin, when either:
+   - the account was deleted meanwhile (ADR-018);
+   - the amount received is below the price.
+
+   In both cases `metadata.accessWithheld` is `ACCOUNT_DELETED` or `AMOUNT_SHORT`. Any correction is an exceptional adjustment (ADR-005).
+
 ## Consequences
 
 - **Unchanged:**

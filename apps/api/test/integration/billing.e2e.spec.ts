@@ -230,6 +230,24 @@ describe('checkout', () => {
     expect(await tier(auth)).toBe('PROFESSIONAL');
   });
 
+  it('records a payment confirmed after account deletion without granting access (ADR-018)', async () => {
+    const { userId, auth } = await userActor(app, 'PROFESSIONAL_UNPAID');
+    const started = await checkout(auth).expect(200);
+    await app
+      .http()
+      .post('/v1/me/deletion')
+      .set(auth)
+      .send({ password: 'user password for tests' })
+      .expect(204);
+    await payOnProviderPage(started.body.redirectUrl, 'PAID');
+    const stored = await app
+      .prisma()
+      .transaction.findUniqueOrThrow({ where: { transactionId: started.body.transactionId } });
+    expect(stored.status).toBe('SUCCEEDED');
+    expect(stored.metadata).toMatchObject({ accessWithheld: 'ACCOUNT_DELETED' });
+    expect(await app.prisma().subscription.count({ where: { userId, status: 'ACTIVE' } })).toBe(0);
+  });
+
   it('requires the no-refund acknowledgement in its current version', async () => {
     const { auth } = await userActor(app, 'PROFESSIONAL_UNPAID');
     await checkout(auth, { acknowledged: false }).expect(400);

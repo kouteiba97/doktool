@@ -384,6 +384,11 @@ export class CheckoutService {
         ? outcome.feesMinor
         : null;
     const plan = await this.plans.byId(transaction.planId);
+    // The money is recorded whatever happens; access is granted only for the full price and to
+    // an account that still exists (ADR-018). Anything else is left to the Super Admin.
+    const deleted = (await this.users.getAccessFacts(transaction.userId))?.status === 'DELETED';
+    const shortfall = paidAmountMinor < transaction.amountMinor;
+    const withheld = deleted ? 'ACCOUNT_DELETED' : shortfall ? 'AMOUNT_SHORT' : null;
     const settled = await this.prisma.$transaction(async (tx) => {
       const { count } = await tx.transaction.updateMany({
         where: { id: transaction.id, status: 'PENDING' },
@@ -397,10 +402,12 @@ export class CheckoutService {
             ...metadataOf(transaction),
             provider: details,
             ...(paidAmountMinor !== transaction.amountMinor ? { paidAmountMinor } : {}),
+            ...(withheld ? { accessWithheld: withheld } : {}),
           },
         },
       });
       if (count !== 1) return null;
+      if (withheld) return { started: false, withheld };
       const subscription = await tx.subscription.findUniqueOrThrow({
         where: { id: transaction.subscriptionId },
       });
@@ -423,9 +430,13 @@ export class CheckoutService {
           graceEndsAt: null,
         },
       });
-      return { started };
+      return { started, withheld: null };
     });
-    if (settled) {
+    if (settled?.withheld) {
+      this.logger.error(
+        `${transaction.transactionId}: paid but access withheld (${settled.withheld}); review it in Admin Web`,
+      );
+    } else if (settled) {
       if (paidAmountMinor !== transaction.amountMinor) {
         this.logger.error(
           `${transaction.transactionId}: provider amount ${paidAmountMinor} differs from ${transaction.amountMinor}`,
