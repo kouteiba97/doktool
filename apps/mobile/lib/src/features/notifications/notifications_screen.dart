@@ -82,12 +82,24 @@ String _date(String locale, String? iso) {
   return parsed == null ? '' : DateFormat.yMMMMd(locale).format(parsed.toLocal());
 }
 
-/// ScreenNotifications: « Nouveau » then « Plus tôt », with « Tout lire ».
-class NotificationsScreen extends ConsumerWidget {
+/// ScreenNotifications: « Nouveau » then « Plus tôt », with « Tout lire ». The list is fetched
+/// again each time the screen opens (the bell's count may be from earlier) and on pull.
+class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.invalidate(notificationsProvider));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.colors;
     final page = ref.watch(notificationsProvider);
@@ -128,8 +140,20 @@ class NotificationsScreen extends ConsumerWidget {
               ),
             )
           : items.isEmpty
-          ? Center(
-              child: Text(l10n.notificationsEmpty, style: DtType.body.copyWith(color: colors.inkMuted)),
+          ? RefreshIndicator(
+              onRefresh: () => ref.refresh(notificationsProvider.future),
+              child: ListView(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(DtSpace.s12),
+                    child: Text(
+                      l10n.notificationsEmpty,
+                      textAlign: TextAlign.center,
+                      style: DtType.body.copyWith(color: colors.inkMuted),
+                    ),
+                  ),
+                ],
+              ),
             )
           : RefreshIndicator(
               onRefresh: () => ref.refresh(notificationsProvider.future),

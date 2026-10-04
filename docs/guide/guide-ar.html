@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>دليل DokTool الشامل</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand: #0a5c78;
+    --brand-mid: #2b7a96;
+    --brand-soft: #e3f0f4;
+    --ink: #0f2533;
+    --ink-2: #3d5566;
+    --muted: #6b8090;
+    --line: #d7e3ea;
+    --bg: #f4f7f9;
+    --ok: #1d7a4f;
+    --ok-soft: #e4f4ec;
+    --warn: #9a5b00;
+    --warn-soft: #fdf1dc;
+    --crit: #a8322d;
+    --crit-soft: #fbe6e4;
+  }
+  @page { size: A4; margin: 16mm 15mm 18mm 15mm; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    margin: 0;
+    font-family: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif;
+    color: var(--ink);
+    font-size: 11.2pt;
+    line-height: 1.75;
+    background: #fff;
+  }
+  .fr { font-family: 'Segoe UI', Arial, sans-serif; unicode-bidi: isolate; direction: ltr; color: var(--brand); font-weight: 600; }
+  .code { font-family: Consolas, 'Courier New', monospace; direction: ltr; unicode-bidi: isolate; background: #eef3f6; padding: 0 4px; border-radius: 4px; font-size: 9.8pt; }
+  h1, h2, h3, h4 { line-height: 1.35; margin: 0; }
+  h2 {
+    font-size: 19pt; color: var(--brand); margin: 0 0 10px;
+    padding-bottom: 8px; border-bottom: 3px solid var(--brand-soft);
+  }
+  h3 { font-size: 13.5pt; margin: 18px 0 6px; color: var(--ink); }
+  h4 { font-size: 11.5pt; margin: 12px 0 4px; color: var(--brand); }
+  p { margin: 6px 0 8px; }
+  ul, ol { margin: 4px 0 10px; padding-inline-start: 22px; }
+  li { margin: 3px 0; }
+  .chapter { page-break-before: always; }
+  .num { display: inline-block; min-width: 30px; height: 30px; border-radius: 50%; background: var(--brand); color: #fff; text-align: center; line-height: 30px; font-size: 13pt; margin-inline-end: 8px; }
+
+  /* Cover */
+  .cover {
+    height: 262mm; border-radius: 18px; padding: 34mm 18mm 0;
+    background: linear-gradient(180deg, #0a5c78 0%, #2b7a96 52%, #f4f7f9 100%);
+    color: #fff; position: relative; overflow: hidden;
+  }
+  .cover .badge { display: inline-block; padding: 6px 14px; border-radius: 999px; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35); font-size: 10pt; }
+  .cover h1 { font-size: 34pt; margin: 18px 0 8px; font-weight: 700; }
+  .cover .sub { font-size: 14pt; opacity: .95; max-width: 150mm; }
+  .cover .glass {
+    position: absolute; inset-inline: 18mm; bottom: 26mm; border-radius: 18px; padding: 16px 20px;
+    background: rgba(255,255,255,.88); border: 1px solid #fff; color: var(--ink);
+    box-shadow: 0 10px 30px rgba(10,92,120,.18);
+  }
+  .cover .glass b { color: var(--brand); }
+  .cover .logo { width: 64px; height: 64px; border-radius: 18px; background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.4); display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 700; }
+
+  /* Boxes */
+  .box { border-radius: 12px; padding: 10px 14px; margin: 10px 0; border: 1px solid var(--line); background: #fbfdfe; page-break-inside: avoid; }
+  .box.info { background: var(--brand-soft); border-color: #c4dde6; }
+  .box.ok { background: var(--ok-soft); border-color: #bfe3cf; }
+  .box.warn { background: var(--warn-soft); border-color: #f1d7a8; }
+  .box.crit { background: var(--crit-soft); border-color: #f0c4c0; }
+  .box .t { font-weight: 700; display: block; margin-bottom: 2px; }
+
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 10pt; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 6px 8px; vertical-align: top; text-align: start; }
+  th { background: var(--brand-soft); color: var(--brand); font-weight: 700; }
+  td.c, th.c { text-align: center; }
+  .yes { color: var(--ok); font-weight: 700; }
+  .no { color: var(--crit); font-weight: 700; }
+  .part { color: var(--warn); font-weight: 700; }
+
+  /* Steps / flows */
+  .flow { display: flex; flex-wrap: wrap; gap: 6px; align-items: stretch; margin: 10px 0 14px; page-break-inside: avoid; }
+  .flow .s { flex: 1 1 0; min-width: 28mm; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; font-size: 9.6pt; box-shadow: 0 2px 6px rgba(10,92,120,.06); }
+  .flow .s b { display: block; color: var(--brand); font-size: 10pt; }
+  .flow .a { align-self: center; color: var(--brand-mid); font-weight: 700; }
+
+  /* Screenshots */
+  .shots { display: flex; gap: 10px; justify-content: center; margin: 10px 0 14px; page-break-inside: avoid; flex-wrap: wrap; }
+  .shot { width: 52mm; text-align: center; font-size: 9pt; color: var(--muted); }
+  .shot img { width: 100%; border-radius: 14px; border: 1px solid var(--line); box-shadow: 0 6px 16px rgba(10,92,120,.12); }
+  .shot.wide { width: 170mm; }
+  .toc { columns: 2; column-gap: 12mm; font-size: 10.5pt; }
+  .toc div { break-inside: avoid; margin: 2px 0; }
+  .toc .n { color: var(--brand); font-weight: 700; margin-inline-end: 6px; }
+  .kicker { color: var(--muted); font-size: 10pt; margin-bottom: 4px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+  .pill { display: inline-block; border-radius: 999px; padding: 0 10px; font-size: 9.5pt; border: 1px solid var(--line); background: #fff; margin: 1px 2px; }
+  .footer-note { color: var(--muted); font-size: 9pt; margin-top: 18px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════ الغلاف ═══════════════════════════ -->
+<section class="cover">
+  <div class="logo">D</div>
+  <h1>دليل DokTool الشامل</h1>
+  <div class="sub">كل ميزة في التطبيق ولوحة الإدارة، كيف تعمل، ومن يستطيع فعل ماذا — مكتوب لصاحب المشروع.</div>
+  <p style="margin-top:14px"><span class="badge">الإصدار الأول V1 · أكتوبر 2026</span></p>
+  <div class="glass">
+    <b>كيف تقرأ هذا الدليل؟</b><br>
+    واجهة التطبيق ولوحة الإدارة بالفرنسية والإنجليزية. لذلك نكتب أسماء الأزرار والشاشات كما تظهر بالفرنسية بين علامتي « »، مثل «&#8239;<span class="fr">Mot de passe oublié ?</span>&#8239;»، ثم نشرح معناها بالعربية.
+    الصور مأخوذة من التطبيق الحقيقي على محاكي أندرويد؛ الأسماء التي تنتهي برموز مثل <span class="fr">3e83e0</span> هي بيانات تجريبية للاختبار وليست محتوى حقيقياً.
+  </div>
+</section>
+
+<!-- ═══════════════════════════ الفهرس ═══════════════════════════ -->
+<section class="chapter">
+  <h2>الفهرس</h2>
+  <div class="toc">
+    <div><span class="n">1</span>ما هو DokTool وما الذي ليس عليه</div>
+    <div><span class="n">2</span>المكونات الثلاثة وأين تُحفظ البيانات</div>
+    <div><span class="n">3</span>أنواع المستخدمين: من يرى ماذا</div>
+    <div><span class="n">4</span>التطبيق: البداية، الحساب، الدخول</div>
+    <div><span class="n">5</span>التحقق المهني</div>
+    <div><span class="n">6</span>الصفحة الرئيسية والبحث</div>
+    <div><span class="n">7</span>المكتبة: الوصفات والشهادات المرجعية</div>
+    <div><span class="n">8</span>الحاسبات الطبية</div>
+    <div><span class="n">9</span>الحمل والرضاعة</div>
+    <div><span class="n">10</span>المفضلة، النشاط، الملف الشخصي</div>
+    <div><span class="n">11</span>الاشتراك والدفع</div>
+    <div><span class="n">12</span>العمل دون اتصال</div>
+    <div><span class="n">13</span>الإشعارات والإعدادات</div>
+    <div><span class="n">14</span>استرجاع الحساب (المسارات الثلاثة)</div>
+    <div><span class="n">15</span>لوحة الإدارة: الدخول والأدوار</div>
+    <div><span class="n">16</span>لوحة الإدارة صفحةً صفحة</div>
+    <div><span class="n">17</span>الدفع عبر Chargily بالتفصيل</div>
+    <div><span class="n">18</span>الرسائل القصيرة SMS</div>
+    <div><span class="n">19</span>الخصوصية والأمان</div>
+    <div><span class="n">20</span>ما عليك فعله قبل الإطلاق</div>
+    <div><span class="n">21</span>مسرد المصطلحات</div>
+  </div>
+  <div class="box info" style="margin-top:16px">
+    <span class="t">الفكرة في سطرين</span>
+    DokTool أداة سريرية سريعة على الهاتف للأطباء والمقيمين وطلبة الطب في الجزائر: مراجع وصفات وشهادات بصيغة PDF، حاسبات طبية موثوقة، ومعلومات الأدوية أثناء الحمل والرضاعة. تديرها أنت وفريقك من لوحة إدارة على الحاسوب، والخادم هو الحَكَم الوحيد في كل قاعدة.
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 1 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">1</span>ما هو DokTool وما الذي ليس عليه</h2>
+  <p>DokTool هو «حقيبة أدوات الطبيب» على الهاتف. ثلاثة استعمالات أساسية:</p>
+  <div class="flow">
+    <div class="s"><b>المراجع</b>ابحث ← اعثر على نموذج الوصفة أو الشهادة ← اقرأه بصيغة PDF كمرجع سريري.</div>
+    <div class="s"><b>الحاسبات</b>اختر الحاسبة ← أدخل القيم ← احسب ← راجع النتيجة ومصدرها العلمي.</div>
+    <div class="s"><b>الزائر</b>جرّب الوضع التجريبي ← استكشف ← افهم ← اشترك.</div>
+  </div>
+  <h3>ما الذي ليس عليه DokTool (عن قصد)</h3>
+  <ul>
+    <li>ليس ملفاً طبياً للمرضى: <b>لا توجد أي بيانات مرضى</b> في أي مكان.</li>
+    <li>لا يكتب وصفات ولا شهادات: النماذج <b>للقراءة فقط</b>، بلا تعديل ولا طباعة ولا تنزيل ولا مشاركة.</li>
+    <li>ليس قاعدة أدوية كاملة: الجرعات والتداخلات والمنتجات مؤجلة لما بعد الإصدار الأول. الاستثناء الوحيد هو قسم «الحمل والرضاعة».</li>
+    <li>ليس منصة إعلانات ولا شراكات مخابر، ولا «روبوت محادثة».</li>
+    <li>لا توجد واجهة عربية داخل التطبيق في الإصدار الأول: الواجهة فرنسية وإنجليزية فقط.</li>
+  </ul>
+  <div class="box warn"><span class="t">قاعدة ذهبية في التصميم</span>«مقفل ≠ مخفي»: المحتوى المدفوع يظهر للمستخدم مع قفل وشرح لكيفية فتحه، ولا يُخفى. أما الوحدات المؤجلة فلا تظهر أبداً.</div>
+</section>
+
+<!-- ═══════════════════════════ 2 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">2</span>المكونات الثلاثة وأين تُحفظ البيانات</h2>
+  <table>
+    <tr><th>المكوّن</th><th>لمن</th><th>ماذا يفعل</th></tr>
+    <tr><td><b>تطبيق الهاتف</b> (Flutter، أندرويد و iOS)</td><td>الأطباء، المقيمون، الطلبة، والزوار التجريبيون</td><td>كل ما يراه المستخدم: البحث، المكتبة، الحاسبات، الحمل والرضاعة، الاشتراك، الإعدادات.</td></tr>
+    <tr><td><b>لوحة الإدارة</b> Admin Web (متصفح على حاسوب ≥ 1024 بكسل)</td><td>أنت وفريقك فقط</td><td>مراجعة التحقق المهني، رفع ملفات PDF، تأليف ومراجعة الحاسبات ومحتوى الحمل، الأسعار، المالية، الصلاحيات، السجلات.</td></tr>
+    <tr><td><b>الخادم</b> API (NestJS)</td><td>يخدم التطبيق ولوحة الإدارة</td><td>هو من يقرر كل شيء: من يرى ماذا، الدفع، الرموز، القواعد. التطبيق لا يقرر شيئاً وحده.</td></tr>
+  </table>
+  <h3>أين تُحفظ البيانات</h3>
+  <ul>
+    <li><b>قاعدة البيانات PostgreSQL:</b> الحسابات، الاشتراكات، المعاملات، المحتوى النصي، السجلات.</li>
+    <li><b>Cloudflare R2</b> (تخزين ملفات) بحاويتين خاصتين:
+      <ul>
+        <li><span class="code">doktool-content</span>: ملفات PDF المرجعية وصور الملف الشخصي.</li>
+        <li><span class="code">doktool-private</span>: وثائق التحقق المهني وصور استرجاع الحساب.</li>
+      </ul>
+      لا يوجد أي ملف عام: كل قراءة عبر رابط موقّع مؤقت (10 دقائق للمراجع، 60 ثانية للوثائق الحساسة).</li>
+    <li><b>الهاتف:</b> نسخة دون اتصال من المحتوى المسموح، والإعدادات، والمفضلة. رموز الدخول في الخزنة الآمنة للهاتف (Keychain/Keystore).</li>
+  </ul>
+  <h3>المزوّدون الخارجيون</h3>
+  <table>
+    <tr><th>الخدمة</th><th>المزوّد</th><th>الحالة</th></tr>
+    <tr><td>الدفع بالبطاقة (CIB و الذهبية Edahabia)</td><td>Chargily Pay (و SATIM مباشرة كبديل جاهز)</td><td>مبني ومُختبَر؛ ينقصه حسابك ومفاتيحك.</td></tr>
+    <tr><td>رسائل الرموز بالبريد</td><td>أي خادم SMTP</td><td>إلزامي في الإنتاج.</td></tr>
+    <tr><td>رسائل الرموز بالهاتف SMS</td><td>Infobip و/أو Twilio</td><td>مبني ومُختبَر؛ ينقصه حسابك.</td></tr>
+    <tr><td>الحماية والشبكة</td><td>Cloudflare</td><td>يُنصح به أمام الخادم ولوحة الإدارة.</td></tr>
+  </table>
+</section>
+
+<!-- ═══════════════════════════ 3 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">3</span>أنواع المستخدمين: من يرى ماذا</h2>
+  <p>الخادم يحسب لكل شخص «مستوى وصول» واحداً، والتطبيق يعرضه كما هو. المستويات الخمسة:</p>
+  <table>
+    <tr><th>المستوى</th><th>من هو</th><th class="c">الحاسبات</th><th class="c">ملفات PDF المرجعية</th><th class="c">الحمل والرضاعة</th><th class="c">دون اتصال</th><th class="c">الاشتراك</th></tr>
+    <tr><td><b>تجريبي</b> DEMO</td><td>زائر بلا حساب</td><td class="c part">عينات</td><td class="c part">عينات</td><td class="c part">عينات</td><td class="c no">لا</td><td class="c no">يحتاج حساباً</td></tr>
+    <tr><td><b>طالب</b> STUDENT</td><td>طالب طب</td><td class="c yes">نعم</td><td class="c part">العناوين + العينات</td><td class="c part">الأسماء + العينات</td><td class="c yes">نعم</td><td class="c">مجاني دائماً</td></tr>
+    <tr><td><b>مهني غير مشترك</b></td><td>طبيب أو مقيم بلا اشتراك</td><td class="c part">عينات</td><td class="c part">عينات</td><td class="c part">عينات</td><td class="c no">لا</td><td class="c">بعد التحقق</td></tr>
+    <tr><td><b>مهني مشترك</b> PRO</td><td>طبيب أو مقيم مُوثَّق ومشترك</td><td class="c yes">الكل</td><td class="c yes">الكل</td><td class="c yes">الكل</td><td class="c yes">نعم</td><td class="c">تجديد يدوي</td></tr>
+    <tr><td><b>مقيَّد</b> RESTRICTED</td><td>حساب في طور الإعداد أو مُعلَّق</td><td class="c no">لا</td><td class="c no">لا</td><td class="c no">لا</td><td class="c no">لا</td><td class="c">—</td></tr>
+  </table>
+  <h3>قرارات صاحب المشروع المطبَّقة</h3>
+  <ul>
+    <li>الطلبة <b>مجاناً</b>: الحاسبات مفتوحة، ونماذج الوصفات والشهادات تظهر بعناوينها فقط (مقفلة) ما عدا العينات.</li>
+    <li>الطبيب غير المشترك يرى مجموعة العينات نفسها التي يراها الزائر، لكن بحساب حقيقي.</li>
+    <li><b>لا دفع قبل التحقق المهني</b>: زر الدفع لا يُفتح إلا بعد قبول وثائق المهنة.</li>
+    <li>الوضع التجريبي بلا تسجيل، بلا مدة محددة، ولا يطلب أي معلومة اتصال.</li>
+    <li>الصيادلة ومهنيو الصحة الآخرون خارج الإصدار الأول.</li>
+  </ul>
+  <div class="box info"><span class="t">العينات (demoSample)</span>أنت من يختار العينات من لوحة الإدارة: أي ملف PDF أو حاسبة أو مادة دوائية تضع عليها علامة «عينة» تصبح ظاهرة للزوار وغير المشتركين.</div>
+</section>
+
+<!-- ═══════════════════════════ 4 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">4</span>التطبيق: البداية، الحساب، الدخول</h2>
+  <div class="shots">
+    <div class="shot"><img src="img/g01-welcome.png" alt=""><br>شاشة الترحيب</div>
+    <div class="shot"><img src="img/g04-sign-in.png" alt=""><br>تسجيل الدخول</div>
+    <div class="shot"><img src="img/g12-role.png" alt=""><br>اختيار الدور</div>
+  </div>
+  <h3>شاشة الترحيب</h3>
+  <p>ثلاثة أزرار: «&#8239;<span class="fr">Créer un compte</span>&#8239;» (إنشاء حساب)، «&#8239;<span class="fr">Se connecter</span>&#8239;» (الدخول)، و«&#8239;<span class="fr">Explorer la démo</span>&#8239;» (تجربة بلا تسجيل؛ يختار الزائر «طبيب» أو «طبيب مقيم» ويرى المحتوى الحقيقي للعينات).</p>
+  <h3>إنشاء الحساب</h3>
+  <ol>
+    <li>البريد الإلكتروني <b>أو</b> رقم الهاتف (يقبل <span class="code">0661 23 45 67</span> ويحوّله إلى <span class="code">+213…</span>)، الاسم، اللقب، ولاية العمل، كلمة مرور (8 أحرف على الأقل مع مؤشر قوة)، والموافقة على الشروط وسياسة الخصوصية.</li>
+    <li>يصل رمز من 6 أرقام صالح 10 دقائق. إعادة الإرسال بعد 60 ثانية، 5 مرات كحد أقصى. 3 أخطاء تقفل الرمز 10 دقائق.</li>
+    <li>بعد التأكيد يختار الشخص دوره: <span class="fr">Médecin</span> (طبيب)، <span class="fr">Médecin résident</span> (مقيم)، أو <span class="fr">Étudiant en médecine</span> (طالب).</li>
+  </ol>
+  <h3>تسجيل الدخول</h3>
+  <ul>
+    <li>بالبريد أو الهاتف (أيهما مسجّل ومؤكَّد) مع كلمة المرور.</li>
+    <li>5 كلمات مرور خاطئة تقفل الحساب 15 دقيقة، مع حد للمحاولات حسب عنوان الشبكة.</li>
+    <li>كل جهاز «جلسة» مستقلة تدوم حتى 180 يوماً، ويمكن إنهاؤها في أي لحظة. <b>الجديد:</b> إنهاء الجلسة يسري فوراً (في الطلب التالي) بدل الانتظار 15 دقيقة.</li>
+    <li>رابطان تحت كلمة المرور: «&#8239;<span class="fr">Mot de passe oublié ?</span>&#8239;» و«&#8239;<span class="fr">Accès perdu ?</span>&#8239;» (انظر الفصل 14).</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════ 5 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">5</span>التحقق المهني</h2>
+  <div class="shots"><div class="shot"><img src="img/g13-verification-intro.png" alt=""><br>مقدمة التحقق</div></div>
+  <p>التحقق هو ما يحوّل حساباً عادياً إلى طبيب أو مقيم أو طالب «موثَّق». يتم مرة واحدة ويُجدد عند انتهاء صلاحيته.</p>
+  <h3>ماذا يرسل الشخص</h3>
+  <ul>
+    <li><b>الهوية:</b> صورة الوجه الأمامي (والخلفي عند الحاجة) لبطاقة التعريف أو جواز السفر أو بطاقة الطالب.</li>
+    <li><b>المهنة:</b> للطبيب إثبات التسجيل في عمادة الأطباء (رقم التسجيل يُخفى جزئياً في كل مكان)، الاختصاص، ومكان العمل؛ للمقيم شهادة الإقامة؛ للطالب إثبات التسجيل الجامعي والسنة.</li>
+  </ul>
+  <p>الكاميرا داخل التطبيق ترسم إطاراً للوثيقة، وتتحقق على الهاتف نفسه من وضوح الصورة ومن ظهور الاسم (دون إرسال أي نص للخادم). يمكن أيضاً اختيار ملف PDF أو صورة.</p>
+  <h3>دورة حياة الملف</h3>
+  <div class="flow">
+    <div class="s"><b>لم يبدأ</b>يحضّر الوثائق</div><div class="a">←</div>
+    <div class="s"><b>مُرسل</b>في طابور المراجعة</div><div class="a">←</div>
+    <div class="s"><b>قيد المراجعة</b>مراجِع أخذ الملف</div><div class="a">←</div>
+    <div class="s"><b>مُوثَّق</b>أو <b>مرفوض</b> مع السبب</div>
+  </div>
+  <ul>
+    <li>الرد المعتاد خلال <b>24 ساعة</b>؛ لوحة الإدارة تنبّه للملفات المتأخرة.</li>
+    <li>عند الرفض يرى الشخص السبب (صورة غير مقروءة، وثيقة منتهية، اسم غير مطابق…) ويعيد الخطوة المطلوبة فقط.</li>
+    <li>بعد رفضين يمكنه <b>الطعن</b>، ويفصل فيه مراجِع آخر.</li>
+    <li>تُحذف الوثائق بعد <b>24 شهراً</b> من القرار، والملفات المهجورة بعد 90 يوماً.</li>
+    <li>تذكير قبل انتهاء صلاحية التحقق بـ 60 ثم 14 يوماً.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════ 6 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">6</span>الصفحة الرئيسية والبحث</h2>
+  <div class="shots">
+    <div class="shot"><img src="img/g02-home.png" alt=""><br>الرئيسية (وضع تجريبي)</div>
+    <div class="shot"><img src="img/g14-home-account.png" alt=""><br>الرئيسية (حساب طبيب)</div>
+  </div>
+  <h3>الرئيسية</h3>
+  <ul>
+    <li>رأس متدرج بالأزرق المائي مع تأثير زجاجي، فيه الاسم والدور، جرس الإشعارات، وحقل البحث.</li>
+    <li>أربعة اختصارات: <span class="fr">Ordonnances</span> (الوصفات)، <span class="fr">Certificats</span> (الشهادات)، <span class="fr">Calculateurs</span> (الحاسبات)، <span class="fr">Grossesse</span> (الحمل).</li>
+    <li>قسم «&#8239;<span class="fr">Commencer</span>&#8239;» للمستخدم الجديد، ثم «الأخيرة» و«المفضلة».</li>
+    <li>في الوضع التجريبي يظهر شريط «&#8239;<span class="fr">Mode démo</span>&#8239;» مع رابط «&#8239;<span class="fr">Voir les offres</span>&#8239;».</li>
+    <li>شريط التنقل السفلي العائم: الرئيسية، البحث (الزر الدائري)، المكتبة، الملف الشخصي.</li>
+  </ul>
+  <h3>البحث</h3>
+  <ul>
+    <li>يبحث في الوصفات والشهادات والحاسبات ومواد الحمل معاً، بالفرنسية والإنجليزية، دون حساسية للنبرات (é/e).</li>
+    <li>الترتيب: التطابق التام ← بداية الكلمة ← المرادفات ← التقريب للأخطاء الإملائية.</li>
+    <li>يفهم النية: كلمة مثل «calcul» أو «grossesse» تقدّم الفئة المناسبة.</li>
+    <li>عوامل تصفية حسب النوع، وآخر عمليات البحث محفوظة على الهاتف فقط.</li>
+    <li>نص البحث <b>لا يُرسل أبداً</b> إلى الإحصاءات.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════ 7 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">7</span>المكتبة: الوصفات والشهادات المرجعية</h2>
+  <p>المكتبة أقسام بأزرار دائرية: <span class="fr">Ordonnances</span>، <span class="fr">Certificats</span>، <span class="fr">Calculateurs</span>، <span class="fr">Grossesse</span>. كل عنصر يعرض حالته: مفتوح، أو <span class="fr">Pro</span> (يحتاج اشتراكاً)، أو عينة.</p>
+  <h3>عارض PDF</h3>
+  <ul>
+    <li>يفتح ملف PDF الذي رفعته أنت من لوحة الإدارة: نموذج مرجعي يقرأه الطبيب.</li>
+    <li><b>قراءة فقط:</b> لا تعديل، لا حقل للمريض، لا تصدير، لا طباعة، لا مشاركة، لا تنزيل، ولا حتى تحديد النص.</li>
+    <li>لغة الملف مستقلة عن لغة الواجهة.</li>
+    <li>يتحقق الهاتف من بصمة الملف (SHA-256) قبل عرضه وقبل حفظه دون اتصال، فلا يُعرض ملف مُعدَّل.</li>
+    <li>زر المفضلة على كل ملف، وسجل «آخر ما فتحت».</li>
+  </ul>
+  <div class="box info"><span class="t">ما يحدده المدير لكل ملف</span>العنوان بالفرنسية (يُملأ تلقائياً من اسم الملف)، عنوان إنجليزي اختياري، علامة «عينة» (demoSample)، والحالة (مُفعَّل / مُعطَّل). لا يوجد مستوى وصول خاص بكل ملف: القاعدة واحدة للجميع حسب الجدول في الفصل 3. استبدال الملف ينشئ نسخة جديدة تلقائياً وتبقى السابقة في السجل.</div>
+</section>
+
+<!-- ═══════════════════════════ 8 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">8</span>الحاسبات الطبية</h2>
+  <p>كل حاسبة «تعريف» دقيق: المدخلات وأنواعها، الوحدات (مع تحويل موثّق بين الوحدات، مثل mg/dL و µmol/L)، والنطاقات المقبولة، والمعادلة، وفئات تفسير النتيجة، والحدود، والمصادر العلمية.</p>
+  <h3>تجربة الطبيب</h3>
+  <ol>
+    <li>يُدخل القيم. التحقق عند الخروج من الحقل وليس مع كل حرف.</li>
+    <li>القيم خارج النطاق المعقول تُرفض، والقيم غير المعتادة تُنبَّه عليها.</li>
+    <li><b>لا تظهر أي نتيجة</b> ما دام هناك مدخل غير صالح.</li>
+    <li>تظهر النتيجة مع فئة التفسير (مثلاً: طبيعي / متوسط / مرتفع)، والمصدر العلمي، والحدود.</li>
+  </ol>
+  <h3>ضمانات السلامة</h3>
+  <ul>
+    <li>كل حاسبة لها مصدر أولي واحد على الأقل وحالات اختبار.</li>
+    <li><b>المؤلف ≠ المراجع:</b> من كتب الحاسبة لا يستطيع مراجعتها ولا نشرها.</li>
+    <li>النسخة المنشورة <b>غير قابلة للتعديل</b>: أي تغيير يعني نسخة جديدة تُراجَع من جديد.</li>
+    <li>محرّكا حساب متطابقان: واحد في الخادم (المرجع) وواحد في الهاتف للعمل دون اتصال. الهاتف يختبر كل نسخة بحالاتها قبل استعمالها.</li>
+    <li><b>لا يُولَّد أي معادلة بالذكاء الاصطناعي، ولا تُخترع معادلة أبداً.</b></li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════ 9 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">9</span>الحمل والرضاعة <span class="fr" style="font-size:12pt">Grossesse · Allaitement</span></h2>
+  <div class="shots"><div class="shot"><img src="img/final-substance.png" alt=""><br>ملف مادة (بيانات تجريبية)</div></div>
+  <p>لكل مادة دوائية ملف من جزأين، يكتبه الطبيب المؤلف من لوحة الإدارة:</p>
+  <div class="grid2">
+    <div class="box">
+      <span class="t">الحمل <span class="fr">Grossesse</span></span>
+      أربع فترات: الثلث الأول، الثاني، الثالث، و«حول الولادة». لكل فترة:
+      <ul>
+        <li><b>التوجيه:</b> مضاد استطباب / يُتجنَّب / استعمال عرضي.</li>
+        <li>شرح التوجيه وسياق الخطر.</li>
+        <li><b>مستوى الدليل</b> (من 0 إلى 4) والفئة المدروسة.</li>
+        <li>اعتبارات سريرية.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <span class="t">الرضاعة <span class="fr">Allaitement</span></span>
+      <ul>
+        <li>التوجيه ونصه.</li>
+        <li>الجرعة النسبية للرضيع، ونصف عمر الدواء عند الأم.</li>
+        <li>الآثار المُبلَّغ عنها، والفئات الخاصة (رضيع خديج…).</li>
+        <li>مستوى الدليل، والاعتبارات.</li>
+      </ul>
+    </div>
+  </div>
+  <ul>
+    <li><b>البدائل الموثَّقة</b> تظهر كأزرار تفتح ملف البديل مباشرة.</li>
+    <li>عند <b>تعارض المصادر</b> (مثلاً CRAT و LactMed) يظهر تنبيه يذكر المصدرين والخلاصة.</li>
+    <li>قاعدة صارمة: <b>لا يوجد حكم «آمن / غير آمن»</b>؛ التوجيه ومستوى الدليل منفصلان دائماً.</li>
+    <li>زر «&#8239;<span class="fr">Signaler une erreur</span>&#8239;» يرسل ملاحظة إلى لوحة الإدارة (قسم البلاغات).</li>
+  </ul>
+  <h3>دورة التأليف (مهمة للطبيب الذي سيتواصل معك)</h3>
+  <div class="flow">
+    <div class="s"><b>1. المادة</b>إنشاء المادة (الاسم بالفرنسية والإنجليزية)</div><div class="a">←</div>
+    <div class="s"><b>2. المصادر</b>إضافة المراجع (CRAT، LactMed، مقالات…)</div><div class="a">←</div>
+    <div class="s"><b>3. نسخة</b>كتابة الفترات والرضاعة وربط مصدر على الأقل، ثم «إرسال للمراجعة»</div><div class="a">←</div>
+    <div class="s"><b>4. المراجعة</b>مدير آخر يوافق أو يطلب تعديلات</div><div class="a">←</div>
+    <div class="s"><b>5. النشر</b>تظهر في التطبيق؛ النسخة السابقة تبقى حتى الموافقة</div>
+  </div>
+  <div class="box info"><span class="t">التحديثات المتكررة</span>بما أن محتوى الطبيب سيتغيّر كثيراً، كل تعديل نسخةٌ جديدة، ولا يُمس المنشور إلا بعد الموافقة. تحتاج حسابَين: <span class="code">CALCULATOR_EDITOR</span> للمؤلف و<span class="code">CLINICAL_REVIEWER</span> للمراجع.</div>
+</section>
+
+<!-- ═══════════════════════════ 10 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">10</span>المفضلة، النشاط، الملف الشخصي</h2>
+  <div class="shots"><div class="shot"><img src="img/g15-profile.png" alt=""><br>الملف الشخصي</div></div>
+  <ul>
+    <li><b>المفضلة:</b> نجمة على أي ملف أو حاسبة أو مادة، تظهر في الرئيسية وفي «&#8239;<span class="fr">Activité et favoris</span>&#8239;».</li>
+    <li><b>النشاط:</b> آخر الملفات والحاسبات التي فُتحت، لتسهيل العودة إليها. (لا تُحفظ القيم المُدخلة في الحاسبات أبداً.)</li>
+    <li><b>الملف الشخصي:</b> صورة (يعاد ترميزها على الخادم، 512 بكسل، دون بيانات وصفية)، نبذة قصيرة، الاختصاص ومكان العمل. يمكن تعديلها من «&#8239;<span class="fr">Modifier</span>&#8239;».</li>
+    <li>من الملف الشخصي: الاشتراك، حالة التحقق، الإشعارات، الإعدادات، وتسجيل الخروج.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════ 11 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">11</span>الاشتراك والدفع</h2>
+  <p>اشتراك واحد هو <b>DokTool Pro</b> بخطتين (شهرية وسنوية) تحدد أنت أسعارهما. للأطباء والمقيمين الموثَّقين فقط.</p>
+  <h3>رحلة الدفع خطوة بخطوة</h3>
+  <div class="flow">
+    <div class="s"><b>العروض</b>«&#8239;<span class="fr">Voir les offres</span>&#8239;»: ما يشمله وما لا يشمله، المدة، السعر</div><div class="a">←</div>
+    <div class="s"><b>الملخص</b>الخطة، السعر، الفترة، طريقة الدفع (CIB أو الذهبية)، التجديد اليدوي</div><div class="a">←</div>
+    <div class="s"><b>الإقرار</b>«فهمت ما يشمله DokTool Pro. الدفع غير قابل للاسترجاع.»</div><div class="a">←</div>
+    <div class="s"><b>صفحة Chargily</b>إدخال البطاقة في صفحة الدفع الآمنة</div><div class="a">←</div>
+    <div class="s"><b>النتيجة</b>تأكيد من الخادم مباشرة، والاشتراك يُفعَّل فوراً</div>
+  </div>
+  <ul>
+    <li>يختار الشخص <b>نوع البطاقة</b> فقط (CIB أو Edahabia)؛ الخادم يختار المزوّد. DokTool لا يرى البطاقة أبداً.</li>
+    <li>السعر المعروض هو ما يُدفع تماماً: <b>رسوم Chargily على DokTool</b> وليست على الطبيب.</li>
+    <li>لا تُصدّق نتيجة الدفع من المتصفح أبداً: الخادم يسأل Chargily مباشرة، عند العودة من الصفحة وعند وصول إشعار Chargily الموقّع، ومهمة دورية كل 10 دقائق للحالات العالقة.</li>
+    <li>دفع لم يكتمل خلال 60 دقيقة يُلغى تلقائياً.</li>
+  </ul>
+  <h3>التجديد والانتهاء</h3>
+  <table>
+    <tr><th>القاعدة</th><th>القيمة</th></tr>
+    <tr><td>التجديد</td><td>يدوي فقط؛ يُفتح قبل 14 يوماً من نهاية الفترة ويمدّها من تاريخ نهايتها.</td></tr>
+    <tr><td>التذكير</td><td>إشعار قبل 14 يوماً ثم 3 أيام (بلا لافتات حمراء ولا عدّ تنازلي).</td></tr>
+    <tr><td>فترة السماح</td><td>7 أيام بعد النهاية مع بقاء الوصول، برسالة هادئة.</td></tr>
+    <tr><td>عدم التجديد</td><td>زر «&#8239;<span class="fr">Ne pas renouveler</span>&#8239;»: يبقى الوصول حتى نهاية الفترة.</td></tr>
+    <tr><td>الاسترجاع</td><td><b>لا يوجد استرجاع</b> ولا زر ولا حالة له. التصحيح الاستثنائي عبر لوحة الإدارة فقط وبموافقة مديرَين.</td></tr>
+  </table>
+  <div class="box warn"><span class="t">حالتان يُسجَّل فيهما المال دون فتح الوصول</span>
+    <ul style="margin:4px 0 0">
+      <li>إذا حُذف الحساب قبل اكتمال الدفع.</li>
+      <li>إذا كان المبلغ المستلم أقل من السعر.</li>
+    </ul>
+    يُسجَّل الدفع كـ «ناجح» للمحاسبة، ويُكتب خطأ في السجل لتعالجه من لوحة الإدارة.</div>
+</section>
+
+<!-- ═══════════════════════════ 12 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">12</span>العمل دون اتصال</h2>
+  <p>لكل حساب حقيقي يحق له ذلك (المشتركون والطلبة):</p>
+  <ul>
+    <li>ملفات PDF المسموح بها، والنسخ المنشورة من الحاسبات، ومواد الحمل، تُحفظ على الهاتف.</li>
+    <li>المفضلة والنشاط والإعدادات تعمل دون اتصال.</li>
+    <li>صفحة «&#8239;<span class="fr">Données et hors ligne</span>&#8239;» تعرض: إصدار البيانات، هل المعروض «محفوظ» أم «مباشر»، ووجود تحديث متاح، والمساحة المستعملة.</li>
+    <li>الحاسبات دون اتصال تستعمل محرك الهاتف بعد أن يختبر كل نسخة بحالاتها.</li>
+    <li>الزائر التجريبي والطبيب غير المشترك: لا تخزين دون اتصال.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════ 13 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">13</span>الإشعارات والإعدادات</h2>
+  <div class="shots">
+    <div class="shot"><img src="img/g16-settings.png" alt=""><br>الإعدادات</div>
+    <div class="shot"><img src="img/g19-security-done.png" alt=""><br>الإحداثيات والأمان</div>
+    <div class="shot"><img src="img/g20-notifications.png" alt=""><br>الإشعارات</div>
+  </div>
+  <h3>الإشعارات</h3>
+  <p>داخل التطبيق (الجرس): قرارات التحقق، انتهاء الصلاحية، تفعيل الاشتراك وتذكير التجديد وفترة السماح، و<b>إشعارات الأمان</b> (تغيير كلمة المرور، إضافة أو إزالة وسيلة اتصال، طلب استرجاع للحساب). تُحدَّث القائمة كلما فُتحت، ويمكن سحبها للأسفل للتحديث.</p>
+  <h3>الإعدادات <span class="fr" style="font-size:11pt">Paramètres</span></h3>
+  <ul>
+    <li><b>المظهر:</b> فاتح، داكن، أو حسب الجهاز.</li>
+    <li><b>اللغة:</b> الفرنسية أو الإنجليزية، فوراً.</li>
+    <li><b>البيانات ودون اتصال</b> (الفصل 12).</li>
+    <li><b>الإحداثيات والأمان</b> «&#8239;<span class="fr">Coordonnées et sécurité</span>&#8239;» — جديد:
+      <ul>
+        <li>البريد والهاتف معاً: أضف أو غيّر أو احذف. كل تغيير يطلب كلمة المرور الحالية، والعنوان الجديد يُثبَت برمز يُرسل إليه.</li>
+        <li>رسالة خضراء «حسابك محمي جيداً» عندما يكون البريد والهاتف مؤكَّدين معاً، وإلا نصيحة بإضافة الناقص.</li>
+        <li>«تغيير كلمة المرور»: يبقى هذا الجهاز متصلاً، وتُفصل الأجهزة الأخرى.</li>
+        <li>إن طلب أحدٌ استرجاع الحساب، يظهر تنبيه مع زر «&#8239;<span class="fr">Ce n’est pas moi</span>&#8239;» (لستُ أنا) لإلغائه فوراً.</li>
+      </ul></li>
+    <li><b>حذف الحساب</b> «&#8239;<span class="fr">Supprimer mon compte</span>&#8239;»: بكلمة المرور، نهائي. يمحو البيانات الشخصية والوثائق فوراً، ويُنهي الاشتراك دون استرجاع. لا تبقى إلا سجلات المدفوعات المطلوبة محاسبياً، دون أي معلومة شخصية.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════ 14 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">14</span>استرجاع الحساب: المسارات الثلاثة</h2>
+  <p>طلبتَ أن يكون استرجاع الحساب سهلاً. من شاشة الدخول، الرابط «&#8239;<span class="fr">Accès perdu ?</span>&#8239;» يعرض ثلاث حالات، ولكل حالة أقصر طريق:</p>
+  <div class="shots">
+    <div class="shot"><img src="img/g05-access-help.png" alt=""><br>«أين المشكلة؟»</div>
+    <div class="shot"><img src="img/g06-recovery-form.png" alt=""><br>طلب الاسترجاع</div>
+    <div class="shot"><img src="img/g08-recovery-photos.png" alt=""><br>الصورتان</div>
+  </div>
+  <table>
+    <tr><th>الحالة</th><th>الحل</th><th>المدة</th></tr>
+    <tr><td>نسيتُ كلمة المرور</td><td>«&#8239;<span class="fr">Mot de passe oublié</span>&#8239;»: رمز على البريد أو الهاتف، ثم كلمة مرور جديدة. تُفصل كل الأجهزة ويصل إشعار أمان.</td><td>دقيقة واحدة</td></tr>
+    <tr><td>غيّرتُ بريدي أو رقمي لكني أعرف كلمة المرور</td><td>الدخول بالعنوان القديم وكلمة المرور، ثم تحديثه من «الإحداثيات والأمان».</td><td>دقيقتان</td></tr>
+    <tr><td>فقدتُ كل شيء (البريد والهاتف وكلمة المرور)</td><td>الاسترجاع المُساعَد (أدناه).</td><td>حتى 72 ساعة + 24 ساعة أمان</td></tr>
+  </table>
+  <div class="shots">
+    <div class="shot"><img src="img/g11-recovery-done.png" alt=""><br>«تم إرسال الطلب»</div>
+    <div class="shot"><img src="img/g17-security.png" alt=""><br>نصيحة إضافة الهاتف</div>
+  </div>
+  <div class="box ok"><span class="t">الوقاية أفضل</span>من لديه بريد <b>و</b>هاتف مؤكَّدان لا يحتاج أحداً أبداً: أحدهما يكفي لاسترجاع الآخر. لذلك ينصح التطبيق بإضافة الناقص.</div>
+  <h3>الاسترجاع المساعَد خطوةً بخطوة</h3>
+  <div class="flow">
+    <div class="s"><b>1. الطلب</b>العنوان المفقود + الاسم واللقب + عنوان <b>جديد</b></div><div class="a">←</div>
+    <div class="s"><b>2. الرمز</b>رمز يُرسل إلى العنوان الجديد ليُثبت أنه للشخص نفسه</div><div class="a">←</div>
+    <div class="s"><b>3. صورتان</b>بطاقة التعريف + صورة شخصية (سيلفي) مع البطاقة</div><div class="a">←</div>
+    <div class="s"><b>4. الإرسال</b>يُبلَّغ صاحب الحساب على عناوينه الحالية</div>
+  </div>
+  <div class="flow">
+    <div class="s"><b>5. المراجعة</b>فريقك يقارن الصورتين بالحساب في لوحة الإدارة</div><div class="a">←</div>
+    <div class="s"><b>6. انتظار 24 ساعة</b>يمكن لصاحب الحساب الحقيقي الإلغاء بمجرد الدخول أو بزر «لستُ أنا»</div><div class="a">←</div>
+    <div class="s"><b>7. التطبيق</b>العنوان الجديد يصبح الوحيد، كلمة المرور تُعطَّل، كل الأجهزة تُفصل</div><div class="a">←</div>
+    <div class="s"><b>8. كلمة مرور جديدة</b>عبر «نسيتُ كلمة المرور» بالعنوان الجديد</div>
+  </div>
+  <h3>لماذا هو آمن رغم سهولته</h3>
+  <ul>
+    <li>العنوان الجديد يُثبت برمز قبل أي شيء، و«رمز الاسترجاع» يبقى في ذاكرة الهاتف فقط ويصلح ساعة واحدة.</li>
+    <li>الجواب نفسه سواء وُجد الحساب أم لا، فلا يمكن معرفة من لديه حساب.</li>
+    <li>صاحب الحساب يُبلَّغ عند الطلب وعند الموافقة، ويستطيع الإيقاف في أي لحظة خلال الـ 24 ساعة.</li>
+    <li>الصور في الحاوية الخاصة، لا يراها إلا فريق التحقق (رابط 60 ثانية مع علامة مائية باسم المراجِع، وكل مشاهدة مسجّلة)، وتُحذف بعد 30 يوماً من القرار.</li>
+    <li>حدود: 5 طلبات لكل عنوان شبكة في الساعة، و3 يومياً لكل عنوان مفقود ولكل عنوان جديد.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════ 15 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">15</span>لوحة الإدارة: الدخول والأدوار</h2>
+  <h3>الدخول</h3>
+  <ol>
+    <li>أول مدير عام يُنشأ من سطر الأوامر على الخادم:<br><span class="code">npm run admin:create -w @doktool/api -- --email ... --name "..."</span></li>
+    <li>الدخول بالبريد وكلمة المرور، ثم <b>رمز TOTP إلزامي</b> من تطبيق مصادقة (Google Authenticator، Microsoft Authenticator…). عند أول دخول يُعرض رمز QR للربط.</li>
+    <li>الجلسة في «كعكة» آمنة لا تقرأها الصفحات، مع حماية من الطلبات المزوّرة.</li>
+  </ol>
+  <h3>الأدوار الجاهزة (Presets)</h3>
+  <table>
+    <tr><th>الدور</th><th>ماذا يستطيع</th></tr>
+    <tr><td><span class="code">SUPER_ADMIN</span></td><td>كل شيء، بما فيه الموافقة على التعديلات المالية الاستثنائية. أنت.</td></tr>
+    <tr><td><span class="code">VERIFICATION_REVIEWER</span></td><td>طابور التحقق واتخاذ القرار، واسترجاع الحسابات. مشاهدة الوثائق تُمنح مؤقتاً (ساعتان افتراضياً).</td></tr>
+    <tr><td><span class="code">LIBRARY_MANAGER</span></td><td>رفع ملفات PDF وتعديلها وتعطيلها.</td></tr>
+    <tr><td><span class="code">CALCULATOR_EDITOR</span></td><td>تأليف مسودات الحاسبات وملفات الحمل والرضاعة.</td></tr>
+    <tr><td><span class="code">CLINICAL_REVIEWER</span></td><td>مراجعة ونشر الحاسبات وملفات الحمل، لكن ليس ما كتبه بنفسه.</td></tr>
+    <tr><td><span class="code">FINANCE_ADMIN</span></td><td>المالية والمعاملات والمصاريف والتقارير.</td></tr>
+    <tr><td><span class="code">ANALYST</span></td><td>الإحصاءات وتصديرها.</td></tr>
+  </table>
+  <div class="box info"><span class="t">فصل المهام (مفروض في الخادم)</span>
+    <ul style="margin:4px 0 0">
+      <li>المؤلف ≠ المراجع.</li>
+      <li>من يطلب تعديلاً مالياً ≠ من يوافق عليه.</li>
+      <li>لا حساب يجمع صلاحيات المالية مع صلاحيات المحتوى السريري.</li>
+      <li>لا يستطيع مدير تعديل صلاحياته بنفسه.</li>
+      <li>كل قرار يطلب «سبباً» يُكتب في سجل التدقيق.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 16 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">16</span>لوحة الإدارة صفحةً صفحة</h2>
+  <p class="kicker">القائمة الجانبية تُظهر لكل مدير الصفحات التي تسمح بها صلاحياته فقط.</p>
+
+  <div class="shots"><div class="shot wide"><img src="img/a01-overview.png" alt=""><br>نظرة عامة (بيانات اختبار)</div></div>
+  <h3>نظرة عامة <span class="fr">Vue d’ensemble</span></h3>
+  <p>المستخدمون النشطون، ملفات التحقق المنتظرة والمتأخرة عن 24 ساعة، المهنيون المشتركون، صافي الإيرادات، «ما ينتظرك» حسب صلاحياتك، الحوادث (مدفوعات فاشلة أو عالقة)، وآخر التغييرات.</p>
+
+  <h3>المستخدمون <span class="fr">Utilisateurs</span></h3>
+  <p>بحث وتصفية، ثم درج تفاصيل بخمس علامات: الملف، الوصول (المستوى المحسوب وسببه)، الاشتراك، النشاط، السجل. الإجراءات (بسبب مكتوب): تعليق الحساب أو إعادته، وتسجيل الخروج من كل الأجهزة (فوري).</p>
+
+  <h3>التحقق <span class="fr">Vérification</span></h3>
+  <p>طابور حسب الحالة (الأقدم أولاً) مع شارة 24 ساعة. المراجِع «يأخذ» الملف فلا يعمل عليه اثنان معاً. يرى الملخص، والوثائق في عارض مقيَّد (60 ثانية، علامة مائية، دون تنزيل أو نسخ أو طباعة)، والسجل. القرارات: قبول (مع تاريخ انتهاء الوثيقة اختيارياً)، رفض (سبب من قائمة + ملاحظة تظهر للشخص)، أو إعادة الملف للطابور. الطعون تذهب إلى مراجِع آخر.</p>
+
+  <h3>استرجاع الحسابات <span class="fr">Récupérations de compte</span> — جديد</h3>
+  <p>علامات: للمعالجة، مقبولة (مهلة 24 ساعة)، مطبَّقة، مرفوضة، ملغاة. لكل طلب جدول مقارنة: «المُصرَّح به» مقابل «ما في الحساب» (الاسم، العناوين)، تاريخ إنشاء الحساب، الولاية، وحالة التحقق. ثم زرّا الصورتين (عارض مقيَّد) وقرار «قبول» بملاحظة أو «رفض» بسبب: صور غير مقروءة، الهوية لا تطابق، السيلفي لا يطابق، لا يوجد حساب، سبب آخر.</p>
+
+  <div class="shots"><div class="shot wide"><img src="img/a03-recovery-drawer.png" alt=""><br>مراجعة طلب استرجاع: المقارنة، الصورتان، القرار</div></div>
+  <h3>المكتبة المرجعية <span class="fr">Bibliothèque de référence</span></h3>
+  <p>صفحتان (الوصفات والشهادات). رفع PDF (حتى 20 ميغابايت) مباشرة إلى التخزين الآمن، العنوان، العينة، التفعيل والتعطيل، استبدال الملف بنسخة جديدة، ومعاينة.</p>
+
+  <h3>الحاسبات <span class="fr">Calculateurs</span></h3>
+  <p>القائمة والحالات (مسودة، للمراجعة، منشورة، متقاعدة). صفحة الحاسبة: التعريف (محرر منظَّم أو JSON)، المصادر، حالات الاختبار وتشغيلها، بوابات النشر (مصدر أولي، مراجِع مختلف، كل الاختبارات ناجحة)، المستوى (طالب / مهني)، والعينة.</p>
+
+  <h3>الحمل والرضاعة <span class="fr">Grossesse · Allaitement</span></h3>
+  <p>ثلاث علامات: المواد، المصادر، البلاغات. صفحة المادة: النسخ وحالاتها، المحرر (فرنسية/إنجليزية لكل حقل)، معاينة «كما يراها الطبيب»، الإرسال للمراجعة، الموافقة أو طلب التعديل، وإظهار المادة أو إخفاؤها.</p>
+</section>
+
+<section class="chapter">
+  <h3>الاشتراكات <span class="fr">Abonnements</span></h3>
+  <p>قائمة المشتركين وحالاتهم، وكتالوج الخطط: كل تغيير سعر يُنشئ «نسخة» جديدة من الخطة (السعر بالدينار الكامل، 50 دج على الأقل)، مع ما تشمله وما لا تشمله، والجمهور (أطباء و/أو مقيمون). زر بدء البيع أو إيقافه.</p>
+
+  <h3>المعاملات <span class="fr">Transactions</span></h3>
+  <p>كل محاولة دفع برقمها <span class="code">DT-2026-000123</span>: الحالة، المبلغ، «القناة» (مثلاً «Chargily · CIB»)، الرسوم، الصافي، وتفاصيل المزوّد. المعاملة النهائية لا تُعدَّل ولا تُحذف أبداً؛ التصحيح الوحيد هو «تعديل استثنائي» يطلبه مدير عام ويوافق عليه مدير آخر.</p>
+
+  <h3>المالية <span class="fr">Finance</span></h3>
+  <div class="flow">
+    <div class="s"><b>الإيراد الإجمالي</b>كل المدفوعات الناجحة</div><div class="a">−</div>
+    <div class="s"><b>رسوم الدفع</b>الفعلية من Chargily أو المقدَّرة</div><div class="a">=</div>
+    <div class="s"><b>الإيراد الصافي</b></div><div class="a">−</div>
+    <div class="s"><b>المصاريف التشغيلية</b>خوادم، مراجعة سريرية، دعم…</div><div class="a">=</div>
+    <div class="s"><b>الربح الصافي</b>في كتلة منفصلة</div>
+  </div>
+  <div class="shots"><div class="shot wide"><img src="img/a05-payment-methods.png" alt=""><br>المالية ← المصاريف: وسائل الدفع ومعدلات الرسوم</div></div>
+  <ul>
+    <li><b>وسائل الدفع</b> <span class="fr">Moyens de paiement</span> (جديد): لكل بطاقة المزوّد الذي يستلمها، وزر «إيقاف مؤقت» عند عطل شبكة الذهبية أو CIB؛ التطبيق يتوقف عن عرضها فوراً.</li>
+    <li><b>معدلات الرسوم</b> لكل قناة (نسبة + مبلغ ثابت)، تُستعمل للتقدير فقط عندما لا يذكر المزوّد الرسوم الفعلية. Chargily يذكرها، فتُسجَّل فعلية تلقائياً.</li>
+    <li><b>تسوية الرسوم</b> من كشف المزوّد (للمزوّدين الذين لا يذكرونها).</li>
+    <li>تقارير CSV: الإيرادات حسب الخطة، الاشتراكات، رسوم المزوّدين.</li>
+  </ul>
+
+  <h3>الإحصاءات <span class="fr">Analytics</span></h3>
+  <p>علامات: الاستعمال، المستخدمون، المكتبة، الحاسبات، الاشتراكات، الوضع التجريبي. أرقام مجهولة الهوية: لا نص بحث، ولا قيم حاسبات، وكل خانة فيها أقل من 10 أشخاص تُخفى. المال يُعرض في المالية فقط.</p>
+
+  <h3>سجل التدقيق <span class="fr">Journal d’audit</span></h3>
+  <p>كل إجراء إداري وكل حدث حساس: من، ماذا، على أي عنصر، قبل/بعد، السبب، العنوان، الوقت. لا يُعدَّل ولا يُحذف (محمي في قاعدة البيانات). تصفية وتصدير لمن يملك الصلاحية.</p>
+
+  <h3>الصلاحيات <span class="fr">Permissions</span></h3>
+  <p>إنشاء المديرين بدور جاهز أو صلاحيات مخصصة (مع فرض فصل المهام)، منح مؤقت لمشاهدة الوثائق، إيقاف مدير، وإعادة ضبط مصادقته.</p>
+
+  <h3>إعدادات النظام <span class="fr">Paramètres système</span></h3>
+  <p>القوائم المرجعية: الاختصاصات، المؤسسات (حسب الولاية)، الجامعات. تُستعمل في التسجيل والتحقق.</p>
+</section>
+
+<!-- ═══════════════════════════ 17 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">17</span>الدفع عبر Chargily بالتفصيل</h2>
+  <p>اخترتَ <b>Chargily Pay</b> لأنه الأسهل في الحصول عليه. يقبل بطاقات <b>CIB</b> (شبكة SATIM) و<b>الذهبية Edahabia</b> (بريد الجزائر).</p>
+  <h3>ما الذي بُني</h3>
+  <ul>
+    <li><b>طبقة مزوّدين قابلة للتوسعة:</b> كل مزوّد «محوّل» واحد في الخادم. Chargily أولاً، وSATIM المباشر جاهز كبديل. إضافة مزوّد مستقبلاً لا تمس التطبيق ولا المالية.</li>
+    <li><b>توجيه بالإعدادات:</b> المتغير <span class="code">PAYMENT_GATEWAYS=chargily</span> أو <span class="code">chargily,satim</span>؛ كل بطاقة تذهب لأول مزوّد يقبلها.</li>
+    <li><b>إشعارات Chargily</b> (Webhook) موقّعة بمفتاحك السري ومُتحقَّق منها بايتاً بايتاً. حتى الإشعار الصحيح لا يكفي وحده: الخادم يعيد السؤال من Chargily عن حالة الدفع.</li>
+    <li><b>الرسوم:</b> على DokTool، وتُسجَّل الرسوم الفعلية لكل دفعة تلقائياً.</li>
+    <li><b>الأسعار:</b> بالدينار الكامل، و50 دج على الأقل (شرط Chargily).</li>
+  </ul>
+  <h3>ما عليك فعله (التفاصيل في <span class="code">docs/operations/chargily-setup.md</span>)</h3>
+  <ol>
+    <li>إنشاء حساب على <span class="code">pay.chargily.com</span> وتطبيق باسم DokTool.</li>
+    <li>من <span class="fr">Developers corner</span> انسخ المفتاح السري للاختبار <span class="code">test_sk_…</span>.</li>
+    <li>في إعدادات الخادم: <span class="code">PAYMENT_GATEWAYS=chargily</span>، <span class="code">CHARGILY_MODE=test</span>، <span class="code">CHARGILY_SECRET_KEY=…</span>، <span class="code">PUBLIC_API_URL=https://api.…</span></li>
+    <li>جرّب دفعاً ناجحاً ودفعاً مرفوضاً ودفعاً متروكاً كما في الدليل.</li>
+    <li>بعد توثيق Chargily لشركتك: <span class="code">CHARGILY_MODE=live</span> و<span class="code">live_sk_…</span>.</li>
+  </ol>
+  <div class="box crit"><span class="t">المفتاح السري</span>يوضع في إعدادات الخادم فقط، لا في التطبيق ولا في لوحة الإدارة ولا في أي ملف داخل المستودع. من يملكه يستطيع إنشاء عمليات دفع وقراءة مدفوعاتك. الخادم يرفض العمل إذا لم يتطابق نوع المفتاح مع الوضع، أو إذا كان الإنتاج في وضع الاختبار.</div>
+  <div class="box info"><span class="t">عند عطل</span>لوحة الإدارة ← المالية ← وسائل الدفع ← «إيقاف» البطاقة المعطلة مع ذكر السبب. التطبيق يكتب للأطباء «الدفع غير متاح مؤقتاً، أعد المحاولة لاحقاً».</div>
+</section>
+
+<!-- ═══════════════════════════ 18 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">18</span>الرسائل القصيرة SMS</h2>
+  <p>قلتَ إنك لا تعرف كيف تعمل؛ ببساطة:</p>
+  <div class="flow">
+    <div class="s"><b>الخادم</b>يطلب من المزوّد إرسال نص إلى <span class="code">+213…</span></div><div class="a">←</div>
+    <div class="s"><b>المزوّد</b>(Infobip أو Twilio) يوصله عبر موبيليس وجيزي وأوريدو</div><div class="a">←</div>
+    <div class="s"><b>الفاتورة</b>يدفع DokTool لكل رسالة للمزوّد</div>
+  </div>
+  <ul>
+    <li><b>مزوّدان جاهزان:</b> Infobip (قوي في إفريقيا والشرق الأوسط، يسجل اسم المرسل «DokTool») وTwilio (سهل التسجيل). الموصى به: Infobip أولاً وTwilio احتياطياً.</li>
+    <li><b>التبديل التلقائي:</b> إذا تعطل الأول مؤقتاً، يرسل الثاني الرسالة نفسها.</li>
+    <li><b>متى تُرسل رسالة:</b> تأكيد رقم عند التسجيل، نسيان كلمة المرور، إضافة رقم، استرجاع الحساب، وإشعارات الأمان عندما يكون الهاتف هو الوسيلة الوحيدة للحساب.</li>
+    <li><b>بدون مزوّد:</b> يُرفض التسجيل بالهاتف في الإنتاج، ويُطلب البريد بدلاً منه.</li>
+  </ul>
+  <h3>الحماية من الاحتيال والفواتير المفاجئة</h3>
+  <table>
+    <tr><th>الحماية</th><th>القيمة الافتراضية</th></tr>
+    <tr><td>الدول المسموح الإرسال إليها</td><td>الجزائر فقط <span class="code">213</span></td></tr>
+    <tr><td>حد لكل رقم</td><td>10 رسائل في اليوم</td></tr>
+    <tr><td>حد للخادم كله</td><td>2000 رسالة في اليوم <span class="code">SMS_DAILY_LIMIT</span> (عدّله حسب ميزانيتك)</td></tr>
+    <tr><td>حدود الرموز</td><td>60 ثانية بين رمزين، 5 إرسالات، 3 أخطاء ثم قفل 10 دقائق</td></tr>
+    <tr><td>السجلات</td><td>لا يُكتب النص ولا الرمز أبداً؛ الرقم مُخفى <span class="code">+21366•••••67</span></td></tr>
+  </table>
+  <p>الإعداد في <span class="code">docs/operations/sms-setup.md</span>.</p>
+</section>
+
+<!-- ═══════════════════════════ 19 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">19</span>الخصوصية والأمان</h2>
+  <div class="grid2">
+    <div class="box"><span class="t">الحسابات</span>كلمات المرور مشفرة بـ Argon2id، وقفل بعد المحاولات الخاطئة. المصادقة الثنائية TOTP إلزامية للمديرين. الجلسات تُنهى فوراً، وكل تغيير في الأمان يُبلَّغ عنه.</div>
+    <div class="box"><span class="t">الوثائق</span>في حاوية خاصة، روابط 60 ثانية، علامة مائية، صلاحية مؤقتة، مشاهدة مسجّلة، وحذف تلقائي (24 شهراً للتحقق، 30 يوماً للاسترجاع).</div>
+    <div class="box"><span class="t">المال</span>لا بيانات بطاقات عند DokTool. المعاملات لا تُعدَّل ولا تُحذف. الإشعارات موقّعة، ونتيجة الدفع تؤكَّد من المزوّد دائماً.</div>
+    <div class="box"><span class="t">الإحصاءات</span>مجهولة الهوية، بلا نص بحث، وبلا قيم حاسبات، وبلا بيانات مرضى. الخانات الصغيرة (أقل من 10 أشخاص) تُخفى.</div>
+    <div class="box"><span class="t">الهاتف</span>لا نسخ احتياطي سحابي لبيانات التطبيق، ولا اتصال غير مشفر في الإصدار النهائي. لا إعلانات ولا أدوات تتبع خارجية.</div>
+    <div class="box"><span class="t">الحق في الحذف</span>حذف الحساب من التطبيق بكلمة المرور: يُمحى كل شيء شخصي فوراً، ولا يبقى إلا سجل الدفع المحاسبي دون هوية.</div>
+  </div>
+  <p>تقرير المخاطر الكامل في <span class="code">docs/security/THREAT-MODEL.md</span>، وأُعيدت مراجعته في 5 أكتوبر 2026 ليشمل الدفع والرسائل والاسترجاع.</p>
+</section>
+
+<!-- ═══════════════════════════ 20 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">20</span>ما عليك فعله قبل الإطلاق</h2>
+  <p>الجزء البرمجي جاهز ومُختبَر. هذا ما ينتظرك (القائمة الكاملة بالإنجليزية في <span class="code">docs/RELEASE-CHECKLIST.md</span>):</p>
+  <h3>الحسابات والاستضافة</h3>
+  <ul>
+    <li>☐ حسابا المطوّر في Google Play وApple، ومفتاح توقيع أندرويد.</li>
+    <li>☐ خادم إنتاج بقاعدة PostgreSQL 18 ونسخ احتياطي يومي.</li>
+    <li>☐ Cloudflare R2 بحاويتين خاصتين، وCloudflare أمام الخادم ولوحة الإدارة.</li>
+    <li>☐ خدمة بريد SMTP، ومزوّد SMS (Infobip و/أو Twilio)، وحساب Chargily بمفاتيحه.</li>
+    <li>☐ مفاتيح سرية عشوائية قوية لكل متغيرات الخادم.</li>
+  </ul>
+  <h3>القانوني والمتاجر</h3>
+  <ul>
+    <li>☐ نشر صفحتي الشروط وسياسة الخصوصية، وعنوان دعم يُذكر في رسائل الأمان.</li>
+    <li>☐ نماذج «سلامة البيانات» في المتجرين (الإجابات جاهزة في القائمة).</li>
+    <li>☐ صفحات المتجر بالفرنسية والإنجليزية، ولقطات الشاشة، والتصنيف (18+ مهنيون).</li>
+  </ul>
+  <h3>المحتوى (من لوحة الإدارة)</h3>
+  <ul>
+    <li>☐ المدير العام الأول، ثم حسابات الفريق (مؤلف ومراجع للمحتوى السريري).</li>
+    <li>☐ ملفات PDF للوصفات والشهادات، واختيار العينات.</li>
+    <li>☐ الحاسبات (مؤلف + مراجع)، وملفات الحمل والرضاعة مع الطبيب.</li>
+    <li>☐ القوائم المرجعية، وأسعار الخطتين، ومعدلات الرسوم.</li>
+  </ul>
+  <h3>اختبارات يدوية على أجهزة حقيقية</h3>
+  <ul>
+    <li>☐ أول نسخة iOS على جهاز Mac مع Xcode (لم تُبنَ بعد لأن العمل على Windows).</li>
+    <li>☐ مرور بقارئ الشاشة TalkBack وVoiceOver، واستعمال لوحة الإدارة بلوحة المفاتيح فقط.</li>
+    <li>☐ اختبارات Chargily في وضع الاختبار، ثم دفع حقيقي صغير بعد التفعيل.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════ 21 ═══════════════════════════ -->
+<section class="chapter">
+  <h2><span class="num">21</span>مسرد المصطلحات</h2>
+  <table>
+    <tr><th>كما يظهر في الواجهة</th><th>بالعربية</th></tr>
+    <tr><td><span class="fr">Ordonnance</span></td><td>وصفة طبية (نموذج مرجعي PDF)</td></tr>
+    <tr><td><span class="fr">Certificat</span></td><td>شهادة طبية (نموذج مرجعي PDF)</td></tr>
+    <tr><td><span class="fr">Calculateur</span></td><td>حاسبة طبية</td></tr>
+    <tr><td><span class="fr">Grossesse · Allaitement</span></td><td>الحمل والرضاعة</td></tr>
+    <tr><td><span class="fr">Vérification</span></td><td>التحقق المهني</td></tr>
+    <tr><td><span class="fr">Abonnement · Offres · Payer</span></td><td>الاشتراك · العروض · ادفع</td></tr>
+    <tr><td><span class="fr">Renouveler · Ne pas renouveler</span></td><td>جدّد · لا تجدّد</td></tr>
+    <tr><td><span class="fr">Hors ligne</span></td><td>دون اتصال</td></tr>
+    <tr><td><span class="fr">Coordonnées et sécurité</span></td><td>الإحداثيات (البريد والهاتف) والأمان</td></tr>
+    <tr><td><span class="fr">Accès perdu ? · J’ai tout perdu</span></td><td>فقدتَ الوصول؟ · فقدتُ كل شيء</td></tr>
+    <tr><td><span class="fr">Ce n’est pas moi</span></td><td>لستُ أنا (إلغاء طلب الاسترجاع)</td></tr>
+    <tr><td><span class="fr">Récupérations de compte</span></td><td>طلبات استرجاع الحسابات (لوحة الإدارة)</td></tr>
+    <tr><td><span class="fr">Moyens de paiement</span></td><td>وسائل الدفع</td></tr>
+    <tr><td><span class="fr">Démo · demoSample</span></td><td>الوضع التجريبي · عينة ظاهرة للجميع</td></tr>
+    <tr><td><span class="fr">Pro</span></td><td>محتوى للمشتركين</td></tr>
+    <tr><td>CIB · Edahabia</td><td>البطاقة البنكية CIB · البطاقة الذهبية لبريد الجزائر</td></tr>
+    <tr><td>TOTP</td><td>رمز من 6 أرقام يتغيّر كل 30 ثانية في تطبيق المصادقة</td></tr>
+    <tr><td>Webhook</td><td>إشعار آلي يرسله مزوّد الدفع إلى الخادم</td></tr>
+  </table>
+  <p class="footer-note">أُعدّ هذا الدليل من الشيفرة المصدرية نفسها وقرارات المشروع (ADR-001 إلى ADR-023). عند أي اختلاف، القرار المكتوب في مجلد <span class="code">docs/adr</span> هو المرجع.</p>
+</section>
+
+</body>
+</html>

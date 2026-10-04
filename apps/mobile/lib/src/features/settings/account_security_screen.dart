@@ -27,6 +27,7 @@ import '../../ui/glass.dart';
 import '../../ui/skeleton.dart';
 import '../../ui/tokens.dart';
 import '../account/account_controller.dart';
+import '../notifications/notifications_screen.dart';
 import '../onboarding/otp_code_input.dart';
 import '../onboarding/otp_screen.dart';
 import '../onboarding/password_field.dart';
@@ -55,7 +56,9 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
     setState(() => _canceling = true);
     try {
       await ref.read(apiProvider).account.accountSecurityControllerCancelRecovery();
-      ref.invalidate(accountContactsProvider);
+      ref
+        ..invalidate(accountContactsProvider)
+        ..invalidate(notificationsProvider);
       if (mounted) setState(() => _notice = l10n.securityRecoveryCanceled);
     } catch (error) {
       if (mounted) setState(() => _notice = commonErrorText(context, ApiError.from(error)));
@@ -73,7 +76,8 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
     if (removed == true && mounted) {
       ref
         ..invalidate(accountContactsProvider)
-        ..invalidate(accountControllerProvider);
+        ..invalidate(accountControllerProvider)
+        ..invalidate(notificationsProvider);
       setState(() => _notice = AppLocalizations.of(context).contactRemoved);
     }
   }
@@ -85,7 +89,8 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
     if (saved == true && mounted) {
       ref
         ..invalidate(accountContactsProvider)
-        ..invalidate(accountControllerProvider);
+        ..invalidate(accountControllerProvider)
+        ..invalidate(notificationsProvider);
       setState(() => _notice = AppLocalizations.of(context).contactSaved);
     }
   }
@@ -181,7 +186,10 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
                     trailing: Icon(LucideIcons.chevronRight, color: colors.inkMuted),
                     onTap: () async {
                       final saved = await context.push<bool>(Routes.passwordChange);
-                      if (saved == true && mounted) setState(() => _notice = l10n.passwordSaved);
+                      if (saved == true && mounted) {
+                        ref.invalidate(notificationsProvider);
+                        setState(() => _notice = l10n.passwordSaved);
+                      }
                     },
                   ),
                 ),
