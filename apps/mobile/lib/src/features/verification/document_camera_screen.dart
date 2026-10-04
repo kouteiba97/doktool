@@ -13,13 +13,20 @@ import '../../ui/tokens.dart';
 /// « Utiliser cette photo / Reprendre ». Returns the photo path, or null. The photo is shown only
 /// here, before sending; afterwards the app shows the file name and size, never a thumbnail.
 class DocumentCameraScreen extends StatefulWidget {
-  const DocumentCameraScreen({required this.title, super.key});
+  const DocumentCameraScreen({required this.title, this.selfie = false, super.key});
 
   final String title;
 
-  static Future<String?> capture(BuildContext context, String title) =>
-      Navigator.of(context)
-          .push<String>(MaterialPageRoute(fullscreenDialog: true, builder: (_) => DocumentCameraScreen(title: title)));
+  /// The front camera, for the selfie of an account recovery (ADR-023).
+  final bool selfie;
+
+  static Future<String?> capture(BuildContext context, String title, {bool selfie = false}) => Navigator.of(context)
+      .push<String>(
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (_) => DocumentCameraScreen(title: title, selfie: selfie),
+        ),
+      );
 
   @override
   State<DocumentCameraScreen> createState() => _DocumentCameraScreenState();
@@ -40,16 +47,19 @@ class _DocumentCameraScreenState extends State<DocumentCameraScreen> {
   Future<void> _open() async {
     try {
       final cameras = await availableCameras();
-      final back =
-          cameras.where((camera) => camera.lensDirection == CameraLensDirection.back).firstOrNull ??
-          cameras.firstOrNull;
-      if (back == null) {
+      final wanted = widget.selfie ? CameraLensDirection.front : CameraLensDirection.back;
+      final lens = cameras.where((camera) => camera.lensDirection == wanted).firstOrNull ?? cameras.firstOrNull;
+      if (lens == null) {
         setState(() => _unavailable = true);
         return;
       }
-      final controller = CameraController(back, ResolutionPreset.high, enableAudio: false);
+      final controller = CameraController(lens, ResolutionPreset.high, enableAudio: false);
       await controller.initialize();
-      await controller.setFlashMode(FlashMode.off);
+      try {
+        await controller.setFlashMode(FlashMode.off);
+      } on CameraException {
+        // Front cameras often have no flash to switch off.
+      }
       if (!mounted) {
         await controller.dispose();
         return;

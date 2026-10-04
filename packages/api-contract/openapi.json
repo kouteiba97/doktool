@@ -114,6 +114,48 @@
         ],
         "type": "string"
       },
+      "AccountContactsDto": {
+        "properties": {
+          "email": {
+            "nullable": true,
+            "type": "string"
+          },
+          "emailConfirmed": {
+            "type": "boolean"
+          },
+          "pendingRecovery": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PendingRecoveryDto"
+              }
+            ],
+            "description": "Someone asked to recover this account; « Ce n’est pas moi » cancels it.",
+            "nullable": true,
+            "type": "object"
+          },
+          "phone": {
+            "description": "E.164",
+            "nullable": true,
+            "type": "string"
+          },
+          "phoneConfirmed": {
+            "type": "boolean"
+          },
+          "recoverable": {
+            "description": "Both contacts are confirmed: losing one of them never locks the person out (ADR-023).",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "email",
+          "emailConfirmed",
+          "phone",
+          "phoneConfirmed",
+          "recoverable",
+          "pendingRecovery"
+        ],
+        "type": "object"
+      },
       "ActivityCountsDto": {
         "properties": {
           "favorites": {
@@ -1120,6 +1162,121 @@
         },
         "required": [
           "reason"
+        ],
+        "type": "object"
+      },
+      "AdminRecoveryDetailDto": {
+        "properties": {
+          "account": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecoveryAccountDto"
+              }
+            ],
+            "description": "The account the lost contact belongs to; null when none does.",
+            "nullable": true,
+            "type": "object"
+          },
+          "request": {
+            "$ref": "#/components/schemas/AdminRecoveryDto"
+          }
+        },
+        "required": [
+          "request",
+          "account"
+        ],
+        "type": "object"
+      },
+      "AdminRecoveryDto": {
+        "properties": {
+          "appliedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "claimedIdentifier": {
+            "description": "The lost contact the person named.",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decisionNote": {
+            "nullable": true,
+            "type": "string"
+          },
+          "effectiveAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "hasIdentityPhoto": {
+            "type": "boolean"
+          },
+          "hasSelfie": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "newChannel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MessageChannel"
+              }
+            ]
+          },
+          "newDestination": {
+            "type": "string"
+          },
+          "rejectionReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecoveryStatus"
+              }
+            ]
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "userId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "claimedIdentifier",
+          "firstName",
+          "lastName",
+          "newChannel",
+          "newDestination",
+          "userId",
+          "hasIdentityPhoto",
+          "hasSelfie",
+          "submittedAt",
+          "decidedAt",
+          "rejectionReason",
+          "decisionNote",
+          "effectiveAt",
+          "appliedAt"
         ],
         "type": "object"
       },
@@ -3027,6 +3184,68 @@
           "challengeId",
           "code",
           "device"
+        ],
+        "type": "object"
+      },
+      "ContactConfirmDto": {
+        "properties": {
+          "challengeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "code": {
+            "example": "123456",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challengeId",
+          "code"
+        ],
+        "type": "object"
+      },
+      "ContactRemoveDto": {
+        "properties": {
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MessageChannel"
+              }
+            ]
+          },
+          "password": {
+            "description": "The current password: every account change asks for it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "password",
+          "channel"
+        ],
+        "type": "object"
+      },
+      "ContactRequestDto": {
+        "properties": {
+          "identifier": {
+            "description": "The e-mail or mobile number to add; it replaces the current one of its kind.",
+            "type": "string"
+          },
+          "language": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Language"
+              }
+            ],
+            "default": "FR"
+          },
+          "password": {
+            "description": "The current password: every account change asks for it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "password",
+          "identifier"
         ],
         "type": "object"
       },
@@ -5084,6 +5303,13 @@
         ],
         "type": "object"
       },
+      "MessageChannel": {
+        "enum": [
+          "EMAIL",
+          "SMS"
+        ],
+        "type": "string"
+      },
       "ModelActivityDto": {
         "properties": {
           "favorites": {
@@ -5527,6 +5753,23 @@
         ],
         "type": "object"
       },
+      "PasswordChangeDto": {
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "maxLength": 128,
+            "minLength": 8,
+            "type": "string"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ],
+        "type": "object"
+      },
       "PasswordResetConfirmDto": {
         "properties": {
           "challengeId": {
@@ -5638,6 +5881,28 @@
           "CHARGILY_EDAHABIA"
         ],
         "type": "string"
+      },
+      "PendingRecoveryDto": {
+        "properties": {
+          "effectiveAt": {
+            "description": "APPROVED: when it replaces the contacts unless cancelled.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "SUBMITTED",
+              "APPROVED"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "effectiveAt"
+        ],
+        "type": "object"
       },
       "PeriodDto": {
         "properties": {
@@ -6589,6 +6854,384 @@
         "required": [
           "deviceId",
           "entries"
+        ],
+        "type": "object"
+      },
+      "RecoveryAccountDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "email": {
+            "nullable": true,
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "identityStatus": {
+            "description": "Identity verification status on file (NOT_STARTED, VERIFIED…).",
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "phone": {
+            "nullable": true,
+            "type": "string"
+          },
+          "professionalStatus": {
+            "type": "string"
+          },
+          "professionalType": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "wilaya": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "email",
+          "phone",
+          "status",
+          "createdAt",
+          "wilaya",
+          "professionalType",
+          "identityStatus",
+          "professionalStatus"
+        ],
+        "type": "object"
+      },
+      "RecoveryApproveDto": {
+        "properties": {
+          "note": {
+            "description": "What was compared and found.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "note"
+        ],
+        "type": "object"
+      },
+      "RecoveryAttachDto": {
+        "properties": {
+          "intentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "recoveryToken": {
+            "type": "string"
+          },
+          "slot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecoveryPhotoSlot"
+              }
+            ]
+          }
+        },
+        "required": [
+          "recoveryToken",
+          "slot",
+          "intentId"
+        ],
+        "type": "object"
+      },
+      "RecoveryConfirmDto": {
+        "properties": {
+          "challengeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "code": {
+            "example": "123456",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "challengeId",
+          "code"
+        ],
+        "type": "object"
+      },
+      "RecoveryPhotoSlot": {
+        "enum": [
+          "IDENTITY_DOCUMENT",
+          "SELFIE"
+        ],
+        "type": "string"
+      },
+      "RecoveryPhotoViewDto": {
+        "properties": {
+          "contentType": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "watermark": {
+            "description": "Overlay it on the photo (who viewed it, when).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "expiresAt",
+          "contentType",
+          "watermark"
+        ],
+        "type": "object"
+      },
+      "RecoveryRejectDto": {
+        "properties": {
+          "note": {
+            "description": "What was compared and found.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecoveryRejectionReason"
+              }
+            ]
+          }
+        },
+        "required": [
+          "note",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "RecoveryRejectionReason": {
+        "enum": [
+          "PHOTO_UNREADABLE",
+          "IDENTITY_MISMATCH",
+          "SELFIE_MISMATCH",
+          "NO_ACCOUNT",
+          "OTHER"
+        ],
+        "type": "string"
+      },
+      "RecoveryStartDto": {
+        "properties": {
+          "firstName": {
+            "maxLength": 80,
+            "type": "string"
+          },
+          "language": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Language"
+              }
+            ],
+            "default": "FR"
+          },
+          "lastName": {
+            "maxLength": 80,
+            "type": "string"
+          },
+          "lostIdentifier": {
+            "description": "The e-mail or phone of the account, now out of reach.",
+            "type": "string"
+          },
+          "newIdentifier": {
+            "description": "A new e-mail or phone the person receives messages on.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "lostIdentifier",
+          "newIdentifier",
+          "firstName",
+          "lastName"
+        ],
+        "type": "object"
+      },
+      "RecoveryStartedDto": {
+        "properties": {
+          "challenge": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OtpChallengeDto"
+              }
+            ],
+            "description": "The code sent to the new contact."
+          },
+          "requestId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "challenge"
+        ],
+        "type": "object"
+      },
+      "RecoveryStatus": {
+        "enum": [
+          "AWAITING_DOCUMENTS",
+          "SUBMITTED",
+          "APPROVED",
+          "APPLIED",
+          "REJECTED",
+          "CANCELED",
+          "EXPIRED"
+        ],
+        "type": "string"
+      },
+      "RecoverySubmitDto": {
+        "properties": {
+          "recoveryToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "recoveryToken"
+        ],
+        "type": "object"
+      },
+      "RecoverySubmittedDto": {
+        "properties": {
+          "answerWithinHours": {
+            "description": "The team answers on the new contact within this many hours.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "answerWithinHours"
+        ],
+        "type": "object"
+      },
+      "RecoveryTokenDto": {
+        "properties": {
+          "expiresAt": {
+            "description": "The photos must be sent before this.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "recoveryToken": {
+            "description": "Kept in memory by the app until the photos are sent; never stored.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recoveryToken",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "RecoveryUploadHeadersDto": {
+        "properties": {
+          "Content-Length": {
+            "type": "string"
+          },
+          "Content-Type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "Content-Type",
+          "Content-Length"
+        ],
+        "type": "object"
+      },
+      "RecoveryUploadRequestDto": {
+        "properties": {
+          "contentType": {
+            "description": "image/jpeg or image/png.",
+            "example": "image/jpeg",
+            "type": "string"
+          },
+          "recoveryToken": {
+            "type": "string"
+          },
+          "sha256": {
+            "description": "Lower-case hex SHA-256 of the file.",
+            "type": "string"
+          },
+          "sizeBytes": {
+            "description": "Exact size in bytes (at most 10 MB).",
+            "type": "number"
+          },
+          "slot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecoveryPhotoSlot"
+              }
+            ]
+          }
+        },
+        "required": [
+          "recoveryToken",
+          "slot",
+          "contentType",
+          "sizeBytes",
+          "sha256"
+        ],
+        "type": "object"
+      },
+      "RecoveryUploadTicketDto": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "headers": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecoveryUploadHeadersDto"
+              }
+            ],
+            "description": "Send exactly these headers."
+          },
+          "intentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "PUT"
+            ],
+            "type": "string"
+          },
+          "url": {
+            "description": "Signed URL, valid 15 minutes.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "intentId",
+          "method",
+          "url",
+          "headers",
+          "expiresAt"
         ],
         "type": "object"
       },
@@ -8931,6 +9574,262 @@
   },
   "openapi": "3.0.0",
   "paths": {
+    "/admin/v1/account-recoveries": {
+      "get": {
+        "operationId": "AccountRecoveryAdminController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RecoveryStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminRecoveryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-account-recovery"
+        ]
+      }
+    },
+    "/admin/v1/account-recoveries/{id}": {
+      "get": {
+        "operationId": "AccountRecoveryAdminController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminRecoveryDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-account-recovery"
+        ]
+      }
+    },
+    "/admin/v1/account-recoveries/{id}/approve": {
+      "post": {
+        "operationId": "AccountRecoveryAdminController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryApproveDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminRecoveryDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-account-recovery"
+        ]
+      }
+    },
+    "/admin/v1/account-recoveries/{id}/photos/{slot}": {
+      "post": {
+        "operationId": "AccountRecoveryAdminController_photo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "slot",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/RecoveryPhotoSlot"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryPhotoViewDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-account-recovery"
+        ]
+      }
+    },
+    "/admin/v1/account-recoveries/{id}/reject": {
+      "post": {
+        "operationId": "AccountRecoveryAdminController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryRejectDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminRecoveryDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-account-recovery"
+        ]
+      }
+    },
     "/admin/v1/admins": {
       "get": {
         "operationId": "AdminAccountsController_list",
@@ -14652,6 +15551,204 @@
         ]
       }
     },
+    "/v1/auth/recovery": {
+      "post": {
+        "operationId": "AccountRecoveryController_start",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryStartDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryStartedDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/recovery/confirm": {
+      "post": {
+        "operationId": "AccountRecoveryController_confirm",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryConfirmDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryTokenDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/recovery/photos": {
+      "post": {
+        "operationId": "AccountRecoveryController_attach",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryAttachDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/recovery/submit": {
+      "post": {
+        "operationId": "AccountRecoveryController_submit",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoverySubmitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoverySubmittedDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/recovery/uploads": {
+      "post": {
+        "operationId": "AccountRecoveryController_upload",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryUploadRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryUploadTicketDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/v1/auth/refresh": {
       "post": {
         "operationId": "AuthController_refresh",
@@ -15386,6 +16483,168 @@
         ]
       }
     },
+    "/v1/me/contacts": {
+      "get": {
+        "operationId": "AccountSecurityController_contacts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountContactsDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      },
+      "post": {
+        "operationId": "AccountSecurityController_requestContact",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OtpChallengeDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/v1/me/contacts/confirm": {
+      "post": {
+        "operationId": "AccountSecurityController_confirmContact",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactConfirmDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountContactsDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/v1/me/contacts/remove": {
+      "post": {
+        "operationId": "AccountSecurityController_removeContact",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactRemoveDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountContactsDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
     "/v1/me/deletion": {
       "post": {
         "operationId": "AccountDeletionController_delete",
@@ -15670,6 +16929,45 @@
         ]
       }
     },
+    "/v1/me/password": {
+      "post": {
+        "operationId": "AccountSecurityController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChangeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
     "/v1/me/photo": {
       "delete": {
         "operationId": "UsersController_removePhoto",
@@ -15898,6 +17196,42 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/v1/me/recovery/cancel": {
+      "post": {
+        "operationId": "AccountSecurityController_cancelRecovery",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountContactsDto"
                 }
               }
             },

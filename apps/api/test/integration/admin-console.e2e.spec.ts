@@ -50,8 +50,9 @@ describe('users', () => {
       .expect(204);
     const sessions = await app.prisma().userSession.findMany({ where: { userId } });
     expect(sessions.every((session) => session.revokedReason === 'ACCOUNT_SUSPENDED')).toBe(true);
-    expect((await app.http().get('/v1/me/access').set(auth).expect(200)).body.tier).toBe(
-      'RESTRICTED',
+    // The session ends on the next request, not when the access token expires (ADR-023).
+    expect((await app.http().get('/v1/me/access').set(auth).expect(401)).body.error.code).toBe(
+      'SESSION_INVALID',
     );
     await superAdmin
       .post(`/admin/v1/users/${userId}/suspend`)

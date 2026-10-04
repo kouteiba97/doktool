@@ -3,6 +3,7 @@ export { UsersModule } from './users.module.js';
 export {
   UsersService,
   type AccessFacts,
+  type AccountContacts,
   type ProfessionalProfileInput,
   type SignInCandidate,
 } from './users.service.js';

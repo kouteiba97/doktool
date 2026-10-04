@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -42,6 +43,7 @@ final notificationsProvider = AsyncNotifierProvider<NotificationsController, Not
 
 /// Renders a notification from its catalogue key (section 19); unknown keys are skipped.
 String? notificationText(AppLocalizations l10n, NotificationDto notification) {
+  final locale = l10n.localeName;
   final caseType = notification.params['caseType'] ?? '';
   return switch (notification.messageKey) {
     'mobile.notifications.verificationApproved' => l10n.notificationsVerificationApproved(caseType),
@@ -51,8 +53,33 @@ String? notificationText(AppLocalizations l10n, NotificationDto notification) {
       notification.params['days'] ?? '',
     ),
     'mobile.notifications.verificationExpired' => l10n.notificationsVerificationExpired(caseType),
+    'mobile.notifications.subscriptionActivated' => l10n.notificationsSubscriptionActivated,
+    'mobile.notifications.subscriptionEnded' => l10n.notificationsSubscriptionEnded,
+    'mobile.notifications.subscriptionGrace' => l10n.notificationsSubscriptionGrace(
+      _date(locale, notification.params['graceEndsAt']),
+    ),
+    'mobile.notifications.subscriptionRenewal' => l10n.notificationsSubscriptionRenewal(
+      _date(locale, notification.params['endsAt']),
+    ),
+    'mobile.notifications.securityPasswordChanged' => l10n.notificationsSecurityPasswordChanged,
+    'mobile.notifications.securityContactAdded' => l10n.notificationsSecurityContactAdded(
+      notification.params['channel'] ?? '',
+    ),
+    'mobile.notifications.securityContactRemoved' => l10n.notificationsSecurityContactRemoved(
+      notification.params['channel'] ?? '',
+    ),
+    'mobile.notifications.securityRecoveryRequested' => l10n.notificationsSecurityRecoveryRequested,
+    'mobile.notifications.securityRecoveryApproved' => l10n.notificationsSecurityRecoveryApproved(
+      _date(locale, notification.params['date']),
+    ),
     _ => null,
   };
+}
+
+/// An ISO date parameter in the person's language (« 12 octobre 2026 »).
+String _date(String locale, String? iso) {
+  final parsed = iso == null ? null : DateTime.tryParse(iso);
+  return parsed == null ? '' : DateFormat.yMMMMd(locale).format(parsed.toLocal());
 }
 
 /// ScreenNotifications: « Nouveau » then « Plus tôt », with « Tout lire ».

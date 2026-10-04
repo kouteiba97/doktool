@@ -8,6 +8,9 @@ import 'package:doktool/src/features/onboarding/role_select_screen.dart';
 import 'package:doktool/src/features/onboarding/sign_in_screen.dart';
 import 'package:doktool/src/features/onboarding/sign_up_screen.dart';
 import 'package:doktool/src/features/onboarding/welcome_screen.dart';
+import 'package:doktool/src/features/recovery/access_help_screen.dart';
+import 'package:doktool/src/features/recovery/recovery_screen.dart';
+import 'package:doktool/src/features/settings/account_security_screen.dart';
 import 'package:doktool/src/features/settings/app_settings.dart';
 import 'package:doktool/src/features/settings/delete_account_screen.dart';
 import 'package:doktool/src/features/settings/settings_screen.dart';
@@ -33,6 +36,9 @@ void main() {
     'Password reset': ResetRequestScreen.new,
     'Settings': SettingsScreen.new,
     'Delete account': DeleteAccountScreen.new,
+    'Access help': AccessHelpScreen.new,
+    'Account recovery': RecoveryScreen.new,
+    'Change password': PasswordChangeScreen.new,
   };
 
   Future<void> pump(WidgetTester tester, Widget screen, {required AppearancePreference appearance}) async {

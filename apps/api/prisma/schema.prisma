@@ -338,8 +338,26 @@ enum DevicePlatform {
 enum OtpPurpose {
   SIGN_UP
   PASSWORD_RESET
+  /// Proves a new e-mail or phone before it is added to an account (ADR-023).
+  CONTACT_CHANGE
+  /// Proves the new contact of an assisted account recovery (ADR-023).
+  ACCOUNT_RECOVERY
 
   @@map("otp_purpose")
+}
+
+/// Assisted account recovery (ADR-023): documents sent → reviewed → approved and applied after a
+/// waiting period during which the owner can cancel by signing in.
+enum RecoveryStatus {
+  AWAITING_DOCUMENTS
+  SUBMITTED
+  APPROVED
+  APPLIED
+  REJECTED
+  CANCELED
+  EXPIRED
+
+  @@map("recovery_status")
 }
 
 enum MessageChannel {
@@ -360,6 +378,10 @@ enum SessionRevocationReason {
   ADMIN_REVOKED
   /// The person deleted their account (Settings « Supprimer le compte »).
   ACCOUNT_DELETED
+  /// The person changed their password from Settings (other devices are signed out).
+  PASSWORD_CHANGED
+  /// An approved assisted recovery replaced the contacts (ADR-023).
+  ACCOUNT_RECOVERED
 
   @@map("session_revocation_reason")
 }
@@ -477,6 +499,7 @@ model User {
   convertedDemos      DemoSession[]
   sessions            UserSession[]
   otpChallenges       OtpChallenge[]
+  recoveryRequests    AccountRecoveryRequest[]
 
   @@map("users")
 }
@@ -1107,6 +1130,46 @@ model OtpChallenge {
   @@map("otp_challenges")
 }
 
+/// « J’ai perdu l’accès à mon e-mail et à mon téléphone » (ADR-023). The person proves a new
+/// contact with a code, sends an identity photo and a selfie, and an admin compares them with the
+/// account. Photos are deleted 30 days after the decision; the row stays as the record.
+model AccountRecoveryRequest {
+  id                  String         @id @default(uuid(7)) @db.Uuid
+  status              RecoveryStatus @default(AWAITING_DOCUMENTS)
+  /// The lost e-mail or phone the person typed, normalised.
+  claimedIdentifier   String         @map("claimed_identifier")
+  /// The account it matched when sent; null when none did (the admin rejects it).
+  userId              String?        @map("user_id") @db.Uuid
+  user                User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  firstName           String         @map("first_name")
+  lastName            String         @map("last_name")
+  /// The new contact, proven by a code before anything else.
+  newChannel          MessageChannel @map("new_channel")
+  newDestination      String         @map("new_destination")
+  language            Language
+  /// SHA-256 of the bearer token the app holds until it sends the photos.
+  tokenHash           String         @unique @map("token_hash") @db.Char(64)
+  identityDocumentKey String?        @map("identity_document_key")
+  selfieKey           String?        @map("selfie_key")
+  submittedAt         DateTime?      @map("submitted_at") @db.Timestamptz(3)
+  decidedAt           DateTime?      @map("decided_at") @db.Timestamptz(3)
+  decidedById         String?        @map("decided_by_id") @db.Uuid
+  decidedBy           AdminAccount?  @relation("RecoveryDecider", fields: [decidedById], references: [id], onDelete: Restrict)
+  rejectionReason     String?        @map("rejection_reason")
+  decisionNote        String?        @map("decision_note")
+  /// Approved requests apply then, unless the owner signs in before.
+  effectiveAt         DateTime?      @map("effective_at") @db.Timestamptz(3)
+  appliedAt           DateTime?      @map("applied_at") @db.Timestamptz(3)
+  documentsPurgeAfter DateTime?      @map("documents_purge_after") @db.Timestamptz(3)
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([status, submittedAt])
+  @@index([userId])
+  @@index([documentsPurgeAfter])
+  @@map("account_recovery_requests")
+}
+
 // ──────────────────────────── [notifications] ────────────────────────────
 
 /// Rendered in the user's language from catalogue keys.
@@ -1232,6 +1295,7 @@ model AdminAccount {
   expensesVoided             OperatingExpense[]        @relation("ExpenseVoider")
   feeRatesUpdated            PaymentFeeRate[]          @relation("FeeRateUpdater")
   paymentMethodsUpdated      PaymentMethodSetting[]    @relation("PaymentMethodUpdater")
+  recoveriesDecided          AccountRecoveryRequest[]  @relation("RecoveryDecider")
   referenceDocumentsCreated  ReferenceDocument[]       @relation("ReferenceDocumentCreator")
   referenceDocumentsUpdated  ReferenceDocument[]       @relation("ReferenceDocumentUpdater")
   referenceFilesUploaded     ReferenceDocumentFile[]   @relation("ReferenceDocumentFileUploader")
@@ -1323,6 +1387,8 @@ enum UploadPurpose {
   REFERENCE_DOCUMENT
   VERIFICATION_DOCUMENT
   PROFILE_IMAGE
+  /// Identity photo or selfie of an assisted account recovery (private bucket, ADR-023).
+  RECOVERY_DOCUMENT
 
   @@map("upload_purpose")
 }
@@ -1330,6 +1396,8 @@ enum UploadPurpose {
 enum UploaderType {
   ADMIN
   USER
+  /// A person without a session, proven by an account recovery token (ADR-023).
+  RECOVERY_REQUEST
 
   @@map("uploader_type")
 }

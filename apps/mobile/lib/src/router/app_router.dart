@@ -22,6 +22,9 @@ import '../features/profile/profile_screen.dart';
 import '../features/reference/reference_viewer_screen.dart';
 import '../features/pregnancy/substance_screen.dart';
 import '../features/search/search_screen.dart';
+import '../features/recovery/access_help_screen.dart';
+import '../features/recovery/recovery_screen.dart';
+import '../features/settings/account_security_screen.dart';
 import '../features/settings/delete_account_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/shell/app_shell.dart';
@@ -51,6 +54,8 @@ abstract final class Routes {
   static const otp = '/auth/otp';
   static const resetRequest = '/auth/reset';
   static const resetConfirm = '/auth/reset/confirm';
+  static const accessHelp = '/auth/access-help';
+  static const recovery = '/auth/recovery';
   static const role = '/onboarding/role';
   static const verificationIntro = '/verification/intro';
   static const verificationIdentity = '/verification/identity';
@@ -63,6 +68,8 @@ abstract final class Routes {
   static const settings = '/settings';
   static const offlineSettings = '/settings/offline';
   static const deleteAccount = '/settings/account/delete';
+  static const security = '/settings/account/security';
+  static const passwordChange = '/settings/account/password';
   static const notifications = '/notifications';
   static const plans = '/subscription/plans';
   static const subscription = '/subscription';
@@ -74,10 +81,22 @@ abstract final class Routes {
   static String calculator(String slug) => '/calculators/$slug';
   static String substance(String id) => '/pregnancy/$id';
   static String subscriptionReview(String planId) => '/subscription/review/$planId';
+  static String contactEdit(String kind, bool exists) => '/settings/account/contact/$kind${exists ? '?change=1' : ''}';
   static String subscriptionResult(String transactionId) => '/subscription/result/$transactionId';
 
   /// Reachable while signed out.
-  static const public = {welcome, demoStart, signIn, signUp, otp, resetRequest, resetConfirm, role};
+  static const public = {
+    welcome,
+    demoStart,
+    signIn,
+    signUp,
+    otp,
+    resetRequest,
+    resetConfirm,
+    accessHelp,
+    recovery,
+    role,
+  };
 
   /// Only for real accounts (never a demo token, section 27).
   static const accountOnly = [
@@ -152,6 +171,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: Routes.otp, builder: (context, state) => const OtpScreen()),
       GoRoute(path: Routes.resetRequest, builder: (context, state) => const ResetRequestScreen()),
       GoRoute(path: Routes.resetConfirm, builder: (context, state) => const ResetConfirmScreen()),
+      GoRoute(path: Routes.accessHelp, builder: (context, state) => const AccessHelpScreen()),
+      GoRoute(path: Routes.recovery, builder: (context, state) => const RecoveryScreen()),
       GoRoute(path: Routes.role, builder: (context, state) => const RoleSelectScreen()),
       GoRoute(path: Routes.verificationIntro, builder: (context, state) => const VerificationIntroScreen()),
       GoRoute(path: Routes.verificationIdentity, builder: (context, state) => const IdentityStepScreen()),
@@ -162,6 +183,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: Routes.settings, builder: (context, state) => const SettingsScreen()),
       GoRoute(path: Routes.offlineSettings, builder: (context, state) => const OfflineSettingsScreen()),
       GoRoute(path: Routes.deleteAccount, builder: (context, state) => const DeleteAccountScreen()),
+      GoRoute(path: Routes.security, builder: (context, state) => const AccountSecurityScreen()),
+      GoRoute(path: Routes.passwordChange, builder: (context, state) => const PasswordChangeScreen()),
+      GoRoute(
+        path: '/settings/account/contact/:kind',
+        builder: (context, state) => ContactEditScreen(
+          email: state.pathParameters['kind'] == 'email',
+          exists: state.uri.queryParameters['change'] == '1',
+        ),
+      ),
       GoRoute(path: Routes.notifications, builder: (context, state) => const NotificationsScreen()),
       GoRoute(path: Routes.plans, builder: (context, state) => const PlansScreen()),
       GoRoute(path: Routes.subscription, builder: (context, state) => const SubscriptionScreen()),

@@ -24,6 +24,42 @@
   "@accessStudent": {
     "description": "mobile.access.student"
   },
+  "accessHelpContactBody": "You know your password? Sign in with the old contact, then update it in Settings › Contacts and security.",
+  "@accessHelpContactBody": {
+    "description": "mobile.accessHelp.contactBody"
+  },
+  "accessHelpContactTitle": "I changed my e-mail or number",
+  "@accessHelpContactTitle": {
+    "description": "mobile.accessHelp.contactTitle"
+  },
+  "accessHelpForgotBody": "Get a code on your e-mail or phone to choose a new one.",
+  "@accessHelpForgotBody": {
+    "description": "mobile.accessHelp.forgotBody"
+  },
+  "accessHelpForgotTitle": "I forgot my password",
+  "@accessHelpForgotTitle": {
+    "description": "mobile.accessHelp.forgotTitle"
+  },
+  "accessHelpIntro": "Choose what happened.",
+  "@accessHelpIntro": {
+    "description": "mobile.accessHelp.intro"
+  },
+  "accessHelpLostBody": "No access to my e-mail or my phone, and no password. The DokTool team checks your identity and gives your account back.",
+  "@accessHelpLostBody": {
+    "description": "mobile.accessHelp.lostBody"
+  },
+  "accessHelpLostTitle": "I lost everything",
+  "@accessHelpLostTitle": {
+    "description": "mobile.accessHelp.lostTitle"
+  },
+  "accessHelpTip": "To never get here, add both an e-mail and a phone to your account: either one recovers the other.",
+  "@accessHelpTip": {
+    "description": "mobile.accessHelp.tip"
+  },
+  "accessHelpTitle": "Get back in",
+  "@accessHelpTitle": {
+    "description": "mobile.accessHelp.title"
+  },
   "activityClear": "Clear history",
   "@activityClear": {
     "description": "mobile.activity.clear"
@@ -350,6 +386,76 @@
         "type": "String"
       }
     }
+  },
+  "contactConfirm": "Confirm",
+  "@contactConfirm": {
+    "description": "mobile.contact.confirm"
+  },
+  "contactIntro": "A code is sent to the new contact. Your password confirms it is really you.",
+  "@contactIntro": {
+    "description": "mobile.contact.intro"
+  },
+  "contactKeepOne": "Keep at least one confirmed contact.",
+  "@contactKeepOne": {
+    "description": "mobile.contact.keepOne"
+  },
+  "contactNewEmail": "New e-mail",
+  "@contactNewEmail": {
+    "description": "mobile.contact.newEmail"
+  },
+  "contactNewPhone": "New number",
+  "@contactNewPhone": {
+    "description": "mobile.contact.newPhone"
+  },
+  "contactPassword": "Current password",
+  "@contactPassword": {
+    "description": "mobile.contact.password"
+  },
+  "contactRemoveBody": "You keep your other contact to sign in and recover your account. Confirm with your password.",
+  "@contactRemoveBody": {
+    "description": "mobile.contact.removeBody"
+  },
+  "contactRemoveTitle": "{channel, select, EMAIL {Remove the e-mail?} other {Remove the phone?}}",
+  "@contactRemoveTitle": {
+    "description": "mobile.contact.removeTitle",
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "contactRemoved": "Contact removed.",
+  "@contactRemoved": {
+    "description": "mobile.contact.removed"
+  },
+  "contactSame": "This is already your contact.",
+  "@contactSame": {
+    "description": "mobile.contact.same"
+  },
+  "contactSaved": "Contact saved.",
+  "@contactSaved": {
+    "description": "mobile.contact.saved"
+  },
+  "contactSendCode": "Get a code",
+  "@contactSendCode": {
+    "description": "mobile.contact.sendCode"
+  },
+  "contactTaken": "This contact is already used by another account.",
+  "@contactTaken": {
+    "description": "mobile.contact.taken"
+  },
+  "contactTitle": "{mode, select, addEmail {Add an e-mail} addPhone {Add a phone} changeEmail {Change the e-mail} other {Change the phone}}",
+  "@contactTitle": {
+    "description": "mobile.contact.title",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "contactWrongPassword": "Wrong password.",
+  "@contactWrongPassword": {
+    "description": "mobile.contact.wrongPassword"
   },
   "deleteAccountConfirm": "Delete account",
   "@deleteAccountConfirm": {
@@ -697,6 +803,41 @@
   "@notificationsMarkAllRead": {
     "description": "mobile.notifications.markAllRead"
   },
+  "notificationsSecurityContactAdded": "{channel, select, EMAIL {An e-mail address was added to your account.} other {A phone number was added to your account.}}",
+  "@notificationsSecurityContactAdded": {
+    "description": "mobile.notifications.securityContactAdded",
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsSecurityContactRemoved": "{channel, select, EMAIL {The e-mail address was removed from your account.} other {The phone number was removed from your account.}}",
+  "@notificationsSecurityContactRemoved": {
+    "description": "mobile.notifications.securityContactRemoved",
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsSecurityPasswordChanged": "Your password was changed. Your other devices were signed out.",
+  "@notificationsSecurityPasswordChanged": {
+    "description": "mobile.notifications.securityPasswordChanged"
+  },
+  "notificationsSecurityRecoveryApproved": "A recovery of your account takes effect on {date}. If this wasn’t you, open Settings › Account and tap “This wasn’t me”.",
+  "@notificationsSecurityRecoveryApproved": {
+    "description": "mobile.notifications.securityRecoveryApproved",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsSecurityRecoveryRequested": "Someone asked to recover your account. If this wasn’t you, open Settings › Account and tap “This wasn’t me”.",
+  "@notificationsSecurityRecoveryRequested": {
+    "description": "mobile.notifications.securityRecoveryRequested"
+  },
   "notificationsSubscriptionActivated": "Your DokTool Pro subscription is active.",
   "@notificationsSubscriptionActivated": {
     "description": "mobile.notifications.subscriptionActivated"
@@ -987,6 +1128,30 @@
   "otpVerify": "Confirm",
   "@otpVerify": {
     "description": "mobile.otp.verify"
+  },
+  "passwordCurrent": "Current password",
+  "@passwordCurrent": {
+    "description": "mobile.password.current"
+  },
+  "passwordNew": "New password",
+  "@passwordNew": {
+    "description": "mobile.password.new"
+  },
+  "passwordSameAsContact": "The password cannot be your e-mail or phone number.",
+  "@passwordSameAsContact": {
+    "description": "mobile.password.sameAsContact"
+  },
+  "passwordSave": "Save",
+  "@passwordSave": {
+    "description": "mobile.password.save"
+  },
+  "passwordSaved": "Password changed. Your other devices were signed out.",
+  "@passwordSaved": {
+    "description": "mobile.password.saved"
+  },
+  "passwordTitle": "Change the password",
+  "@passwordTitle": {
+    "description": "mobile.password.title"
   },
   "paymentCanceled": "The payment was abandoned.",
   "@paymentCanceled": {
@@ -1429,6 +1594,110 @@
   "@profileVerification": {
     "description": "mobile.profile.verification"
   },
+  "recoveryAccountExists": "This contact already opens an account: sign in with it.",
+  "@recoveryAccountExists": {
+    "description": "mobile.recovery.accountExists"
+  },
+  "recoveryBackToSignIn": "Back to sign in",
+  "@recoveryBackToSignIn": {
+    "description": "mobile.recovery.backToSignIn"
+  },
+  "recoveryDoneBody": "The DokTool team answers within {hours} hours on {contact}. If you find your password meanwhile, just sign in: the request will be cancelled.",
+  "@recoveryDoneBody": {
+    "description": "mobile.recovery.doneBody",
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "contact": {
+        "type": "String"
+      }
+    }
+  },
+  "recoveryDoneTitle": "Request sent",
+  "@recoveryDoneTitle": {
+    "description": "mobile.recovery.doneTitle"
+  },
+  "recoveryExpired": "The request expired. Start again from the beginning.",
+  "@recoveryExpired": {
+    "description": "mobile.recovery.expired"
+  },
+  "recoveryIdentityHelp": "National ID card or passport, front side, clearly readable.",
+  "@recoveryIdentityHelp": {
+    "description": "mobile.recovery.identityHelp"
+  },
+  "recoveryIdentityPhoto": "Your identity document",
+  "@recoveryIdentityPhoto": {
+    "description": "mobile.recovery.identityPhoto"
+  },
+  "recoveryIntro": "Give the contact of your account that you lost, then a new contact where you receive messages.",
+  "@recoveryIntro": {
+    "description": "mobile.recovery.intro"
+  },
+  "recoveryLostIdentifier": "Lost e-mail or number",
+  "@recoveryLostIdentifier": {
+    "description": "mobile.recovery.lostIdentifier"
+  },
+  "recoveryNewIdentifier": "New e-mail or number",
+  "@recoveryNewIdentifier": {
+    "description": "mobile.recovery.newIdentifier"
+  },
+  "recoveryNewIdentifierHelp": "You get a code there now, then the team's answer.",
+  "@recoveryNewIdentifierHelp": {
+    "description": "mobile.recovery.newIdentifierHelp"
+  },
+  "recoveryPhotoSent": "Photo sent",
+  "@recoveryPhotoSent": {
+    "description": "mobile.recovery.photoSent"
+  },
+  "recoveryPhotosIntro": "Two photos let the team check that it is really you. Only the verification team sees them, and they are deleted 30 days after the decision.",
+  "@recoveryPhotosIntro": {
+    "description": "mobile.recovery.photosIntro"
+  },
+  "recoveryRetake": "Retake",
+  "@recoveryRetake": {
+    "description": "mobile.recovery.retake"
+  },
+  "recoverySameContact": "The new contact must differ from the one you lost.",
+  "@recoverySameContact": {
+    "description": "mobile.recovery.sameContact"
+  },
+  "recoverySelfie": "Selfie with your document",
+  "@recoverySelfie": {
+    "description": "mobile.recovery.selfie"
+  },
+  "recoverySelfieHelp": "Your face and the identity document, visible together.",
+  "@recoverySelfieHelp": {
+    "description": "mobile.recovery.selfieHelp"
+  },
+  "recoverySendCode": "Get a code",
+  "@recoverySendCode": {
+    "description": "mobile.recovery.sendCode"
+  },
+  "recoverySubmit": "Send the request",
+  "@recoverySubmit": {
+    "description": "mobile.recovery.submit"
+  },
+  "recoveryTakePhoto": "Take the photo",
+  "@recoveryTakePhoto": {
+    "description": "mobile.recovery.takePhoto"
+  },
+  "recoveryTitle": "Recover my account",
+  "@recoveryTitle": {
+    "description": "mobile.recovery.title"
+  },
+  "recoveryUploadFailed": "The photo could not be sent. Try again.",
+  "@recoveryUploadFailed": {
+    "description": "mobile.recovery.uploadFailed"
+  },
+  "recoveryUploading": "Sending the photo…",
+  "@recoveryUploading": {
+    "description": "mobile.recovery.uploading"
+  },
+  "recoveryVerify": "Verify",
+  "@recoveryVerify": {
+    "description": "mobile.recovery.verify"
+  },
   "resetConfirm": "Change password",
   "@resetConfirm": {
     "description": "mobile.reset.confirm"
@@ -1624,6 +1893,84 @@
   "@searchUnavailable": {
     "description": "mobile.search.unavailable"
   },
+  "securityAdd": "Add",
+  "@securityAdd": {
+    "description": "mobile.security.add"
+  },
+  "securityChange": "Change",
+  "@securityChange": {
+    "description": "mobile.security.change"
+  },
+  "securityChangePassword": "Change the password",
+  "@securityChangePassword": {
+    "description": "mobile.security.changePassword"
+  },
+  "securityContacts": "Contacts",
+  "@securityContacts": {
+    "description": "mobile.security.contacts"
+  },
+  "securityEmail": "E-mail",
+  "@securityEmail": {
+    "description": "mobile.security.email"
+  },
+  "securityNone": "None",
+  "@securityNone": {
+    "description": "mobile.security.none"
+  },
+  "securityNotMe": "This wasn’t me",
+  "@securityNotMe": {
+    "description": "mobile.security.notMe"
+  },
+  "securityNotRecoverable": "Add {missing, select, EMAIL {an e-mail} other {a phone}}: if you lose your only contact, recovery needs an identity check.",
+  "@securityNotRecoverable": {
+    "description": "mobile.security.notRecoverable",
+    "placeholders": {
+      "missing": {
+        "type": "String"
+      }
+    }
+  },
+  "securityPassword": "Password",
+  "@securityPassword": {
+    "description": "mobile.security.password"
+  },
+  "securityPasswordHelp": "Your other devices are signed out when you change it.",
+  "@securityPasswordHelp": {
+    "description": "mobile.security.passwordHelp"
+  },
+  "securityPendingApproved": "A recovery of your account takes effect on {date}. If this wasn’t you, cancel it now.",
+  "@securityPendingApproved": {
+    "description": "mobile.security.pendingApproved",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "securityPendingSubmitted": "Someone asked to recover your account. If this wasn’t you, cancel the request.",
+  "@securityPendingSubmitted": {
+    "description": "mobile.security.pendingSubmitted"
+  },
+  "securityPhone": "Phone",
+  "@securityPhone": {
+    "description": "mobile.security.phone"
+  },
+  "securityRecoverable": "Your account is well protected: if you lose one of your contacts, the other is enough to recover it.",
+  "@securityRecoverable": {
+    "description": "mobile.security.recoverable"
+  },
+  "securityRecoveryCanceled": "Request cancelled. To be safe, change your password.",
+  "@securityRecoveryCanceled": {
+    "description": "mobile.security.recoveryCanceled"
+  },
+  "securityRemove": "Remove",
+  "@securityRemove": {
+    "description": "mobile.security.remove"
+  },
+  "securityTitle": "Contacts and security",
+  "@securityTitle": {
+    "description": "mobile.security.title"
+  },
   "settingsAccount": "Account",
   "@settingsAccount": {
     "description": "mobile.settings.account"
@@ -1672,6 +2019,10 @@
   "@settingsOffline": {
     "description": "mobile.settings.offline"
   },
+  "settingsSecurity": "Contacts and security",
+  "@settingsSecurity": {
+    "description": "mobile.settings.security"
+  },
   "settingsTitle": "Settings",
   "@settingsTitle": {
     "description": "mobile.settings.title"
@@ -1692,6 +2043,10 @@
         "type": "String"
       }
     }
+  },
+  "signInLostAccess": "Lost access?",
+  "@signInLostAccess": {
+    "description": "mobile.signIn.lostAccess"
   },
   "signInNoAccount": "No account yet? Create an account",
   "@signInNoAccount": {

@@ -27,6 +27,17 @@ export interface PendingAccountInput {
   language: Language;
 }
 
+/** The contacts of an account (ADR-023): only confirmed ones are used to reach the person. */
+export interface AccountContacts {
+  email: string | null;
+  emailConfirmed: boolean;
+  phone: string | null;
+  phoneConfirmed: boolean;
+  language: Language;
+  firstName: string;
+  status: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
+}
+
 export interface SignInCandidate {
   id: string;
   passwordHash: string;
@@ -265,6 +276,156 @@ export class UsersService {
   }
 
   /** Sets a new password and lifts any lockout (password reset). */
+  async contactsOf(userId: string): Promise<AccountContacts | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        emailConfirmedAt: true,
+        phone: true,
+        phoneConfirmedAt: true,
+        firstName: true,
+        status: true,
+        preference: { select: { language: true } },
+      },
+    });
+    if (!user) return null;
+    return {
+      email: user.email,
+      emailConfirmed: user.emailConfirmedAt !== null,
+      phone: user.phone,
+      phoneConfirmed: user.phoneConfirmedAt !== null,
+      language: user.preference?.language ?? 'FR',
+      firstName: user.firstName,
+      status: user.status,
+    };
+  }
+
+  /** The live account whose confirmed contact this is (account recovery, ADR-023). */
+  async findAccountIdByContact(identifier: Identifier): Promise<string | null> {
+    const candidate = await this.findSignInCandidate(identifier);
+    return candidate && candidate.identifierConfirmed && candidate.status !== 'DELETED'
+      ? candidate.id
+      : null;
+  }
+
+  /**
+   * Sets an account's e-mail or phone to a contact just proven by a code, confirmed now, and
+   * returns the value it replaces. A sign-up never confirmed that holds the same contact is
+   * dropped (it could never be used); an account that confirmed it keeps it (ACCOUNT_EXISTS).
+   */
+  async setContact(userId: string, identifier: Identifier): Promise<string | null> {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        await this.releaseFromUnconfirmed(tx, userId, identifier);
+        const before = await tx.user.findUniqueOrThrow({
+          where: { id: userId },
+          select: { email: true, phone: true },
+        });
+        await tx.user.update({
+          where: { id: userId },
+          data:
+            identifier.channel === 'EMAIL'
+              ? { email: identifier.value, emailConfirmedAt: new Date() }
+              : { phone: identifier.value, phoneConfirmedAt: new Date() },
+        });
+        return identifier.channel === 'EMAIL' ? before.email : before.phone;
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new DomainError('ACCOUNT_EXISTS', 'Another account already uses this contact.');
+      }
+      throw error;
+    }
+  }
+
+  /** Removes the e-mail or the phone; the other one must be confirmed, so the person stays reachable. */
+  async removeContact(userId: string, channel: Identifier['channel']): Promise<string> {
+    const contacts = await this.contactsOf(userId);
+    const removed = channel === 'EMAIL' ? contacts?.email : contacts?.phone;
+    const otherConfirmed =
+      channel === 'EMAIL' ? contacts?.phoneConfirmed : contacts?.emailConfirmed;
+    if (!removed) throw new DomainError('NOT_FOUND', 'This contact is not set.');
+    if (!otherConfirmed) {
+      throw new DomainError('INVALID_STATE', 'Keep at least one confirmed contact.');
+    }
+    await this.prisma.user.update({
+      where: { id: userId },
+      data:
+        channel === 'EMAIL'
+          ? { email: null, emailConfirmedAt: null }
+          : { phone: null, phoneConfirmedAt: null },
+    });
+    return removed;
+  }
+
+  /**
+   * Applies an approved account recovery (ADR-023): the proven contact becomes the only one, and
+   * the password is replaced by an unusable one, so only « Mot de passe oublié » on the new
+   * contact opens the account. Returns the contacts it replaced.
+   */
+  async replaceContactsForRecovery(
+    userId: string,
+    identifier: Identifier,
+    unusablePasswordHash: string,
+  ): Promise<{ email: string | null; phone: string | null }> {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        await this.releaseFromUnconfirmed(tx, userId, identifier);
+        const before = await tx.user.findUniqueOrThrow({
+          where: { id: userId },
+          select: { email: true, phone: true },
+        });
+        const now = new Date();
+        await tx.user.update({
+          where: { id: userId },
+          data: {
+            ...(identifier.channel === 'EMAIL'
+              ? {
+                  email: identifier.value,
+                  emailConfirmedAt: now,
+                  phone: null,
+                  phoneConfirmedAt: null,
+                }
+              : {
+                  phone: identifier.value,
+                  phoneConfirmedAt: now,
+                  email: null,
+                  emailConfirmedAt: null,
+                }),
+            passwordHash: unusablePasswordHash,
+            failedSignInCount: 0,
+            lockedUntil: null,
+          },
+        });
+        return before;
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new DomainError('ACCOUNT_EXISTS', 'Another account already uses this contact.');
+      }
+      throw error;
+    }
+  }
+
+  /** Drops a never-confirmed sign-up holding this contact, so a confirmed owner can take it. */
+  private async releaseFromUnconfirmed(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    identifier: Identifier,
+  ): Promise<void> {
+    const holder = await tx.user.findUnique({
+      where: identifierWhere(identifier),
+      select: { id: true, emailConfirmedAt: true, phoneConfirmedAt: true },
+    });
+    if (!holder || holder.id === userId) return;
+    if (holder.emailConfirmedAt === null && holder.phoneConfirmedAt === null) {
+      await tx.user.delete({ where: { id: holder.id } });
+      return;
+    }
+    throw new DomainError('ACCOUNT_EXISTS', 'Another account already uses this contact.');
+  }
+
   async setPassword(userId: string, passwordHash: string): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },

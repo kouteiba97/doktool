@@ -26,5 +26,6 @@ One file per decision, numbered, never rewritten after acceptance — a changed 
 | [020](ADR-020-glass-refresh.md) | Glass visual refresh of the app | Accepted |
 | [021](ADR-021-payment-gateways.md) | Pluggable payment gateways (Chargily Pay first) | Accepted |
 | [022](ADR-022-sms-providers.md) | SMS providers (Infobip, Twilio, fallback, fraud guards) | Accepted |
+| [023](ADR-023-account-recovery.md) | Contacts, security notices and account recovery | Accepted |
 
 Source of the architecture: [`docs/ARCHITECTURE-AUDIT.md`](../ARCHITECTURE-AUDIT.md). Where an ADR and the design system disagree, the ADR wins; where ADR-006 and the audit disagree, ADR-006 wins.

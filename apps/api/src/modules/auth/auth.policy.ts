@@ -27,6 +27,30 @@ export const RATE_LIMITS = {
   resetPerIdentifier: { name: 'reset:identifier', limit: 5, windowSeconds: 3600 },
   resetPerIp: { name: 'reset:ip', limit: 20, windowSeconds: 3600 },
   deleteAccountPerUser: { name: 'account-delete:user', limit: 5, windowSeconds: 3600 },
+  /** Password checks of signed-in changes (contacts, password): a stolen phone can't brute-force. */
+  accountChangePerUser: { name: 'account-change:user', limit: 10, windowSeconds: 3600 },
+  recoveryPerIp: { name: 'recovery:ip', limit: 5, windowSeconds: 3600 },
+  recoveryPerClaimed: { name: 'recovery:claimed', limit: 3, windowSeconds: 24 * 3600 },
+  recoveryPerNewContact: { name: 'recovery:contact', limit: 3, windowSeconds: 24 * 3600 },
+  recoveryUploadPerRequest: { name: 'recovery:upload', limit: 10, windowSeconds: 3600 },
 } as const satisfies Record<string, RateLimitRule>;
 
 export const DAY_MS = 24 * 3600 * 1000;
+
+// Assisted account recovery (ADR-023).
+/** The code and the photos must be sent within this delay after the request. */
+export const RECOVERY_DOCUMENTS_TTL_MINUTES = 60;
+/** An approved recovery applies after this delay; the owner signing in meanwhile cancels it. */
+export const RECOVERY_HOLD_HOURS = 24;
+/** Recovery photos are deleted this long after the decision (or the cancellation). */
+export const RECOVERY_DOCUMENT_RETENTION_DAYS = 30;
+/** Requests answered by the team within this delay (shown to the person). */
+export const RECOVERY_REVIEW_HOURS = 72;
+export const RECOVERY_REJECTION_REASONS = [
+  'PHOTO_UNREADABLE',
+  'IDENTITY_MISMATCH',
+  'SELFIE_MISMATCH',
+  'NO_ACCOUNT',
+  'OTHER',
+] as const;
+export type RecoveryRejectionReason = (typeof RECOVERY_REJECTION_REASONS)[number];

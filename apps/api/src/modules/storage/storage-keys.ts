@@ -37,6 +37,16 @@ export const StorageKeys = {
     return `doktool/verification/${userId}/${caseId}/${documentId}.${extension}`;
   },
 
+  /** doktool/recovery/{requestId}/{slot}-{uuid}.{jpg|png} — private bucket only (ADR-023). */
+  recoveryDocument(
+    requestId: string,
+    slot: 'identity' | 'selfie',
+    fileId: string,
+    extension: 'jpg' | 'png',
+  ) {
+    return `doktool/recovery/${requestId}/${slot}-${fileId}.${extension}`;
+  },
+
   /** doktool/profile-images/{userId}/originals/{uuid}.{jpg|png} — deleted once re-encoded. */
   profileImageOriginal(userId: string, imageId: string, extension: 'jpg' | 'png') {
     return `doktool/profile-images/${userId}/originals/${imageId}.${extension}`;

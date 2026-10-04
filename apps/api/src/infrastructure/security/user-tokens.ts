@@ -3,6 +3,7 @@ import { errors, jwtVerify, SignJWT } from 'jose';
 import { randomUUID } from 'node:crypto';
 import { DomainError } from '../../common/errors/domain-error.js';
 import { ENV, type Env } from '../../config/env.js';
+import { PrismaService } from '../database/prisma.service.js';
 
 export const TOKEN_ISSUER = 'doktool-api';
 export const USER_AUDIENCE = 'doktool-user';
@@ -18,12 +19,20 @@ export interface UserPrincipal {
 /**
  * Signs and verifies user access tokens (HS256, issuer `doktool-api`, audience `doktool-user`).
  * Lives outside the auth module so any module can guard its routes without importing auth.
+ *
+ * A token is accepted only while its session is live (ADR-023): signing a device out, changing
+ * the password, a recovery, a suspension or a deletion take effect on the next request rather
+ * than when the 15-minute token expires. This is a read-only, primary-key lookup of the auth
+ * module's `user_sessions` — the one place outside auth that reads it (ADR-001 exception).
  */
 @Injectable()
 export class UserTokens {
   private readonly key: Uint8Array;
 
-  constructor(@Inject(ENV) env: Env) {
+  constructor(
+    @Inject(ENV) env: Env,
+    private readonly prisma: PrismaService,
+  ) {
     this.key = new TextEncoder().encode(env.USER_JWT_SECRET);
   }
 
@@ -52,14 +61,27 @@ export class UserTokens {
       if (typeof payload.sub !== 'string' || typeof payload.sid !== 'string') {
         throw new DomainError('UNAUTHENTICATED', 'Malformed access token.');
       }
+      if (!(await this.sessionIsLive(payload.sid, payload.sub))) {
+        throw new DomainError('SESSION_INVALID', 'This session has ended.');
+      }
       return { userId: payload.sub, sessionId: payload.sid };
     } catch (error) {
       if (error instanceof DomainError) throw error;
+      if (!(error instanceof errors.JOSEError)) throw error;
       const expired = error instanceof errors.JWTExpired;
       throw new DomainError(
         'UNAUTHENTICATED',
         expired ? 'Access token expired.' : 'Invalid access token.',
       );
     }
+  }
+
+  private async sessionIsLive(sessionId: string, userId: string): Promise<boolean> {
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuid.test(sessionId) || !uuid.test(userId)) return false;
+    const [row] = await this.prisma.$queryRaw<{ live: boolean }[]>`
+      SELECT (revoked_at IS NULL AND expires_at > now()) AS live
+      FROM user_sessions WHERE id = ${sessionId}::uuid AND user_id = ${userId}::uuid`;
+    return row?.live === true;
   }
 }

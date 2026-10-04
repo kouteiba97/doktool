@@ -24,6 +24,42 @@
   "@accessStudent": {
     "description": "mobile.access.student"
   },
+  "accessHelpContactBody": "Vous connaissez votre mot de passe ? Connectez-vous avec l’ancienne coordonnée, puis mettez-la à jour dans Paramètres › Coordonnées et sécurité.",
+  "@accessHelpContactBody": {
+    "description": "mobile.accessHelp.contactBody"
+  },
+  "accessHelpContactTitle": "J’ai changé d’e-mail ou de numéro",
+  "@accessHelpContactTitle": {
+    "description": "mobile.accessHelp.contactTitle"
+  },
+  "accessHelpForgotBody": "Recevez un code sur votre e-mail ou votre téléphone pour en choisir un nouveau.",
+  "@accessHelpForgotBody": {
+    "description": "mobile.accessHelp.forgotBody"
+  },
+  "accessHelpForgotTitle": "J’ai oublié mon mot de passe",
+  "@accessHelpForgotTitle": {
+    "description": "mobile.accessHelp.forgotTitle"
+  },
+  "accessHelpIntro": "Choisissez ce qui vous arrive.",
+  "@accessHelpIntro": {
+    "description": "mobile.accessHelp.intro"
+  },
+  "accessHelpLostBody": "Plus d’accès à mon e-mail ni à mon téléphone, et plus de mot de passe. L’équipe DokTool vérifie votre identité et vous rend votre compte.",
+  "@accessHelpLostBody": {
+    "description": "mobile.accessHelp.lostBody"
+  },
+  "accessHelpLostTitle": "J’ai tout perdu",
+  "@accessHelpLostTitle": {
+    "description": "mobile.accessHelp.lostTitle"
+  },
+  "accessHelpTip": "Pour ne jamais en arriver là, ajoutez un e-mail et un téléphone à votre compte : l’un suffit à récupérer l’autre.",
+  "@accessHelpTip": {
+    "description": "mobile.accessHelp.tip"
+  },
+  "accessHelpTitle": "Retrouver l’accès",
+  "@accessHelpTitle": {
+    "description": "mobile.accessHelp.title"
+  },
   "activityClear": "Effacer l’historique",
   "@activityClear": {
     "description": "mobile.activity.clear"
@@ -350,6 +386,76 @@
         "type": "String"
       }
     }
+  },
+  "contactConfirm": "Confirmer",
+  "@contactConfirm": {
+    "description": "mobile.contact.confirm"
+  },
+  "contactIntro": "Un code est envoyé à la nouvelle coordonnée. Votre mot de passe confirme que c’est bien vous.",
+  "@contactIntro": {
+    "description": "mobile.contact.intro"
+  },
+  "contactKeepOne": "Gardez au moins une coordonnée confirmée.",
+  "@contactKeepOne": {
+    "description": "mobile.contact.keepOne"
+  },
+  "contactNewEmail": "Nouvel e-mail",
+  "@contactNewEmail": {
+    "description": "mobile.contact.newEmail"
+  },
+  "contactNewPhone": "Nouveau numéro",
+  "@contactNewPhone": {
+    "description": "mobile.contact.newPhone"
+  },
+  "contactPassword": "Mot de passe actuel",
+  "@contactPassword": {
+    "description": "mobile.contact.password"
+  },
+  "contactRemoveBody": "Vous garderez votre autre coordonnée pour vous connecter et récupérer votre compte. Confirmez avec votre mot de passe.",
+  "@contactRemoveBody": {
+    "description": "mobile.contact.removeBody"
+  },
+  "contactRemoveTitle": "{channel, select, EMAIL {Retirer l’e-mail ?} other {Retirer le téléphone ?}}",
+  "@contactRemoveTitle": {
+    "description": "mobile.contact.removeTitle",
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "contactRemoved": "Coordonnée retirée.",
+  "@contactRemoved": {
+    "description": "mobile.contact.removed"
+  },
+  "contactSame": "C’est déjà votre coordonnée.",
+  "@contactSame": {
+    "description": "mobile.contact.same"
+  },
+  "contactSaved": "Coordonnée enregistrée.",
+  "@contactSaved": {
+    "description": "mobile.contact.saved"
+  },
+  "contactSendCode": "Recevoir un code",
+  "@contactSendCode": {
+    "description": "mobile.contact.sendCode"
+  },
+  "contactTaken": "Cette coordonnée est déjà utilisée par un autre compte.",
+  "@contactTaken": {
+    "description": "mobile.contact.taken"
+  },
+  "contactTitle": "{mode, select, addEmail {Ajouter un e-mail} addPhone {Ajouter un téléphone} changeEmail {Modifier l’e-mail} other {Modifier le téléphone}}",
+  "@contactTitle": {
+    "description": "mobile.contact.title",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "contactWrongPassword": "Mot de passe incorrect.",
+  "@contactWrongPassword": {
+    "description": "mobile.contact.wrongPassword"
   },
   "deleteAccountConfirm": "Supprimer le compte",
   "@deleteAccountConfirm": {
@@ -697,6 +803,41 @@
   "@notificationsMarkAllRead": {
     "description": "mobile.notifications.markAllRead"
   },
+  "notificationsSecurityContactAdded": "{channel, select, EMAIL {Une adresse e-mail a été ajoutée à votre compte.} other {Un numéro de téléphone a été ajouté à votre compte.}}",
+  "@notificationsSecurityContactAdded": {
+    "description": "mobile.notifications.securityContactAdded",
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsSecurityContactRemoved": "{channel, select, EMAIL {L’adresse e-mail a été retirée de votre compte.} other {Le numéro de téléphone a été retiré de votre compte.}}",
+  "@notificationsSecurityContactRemoved": {
+    "description": "mobile.notifications.securityContactRemoved",
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsSecurityPasswordChanged": "Votre mot de passe a été modifié. Vos autres appareils ont été déconnectés.",
+  "@notificationsSecurityPasswordChanged": {
+    "description": "mobile.notifications.securityPasswordChanged"
+  },
+  "notificationsSecurityRecoveryApproved": "Une récupération de votre compte prendra effet le {date}. Si ce n’est pas vous, ouvrez Réglages › Compte et touchez « Ce n’est pas moi ».",
+  "@notificationsSecurityRecoveryApproved": {
+    "description": "mobile.notifications.securityRecoveryApproved",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsSecurityRecoveryRequested": "Quelqu’un a demandé à récupérer votre compte. Si ce n’est pas vous, ouvrez Réglages › Compte et touchez « Ce n’est pas moi ».",
+  "@notificationsSecurityRecoveryRequested": {
+    "description": "mobile.notifications.securityRecoveryRequested"
+  },
   "notificationsSubscriptionActivated": "Votre abonnement DokTool Pro est actif.",
   "@notificationsSubscriptionActivated": {
     "description": "mobile.notifications.subscriptionActivated"
@@ -987,6 +1128,30 @@
   "otpVerify": "Valider",
   "@otpVerify": {
     "description": "mobile.otp.verify"
+  },
+  "passwordCurrent": "Mot de passe actuel",
+  "@passwordCurrent": {
+    "description": "mobile.password.current"
+  },
+  "passwordNew": "Nouveau mot de passe",
+  "@passwordNew": {
+    "description": "mobile.password.new"
+  },
+  "passwordSameAsContact": "Le mot de passe ne peut pas être votre e-mail ou votre numéro.",
+  "@passwordSameAsContact": {
+    "description": "mobile.password.sameAsContact"
+  },
+  "passwordSave": "Enregistrer",
+  "@passwordSave": {
+    "description": "mobile.password.save"
+  },
+  "passwordSaved": "Mot de passe modifié. Vos autres appareils ont été déconnectés.",
+  "@passwordSaved": {
+    "description": "mobile.password.saved"
+  },
+  "passwordTitle": "Changer le mot de passe",
+  "@passwordTitle": {
+    "description": "mobile.password.title"
   },
   "paymentCanceled": "Le paiement a été abandonné.",
   "@paymentCanceled": {
@@ -1429,6 +1594,110 @@
   "@profileVerification": {
     "description": "mobile.profile.verification"
   },
+  "recoveryAccountExists": "Cette coordonnée ouvre déjà un compte : connectez-vous avec elle.",
+  "@recoveryAccountExists": {
+    "description": "mobile.recovery.accountExists"
+  },
+  "recoveryBackToSignIn": "Retour à la connexion",
+  "@recoveryBackToSignIn": {
+    "description": "mobile.recovery.backToSignIn"
+  },
+  "recoveryDoneBody": "L’équipe DokTool vous répond sous {hours} heures sur {contact}. Si vous retrouvez votre mot de passe entre-temps, connectez-vous simplement : la demande sera annulée.",
+  "@recoveryDoneBody": {
+    "description": "mobile.recovery.doneBody",
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "contact": {
+        "type": "String"
+      }
+    }
+  },
+  "recoveryDoneTitle": "Demande envoyée",
+  "@recoveryDoneTitle": {
+    "description": "mobile.recovery.doneTitle"
+  },
+  "recoveryExpired": "La demande a expiré. Recommencez depuis le début.",
+  "@recoveryExpired": {
+    "description": "mobile.recovery.expired"
+  },
+  "recoveryIdentityHelp": "Carte nationale ou passeport, recto, bien lisible.",
+  "@recoveryIdentityHelp": {
+    "description": "mobile.recovery.identityHelp"
+  },
+  "recoveryIdentityPhoto": "Votre pièce d’identité",
+  "@recoveryIdentityPhoto": {
+    "description": "mobile.recovery.identityPhoto"
+  },
+  "recoveryIntro": "Indiquez la coordonnée de votre compte que vous avez perdue, puis une nouvelle coordonnée où vous recevez vos messages.",
+  "@recoveryIntro": {
+    "description": "mobile.recovery.intro"
+  },
+  "recoveryLostIdentifier": "E-mail ou numéro perdu",
+  "@recoveryLostIdentifier": {
+    "description": "mobile.recovery.lostIdentifier"
+  },
+  "recoveryNewIdentifier": "Nouvel e-mail ou numéro",
+  "@recoveryNewIdentifier": {
+    "description": "mobile.recovery.newIdentifier"
+  },
+  "recoveryNewIdentifierHelp": "Vous y recevrez un code maintenant, puis la réponse de l’équipe.",
+  "@recoveryNewIdentifierHelp": {
+    "description": "mobile.recovery.newIdentifierHelp"
+  },
+  "recoveryPhotoSent": "Photo envoyée",
+  "@recoveryPhotoSent": {
+    "description": "mobile.recovery.photoSent"
+  },
+  "recoveryPhotosIntro": "Deux photos permettent à l’équipe de vérifier que c’est bien vous. Seule l’équipe de vérification les voit, et elles sont supprimées 30 jours après la décision.",
+  "@recoveryPhotosIntro": {
+    "description": "mobile.recovery.photosIntro"
+  },
+  "recoveryRetake": "Reprendre",
+  "@recoveryRetake": {
+    "description": "mobile.recovery.retake"
+  },
+  "recoverySameContact": "La nouvelle coordonnée doit être différente de celle que vous avez perdue.",
+  "@recoverySameContact": {
+    "description": "mobile.recovery.sameContact"
+  },
+  "recoverySelfie": "Selfie avec votre pièce",
+  "@recoverySelfie": {
+    "description": "mobile.recovery.selfie"
+  },
+  "recoverySelfieHelp": "Votre visage et la pièce d’identité, visibles ensemble.",
+  "@recoverySelfieHelp": {
+    "description": "mobile.recovery.selfieHelp"
+  },
+  "recoverySendCode": "Recevoir un code",
+  "@recoverySendCode": {
+    "description": "mobile.recovery.sendCode"
+  },
+  "recoverySubmit": "Envoyer la demande",
+  "@recoverySubmit": {
+    "description": "mobile.recovery.submit"
+  },
+  "recoveryTakePhoto": "Prendre la photo",
+  "@recoveryTakePhoto": {
+    "description": "mobile.recovery.takePhoto"
+  },
+  "recoveryTitle": "Récupérer mon compte",
+  "@recoveryTitle": {
+    "description": "mobile.recovery.title"
+  },
+  "recoveryUploadFailed": "La photo n’a pas pu être envoyée. Réessayez.",
+  "@recoveryUploadFailed": {
+    "description": "mobile.recovery.uploadFailed"
+  },
+  "recoveryUploading": "Envoi de la photo…",
+  "@recoveryUploading": {
+    "description": "mobile.recovery.uploading"
+  },
+  "recoveryVerify": "Vérifier",
+  "@recoveryVerify": {
+    "description": "mobile.recovery.verify"
+  },
   "resetConfirm": "Changer le mot de passe",
   "@resetConfirm": {
     "description": "mobile.reset.confirm"
@@ -1624,6 +1893,84 @@
   "@searchUnavailable": {
     "description": "mobile.search.unavailable"
   },
+  "securityAdd": "Ajouter",
+  "@securityAdd": {
+    "description": "mobile.security.add"
+  },
+  "securityChange": "Modifier",
+  "@securityChange": {
+    "description": "mobile.security.change"
+  },
+  "securityChangePassword": "Changer le mot de passe",
+  "@securityChangePassword": {
+    "description": "mobile.security.changePassword"
+  },
+  "securityContacts": "Coordonnées",
+  "@securityContacts": {
+    "description": "mobile.security.contacts"
+  },
+  "securityEmail": "E-mail",
+  "@securityEmail": {
+    "description": "mobile.security.email"
+  },
+  "securityNone": "Aucun",
+  "@securityNone": {
+    "description": "mobile.security.none"
+  },
+  "securityNotMe": "Ce n’est pas moi",
+  "@securityNotMe": {
+    "description": "mobile.security.notMe"
+  },
+  "securityNotRecoverable": "Ajoutez {missing, select, EMAIL {un e-mail} other {un téléphone}} : si vous perdez votre seule coordonnée, la récupération demande une vérification d’identité.",
+  "@securityNotRecoverable": {
+    "description": "mobile.security.notRecoverable",
+    "placeholders": {
+      "missing": {
+        "type": "String"
+      }
+    }
+  },
+  "securityPassword": "Mot de passe",
+  "@securityPassword": {
+    "description": "mobile.security.password"
+  },
+  "securityPasswordHelp": "Les autres appareils sont déconnectés quand vous le changez.",
+  "@securityPasswordHelp": {
+    "description": "mobile.security.passwordHelp"
+  },
+  "securityPendingApproved": "Une récupération de votre compte prendra effet le {date}. Si ce n’est pas vous, annulez-la maintenant.",
+  "@securityPendingApproved": {
+    "description": "mobile.security.pendingApproved",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "securityPendingSubmitted": "Quelqu’un a demandé à récupérer votre compte. Si ce n’est pas vous, annulez la demande.",
+  "@securityPendingSubmitted": {
+    "description": "mobile.security.pendingSubmitted"
+  },
+  "securityPhone": "Téléphone",
+  "@securityPhone": {
+    "description": "mobile.security.phone"
+  },
+  "securityRecoverable": "Votre compte est bien protégé : si vous perdez l’une de vos coordonnées, l’autre suffit pour le récupérer.",
+  "@securityRecoverable": {
+    "description": "mobile.security.recoverable"
+  },
+  "securityRecoveryCanceled": "Demande annulée. Par précaution, changez votre mot de passe.",
+  "@securityRecoveryCanceled": {
+    "description": "mobile.security.recoveryCanceled"
+  },
+  "securityRemove": "Retirer",
+  "@securityRemove": {
+    "description": "mobile.security.remove"
+  },
+  "securityTitle": "Coordonnées et sécurité",
+  "@securityTitle": {
+    "description": "mobile.security.title"
+  },
   "settingsAccount": "Compte",
   "@settingsAccount": {
     "description": "mobile.settings.account"
@@ -1672,6 +2019,10 @@
   "@settingsOffline": {
     "description": "mobile.settings.offline"
   },
+  "settingsSecurity": "Coordonnées et sécurité",
+  "@settingsSecurity": {
+    "description": "mobile.settings.security"
+  },
   "settingsTitle": "Paramètres",
   "@settingsTitle": {
     "description": "mobile.settings.title"
@@ -1692,6 +2043,10 @@
         "type": "String"
       }
     }
+  },
+  "signInLostAccess": "Accès perdu ?",
+  "@signInLostAccess": {
+    "description": "mobile.signIn.lostAccess"
   },
   "signInNoAccount": "Pas encore de compte ? Créer un compte",
   "@signInNoAccount": {

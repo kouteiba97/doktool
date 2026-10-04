@@ -165,6 +165,18 @@ export class SessionsService {
     if (count === 0) throw new DomainError('NOT_FOUND', 'Session not found.');
   }
 
+  /** Every other device signs out; this one stays signed in (password change). */
+  async revokeOthers(
+    userId: string,
+    keepSessionId: string,
+    reason: SessionRevocationReason,
+  ): Promise<void> {
+    await this.prisma.userSession.updateMany({
+      where: { userId, revokedAt: null, id: { not: keepSessionId } },
+      data: { revokedAt: new Date(), revokedReason: reason },
+    });
+  }
+
   async revokeAll(userId: string, reason: SessionRevocationReason): Promise<void> {
     await this.prisma.userSession.updateMany({
       where: { userId, revokedAt: null },

@@ -123,15 +123,26 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
             ],
           ),
         ),
-        Align(
-          alignment: AlignmentDirectional.centerEnd,
-          child: DtButton(
-            label: l10n.signInForgot,
-            variant: DtButtonVariant.ghost,
-            size: DtButtonSize.md,
-            expand: false,
-            onPressed: () => context.push(Routes.resetRequest),
-          ),
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: DtSpace.s2,
+          children: [
+            DtButton(
+              label: l10n.signInLostAccess,
+              variant: DtButtonVariant.ghost,
+              size: DtButtonSize.md,
+              expand: false,
+              onPressed: () => context.push(Routes.accessHelp),
+            ),
+            DtButton(
+              label: l10n.signInForgot,
+              variant: DtButtonVariant.ghost,
+              size: DtButtonSize.md,
+              expand: false,
+              onPressed: () => context.push(Routes.resetRequest),
+            ),
+          ],
         ),
       ],
     );

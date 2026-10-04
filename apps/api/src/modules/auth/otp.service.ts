@@ -39,6 +39,14 @@ export interface OtpChallengeView {
 export interface ConsumedChallenge {
   userId: string;
   channel: Identifier['channel'];
+  /** The e-mail or E.164 phone the code went to (the contact being added, for CONTACT_CHANGE). */
+  destination: string;
+}
+
+/** A proven contact: the person received the code sent there (account recovery). */
+export interface ProvenContact {
+  channel: Identifier['channel'];
+  destination: string;
 }
 
 const MESSAGE_KEYS: Record<OtpPurpose, { subject: string; text: string }> = {
@@ -47,7 +55,23 @@ const MESSAGE_KEYS: Record<OtpPurpose, { subject: string; text: string }> = {
     subject: 'server.otp.passwordReset.subject',
     text: 'server.otp.passwordReset.text',
   },
+  CONTACT_CHANGE: {
+    subject: 'server.otp.contactChange.subject',
+    text: 'server.otp.contactChange.text',
+  },
+  ACCOUNT_RECOVERY: {
+    subject: 'server.otp.accountRecovery.subject',
+    text: 'server.otp.accountRecovery.text',
+  },
 };
+
+/**
+ * Whether a challenge's code is really sent. A password reset for an unknown identifier sends
+ * nothing (no enumeration); an account recovery proves a contact that belongs to no account yet,
+ * so its code is always sent.
+ */
+const delivers = (purpose: OtpPurpose, userId: string | null) =>
+  userId !== null || purpose === 'ACCOUNT_RECOVERY';
 
 export function maskDestination(channel: Identifier['channel'], destination: string): string {
   if (channel === 'EMAIL') {
@@ -59,7 +83,7 @@ export function maskDestination(channel: Identifier['channel'], destination: str
 
 const minutesFromNow = (minutes: number) => new Date(Date.now() + minutes * 60_000);
 
-/** One-time codes for sign-up confirmation and password reset (ADR-009). */
+/** One-time codes: sign-up, password reset (ADR-009), contact change and account recovery (ADR-023). */
 @Injectable()
 export class OtpService {
   constructor(
@@ -90,11 +114,11 @@ export class OtpService {
         channel: identifier.channel,
         destination: identifier.value,
         userId,
-        codeHash: userId ? this.hash(id, code) : this.hash(id, randomToken()),
+        codeHash: delivers(purpose, userId) ? this.hash(id, code) : this.hash(id, randomToken()),
         expiresAt: minutesFromNow(OTP_TTL_MINUTES),
       },
     });
-    if (userId) await this.send(purpose, identifier, code, locale);
+    if (delivers(purpose, userId)) await this.send(purpose, identifier, code, locale);
     return this.view(challenge);
   }
 
@@ -125,7 +149,7 @@ export class OtpService {
     const updated = await this.prisma.otpChallenge.update({
       where: { id: challenge.id },
       data: {
-        codeHash: challenge.userId
+        codeHash: delivers(challenge.purpose, challenge.userId)
           ? this.hash(challenge.id, code)
           : this.hash(challenge.id, randomToken()),
         expiresAt: minutesFromNow(OTP_TTL_MINUTES),
@@ -135,7 +159,7 @@ export class OtpService {
         lastSentAt: now,
       },
     });
-    if (challenge.userId) {
+    if (delivers(challenge.purpose, challenge.userId)) {
       await this.send(
         challenge.purpose,
         { channel: challenge.channel, value: challenge.destination },
@@ -152,9 +176,25 @@ export class OtpService {
    */
   async consume(
     challengeId: string,
-    purpose: OtpPurpose,
+    purpose: Exclude<OtpPurpose, 'ACCOUNT_RECOVERY'>,
     code: string,
   ): Promise<ConsumedChallenge> {
+    const challenge = await this.verify(challengeId, purpose, code);
+    if (!challenge.userId) throw new DomainError('OTP_INVALID', 'Wrong code.');
+    return {
+      userId: challenge.userId,
+      channel: challenge.channel,
+      destination: challenge.destination,
+    };
+  }
+
+  /** Account recovery: the code proves the person receives messages at this new contact. */
+  async consumeContactProof(challengeId: string, code: string): Promise<ProvenContact> {
+    const challenge = await this.verify(challengeId, 'ACCOUNT_RECOVERY', code);
+    return { channel: challenge.channel, destination: challenge.destination };
+  }
+
+  private async verify(challengeId: string, purpose: OtpPurpose, code: string) {
     const challenge = await this.prisma.otpChallenge.findUnique({ where: { id: challengeId } });
     const now = new Date();
     if (
@@ -171,12 +211,15 @@ export class OtpService {
       });
     }
 
-    if (challenge.userId && hexDigestsEqual(challenge.codeHash, this.hash(challenge.id, code))) {
+    if (
+      delivers(challenge.purpose, challenge.userId) &&
+      hexDigestsEqual(challenge.codeHash, this.hash(challenge.id, code))
+    ) {
       const { count } = await this.prisma.otpChallenge.updateMany({
         where: { id: challenge.id, consumedAt: null },
         data: { consumedAt: now },
       });
-      if (count === 1) return { userId: challenge.userId, channel: challenge.channel };
+      if (count === 1) return challenge;
       throw new DomainError('OTP_EXPIRED', 'This code has already been used.');
     }
 

@@ -69,7 +69,7 @@ describe('navigation', () => {
     const groups = visibleNavigation(['calculators.read', 'verification.queue.read']);
     expect(groups.map((group) => group.items.map((item) => item.href))).toEqual([
       ['/admin/overview'],
-      ['/admin/verification'],
+      ['/admin/verification', '/admin/recovery'],
       ['/admin/calculators'],
     ]);
     // The overview needs no grant: every admin lands there first.

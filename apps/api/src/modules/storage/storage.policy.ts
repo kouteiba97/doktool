@@ -7,6 +7,7 @@ export const SIGNED_READ_TTL = {
   referenceDocument: 10 * 60,
   profileImage: 60 * 60,
   verificationDocument: 60,
+  recoveryDocument: 60,
 } as const;
 
 /** A direct upload must happen within this delay. */
@@ -56,6 +57,13 @@ export const UPLOAD_RULES: Record<UploadPurpose, UploadRule> = {
     keyPrefix: 'doktool/verification/',
     maxBytes: 10 * MB,
     signatures: [JPEG, PNG, PDF],
+  },
+  /** Identity photo and selfie of an account recovery (ADR-023): photos only. */
+  RECOVERY_DOCUMENT: {
+    bucket: 'PRIVATE',
+    keyPrefix: 'doktool/recovery/',
+    maxBytes: 10 * MB,
+    signatures: [JPEG, PNG],
   },
 };
 

@@ -8,7 +8,9 @@ import { MessageDelivery } from '../../infrastructure/messaging/message-delivery
 import { RateLimiter } from '../../infrastructure/rate-limit/rate-limiter.js';
 import { type Identifier, parseIdentifier, UsersService } from '../users/index.js';
 import { RATE_LIMITS } from './auth.policy.js';
+import { AccountRecoveryService } from './account-recovery.service.js';
 import { type OtpChallengeView, OtpService } from './otp.service.js';
+import { SecurityNoticesService } from './security-notices.service.js';
 import { type AuthTokens, type DeviceInput, SessionsService } from './sessions.service.js';
 
 export interface SignUpInput {
@@ -52,6 +54,8 @@ export class AuthService {
     private readonly sessions: SessionsService,
     private readonly limiter: RateLimiter,
     private readonly delivery: MessageDelivery,
+    private readonly recovery: AccountRecoveryService,
+    private readonly notices: SecurityNoticesService,
   ) {}
 
   async signUp(input: SignUpInput, client: ClientInfo): Promise<OtpChallengeView> {
@@ -139,6 +143,8 @@ export class AuthService {
       );
     }
     await this.users.clearSignInFailures(candidate.id);
+    // The owner has the account: a recovery someone else asked for stops here (ADR-023).
+    await this.recovery.cancelForOwner(candidate.id);
     return this.sessions.open(candidate.id, device, client);
   }
 
@@ -181,5 +187,6 @@ export class AuthService {
     const { userId } = await this.otp.consume(challengeId, 'PASSWORD_RESET', code);
     await this.users.setPassword(userId, await this.hasher.hash(newPassword));
     await this.sessions.revokeAll(userId, 'PASSWORD_RESET');
+    await this.notices.notify(userId, 'passwordReset');
   }
 }

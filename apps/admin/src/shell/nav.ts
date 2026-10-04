@@ -48,6 +48,12 @@ export const NAVIGATION: NavGroup[] = [
         icon: BadgeCheck,
         grant: 'verification.queue.read',
       },
+      {
+        href: '/admin/recovery',
+        label: 'admin.nav.recovery',
+        icon: KeyRound,
+        grant: 'verification.queue.read',
+      },
     ],
   },
   {

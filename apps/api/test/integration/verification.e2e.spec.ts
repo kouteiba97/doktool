@@ -220,10 +220,18 @@ describe('doctor verification', () => {
       lockReason: 'VERIFICATION_PENDING',
     });
 
-    const queue = await superAdmin.get('/admin/v1/verification/cases').expect(200);
-    expect(queue.body.map((item: { id: string }) => item.id)).toEqual(
-      expect.arrayContaining([identityId, statusId]),
-    );
+    // Every page of the queue (oldest first, 50 a page): a reused database keeps older cases.
+    const queued: string[] = [];
+    for (let cursor: string | undefined; ;) {
+      const page = await superAdmin
+        .get(`/admin/v1/verification/cases${cursor ? `?cursor=${cursor}` : ''}`)
+        .expect(200);
+      const ids = page.body.map((item: { id: string }) => item.id);
+      queued.push(...ids);
+      if (ids.length < 50) break;
+      cursor = ids.at(-1);
+    }
+    expect(queued).toEqual(expect.arrayContaining([identityId, statusId]));
 
     await decide(superAdmin, identityId, 'approve');
     const detail = await superAdmin.get(`/admin/v1/verification/cases/${statusId}`).expect(200);

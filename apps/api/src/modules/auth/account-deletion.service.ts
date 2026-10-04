@@ -11,6 +11,7 @@ import { PregnancyService } from '../pregnancy/index.js';
 import { UsersService } from '../users/index.js';
 import { VerificationMaintenanceService } from '../verification/index.js';
 import { RATE_LIMITS } from './auth.policy.js';
+import { AccountRecoveryService } from './account-recovery.service.js';
 import { OtpService } from './otp.service.js';
 import { SessionsService } from './sessions.service.js';
 
@@ -27,6 +28,7 @@ export class AccountDeletionService {
     private readonly users: UsersService,
     private readonly sessions: SessionsService,
     private readonly otp: OtpService,
+    private readonly recovery: AccountRecoveryService,
     private readonly activity: ActivityService,
     private readonly notifications: NotificationsService,
     private readonly pregnancy: PregnancyService,
@@ -54,6 +56,7 @@ export class AccountDeletionService {
     await this.notifications.eraseUser(userId);
     await this.pregnancy.eraseUser(userId);
     await this.otp.eraseUser(userId);
+    await this.recovery.eraseUser(userId);
     await this.users.eraseAccount(userId);
     await this.sessions.revokeAll(userId, 'ACCOUNT_DELETED');
     await this.audit.record({

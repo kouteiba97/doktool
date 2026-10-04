@@ -19,6 +19,8 @@ export interface TestApp {
   lastCode: (destination: string) => string;
   /** Number of messages sent to `destination`. */
   messageCount: (destination: string) => number;
+  /** The texts sent to `destination`, oldest first. */
+  messages: (destination: string) => string[];
 }
 
 let sequence = 0;
@@ -57,11 +59,16 @@ export function useTestApp(): TestApp {
     prisma: () => app.get(PrismaService),
     get: (token) => app.get(token),
     lastCode(destination) {
-      const text = sentTo(destination).at(-1)?.text ?? '';
+      // Security notices (ADR-023) carry no code: the last message that has one.
+      const text =
+        sentTo(destination)
+          .map((message) => message.text)
+          .findLast((candidate) => /\b\d{6}\b/.test(candidate)) ?? '';
       const code = /\b(\d{6})\b/.exec(text)?.[1];
       if (!code) throw new Error(`No code was sent to ${destination}`);
       return code;
     },
     messageCount: (destination) => sentTo(destination).length,
+    messages: (destination) => sentTo(destination).map((message) => message.text),
   };
 }

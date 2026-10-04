@@ -85,12 +85,26 @@ class SettingsScreen extends ConsumerWidget {
                     title: l10n.settingsAccount,
                     child: Material(
                       type: MaterialType.transparency,
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(LucideIcons.userX, color: colors.critical),
-                        title: Text(l10n.settingsDeleteAccount, style: DtType.body.copyWith(color: colors.critical)),
-                        trailing: Icon(LucideIcons.chevronRight, color: colors.inkMuted),
-                        onTap: () => context.push(Routes.deleteAccount),
+                      child: Column(
+                        children: [
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(LucideIcons.shieldCheck, color: colors.inkSecondary),
+                            title: Text(l10n.settingsSecurity, style: DtType.body.copyWith(color: colors.ink)),
+                            trailing: Icon(LucideIcons.chevronRight, color: colors.inkMuted),
+                            onTap: () => context.push(Routes.security),
+                          ),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(LucideIcons.userX, color: colors.critical),
+                            title: Text(
+                              l10n.settingsDeleteAccount,
+                              style: DtType.body.copyWith(color: colors.critical),
+                            ),
+                            trailing: Icon(LucideIcons.chevronRight, color: colors.inkMuted),
+                            onTap: () => context.push(Routes.deleteAccount),
+                          ),
+                        ],
                       ),
                     ),
                   ),
