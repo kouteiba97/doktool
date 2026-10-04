@@ -70,6 +70,8 @@ Future<void> showLockSheet(BuildContext context, ItemAccessDto access, {required
   final demo = access.lockReason == LockReason.demoLimit;
   if (demo) recordDemoLimit(context);
   return showModalBottomSheet<void>(
+    // Above the floating tab bar (ADR-020), never under it.
+    useRootNavigator: true,
     context: context,
     useSafeArea: true,
     backgroundColor: colors.surface,

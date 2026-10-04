@@ -78,6 +78,8 @@ class DtPickerField<T> extends StatelessWidget {
             child: InkWell(
               onTap: () async {
                 final picked = await showModalBottomSheet<T>(
+                  // Above the floating tab bar (ADR-020), never under it.
+                  useRootNavigator: true,
                   context: context,
                   isScrollControlled: true,
                   useSafeArea: true,

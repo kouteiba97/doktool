@@ -111,9 +111,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         DtButton(
           label: l10n.reviewPay,
           loading: _paying,
-          onPressed: open && _acknowledged && method != null
-              ? () => _pay(plans.acknowledgementVersion, method)
-              : null,
+          onPressed: open && _acknowledged && method != null ? () => _pay(plans.acknowledgementVersion, method) : null,
         ),
         Text(
           l10n.reviewRedirectNote,

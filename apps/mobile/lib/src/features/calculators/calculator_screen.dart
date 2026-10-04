@@ -4,7 +4,6 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -19,6 +18,7 @@ import '../../ui/dt_alert.dart';
 import '../../ui/dt_badge.dart';
 import '../../ui/dt_button.dart';
 import '../../ui/error_text.dart';
+import '../../ui/hero.dart';
 import '../../ui/locks.dart';
 import '../../ui/segmented_control.dart';
 import '../../ui/skeleton.dart';
@@ -46,17 +46,13 @@ class CalculatorScreen extends ConsumerWidget {
     final colors = context.colors;
     final runtime = ref.watch(calculatorRuntimeProvider(slug));
     return runtime.when(
-      loading: () => Scaffold(
-        backgroundColor: colors.bg,
-        appBar: AppBar(backgroundColor: colors.bg),
-        body: const SkeletonRows(),
-      ),
+      loading: () => Scaffold(backgroundColor: colors.bg, appBar: const DtHeroAppBar(), body: const SkeletonRows()),
       error: (error, _) {
         final apiError = ApiError.from(error);
         final gone = apiError.code == 'CONTENT_UNAVAILABLE' || apiError.code == 'NOT_FOUND';
         return Scaffold(
           backgroundColor: colors.bg,
-          appBar: AppBar(backgroundColor: colors.bg),
+          appBar: const DtHeroAppBar(),
           body: Padding(
             padding: const EdgeInsets.all(DtSpace.s4),
             child: Column(
@@ -114,14 +110,7 @@ class _Message extends StatelessWidget {
     final colors = context.colors;
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.bg,
-        surfaceTintColor: colors.bg,
-        title: Text(
-          localizedTitle(context, detail.nameFr, detail.nameEn),
-          style: DtType.heading.copyWith(color: colors.ink),
-        ),
-      ),
+      appBar: DtHeroAppBar(title: localizedTitle(context, detail.nameFr, detail.nameEn)),
       body: Padding(
         padding: const EdgeInsets.all(DtSpace.s4),
         child: DtAlert(severity: severity, title: title, body: body),
@@ -382,21 +371,14 @@ class _CalculatorState extends ConsumerState<_Calculator> {
 
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.bg,
-        surfaceTintColor: colors.bg,
-        leading: IconButton(
-          tooltip: l10n.commonBack,
-          icon: Icon(LucideIcons.chevronLeft, color: colors.ink),
-          onPressed: () => context.pop(),
-        ),
-        title: Row(
+      appBar: DtHeroAppBar(
+        titleWidget: Row(
           children: [
             Flexible(
               child: Text(
                 name,
                 overflow: TextOverflow.ellipsis,
-                style: DtType.heading.copyWith(color: colors.ink),
+                style: DtType.heading.copyWith(color: colors.onHero),
               ),
             ),
             const SizedBox(width: DtSpace.s2),
@@ -409,10 +391,10 @@ class _CalculatorState extends ConsumerState<_Calculator> {
           ],
         ),
         actions: [
-          FavoriteButton(type: FavoriteTargetType.calculator, id: _detail.id),
+          FavoriteButton(type: FavoriteTargetType.calculator, id: _detail.id, onHero: true),
           IconButton(
             tooltip: l10n.calculatorSourceSheet,
-            icon: Icon(LucideIcons.bookOpenText, color: colors.inkSecondary),
+            icon: Icon(LucideIcons.bookOpenText, color: colors.onHero),
             onPressed: () => _showSourceSheet(context),
           ),
         ],
@@ -574,6 +556,8 @@ class _CalculatorState extends ConsumerState<_Calculator> {
       _ => l10n.calculatorRoleValidation,
     };
     showModalBottomSheet<void>(
+      // Above the floating tab bar (ADR-020), never under it.
+      useRootNavigator: true,
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -928,8 +912,13 @@ class _Detail extends StatelessWidget {
     final colors = context.colors;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(DtSpace.s3),
-      decoration: BoxDecoration(color: colors.surfaceSunken, borderRadius: BorderRadius.circular(DtRadius.md)),
+      padding: const EdgeInsets.all(DtSpace.s4),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(DtRadius.xl),
+        border: Border.all(color: colors.glassHighlight, width: DtBorder.hairline),
+        boxShadow: context.elevation.glass,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

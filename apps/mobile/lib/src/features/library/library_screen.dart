@@ -14,6 +14,7 @@ import '../../ui/dt_alert.dart';
 import '../../ui/dt_button.dart';
 import '../../ui/error_text.dart';
 import '../../ui/glass.dart';
+import '../../ui/hero.dart';
 import '../../ui/pill_tabs.dart';
 import '../../ui/skeleton.dart';
 import '../../ui/text_match.dart';
@@ -93,13 +94,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     };
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.bg,
-        surfaceTintColor: colors.bg,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(l10n.libraryTitle, style: DtType.title.copyWith(color: colors.ink)),
-      ),
+      appBar: DtHeroAppBar(title: l10n.libraryTitle, showBack: false),
       body: Column(
         children: [
           Padding(

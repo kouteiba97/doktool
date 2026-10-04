@@ -14,6 +14,8 @@ import '../../theme/doktool_tokens.dart';
 import '../../ui/dt_alert.dart';
 import '../../ui/dt_button.dart';
 import '../../ui/error_text.dart';
+import '../../ui/glass.dart';
+import '../../ui/hero.dart';
 import '../../ui/skeleton.dart';
 import '../../ui/tokens.dart';
 
@@ -106,16 +108,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final items = page.value?.items ?? const [];
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.bg,
-        surfaceTintColor: colors.bg,
-        elevation: 0,
-        title: Text(l10n.notificationsTitle, style: DtType.title.copyWith(color: colors.ink)),
+      appBar: DtHeroAppBar(
+        title: l10n.notificationsTitle,
         actions: [
           if ((page.value?.unreadCount ?? 0) > 0)
             TextButton(
               onPressed: () => ref.read(notificationsProvider.notifier).markAllRead(),
-              child: Text(l10n.notificationsMarkAllRead, style: DtType.label.copyWith(color: colors.brand)),
+              child: Text(l10n.notificationsMarkAllRead, style: DtType.label.copyWith(color: colors.onHero)),
             ),
         ],
       ),
@@ -157,29 +156,37 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             )
           : RefreshIndicator(
               onRefresh: () => ref.refresh(notificationsProvider.future),
-              child: ListView.separated(
-                itemCount: items.length,
-                separatorBuilder: (_, _) => Divider(height: DtBorder.hairline, color: colors.border),
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  final text = notificationText(l10n, item);
-                  if (text == null) return const SizedBox.shrink();
-                  final unread = item.readAt == null;
-                  return ListTile(
-                    leading: Icon(
-                      unread ? LucideIcons.bellDot : LucideIcons.bell,
-                      color: unread ? colors.brand : colors.inkMuted,
-                    ),
-                    title: Text(text, style: (unread ? DtType.bodyStrong : DtType.body).copyWith(color: colors.ink)),
-                    subtitle: Text(
-                      dateText(context, item.createdAt),
-                      style: DtType.caption.copyWith(color: colors.inkMuted),
-                    ),
-                    onTap: unread ? () => ref.read(notificationsProvider.notifier).markRead(item.id) : null,
-                  );
-                },
+              child: ListView(
+                padding: const EdgeInsets.only(bottom: DtSpace.s8),
+                children: [
+                  DtCardGroup(
+                    children: [
+                      for (final item in items)
+                        if (notificationText(l10n, item) case final text?) _NotificationTile(item: item, text: text),
+                    ],
+                  ),
+                ],
               ),
             ),
+    );
+  }
+}
+
+class _NotificationTile extends ConsumerWidget {
+  const _NotificationTile({required this.item, required this.text});
+
+  final NotificationDto item;
+  final String text;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
+    final unread = item.readAt == null;
+    return ListTile(
+      leading: Icon(unread ? LucideIcons.bellDot : LucideIcons.bell, color: unread ? colors.brand : colors.inkMuted),
+      title: Text(text, style: (unread ? DtType.bodyStrong : DtType.body).copyWith(color: colors.ink)),
+      subtitle: Text(dateText(context, item.createdAt), style: DtType.caption.copyWith(color: colors.inkMuted)),
+      onTap: unread ? () => ref.read(notificationsProvider.notifier).markRead(item.id) : null,
     );
   }
 }

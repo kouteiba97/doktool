@@ -13,6 +13,8 @@ import '../../core/api/generated/models/reference_document_type.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../router/app_router.dart';
 import '../../theme/doktool_tokens.dart';
+import '../../ui/glass.dart';
+import '../../ui/hero.dart';
 import '../../ui/content_row.dart';
 import '../../ui/dt_button.dart';
 import '../../ui/segmented_control.dart';
@@ -44,11 +46,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
     final colors = context.colors;
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.bg,
-        surfaceTintColor: colors.bg,
-        title: Text(l10n.activityTitle, style: DtType.title.copyWith(color: colors.ink)),
-      ),
+      appBar: DtHeroAppBar(title: l10n.activityTitle),
       body: Column(
         children: [
           Padding(
@@ -126,35 +124,43 @@ class _FavoritesList extends ConsumerWidget {
           for (final (kind, label, icon) in groups)
             if (entries.any((entry) => entry.item?.kind == kind)) ...[
               _GroupTitle(label),
-              for (final entry in entries.where((entry) => entry.item?.kind == kind))
-                ContentRow(
-                  icon: icon,
-                  title: localizedTitle(context, entry.item!.titleFr, entry.item!.titleEn),
-                  access: entry.item!.access,
-                  actionLabel: kind == FavoriteItemDtoKind.calculator ? l10n.libraryOpen : l10n.libraryViewModel,
-                  onOpen: () => openContent(
-                    context,
-                    ContentRef(
-                      id: entry.targetId,
-                      titleFr: entry.item!.titleFr,
-                      titleEn: entry.item!.titleEn,
+              DtCardGroup(
+                children: [
+                  for (final entry in entries.where((entry) => entry.item?.kind == kind))
+                    ContentRow(
+                      icon: icon,
+                      title: localizedTitle(context, entry.item!.titleFr, entry.item!.titleEn),
                       access: entry.item!.access,
-                      slug: entry.item!.slug,
+                      actionLabel: kind == FavoriteItemDtoKind.calculator ? l10n.libraryOpen : l10n.libraryViewModel,
+                      onOpen: () => openContent(
+                        context,
+                        ContentRef(
+                          id: entry.targetId,
+                          titleFr: entry.item!.titleFr,
+                          titleEn: entry.item!.titleEn,
+                          access: entry.item!.access,
+                          slug: entry.item!.slug,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                ],
+              ),
             ],
           if (unavailable.isNotEmpty) ...[
             _GroupTitle(l10n.favoritesUnavailable),
-            for (final entry in unavailable)
-              ListTile(
-                leading: Icon(LucideIcons.fileX, color: colors.inkMuted),
-                title: Text(l10n.favoritesUnavailable, style: DtType.body.copyWith(color: colors.inkSecondary)),
-                trailing: TextButton(
-                  onPressed: () => ref.read(favoritesProvider.notifier).toggle(entry.targetType, entry.targetId),
-                  child: Text(l10n.favoritesRemoveAction, style: DtType.label.copyWith(color: colors.brand)),
-                ),
-              ),
+            DtCardGroup(
+              children: [
+                for (final entry in unavailable)
+                  ListTile(
+                    leading: Icon(LucideIcons.fileX, color: colors.inkMuted),
+                    title: Text(l10n.favoritesUnavailable, style: DtType.body.copyWith(color: colors.inkSecondary)),
+                    trailing: TextButton(
+                      onPressed: () => ref.read(favoritesProvider.notifier).toggle(entry.targetType, entry.targetId),
+                      child: Text(l10n.favoritesRemoveAction, style: DtType.label.copyWith(color: colors.brand)),
+                    ),
+                  ),
+              ],
+            ),
           ],
         ],
       ),
@@ -180,6 +186,8 @@ class _History extends ConsumerWidget {
   Future<void> _clear(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final confirmed = await showModalBottomSheet<bool>(
+      // Above the floating tab bar (ADR-020), never under it.
+      useRootNavigator: true,
       context: context,
       useSafeArea: true,
       builder: (sheet) => Padding(
@@ -217,14 +225,12 @@ class _History extends ConsumerWidget {
     final index = ref.watch(contentIndexProvider).value ?? const {};
     final entries = history.value ?? const <ActivityDto>[];
 
-    final rows = <Widget>[];
-    String? lastDay;
+    // One lifted card per day (ADR-020).
+    final days = <(String, List<Widget>)>[];
     for (final entry in entries) {
       final day = _day(context, l10n, entry.occurredAt);
-      if (day != lastDay) {
-        rows.add(_GroupTitle(day));
-        lastDay = day;
-      }
+      if (days.isEmpty || days.last.$1 != day) days.add((day, <Widget>[]));
+      final rows = days.last.$2;
       final content = entry.targetId == null ? null : index[entry.targetId];
       if (entry.kind == ActivityKind.search) {
         rows.add(
@@ -249,6 +255,11 @@ class _History extends ConsumerWidget {
         );
       }
     }
+
+    final rows = <Widget>[
+      for (final (day, items) in days)
+        if (items.isNotEmpty) ...[_GroupTitle(day), DtCardGroup(children: items)],
+    ];
 
     return Column(
       children: [

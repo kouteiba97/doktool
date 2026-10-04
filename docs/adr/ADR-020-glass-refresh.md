@@ -18,7 +18,21 @@
    - **Library:** the four sections become a scrolling row of pill chips with icons (the selected one filled) — the segmented control could not show four labels whole; the rows of a section sit in one lifted card.
    - **Controls and cards:** segmented controls on a tinted glass track with a white lifted pill; selected search filters are filled pills; settings and profile sections are lifted white cards (`radius-xl`, `shadow-glass`).
 
-3. **Unchanged.** The palette (brand, teal, semantic colours), typography, spacing, iconography, the clinical rules (no colour-only meaning, neutral evidence, calm subscription UI), touch targets (44 pt) and contrast (WCAG 2.2 AA, checked by `accessibility_test.dart` in both themes). Admin Web keeps its dense console look; the new tokens are available to it but not applied.
+3. **Every screen, not just Home** (extension, 5 October 2026: the Product Owner noticed screens left in the old style).
+   - **Flow pages (`DtPage`, 21 screens):**
+     - The status bar and toolbar sit on the deep hero.
+     - The back button is frosted (`DtGlassIconButton`), and trailing actions such as « Plus tard » are white.
+     - The eyebrow, title and intro are white on the hero and scroll under the toolbar, fading into the page.
+     - `DtSection` blocks are lifted white cards.
+   - **Screens with their own top bar** use `DtHeroAppBar`, with the same hero, a white title (two lines or a badge allowed) and white actions; the favourite star has an `onHero` variant. These are: Settings, Library, Activity and favourites, Notifications, calculator, reference viewer, pregnancy profile.
+   - **Search:** the field is a white pill on the hero (`DtHeroBand`).
+   - **Welcome:** a full hero with the light lockup, and the three choices in a lifted card.
+   - **Profile:** the identity sits on the hero (frosted avatar ring, glass « Modifier »), and the menu is in lifted cards.
+   - **Lists** (search results, favourites, history by day, notifications) are grouped in lifted cards (`DtCardGroup`), like the library sections. The verification, plan, subscription and calculator information cards are lifted white cards too.
+   - **Bottom sheets** open on the root navigator, so they cover the floating tab bar instead of sliding under it.
+   - **Accessibility:** the checks (44 pt targets, labels, contrast in both themes, 200 % text) pass on every screen they cover.
+
+4. **Unchanged.** The palette (brand, teal, semantic colours), typography, spacing, iconography, the clinical rules (no colour-only meaning, neutral evidence, calm subscription UI), touch targets (44 pt) and contrast (WCAG 2.2 AA, checked by `accessibility_test.dart` in both themes). Admin Web keeps its dense console look; the new tokens are available to it but not applied.
 
 ## Consequences
 

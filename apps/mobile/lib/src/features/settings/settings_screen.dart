@@ -8,6 +8,7 @@ import '../../core/auth/session_controller.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../router/app_router.dart';
 import '../../theme/doktool_tokens.dart';
+import '../../ui/hero.dart';
 import '../../ui/segmented_control.dart';
 import '../../ui/tokens.dart';
 import 'app_settings.dart';
@@ -27,12 +28,7 @@ class SettingsScreen extends ConsumerWidget {
     final account = ref.watch(sessionControllerProvider).value is UserSession;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.settingsTitle, style: DtType.title.copyWith(color: colors.ink)),
-        backgroundColor: colors.bg,
-        surfaceTintColor: colors.bg,
-        elevation: 0,
-      ),
+      appBar: DtHeroAppBar(title: l10n.settingsTitle),
       body: settings == null
           ? const SizedBox.shrink()
           : ListView(

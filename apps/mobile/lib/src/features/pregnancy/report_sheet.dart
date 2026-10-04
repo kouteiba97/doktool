@@ -25,6 +25,8 @@ Future<void> showReportSheet(
 }) {
   final colors = context.colors;
   return showModalBottomSheet<void>(
+    // Above the floating tab bar (ADR-020), never under it.
+    useRootNavigator: true,
     context: context,
     useSafeArea: true,
     isScrollControlled: true,

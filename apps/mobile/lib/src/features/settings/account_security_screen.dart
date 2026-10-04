@@ -69,6 +69,8 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
 
   Future<void> _remove(MessageChannel channel) async {
     final removed = await showModalBottomSheet<bool>(
+      // Above the floating tab bar (ADR-020), never under it.
+      useRootNavigator: true,
       context: context,
       isScrollControlled: true,
       builder: (_) => _RemoveContactSheet(channel: channel),

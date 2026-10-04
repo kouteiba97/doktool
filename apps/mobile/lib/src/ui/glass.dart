@@ -147,3 +147,41 @@ class DtLiftedCard extends StatelessWidget {
     );
   }
 }
+
+/// Rows grouped in one lifted white card, separated by hairlines (ADR-020): search results,
+/// favorites, history, notifications — the same look as the library sections.
+class DtCardGroup extends StatelessWidget {
+  const DtCardGroup({
+    required this.children,
+    this.margin = const EdgeInsets.symmetric(horizontal: DtSpace.s4),
+    super.key,
+  });
+
+  final List<Widget> children;
+  final EdgeInsetsGeometry margin;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Padding(
+      padding: margin,
+      child: DtLiftedCard(
+        padding: EdgeInsets.zero,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(DtRadius.xl),
+          child: Material(
+            type: MaterialType.transparency,
+            child: Column(
+              children: [
+                for (final (index, child) in children.indexed) ...[
+                  if (index > 0) Divider(height: DtBorder.hairline, thickness: DtBorder.hairline, color: colors.border),
+                  child,
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

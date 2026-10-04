@@ -24,6 +24,7 @@ import '../../ui/dt_alert.dart';
 import '../../ui/dt_badge.dart';
 import '../../ui/dt_button.dart';
 import '../../ui/error_text.dart';
+import '../../ui/hero.dart';
 import '../../ui/locks.dart';
 import '../../ui/pill_tabs.dart';
 import '../../ui/segmented_control.dart';
@@ -75,16 +76,8 @@ class _SubstanceScreenState extends ConsumerState<SubstanceScreen> {
     final item = profile.value;
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.bg,
-        surfaceTintColor: colors.bg,
-        elevation: 0,
-        leading: IconButton(
-          tooltip: l10n.commonBack,
-          icon: Icon(LucideIcons.chevronLeft, color: colors.ink),
-          onPressed: () => context.pop(),
-        ),
-        title: item == null
+      appBar: DtHeroAppBar(
+        titleWidget: item == null
             ? null
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,12 +85,12 @@ class _SubstanceScreenState extends ConsumerState<SubstanceScreen> {
                   Text(
                     localizedTitle(context, item.nameFr, item.nameEn),
                     overflow: TextOverflow.ellipsis,
-                    style: DtType.heading.copyWith(color: colors.ink),
+                    style: DtType.heading.copyWith(color: colors.onHero),
                   ),
                   Text(
                     l10n.pregnancyMeta('${item.version}'),
                     overflow: TextOverflow.ellipsis,
-                    style: DtType.caption.copyWith(color: colors.inkSecondary),
+                    style: DtType.caption.copyWith(color: colors.onHero),
                   ),
                 ],
               ),

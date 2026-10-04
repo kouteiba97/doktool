@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter/services.dart';
 
-import '../l10n/generated/app_localizations.dart';
 import '../theme/doktool_tokens.dart';
+import 'hero.dart';
 import 'tokens.dart';
 
-/// A mobile flow page: top bar with back and an optional trailing action (e.g. « Plus tard »),
-/// an eyebrow line (« Étape 1 sur 3 · Identité »), a title, scrollable content with the 16 px
-/// gutter, and the actions pinned at the bottom above the keyboard.
+/// A mobile flow page in the glass style (ADR-020): the hero gradient behind the status bar and a
+/// toolbar with a frosted back button and an optional trailing action (e.g. « Plus tard »); the
+/// eyebrow (« Étape 1 sur 3 · Identité »), title and intro in white on the hero, fading into the
+/// page; scrollable content with the 16 px gutter; the actions pinned at the bottom.
 class DtPage extends StatelessWidget {
   const DtPage({
     required this.children,
@@ -36,66 +36,52 @@ class DtPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final l10n = AppLocalizations.of(context);
-    final canPop = showBack && (onBack != null || context.canPop());
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.bg,
-        surfaceTintColor: colors.bg,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: canPop
-            ? IconButton(
-                tooltip: l10n.commonBack,
-                icon: Icon(LucideIcons.chevronLeft, color: colors.ink),
-                onPressed: onBack ?? () => context.pop(),
-              )
-            : null,
-        actions: [
-          ?trailing,
-          const SizedBox(width: DtSpace.s2),
-        ],
-      ),
-      body: SafeArea(
-        top: false,
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
         child: Column(
           children: [
+            // The toolbar stays on the deep part of the hero; the title block scrolls under it.
+            ColoredBox(
+              color: colors.heroStart,
+              child: Padding(
+                padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
+                child: DtHeroToolbar(trailing: [?trailing], showBack: showBack, onBack: onBack),
+              ),
+            ),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(DtSpace.s4, 0, DtSpace.s4, DtSpace.s6),
-                children: [
-                  if (eyebrow != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: DtSpace.s1),
-                      child: Text(eyebrow!, style: DtType.label.copyWith(color: colors.inkMuted)),
-                    ),
-                  if (title != null)
-                    Semantics(
-                      header: true,
-                      child: Text(title!, style: DtType.display.copyWith(color: colors.ink)),
-                    ),
-                  if (intro != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: DtSpace.s2),
-                      child: Text(intro!, style: DtType.body.copyWith(color: colors.inkSecondary)),
-                    ),
-                  if (title != null || intro != null) const SizedBox(height: DtSpace.s6),
-                  ...children,
-                ],
+              child: SafeArea(
+                top: false,
+                bottom: actions.isEmpty,
+                child: ListView(
+                  padding: const EdgeInsets.only(bottom: DtSpace.s6),
+                  children: [
+                    DtHeroTitle(eyebrow: eyebrow, title: title, intro: intro),
+                    const SizedBox(height: DtSpace.s2),
+                    for (final child in children)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: DtSpace.s4),
+                        child: child,
+                      ),
+                  ],
+                ),
               ),
             ),
             if (actions.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(DtSpace.s4, DtSpace.s2, DtSpace.s4, DtSpace.s4),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (final (index, action) in actions.indexed) ...[
-                      if (index > 0) const SizedBox(height: DtSpace.s2),
-                      action,
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(DtSpace.s4, DtSpace.s2, DtSpace.s4, DtSpace.s4),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final (index, action) in actions.indexed) ...[
+                        if (index > 0) const SizedBox(height: DtSpace.s2),
+                        action,
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
           ],
@@ -105,7 +91,8 @@ class DtPage extends StatelessWidget {
   }
 }
 
-/// A titled block on a surface (settings sections, verification intro paragraphs, summaries).
+/// A titled block on a lifted white card (settings sections, verification intro paragraphs,
+/// summaries) — ADR-020.
 class DtSection extends StatelessWidget {
   const DtSection({required this.child, this.title, super.key});
 
@@ -120,8 +107,9 @@ class DtSection extends StatelessWidget {
       padding: const EdgeInsets.all(DtSpace.s4),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(DtRadius.md),
-        border: Border.all(color: colors.border, width: DtBorder.hairline),
+        borderRadius: BorderRadius.circular(DtRadius.xl),
+        border: Border.all(color: colors.glassHighlight, width: DtBorder.hairline),
+        boxShadow: context.elevation.glass,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

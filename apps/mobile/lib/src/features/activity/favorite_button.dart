@@ -11,10 +11,13 @@ import 'favorites_controller.dart';
 
 /// The ★ of a model or a calculator (viewer and calculator top bars, search sheet).
 class FavoriteButton extends ConsumerWidget {
-  const FavoriteButton({required this.type, required this.id, super.key});
+  const FavoriteButton({required this.type, required this.id, this.onHero = false, super.key});
 
   final FavoriteTargetType type;
   final String id;
+
+  /// Placed on the hero top bar (ADR-020): white outline, white fill when starred.
+  final bool onHero;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,8 +27,8 @@ class FavoriteButton extends ConsumerWidget {
     return IconButton(
       tooltip: starred ? l10n.favoritesRemove : l10n.favoritesAdd,
       isSelected: starred,
-      icon: Icon(LucideIcons.star, color: colors.inkSecondary),
-      selectedIcon: Icon(LucideIcons.star, color: colors.brand, fill: 1),
+      icon: Icon(LucideIcons.star, color: onHero ? colors.onHero : colors.inkSecondary),
+      selectedIcon: Icon(LucideIcons.star, color: onHero ? colors.onHero : colors.brand, fill: 1),
       onPressed: () async {
         try {
           await ref.read(favoritesProvider.notifier).toggle(type, id);

@@ -10,6 +10,7 @@ import 'package:doktool/src/core/database/app_database.dart';
 import 'package:doktool/src/features/analytics/analytics_event.dart';
 import 'package:doktool/src/features/pregnancy/substance_screen.dart';
 import 'package:doktool/src/router/app_router.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -133,6 +134,12 @@ void main() {
     expect(find.text('Une version plus récente est en relecture. Celle-ci reste la référence.'), findsOneWidget);
     expect(find.text("Ce n'est pas une preuve d'innocuité."), findsOneWidget);
     expect(find.text('Paracétamol'), findsOneWidget);
+    // The page scrolls under the hero top bar: bring the footer into view first.
+    await tester.scrollUntilVisible(
+      find.text('Sources : CRAT 09/2026'),
+      200,
+      scrollable: find.byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.down).first,
+    );
     expect(find.text('Sources : CRAT 09/2026'), findsOneWidget);
     expect(find.textContaining('Dr K. Benali'), findsOneWidget);
   });

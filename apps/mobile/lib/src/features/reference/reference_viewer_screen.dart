@@ -3,7 +3,6 @@ import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:pdfrx/pdfrx.dart';
 
@@ -18,6 +17,7 @@ import '../../ui/content_row.dart';
 import '../../ui/dt_alert.dart';
 import '../../ui/dt_button.dart';
 import '../../ui/error_text.dart';
+import '../../ui/hero.dart';
 import '../../ui/locks.dart';
 import '../../ui/tokens.dart';
 import '../offline/offline_store.dart';
@@ -101,16 +101,8 @@ class _ReferenceViewerScreenState extends ConsumerState<ReferenceViewerScreen> {
 
     return Scaffold(
       backgroundColor: colors.surfaceSunken,
-      appBar: AppBar(
-        backgroundColor: colors.bg,
-        surfaceTintColor: colors.bg,
-        elevation: 0,
-        leading: IconButton(
-          tooltip: l10n.commonBack,
-          icon: Icon(LucideIcons.chevronLeft, color: colors.ink),
-          onPressed: () => context.pop(),
-        ),
-        title: item == null
+      appBar: DtHeroAppBar(
+        titleWidget: item == null
             ? null
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,7 +110,7 @@ class _ReferenceViewerScreenState extends ConsumerState<ReferenceViewerScreen> {
                   Text(
                     localizedTitle(context, item.titleFr, item.titleEn),
                     overflow: TextOverflow.ellipsis,
-                    style: DtType.heading.copyWith(color: colors.ink),
+                    style: DtType.heading.copyWith(color: colors.onHero),
                   ),
                   Row(
                     children: [
@@ -126,7 +118,7 @@ class _ReferenceViewerScreenState extends ConsumerState<ReferenceViewerScreen> {
                         child: Text(
                           l10n.viewerMeta(type, dateText(context, item.fileDate)),
                           overflow: TextOverflow.ellipsis,
-                          style: DtType.caption.copyWith(color: colors.inkSecondary),
+                          style: DtType.caption.copyWith(color: colors.onHero),
                         ),
                       ),
                       const SizedBox(width: DtSpace.s2),
@@ -140,82 +132,84 @@ class _ReferenceViewerScreenState extends ConsumerState<ReferenceViewerScreen> {
               ),
         actions: [
           if (item != null && item.access.state != AccessState.locked)
-            FavoriteButton(type: FavoriteTargetType.referenceDocument, id: item.id),
+            FavoriteButton(type: FavoriteTargetType.referenceDocument, id: item.id, onHero: true),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(DtSpace.s8),
-          child: Container(
+      ),
+      body: Column(
+        children: [
+          Container(
             width: double.infinity,
-            color: colors.surfaceSunken,
-            padding: const EdgeInsets.symmetric(horizontal: DtSpace.s4, vertical: DtSpace.s2),
-            child: Semantics(
-              liveRegion: false,
-              child: Text(l10n.viewerNotice, style: DtType.caption.copyWith(color: colors.inkSecondary)),
+            color: colors.bg,
+            padding: const EdgeInsets.fromLTRB(DtSpace.s4, 0, DtSpace.s4, DtSpace.s2),
+            child: Text(l10n.viewerNotice, style: DtType.caption.copyWith(color: colors.inkSecondary)),
+          ),
+          Expanded(
+            child: opened.when(
+              loading: () => const _PaperSkeleton(),
+              error: (error, _) => _Failure(
+                error: ApiError.from(error),
+                onRetry: () => ref.invalidate(openedReferenceProvider(widget.id)),
+              ),
+              data: (opened) {
+                if (opened.item.access.state == AccessState.locked) {
+                  return Padding(
+                    padding: const EdgeInsets.all(DtSpace.s4),
+                    child: DtAlert(
+                      severity: DtAlertSeverity.neutral,
+                      title: lockWord(l10n, opened.item.access.lockReason),
+                      body: lockExplanation(l10n, opened.item.access.lockReason),
+                    ),
+                  );
+                }
+                return Stack(
+                  children: [
+                    PdfViewer.data(
+                      opened.bytes,
+                      sourceName: '${opened.item.id}-${opened.item.fileVersion}',
+                      controller: _controller,
+                      params: PdfViewerParams(
+                        backgroundColor: colors.surfaceSunken,
+                        textSelectionParams: const PdfTextSelectionParams(enabled: false),
+                        onViewerReady: (document, controller) {
+                          setState(() => _pages = document.pages.length);
+                          if (_viewRecorded) return;
+                          _viewRecorded = true;
+                          ref
+                              .read(analyticsRecorderProvider)
+                              .record(
+                                AnalyticsEvent.referenceViewed(
+                                  id: opened.item.id,
+                                  fileVersion: opened.item.fileVersion.toInt(),
+                                  offline: opened.cachedAt != null,
+                                ),
+                              );
+                        },
+                        onPageChanged: (page) {
+                          if (page != null) setState(() => _page = page);
+                        },
+                      ),
+                    ),
+                    if (_pages > 0)
+                      Positioned(
+                        bottom: DtSpace.s6,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: _ZoomControl(
+                            page: _page,
+                            pages: _pages,
+                            onZoomIn: () => _controller.zoomUp(),
+                            onZoomOut: () => _controller.zoomDown(),
+                            onFit: () => _controller.goToPage(pageNumber: _page, anchor: PdfPageAnchor.all),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
           ),
-        ),
-      ),
-      body: opened.when(
-        loading: () => const _PaperSkeleton(),
-        error: (error, _) =>
-            _Failure(error: ApiError.from(error), onRetry: () => ref.invalidate(openedReferenceProvider(widget.id))),
-        data: (opened) {
-          if (opened.item.access.state == AccessState.locked) {
-            return Padding(
-              padding: const EdgeInsets.all(DtSpace.s4),
-              child: DtAlert(
-                severity: DtAlertSeverity.neutral,
-                title: lockWord(l10n, opened.item.access.lockReason),
-                body: lockExplanation(l10n, opened.item.access.lockReason),
-              ),
-            );
-          }
-          return Stack(
-            children: [
-              PdfViewer.data(
-                opened.bytes,
-                sourceName: '${opened.item.id}-${opened.item.fileVersion}',
-                controller: _controller,
-                params: PdfViewerParams(
-                  backgroundColor: colors.surfaceSunken,
-                  textSelectionParams: const PdfTextSelectionParams(enabled: false),
-                  onViewerReady: (document, controller) {
-                    setState(() => _pages = document.pages.length);
-                    if (_viewRecorded) return;
-                    _viewRecorded = true;
-                    ref
-                        .read(analyticsRecorderProvider)
-                        .record(
-                          AnalyticsEvent.referenceViewed(
-                            id: opened.item.id,
-                            fileVersion: opened.item.fileVersion.toInt(),
-                            offline: opened.cachedAt != null,
-                          ),
-                        );
-                  },
-                  onPageChanged: (page) {
-                    if (page != null) setState(() => _page = page);
-                  },
-                ),
-              ),
-              if (_pages > 0)
-                Positioned(
-                  bottom: DtSpace.s6,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: _ZoomControl(
-                      page: _page,
-                      pages: _pages,
-                      onZoomIn: () => _controller.zoomUp(),
-                      onZoomOut: () => _controller.zoomDown(),
-                      onFit: () => _controller.goToPage(pageNumber: _page, anchor: PdfPageAnchor.all),
-                    ),
-                  ),
-                ),
-            ],
-          );
-        },
+        ],
       ),
     );
   }

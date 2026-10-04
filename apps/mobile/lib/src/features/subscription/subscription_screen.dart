@@ -127,8 +127,9 @@ class _Current extends StatelessWidget {
       padding: const EdgeInsets.all(DtSpace.s4),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(DtRadius.md),
-        border: Border.all(color: colors.border, width: DtBorder.hairline),
+        borderRadius: BorderRadius.circular(DtRadius.xl),
+        border: Border.all(color: colors.glassHighlight, width: DtBorder.hairline),
+        boxShadow: context.elevation.glass,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

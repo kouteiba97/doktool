@@ -104,7 +104,7 @@ class _IdentityStepState extends ConsumerState<_IdentityStep> {
       intro: student ? l10n.verificationIdentityIntroStudent : l10n.verificationIdentityIntro,
       trailing: TextButton(
         onPressed: () => context.go(Routes.home),
-        child: Text(l10n.commonLater, style: DtType.bodyStrong.copyWith(color: colors.brand)),
+        child: Text(l10n.commonLater, style: DtType.bodyStrong.copyWith(color: colors.onHero)),
       ),
       actions: [
         if (_error != null) DtAlert(severity: DtAlertSeverity.critical, body: commonErrorText(context, _error!)),

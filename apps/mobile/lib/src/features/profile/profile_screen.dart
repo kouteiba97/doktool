@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -12,6 +13,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../router/app_router.dart';
 import '../../theme/doktool_tokens.dart';
 import '../../ui/dt_badge.dart';
+import '../../ui/glass.dart';
 import '../../ui/tokens.dart';
 import '../access/access_controller.dart';
 import '../verification/verification_controller.dart';
@@ -34,6 +36,7 @@ class ProfileScreen extends ConsumerWidget {
     final student = access?.tier == EntitlementTier.student;
 
     Widget row(IconData icon, String label, VoidCallback? onTap, {Color? color, String? trailing}) => ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: DtSpace.s4),
       minTileHeight: DtSize.row,
       leading: Icon(icon, color: color ?? colors.inkSecondary),
       title: Text(label, style: DtType.body.copyWith(color: color ?? colors.ink)),
@@ -45,74 +48,156 @@ class ProfileScreen extends ConsumerWidget {
       onTap: onTap,
     );
 
+    Widget card(List<Widget> rows) => DtLiftedCard(
+      padding: EdgeInsets.zero,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(DtRadius.xl),
+        child: Material(
+          type: MaterialType.transparency,
+          child: Column(
+            children: [
+              for (final (index, item) in rows.indexed) ...[
+                if (index > 0) Divider(height: DtBorder.hairline, thickness: DtBorder.hairline, color: colors.border),
+                item,
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.bg,
-        surfaceTintColor: colors.bg,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(l10n.profileTitle, style: DtType.title.copyWith(color: colors.ink)),
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          if (user) ref.invalidate(meProvider);
-          await ref.read(accessControllerProvider.notifier).reload();
-        },
-        child: ListView(
-          padding: const EdgeInsets.only(bottom: DtSize.bottomnav + DtSpace.s6),
-          children: [
-            if (me != null)
-              Padding(
-                padding: const EdgeInsets.all(DtSpace.s4),
-                child: Row(
-                  children: [
-                    ProfileAvatar(url: me.avatarUrl, initials: _initials(me.firstName, me.lastName)),
-                    const SizedBox(width: DtSpace.s3),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('${me.firstName} ${me.lastName}', style: DtType.title.copyWith(color: colors.ink)),
-                          if (me.professionalProfile != null)
-                            Text(
-                              [_roleName(l10n, me.professionalProfile!.professionalType), me.wilaya.name].join(' · '),
-                              style: DtType.caption.copyWith(color: colors.inkSecondary),
-                            ),
-                          const SizedBox(height: DtSpace.s1),
-                          const _Badges(),
-                        ],
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            if (user) ref.invalidate(meProvider);
+            await ref.read(accessControllerProvider.notifier).reload();
+          },
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: DtSize.bottomnav + DtSpace.s10),
+            children: [
+              // ADR-020: the identity sits on the hero, the menu in lifted white cards below.
+              DtHeroBackground(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    DtSpace.s4,
+                    MediaQuery.paddingOf(context).top + DtSpace.s3,
+                    DtSpace.s4,
+                    DtSpace.s8,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Semantics(
+                        header: true,
+                        child: Text(l10n.profileTitle, style: DtType.display.copyWith(color: colors.onHero)),
                       ),
-                    ),
-                    TextButton(
-                      onPressed: () => context.push(Routes.profileEdit),
-                      child: Text(l10n.profileEdit, style: DtType.label.copyWith(color: colors.brand)),
-                    ),
+                      if (me != null) ...[
+                        const SizedBox(height: DtSpace.s4),
+                        Row(
+                          children: [
+                            DtGlass.onHero(
+                              radius: DtRadius.full,
+                              padding: const EdgeInsets.all(DtSpace.s1),
+                              child: ProfileAvatar(url: me.avatarUrl, initials: _initials(me.firstName, me.lastName)),
+                            ),
+                            const SizedBox(width: DtSpace.s3),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${me.firstName} ${me.lastName}',
+                                    style: DtType.title.copyWith(color: colors.onHero),
+                                  ),
+                                  if (me.professionalProfile != null)
+                                    Text(
+                                      [
+                                        _roleName(l10n, me.professionalProfile!.professionalType),
+                                        me.wilaya.name,
+                                      ].join(' · '),
+                                      style: DtType.label.copyWith(color: colors.onHero),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            DtGlass.onHero(
+                              radius: DtRadius.full,
+                              child: Material(
+                                type: MaterialType.transparency,
+                                child: InkWell(
+                                  customBorder: const StadiumBorder(),
+                                  onTap: () => context.push(Routes.profileEdit),
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(minHeight: DtSize.touchMin),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: DtSpace.s4),
+                                      child: Center(
+                                        widthFactor: 1,
+                                        child: Text(
+                                          l10n.profileEdit,
+                                          style: DtType.label.copyWith(color: colors.onHero),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: DtSpace.s4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (me != null) ...[const _Badges(), const SizedBox(height: DtSpace.s3)],
+                    if (me?.bio != null) ...[
+                      DtLiftedCard(
+                        child: Text(me!.bio!, style: DtType.body.copyWith(color: colors.inkSecondary)),
+                      ),
+                      const SizedBox(height: DtSpace.s3),
+                    ],
+                    card([
+                      if (user) ...[
+                        row(LucideIcons.history, l10n.profileActivity, () => context.push(Routes.profileActivity)),
+                        student
+                            ? row(LucideIcons.graduationCap, l10n.profileStudentAccess, null)
+                            : row(
+                                LucideIcons.creditCard,
+                                l10n.profileSubscription,
+                                () => context.push(Routes.subscription),
+                              ),
+                        row(
+                          LucideIcons.badgeCheck,
+                          l10n.profileVerification,
+                          () => context.push(Routes.verificationStatus),
+                        ),
+                        row(LucideIcons.bell, l10n.profileNotifications, () => context.push(Routes.notifications)),
+                      ],
+                      row(LucideIcons.settings, l10n.profileSettings, () => context.push(Routes.settings)),
+                    ]),
+                    const SizedBox(height: DtSpace.s3),
+                    card([
+                      row(
+                        LucideIcons.logOut,
+                        user ? l10n.profileSignOut : l10n.demoEnd,
+                        () => ref.read(sessionControllerProvider.notifier).signOut(),
+                        color: colors.brand,
+                      ),
+                    ]),
                   ],
                 ),
               ),
-            if (me?.bio != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(DtSpace.s4, 0, DtSpace.s4, DtSpace.s3),
-                child: Text(me!.bio!, style: DtType.body.copyWith(color: colors.inkSecondary)),
-              ),
-            if (user) ...[
-              row(LucideIcons.history, l10n.profileActivity, () => context.push(Routes.profileActivity)),
-              student
-                  ? row(LucideIcons.graduationCap, l10n.profileStudentAccess, null)
-                  : row(LucideIcons.creditCard, l10n.profileSubscription, () => context.push(Routes.subscription)),
-              row(LucideIcons.badgeCheck, l10n.profileVerification, () => context.push(Routes.verificationStatus)),
-              row(LucideIcons.bell, l10n.profileNotifications, () => context.push(Routes.notifications)),
             ],
-            row(LucideIcons.settings, l10n.profileSettings, () => context.push(Routes.settings)),
-            const SizedBox(height: DtSpace.s4),
-            row(
-              LucideIcons.logOut,
-              user ? l10n.profileSignOut : l10n.demoEnd,
-              () => ref.read(sessionControllerProvider.notifier).signOut(),
-              color: colors.brand,
-            ),
-          ],
+          ),
         ),
       ),
     );

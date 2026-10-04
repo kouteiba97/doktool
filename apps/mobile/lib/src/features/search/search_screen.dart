@@ -16,6 +16,8 @@ import '../../theme/doktool_tokens.dart';
 import '../../ui/content_row.dart';
 import '../../ui/dt_alert.dart';
 import '../../ui/dt_button.dart';
+import '../../ui/glass.dart';
+import '../../ui/hero.dart';
 import '../../ui/skeleton.dart';
 import '../../ui/tokens.dart';
 import '../library/library_data.dart';
@@ -176,52 +178,56 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Scaffold(
       backgroundColor: colors.bg,
       body: SafeArea(
+        top: false,
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(DtSpace.s2, DtSpace.s2, DtSpace.s4, DtSpace.s2),
-              child: Row(
-                children: [
-                  IconButton(
-                    tooltip: l10n.searchClose,
-                    icon: Icon(LucideIcons.chevronLeft, color: colors.ink),
-                    onPressed: () => context.pop(),
-                  ),
-                  Expanded(
-                    child: TextField(
-                      controller: _query,
-                      autofocus: true,
-                      onChanged: _changed,
-                      onSubmitted: (value) {
-                        ref.read(recentSearchesProvider.notifier).add(value);
-                        _run();
-                      },
-                      textInputAction: TextInputAction.search,
-                      style: DtType.body.copyWith(color: colors.ink),
-                      decoration: InputDecoration(
-                        hintText: l10n.searchHint,
-                        prefixIcon: Icon(LucideIcons.search, color: colors.inkMuted),
-                        suffixIcon: query.isEmpty
-                            ? null
-                            : IconButton(
-                                tooltip: l10n.commonClose,
-                                icon: Icon(LucideIcons.x, color: colors.inkMuted),
-                                onPressed: () {
-                                  _query.clear();
-                                  _changed('');
-                                },
-                              ),
-                        filled: true,
-                        fillColor: colors.surfaceSunken,
-                        isDense: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(DtRadius.full),
-                          borderSide: BorderSide.none,
+            DtHeroBand(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(DtSpace.s4, DtSpace.s2, DtSpace.s4, DtSpace.s2),
+                child: Row(
+                  children: [
+                    DtGlassIconButton(
+                      icon: LucideIcons.chevronLeft,
+                      tooltip: l10n.searchClose,
+                      onPressed: () => context.pop(),
+                    ),
+                    const SizedBox(width: DtSpace.s3),
+                    Expanded(
+                      child: TextField(
+                        controller: _query,
+                        autofocus: true,
+                        onChanged: _changed,
+                        onSubmitted: (value) {
+                          ref.read(recentSearchesProvider.notifier).add(value);
+                          _run();
+                        },
+                        textInputAction: TextInputAction.search,
+                        style: DtType.body.copyWith(color: colors.ink),
+                        decoration: InputDecoration(
+                          hintText: l10n.searchHint,
+                          prefixIcon: Icon(LucideIcons.search, color: colors.inkMuted),
+                          suffixIcon: query.isEmpty
+                              ? null
+                              : IconButton(
+                                  tooltip: l10n.commonClose,
+                                  icon: Icon(LucideIcons.x, color: colors.inkMuted),
+                                  onPressed: () {
+                                    _query.clear();
+                                    _changed('');
+                                  },
+                                ),
+                          filled: true,
+                          fillColor: colors.surface,
+                          isDense: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(DtRadius.full),
+                            borderSide: BorderSide.none,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             if (query.length >= 2 && _totals.isNotEmpty)
@@ -264,15 +270,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             padding: const EdgeInsets.fromLTRB(DtSpace.s4, DtSpace.s3, DtSpace.s4, DtSpace.s1),
             child: Text(l10n.offlineSearchLocal, style: DtType.caption.copyWith(color: colors.inkMuted)),
           ),
-          for (final content in _local)
-            ContentRow(
-              icon: content.isCalculator ? LucideIcons.calculator : LucideIcons.fileText,
-              title: localizedTitle(context, content.titleFr, content.titleEn),
-              access: content.access,
-              actionLabel: content.isCalculator ? l10n.libraryOpen : l10n.libraryViewModel,
-              highlight: query,
-              onOpen: () => openContent(context, content),
-            ),
+          DtCardGroup(
+            children: [
+              for (final content in _local)
+                ContentRow(
+                  icon: content.isCalculator ? LucideIcons.calculator : LucideIcons.fileText,
+                  title: localizedTitle(context, content.titleFr, content.titleEn),
+                  access: content.access,
+                  actionLabel: content.isCalculator ? l10n.libraryOpen : l10n.libraryViewModel,
+                  highlight: query,
+                  onOpen: () => openContent(context, content),
+                ),
+            ],
+          ),
         ],
       );
     }
@@ -317,29 +327,36 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             padding: const EdgeInsets.fromLTRB(DtSpace.s4, DtSpace.s4, DtSpace.s4, DtSpace.s1),
             child: Text(_typeLabel(l10n, group.type), style: DtType.label.copyWith(color: colors.inkMuted)),
           ),
-          for (final hit in group.hits)
-            ContentRow(
-              icon: switch (hit.type) {
-                SearchType.calculator => LucideIcons.calculator,
-                SearchType.certificate => LucideIcons.fileBadge,
-                SearchType.pregnancy => LucideIcons.baby,
-                _ => LucideIcons.fileText,
-              },
-              title: localizedTitle(context, hit.titleFr, hit.titleEn),
-              subtitle: hit.purposeFr == null ? null : localizedTitle(context, hit.purposeFr!, hit.purposeEn),
-              access: hit.access,
-              actionLabel: hit.type == SearchType.calculator || hit.type == SearchType.pregnancy
-                  ? l10n.libraryOpen
-                  : l10n.libraryViewModel,
-              highlight: query,
-              onOpen: () => _open(hit),
-            ),
+          DtCardGroup(
+            children: [
+              for (final hit in group.hits)
+                ContentRow(
+                  icon: switch (hit.type) {
+                    SearchType.calculator => LucideIcons.calculator,
+                    SearchType.certificate => LucideIcons.fileBadge,
+                    SearchType.pregnancy => LucideIcons.baby,
+                    _ => LucideIcons.fileText,
+                  },
+                  title: localizedTitle(context, hit.titleFr, hit.titleEn),
+                  subtitle: hit.purposeFr == null ? null : localizedTitle(context, hit.purposeFr!, hit.purposeEn),
+                  access: hit.access,
+                  actionLabel: hit.type == SearchType.calculator || hit.type == SearchType.pregnancy
+                      ? l10n.libraryOpen
+                      : l10n.libraryViewModel,
+                  highlight: query,
+                  onOpen: () => _open(hit),
+                ),
+            ],
+          ),
           if (_filter == null && group.total > group.hits.length)
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: TextButton(
-                onPressed: () => _setFilter(group.type),
-                child: Text(l10n.searchSeeAll('${group.total}'), style: DtType.label.copyWith(color: colors.brand)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: DtSpace.s2),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton(
+                  onPressed: () => _setFilter(group.type),
+                  child: Text(l10n.searchSeeAll('${group.total}'), style: DtType.label.copyWith(color: colors.brand)),
+                ),
               ),
             ),
         ],
