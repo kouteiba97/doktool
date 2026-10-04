@@ -24,5 +24,7 @@ One file per decision, numbered, never rewritten after acceptance — a changed 
 | [018](ADR-018-account-deletion.md) | Account deletion (erasure, tombstone, legal retention) | Accepted |
 | [019](ADR-019-pregnancy-lactation.md) | Grossesse · Allaitement (pregnancy and lactation profiles) | Accepted |
 | [020](ADR-020-glass-refresh.md) | Glass visual refresh of the app | Accepted |
+| [021](ADR-021-payment-gateways.md) | Pluggable payment gateways (Chargily Pay first) | Accepted |
+| [022](ADR-022-sms-providers.md) | SMS providers (Infobip, Twilio, fallback, fraud guards) | Accepted |
 
 Source of the architecture: [`docs/ARCHITECTURE-AUDIT.md`](../ARCHITECTURE-AUDIT.md). Where an ADR and the design system disagree, the ADR wins; where ADR-006 and the audit disagree, ADR-006 wins.

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { ENV, type Env } from '../../../config/env.js';
+import type { PaymentMethod, PaymentProvider } from '../../../generated/prisma/enums.js';
 import {
   type OrderOutcome,
   PaymentGateway,
@@ -8,17 +9,26 @@ import {
   type RegisterOrder,
 } from './payment-provider.js';
 
+/** The fee the fake gateway reports, like Chargily's 2.5 % (illustrative only). */
+const FAKE_FEE_RATE = 0.025;
+
 interface FakeOrder {
   order: RegisterOrder;
   outcome: 'PENDING' | 'PAID' | 'FAILED';
 }
 
 /**
- * Development and test stand-in for SATIM (refused in production by the environment check). Its
+ * Development and test stand-in for Chargily, the default gateway (refused in production by the
+ * environment check): it records Chargily's channels and reports a fee like Chargily does. Its
  * payment page is served by the API itself and lets the developer choose the outcome.
  */
 @Injectable()
 export class FakeGateway extends PaymentGateway {
+  readonly id = 'fake' as const;
+  readonly channels: Readonly<Partial<Record<PaymentMethod, PaymentProvider>>> = {
+    CIB: 'CHARGILY_CIB',
+    EDAHABIA: 'CHARGILY_EDAHABIA',
+  };
   private readonly orders = new Map<string, FakeOrder>();
 
   constructor(@Inject(ENV) private readonly env: Env) {
@@ -43,6 +53,7 @@ export class FakeGateway extends PaymentGateway {
         status: 'PAID',
         paidAt: new Date(),
         amountMinor: fake.order.amountMinor,
+        feesMinor: Math.round(fake.order.amountMinor * FAKE_FEE_RATE),
         details: { approvalCode: 'FAKE00', Pan: '6280****0000' },
       });
     }

@@ -109,12 +109,24 @@ enum RenewalMode {
   @@map("renewal_mode")
 }
 
-/// V1 providers (ADR-006 Q3): CIB and Edahabia through SATIM. No bank transfer; PayPal is Future Roadmap.
+/// A payment channel: the gateway that took the payment × the card the person paid with (ADR-021).
+/// Fees differ per channel, so finance reports and fee rates are per channel. A new gateway adds
+/// its channels here by migration. No bank transfer; PayPal is Future Roadmap (ADR-006 Q3).
 enum PaymentProvider {
   SATIM_CIB
   SATIM_EDAHABIA
+  CHARGILY_CIB
+  CHARGILY_EDAHABIA
 
   @@map("payment_provider")
+}
+
+/// What the person chooses in the app: the card network. The gateway behind it is configuration.
+enum PaymentMethod {
+  CIB
+  EDAHABIA
+
+  @@map("payment_method")
 }
 
 enum TransactionStatus {
@@ -607,6 +619,18 @@ model Subscription {
   @@index([userId, status])
   @@index([status, currentPeriodEnd])
   @@map("subscriptions")
+}
+
+/// A payment method switched off by an admin (e.g. while its network has an outage). No row means
+/// the method is offered whenever a configured gateway accepts it (ADR-021).
+model PaymentMethodSetting {
+  method      PaymentMethod @id
+  enabled     Boolean
+  updatedById String        @map("updated_by_id") @db.Uuid
+  updatedBy   AdminAccount  @relation("PaymentMethodUpdater", fields: [updatedById], references: [id], onDelete: Restrict)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("payment_method_settings")
 }
 
 /// One individual payment attempt. Immutable after SUCCEEDED except fee settlement (trigger); never
@@ -1207,6 +1231,7 @@ model AdminAccount {
   expensesCreated            OperatingExpense[]        @relation("ExpenseCreator")
   expensesVoided             OperatingExpense[]        @relation("ExpenseVoider")
   feeRatesUpdated            PaymentFeeRate[]          @relation("FeeRateUpdater")
+  paymentMethodsUpdated      PaymentMethodSetting[]    @relation("PaymentMethodUpdater")
   referenceDocumentsCreated  ReferenceDocument[]       @relation("ReferenceDocumentCreator")
   referenceDocumentsUpdated  ReferenceDocument[]       @relation("ReferenceDocumentUpdater")
   referenceFilesUploaded     ReferenceDocumentFile[]   @relation("ReferenceDocumentFileUploader")

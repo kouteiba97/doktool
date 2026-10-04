@@ -21,14 +21,19 @@ const r2 = {
   R2_PRIVATE_SECRET_ACCESS_KEY: 'd',
 };
 
-/** Real payments, required in production (ADR-015). */
+/** Real payments, required in production (ADR-015, ADR-021). */
 const payments = {
-  PAYMENT_PROVIDER: 'satim',
+  PAYMENT_GATEWAYS: 'chargily',
+  CHARGILY_MODE: 'live',
+  CHARGILY_SECRET_KEY: 'live_sk_0123456789abcdef',
+  PUBLIC_API_URL: 'https://api.doktool.dz',
+};
+
+const satim = {
   SATIM_BASE_URL: 'https://test2.satim.dz/payment/rest/',
   SATIM_USERNAME: 'merchant',
   SATIM_PASSWORD: 'secret',
   SATIM_TERMINAL_ID: 'E010000000',
-  PUBLIC_API_URL: 'https://api.doktool.dz',
 };
 
 /** Legal pages, required in production. */
@@ -110,7 +115,7 @@ describe('loadEnv', () => {
     ).toEqual([]);
   });
 
-  it('requires SATIM in production, with all its settings', () => {
+  it('requires a real payment gateway in production', () => {
     expect(
       issuesOf({
         ...required,
@@ -120,11 +125,55 @@ describe('loadEnv', () => {
         SMTP_URL: 'smtps://user:pass@smtp.example.com:465',
         MAIL_FROM: 'DokTool <no-reply@example.com>',
       }),
-    ).toEqual(['PAYMENT_PROVIDER: production takes real payments (PAYMENT_PROVIDER=satim)']);
-    expect(issuesOf({ ...required, PAYMENT_PROVIDER: 'satim' })).toHaveLength(5);
-    expect(loadEnv({ ...required, ...payments }).SATIM_BASE_URL).toBe(
-      'https://test2.satim.dz/payment/rest',
-    );
+    ).toEqual(['PAYMENT_GATEWAYS: production takes real payments (no fake gateway)']);
+  });
+
+  it('parses the gateway list by priority and refuses unknown or repeated gateways', () => {
+    expect(loadEnv({ ...required }).PAYMENT_GATEWAYS).toEqual(['fake']);
+    expect(
+      loadEnv({ ...required, ...payments, ...satim, PAYMENT_GATEWAYS: ' Chargily , satim ' })
+        .PAYMENT_GATEWAYS,
+    ).toEqual(['chargily', 'satim']);
+    expect(issuesOf({ ...required, PAYMENT_GATEWAYS: 'paypal' })).toHaveLength(1);
+    expect(issuesOf({ ...required, PAYMENT_GATEWAYS: 'fake,fake' })).toEqual([
+      'PAYMENT_GATEWAYS: a gateway is listed twice',
+    ]);
+  });
+
+  it('requires the Chargily key of the right mode, live in production', () => {
+    expect(issuesOf({ ...required, PAYMENT_GATEWAYS: 'chargily' })).toEqual([
+      'PUBLIC_API_URL: PUBLIC_API_URL is required with a real payment gateway (return and webhook URLs)',
+      'CHARGILY_SECRET_KEY: CHARGILY_SECRET_KEY is required with the chargily gateway',
+    ]);
+    expect(issuesOf({ ...required, ...payments, CHARGILY_MODE: 'test' })).toEqual([
+      'CHARGILY_SECRET_KEY: CHARGILY_SECRET_KEY must be a test secret key (test_sk_…)',
+    ]);
+    expect(
+      issuesOf({
+        ...required,
+        ...r2,
+        ...legal,
+        ...payments,
+        CHARGILY_MODE: 'test',
+        CHARGILY_SECRET_KEY: 'test_sk_0123',
+        NODE_ENV: 'production',
+        SMTP_URL: 'smtps://user:pass@smtp.example.com:465',
+        MAIL_FROM: 'DokTool <no-reply@example.com>',
+      }),
+    ).toEqual(['CHARGILY_MODE: production takes real payments (CHARGILY_MODE=live)']);
+  });
+
+  it('requires every SATIM setting with the satim gateway', () => {
+    expect(
+      issuesOf({
+        ...required,
+        PAYMENT_GATEWAYS: 'satim',
+        PUBLIC_API_URL: 'https://api.doktool.dz',
+      }),
+    ).toHaveLength(4);
+    expect(
+      loadEnv({ ...required, ...payments, ...satim, PAYMENT_GATEWAYS: 'satim' }).SATIM_BASE_URL,
+    ).toBe('https://test2.satim.dz/payment/rest');
   });
 
   it('parses JOBS_ENABLED strictly', () => {

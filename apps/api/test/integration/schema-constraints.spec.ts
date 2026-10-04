@@ -220,7 +220,14 @@ describe('billing (ADR-005, ADR-006 Q3)', () => {
     expect(await values('subscription_status')).not.toContain('TRIALING');
     expect(await values('subscription_status')).not.toContain('REFUNDED');
     expect(await values('transaction_status')).not.toContain('REFUNDED');
-    expect(await values('payment_provider')).toEqual(['SATIM_CIB', 'SATIM_EDAHABIA']);
+    // Cards only, through SATIM directly or Chargily (ADR-021): no bank transfer channel.
+    expect(await values('payment_provider')).toEqual([
+      'SATIM_CIB',
+      'SATIM_EDAHABIA',
+      'CHARGILY_CIB',
+      'CHARGILY_EDAHABIA',
+    ]);
+    expect(await values('payment_method')).toEqual(['CIB', 'EDAHABIA']);
   });
 
   it('enforces the public transaction id format and net = amount − fees', async () => {

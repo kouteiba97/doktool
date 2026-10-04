@@ -67,10 +67,10 @@ export class AuthService {
         },
       );
     }
-    if (!this.delivery.isAvailable(identifier.channel)) {
+    if (!this.delivery.canReach(identifier.channel, identifier.value)) {
       throw new DomainError(
         'CHANNEL_UNAVAILABLE',
-        `${identifier.channel} confirmation is not available yet.`,
+        `${identifier.channel} confirmation is not available for this identifier.`,
       );
     }
     const { userId } = await this.users.createOrRestartPendingAccount({
@@ -161,10 +161,10 @@ export class AuthService {
     await this.limiter.hit(RATE_LIMITS.resetPerIp, clientKey(client));
     const identifier = requireIdentifier(rawIdentifier);
     await this.limiter.hit(RATE_LIMITS.resetPerIdentifier, identifier.value);
-    if (!this.delivery.isAvailable(identifier.channel)) {
+    if (!this.delivery.canReach(identifier.channel, identifier.value)) {
       throw new DomainError(
         'CHANNEL_UNAVAILABLE',
-        `${identifier.channel} codes are not available yet.`,
+        `${identifier.channel} codes are not available for this identifier.`,
       );
     }
     const userId = await this.users.findConfirmedActiveUserId(identifier);

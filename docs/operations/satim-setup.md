@@ -1,6 +1,6 @@
 # SATIM (CIB / Edahabia) setup
 
-DokTool takes card payments through SATIM's e-payment service (ADR-015). You need a merchant contract with SATIM through your bank. Until then, the API runs with `PAYMENT_PROVIDER=fake`.
+DokTool can take card payments through SATIM's e-payment service directly (ADR-015), as a second gateway next to Chargily Pay ([chargily-setup.md](chargily-setup.md), ADR-021). You need a merchant contract with SATIM through your bank.
 
 ## What SATIM gives you
 
@@ -12,7 +12,8 @@ DokTool takes card payments through SATIM's e-payment service (ADR-015). You nee
 ## Environment of the API
 
 ```
-PAYMENT_PROVIDER=satim
+# satim alone, or after chargily (chargily,satim) to keep it as a fallback, or first to prefer it
+PAYMENT_GATEWAYS=satim
 SATIM_BASE_URL=<REST base URL given by SATIM>
 SATIM_USERNAME=<merchant user name>
 SATIM_PASSWORD=<merchant password>

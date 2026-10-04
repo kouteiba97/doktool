@@ -7,6 +7,7 @@ import {
   Equals,
   IsArray,
   IsBoolean,
+  IsDivisibleBy,
   IsEnum,
   IsIn,
   IsInt,
@@ -20,6 +21,7 @@ import {
   MinLength,
 } from 'class-validator';
 import {
+  PaymentMethod,
   PaymentProvider,
   ProfessionalType,
   SubscriptionStatus,
@@ -28,6 +30,7 @@ import {
 import type { Subscription, SubscriptionPlan, Transaction } from '../../generated/prisma/client.js';
 import type { Eligibility } from './checkout.service.js';
 import { metadataOf } from './checkout.service.js';
+import { type MethodRoute, methodOfChannel } from './payments/payment-gateways.js';
 
 const trimmed = Transform(({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() : value,
@@ -118,6 +121,13 @@ export class PlansDto {
     description: 'Version of the acknowledgement the review screen shows (« non remboursable »).',
   })
   acknowledgementVersion!: string;
+  @ApiProperty({
+    enum: PaymentMethod,
+    enumName: 'PaymentMethod',
+    isArray: true,
+    description: 'The cards accepted right now, in display order; empty while payment is paused.',
+  })
+  paymentMethods!: PaymentMethod[];
 }
 
 export class SubscriptionDto {
@@ -150,8 +160,8 @@ export class TransactionDto {
   status!: TransactionStatus;
   @ApiProperty() amountMinor!: number;
   @ApiProperty() currency!: string;
-  @ApiProperty({ enum: PaymentProvider, enumName: 'PaymentProvider' })
-  paymentProvider!: PaymentProvider;
+  @ApiProperty({ enum: PaymentMethod, enumName: 'PaymentMethod' })
+  paymentMethod!: PaymentMethod;
   @ApiProperty() planCode!: string;
   @ApiProperty({ format: 'date-time' }) createdAt!: string;
   @ApiPropertyOptional({ format: 'date-time', type: String, nullable: true }) paymentDate!:
@@ -170,7 +180,7 @@ export class TransactionDto {
       status: transaction.status,
       amountMinor: transaction.amountMinor,
       currency: transaction.currency,
-      paymentProvider: transaction.paymentProvider,
+      paymentMethod: methodOfChannel(transaction.paymentProvider),
       planCode: transaction.plan.code,
       createdAt: transaction.createdAt.toISOString(),
       paymentDate: iso(transaction.paymentDate),
@@ -192,9 +202,13 @@ export class CheckoutDto {
   @IsUUID()
   planId!: string;
 
-  @ApiProperty({ enum: PaymentProvider, enumName: 'PaymentProvider' })
-  @IsEnum(PaymentProvider)
-  provider!: PaymentProvider;
+  @ApiProperty({
+    enum: PaymentMethod,
+    enumName: 'PaymentMethod',
+    description: 'The card chosen; the API routes it to the gateway that accepts it (ADR-021).',
+  })
+  @IsEnum(PaymentMethod)
+  method!: PaymentMethod;
 
   @ApiProperty({
     description:
@@ -260,8 +274,12 @@ export class PublishPlanDto extends ReasonField {
   @IsIn(['DOCTOR', 'RESIDENT'], { each: true })
   audience!: ('DOCTOR' | 'RESIDENT')[];
 
-  @ApiProperty({ description: 'Price in centimes, taxes included (e.g. 150000 = 1 500 DZD).' })
+  @ApiProperty({
+    description:
+      'Price in centimes, taxes included, whole dinars (e.g. 150000 = 1 500 DZD); gateways take whole dinars.',
+  })
   @IsInt()
+  @IsDivisibleBy(100)
   @Min(5000)
   @Max(100_000_000)
   priceMinor!: number;
@@ -290,4 +308,34 @@ export class PlanSaleDto extends ReasonField {
   @ApiProperty()
   @IsBoolean()
   isPurchasable!: boolean;
+}
+
+/** A payment method in Admin Web: the gateway that takes it and its switch. */
+export class PaymentMethodRouteDto {
+  @ApiProperty({ enum: PaymentMethod, enumName: 'PaymentMethod' }) method!: PaymentMethod;
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: 'chargily',
+    description: 'The configured gateway that takes it; null when none does.',
+  })
+  gateway!: string | null;
+  @ApiProperty({ description: 'Offered in the app (when a gateway takes it).' }) enabled!: boolean;
+  @ApiProperty({
+    enum: PaymentProvider,
+    enumName: 'PaymentProvider',
+    nullable: true,
+    description: 'The channel new payments are recorded under (fees are set per channel).',
+  })
+  channel!: PaymentProvider | null;
+
+  static from(route: MethodRoute, channel: PaymentProvider | null): PaymentMethodRouteDto {
+    return { method: route.method, gateway: route.gateway, enabled: route.enabled, channel };
+  }
+}
+
+export class PaymentMethodSwitchDto extends ReasonField {
+  @ApiProperty()
+  @IsBoolean()
+  enabled!: boolean;
 }

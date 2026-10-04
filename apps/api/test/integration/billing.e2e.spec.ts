@@ -48,7 +48,7 @@ function checkout(auth: Auth, overrides: Record<string, unknown> = {}) {
     .set(auth)
     .send({
       planId: monthlyId,
-      provider: 'SATIM_CIB',
+      method: 'CIB',
       acknowledged: true,
       acknowledgementVersion: 'pro-no-refund-v1',
       ...overrides,
@@ -160,7 +160,7 @@ describe('checkout', () => {
 
     const resumed = await checkout(auth).expect(200);
     expect(resumed.body).toEqual(started.body);
-    await checkout(auth, { provider: 'SATIM_EDAHABIA' }).expect(409);
+    await checkout(auth, { method: 'EDAHABIA' }).expect(409);
 
     const page = await payOnProviderPage(started.body.redirectUrl, 'PAID');
     expect(page.text).toContain('Paiement confirmé');
@@ -174,6 +174,7 @@ describe('checkout', () => {
       status: 'SUCCEEDED',
       amountMinor: 150_000,
       currency: 'DZD',
+      paymentMethod: 'CIB',
       planCode: code,
     });
     expect(await tier(auth)).toBe('PROFESSIONAL');
@@ -193,6 +194,12 @@ describe('checkout', () => {
       .prisma()
       .transaction.findUniqueOrThrow({ where: { transactionId: started.body.transactionId } });
     expect(stored.metadata).toMatchObject({ acknowledgement: 'pro-no-refund-v1', renewal: false });
+    // The channel names the gateway; the fee it reported is the actual fee (ADR-021).
+    expect(stored).toMatchObject({
+      paymentProvider: 'CHARGILY_CIB',
+      paymentFeesMinor: 3_750,
+      netAmountMinor: 146_250,
+    });
     await expect(
       app.prisma().transaction.update({ where: { id: stored.id }, data: { amountMinor: 1 } }),
     ).rejects.toThrow();
@@ -217,7 +224,7 @@ describe('checkout', () => {
     });
     expect(await tier(auth)).toBe('PROFESSIONAL_UNPAID');
 
-    const second = await checkout(auth, { provider: 'SATIM_EDAHABIA' }).expect(200);
+    const second = await checkout(auth, { method: 'EDAHABIA' }).expect(200);
     expect(second.body.transactionId).not.toBe(first.body.transactionId);
     await payOnProviderPage(second.body.redirectUrl, 'PAID');
     expect(await tier(auth)).toBe('PROFESSIONAL');
@@ -353,10 +360,56 @@ describe('demo', () => {
       .set(demo.auth)
       .send({
         planId: monthlyId,
-        provider: 'SATIM_CIB',
+        method: 'CIB',
         acknowledged: true,
         acknowledgementVersion: 'pro-no-refund-v1',
       })
       .expect(401);
+  });
+});
+
+describe('payment methods and gateways (ADR-021)', () => {
+  it('lists the accepted cards, and pauses one that an admin switches off', async () => {
+    const { auth } = await userActor(app, 'PROFESSIONAL_UNPAID');
+    const plans = await app.http().get('/v1/subscription/plans').set(auth).expect(200);
+    expect(plans.body.paymentMethods).toEqual(['CIB', 'EDAHABIA']);
+
+    const routes = await superAdmin.get('/admin/v1/payment-methods').expect(200);
+    expect(routes.body).toEqual([
+      { method: 'CIB', gateway: 'fake', enabled: true, channel: 'CHARGILY_CIB' },
+      { method: 'EDAHABIA', gateway: 'fake', enabled: true, channel: 'CHARGILY_EDAHABIA' },
+    ]);
+    await superAdmin
+      .put('/admin/v1/payment-methods/EDAHABIA')
+      .send({ enabled: false, reason: 'Algérie Poste outage' })
+      .expect(204);
+    try {
+      const paused = await app.http().get('/v1/subscription/plans').set(auth).expect(200);
+      expect(paused.body.paymentMethods).toEqual(['CIB']);
+      const refused = await checkout(auth, { method: 'EDAHABIA' }).expect(503);
+      expect(refused.body.error.code).toBe('CHANNEL_UNAVAILABLE');
+      expect(
+        await app.prisma().auditLogEntry.count({
+          where: { action: 'payment_method.disabled', entityId: 'EDAHABIA' },
+        }),
+      ).toBeGreaterThan(0);
+    } finally {
+      await superAdmin
+        .put('/admin/v1/payment-methods/EDAHABIA')
+        .send({ enabled: true, reason: 'Outage over' })
+        .expect(204);
+    }
+    await checkout(auth, { method: 'EDAHABIA' }).expect(200);
+  });
+
+  it('refuses webhooks that are not authentic and gateways that are not configured', async () => {
+    await app
+      .http()
+      .post('/v1/payments/webhooks/fake')
+      .set('signature', 'a'.repeat(64))
+      .send({ type: 'checkout.paid', data: { entity: 'checkout', id: 'x' } })
+      .expect(401);
+    await app.http().post('/v1/payments/webhooks/chargily').send({}).expect(404);
+    await app.http().post('/v1/payments/webhooks/unknown').send({}).expect(404);
   });
 });

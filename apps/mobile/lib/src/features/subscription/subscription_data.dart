@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/api/generated/models/payment_provider.dart';
+import '../../core/api/generated/models/payment_method.dart';
 import '../../core/api/generated/models/plans_dto.dart';
 import '../../core/api/generated/models/subscription_overview_dto.dart';
 import '../../core/auth/session_controller.dart';
@@ -40,5 +40,9 @@ String durationText(AppLocalizations l10n, num days) => switch (days) {
   _ => l10n.plansDurationDays(days),
 };
 
-String methodText(AppLocalizations l10n, PaymentProvider provider) =>
-    provider == PaymentProvider.satimEdahabia ? l10n.reviewEdahabia : l10n.reviewCib;
+/// The card's name; which gateway took it is not the person's concern (ADR-021).
+String methodText(AppLocalizations l10n, PaymentMethod method) => switch (method) {
+  PaymentMethod.edahabia => l10n.reviewEdahabia,
+  PaymentMethod.cib => l10n.reviewCib,
+  PaymentMethod.$unknown => '—',
+};

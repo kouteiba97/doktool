@@ -26,7 +26,7 @@ type Transaction = Schemas['AdminTransactionDto'];
 
 const PAGE_SIZE = 50;
 const STATUSES: TransactionStatus[] = ['SUCCEEDED', 'PENDING', 'FAILED', 'CANCELED'];
-const PROVIDERS: PaymentProvider[] = ['SATIM_CIB', 'SATIM_EDAHABIA'];
+const PROVIDERS = Object.keys(PROVIDER_LABELS) as PaymentProvider[];
 export const transactionsKey = ['admin', 'transactions'] as const;
 
 /** « Transactions » (ScreenTransactions): the immutable payment ledger; no refund anywhere. */

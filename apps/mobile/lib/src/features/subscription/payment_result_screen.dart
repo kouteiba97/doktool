@@ -19,7 +19,7 @@ import '../access/access_controller.dart';
 import 'payment_state.dart';
 import 'subscription_data.dart';
 
-/// « Résultat du paiement »: the API asks SATIM what happened (never trusting the browser), so this
+/// « Résultat du paiement »: the API asks the payment gateway what happened (never trusting the browser), so this
 /// screen polls the transaction until it is final, and again whenever the app comes back.
 class PaymentResultScreen extends ConsumerStatefulWidget {
   const PaymentResultScreen({required this.transactionId, super.key});

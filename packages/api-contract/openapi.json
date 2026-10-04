@@ -2879,21 +2879,22 @@
             ],
             "type": "string"
           },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentMethod"
+              }
+            ],
+            "description": "The card chosen; the API routes it to the gateway that accepts it (ADR-021)."
+          },
           "planId": {
             "format": "uuid",
             "type": "string"
-          },
-          "provider": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/PaymentProvider"
-              }
-            ]
           }
         },
         "required": [
           "planId",
-          "provider",
+          "method",
           "acknowledged",
           "acknowledgementVersion"
         ],
@@ -5569,10 +5570,72 @@
         ],
         "type": "object"
       },
+      "PaymentMethod": {
+        "enum": [
+          "CIB",
+          "EDAHABIA"
+        ],
+        "type": "string"
+      },
+      "PaymentMethodRouteDto": {
+        "properties": {
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentProvider"
+              }
+            ],
+            "description": "The channel new payments are recorded under (fees are set per channel).",
+            "nullable": true
+          },
+          "enabled": {
+            "description": "Offered in the app (when a gateway takes it).",
+            "type": "boolean"
+          },
+          "gateway": {
+            "description": "The configured gateway that takes it; null when none does.",
+            "example": "chargily",
+            "nullable": true,
+            "type": "string"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentMethod"
+              }
+            ]
+          }
+        },
+        "required": [
+          "method",
+          "enabled",
+          "channel"
+        ],
+        "type": "object"
+      },
+      "PaymentMethodSwitchDto": {
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "enabled"
+        ],
+        "type": "object"
+      },
       "PaymentProvider": {
         "enum": [
           "SATIM_CIB",
-          "SATIM_EDAHABIA"
+          "SATIM_EDAHABIA",
+          "CHARGILY_CIB",
+          "CHARGILY_EDAHABIA"
         ],
         "type": "string"
       },
@@ -5871,6 +5934,13 @@
           "eligibility": {
             "$ref": "#/components/schemas/EligibilityDto"
           },
+          "paymentMethods": {
+            "description": "The cards accepted right now, in display order; empty while payment is paused.",
+            "items": {
+              "$ref": "#/components/schemas/PaymentMethod"
+            },
+            "type": "array"
+          },
           "plans": {
             "description": "Empty for students (no subscription, ADR-006 Q2).",
             "items": {
@@ -5882,7 +5952,8 @@
         "required": [
           "eligibility",
           "plans",
-          "acknowledgementVersion"
+          "acknowledgementVersion",
+          "paymentMethods"
         ],
         "type": "object"
       },
@@ -6365,7 +6436,7 @@
             "type": "string"
           },
           "priceMinor": {
-            "description": "Price in centimes, taxes included (e.g. 150000 = 1 500 DZD).",
+            "description": "Price in centimes, taxes included, whole dinars (e.g. 150000 = 1 500 DZD); gateways take whole dinars.",
             "type": "number"
           },
           "reason": {
@@ -7742,10 +7813,10 @@
             "nullable": true,
             "type": "string"
           },
-          "paymentProvider": {
+          "paymentMethod": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/PaymentProvider"
+                "$ref": "#/components/schemas/PaymentMethod"
               }
             ]
           },
@@ -7774,7 +7845,7 @@
           "status",
           "amountMinor",
           "currency",
-          "paymentProvider",
+          "paymentMethod",
           "planCode",
           "createdAt"
         ],
@@ -11396,6 +11467,83 @@
         ],
         "tags": [
           "admin-overview"
+        ]
+      }
+    },
+    "/admin/v1/payment-methods": {
+      "get": {
+        "operationId": "PaymentMethodsAdminController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentMethodRouteDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-payment-methods"
+        ]
+      }
+    },
+    "/admin/v1/payment-methods/{method}": {
+      "put": {
+        "operationId": "PaymentMethodsAdminController_setEnabled",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "method",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PaymentMethod"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentMethodSwitchDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-payment-methods"
         ]
       }
     },

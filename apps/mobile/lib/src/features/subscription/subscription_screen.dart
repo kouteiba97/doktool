@@ -181,7 +181,7 @@ class _TransactionRow extends StatelessWidget {
         l10n.subscriptionTransactionLine(
           dateText(context, transaction.paymentDate ?? transaction.createdAt),
           moneyText(context, transaction.amountMinor, transaction.currency),
-          methodText(l10n, transaction.paymentProvider),
+          methodText(l10n, transaction.paymentMethod),
         ),
         style: DtType.body.copyWith(color: colors.ink),
       ),

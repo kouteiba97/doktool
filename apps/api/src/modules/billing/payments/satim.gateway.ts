@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ENV, type Env } from '../../../config/env.js';
+import type { PaymentMethod, PaymentProvider } from '../../../generated/prisma/enums.js';
 import {
   type OrderOutcome,
   PaymentGateway,
@@ -25,12 +26,18 @@ function text(value: unknown): string | null {
 }
 
 /**
- * SATIM e-payment (CIB and Edahabia) over its REST API (docs/operations/satim-setup.md):
+ * SATIM e-payment (CIB and Edahabia), contracted directly, over its REST API
+ * (docs/operations/satim-setup.md):
  * `register.do` creates the order and returns the payment page; `confirmOrder.do` answers, server
  * to server, whether it was paid. Credentials come from the merchant contract with SATIM.
  */
 @Injectable()
 export class SatimGateway extends PaymentGateway {
+  readonly id = 'satim' as const;
+  readonly channels: Readonly<Partial<Record<PaymentMethod, PaymentProvider>>> = {
+    CIB: 'SATIM_CIB',
+    EDAHABIA: 'SATIM_EDAHABIA',
+  };
   private readonly logger = new Logger(SatimGateway.name);
 
   constructor(@Inject(ENV) private readonly env: Env) {

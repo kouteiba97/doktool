@@ -23,9 +23,12 @@ export const SUBSCRIPTION_STATUS_TONES: Record<SubscriptionStatus, BadgeTone> = 
   CANCELED: 'outline',
 };
 
+/** A channel is gateway × card (ADR-021): « Chargily · CIB ». */
 export const PROVIDER_LABELS: Record<PaymentProvider, MessageKey> = {
-  SATIM_CIB: 'admin.transactions.providerCib',
-  SATIM_EDAHABIA: 'admin.transactions.providerEdahabia',
+  SATIM_CIB: 'admin.transactions.providerSatimCib',
+  SATIM_EDAHABIA: 'admin.transactions.providerSatimEdahabia',
+  CHARGILY_CIB: 'admin.transactions.providerChargilyCib',
+  CHARGILY_EDAHABIA: 'admin.transactions.providerChargilyEdahabia',
 };
 
 export const TRANSACTION_STATUS_LABELS: Record<TransactionStatus, MessageKey> = {

@@ -915,7 +915,7 @@
   "@offlineUpdate": {
     "description": "mobile.offline.update"
   },
-  "otpChannelUnavailable": "Sending by SMS is not available yet. Use an e-mail address.",
+  "otpChannelUnavailable": "Codes cannot be sent by SMS to this number for now. Use an e-mail address.",
   "@otpChannelUnavailable": {
     "description": "mobile.otp.channelUnavailable"
   },
@@ -1473,6 +1473,10 @@
   "@reviewMethod": {
     "description": "mobile.review.method"
   },
+  "reviewMethodsPaused": "Online payment is unavailable for a moment. Try again a little later.",
+  "@reviewMethodsPaused": {
+    "description": "mobile.review.methodsPaused"
+  },
   "reviewPay": "Pay",
   "@reviewPay": {
     "description": "mobile.review.pay"
@@ -1501,7 +1505,7 @@
   "@reviewPrice": {
     "description": "mobile.review.price"
   },
-  "reviewRedirectNote": "You will be taken to SATIM’s secure payment page.",
+  "reviewRedirectNote": "You will be taken to the secure payment page. DokTool never sees your card.",
   "@reviewRedirectNote": {
     "description": "mobile.review.redirectNote"
   },

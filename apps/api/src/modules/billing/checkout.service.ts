@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ENV, type Env } from '../../config/env.js';
 import { DomainError } from '../../common/errors/domain-error.js';
 import type {
+  PaymentMethod,
   PaymentProvider,
   Prisma,
   Subscription,
@@ -23,7 +24,8 @@ import {
   PENDING_CHECKOUT_MINUTES,
   RENEWAL_WINDOW_DAYS,
 } from './billing.policy.js';
-import { PaymentGateway, PaymentProviderError } from './payments/payment-provider.js';
+import { PaymentGateways } from './payments/payment-gateways.js';
+import { type OrderOutcome, PaymentProviderError } from './payments/payment-provider.js';
 import { PlansService } from './plans.service.js';
 
 export type Eligibility =
@@ -55,7 +57,7 @@ export class CheckoutService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly plans: PlansService,
-    private readonly gateway: PaymentGateway,
+    private readonly gateways: PaymentGateways,
     private readonly users: UsersService,
     private readonly verification: VerificationStatusService,
     private readonly notifications: NotificationsService,
@@ -82,7 +84,7 @@ export class CheckoutService {
 
   async start(
     userId: string,
-    input: { planId: string; provider: PaymentProvider; language: 'FR' | 'EN' },
+    input: { planId: string; method: PaymentMethod; language: 'FR' | 'EN' },
   ): Promise<CheckoutStarted> {
     const eligibility = await this.eligibility(userId);
     if (eligibility.state !== 'OPEN') {
@@ -92,6 +94,14 @@ export class CheckoutService {
     const plan = await this.plans.byId(input.planId);
     if (!plan.isPurchasable || !plan.audience.includes(facts.professionalType!)) {
       throw new DomainError('INVALID_STATE', 'This plan is not offered to this account.');
+    }
+    const gateway = await this.gateways.forMethod(input.method);
+    const channel = gateway?.channels[input.method];
+    if (!gateway || !channel) {
+      throw new DomainError(
+        'CHANNEL_UNAVAILABLE',
+        'This payment method is not available right now; try the other one or come back later.',
+      );
     }
 
     const pending = await this.prisma.transaction.findFirst({
@@ -106,7 +116,7 @@ export class CheckoutService {
       const redirectUrl = metadataOf(pending).redirectUrl;
       if (
         pending.planId === plan.id &&
-        pending.paymentProvider === input.provider &&
+        pending.paymentProvider === channel &&
         typeof redirectUrl === 'string'
       ) {
         return { transactionId: pending.transactionId, redirectUrl };
@@ -118,19 +128,21 @@ export class CheckoutService {
     }
 
     const subscription = await this.subscriptionFor(userId, plan, eligibility.renewal);
-    const transaction = await this.createTransaction(userId, subscription, plan, input.provider, {
+    const transaction = await this.createTransaction(userId, subscription, plan, channel, {
       renewal: eligibility.renewal,
       language: input.language,
     });
     try {
-      const order = await this.gateway.register({
+      const order = await gateway.register({
+        transactionId: transaction.transactionId,
         orderNumber: orderNumberOf(transaction.transactionId),
         amountMinor: plan.priceMinor,
         currency: plan.currency,
-        method: input.provider,
+        method: input.method,
         description: `DokTool Pro ${plan.code} ${transaction.transactionId}`,
         language: input.language,
         returnUrl: `${this.publicUrl()}/v1/subscription/checkout/return?transactionId=${transaction.transactionId}`,
+        webhookUrl: `${this.publicUrl()}/v1/payments/webhooks/${gateway.id}`,
       });
       await this.prisma.transaction.update({
         where: { id: transaction.id },
@@ -174,6 +186,22 @@ export class CheckoutService {
   }
 
   /**
+   * Called by a gateway's authenticated webhook: confirms that gateway's order with the gateway
+   * itself. Unknown orders (another application on the same merchant account) are ignored.
+   */
+  async settleByProviderReference(
+    gatewayId: string,
+    providerReference: string,
+  ): Promise<Transaction | null> {
+    const gateway = this.gateways.byId(gatewayId);
+    if (!gateway) return null;
+    const found = await this.prisma.transaction.findFirst({
+      where: { providerReference, paymentProvider: { in: Object.values(gateway.channels) } },
+    });
+    return found ? this.settle(found) : null;
+  }
+
+  /**
    * Asks the provider for the outcome of a pending transaction and applies it: activation or
    * extension on payment, failure with the provider's message, or cancellation when abandoned.
    */
@@ -184,9 +212,19 @@ export class CheckoutService {
       }
       return transaction;
     }
+    const gateway = this.gateways.forChannel(transaction.paymentProvider);
+    if (!gateway) {
+      // Its gateway was removed from the configuration: it can no longer be confirmed here.
+      this.logger.warn(
+        `${transaction.transactionId}: no configured gateway records ${transaction.paymentProvider}`,
+      );
+      return this.abandoned(transaction, now)
+        ? this.finish(transaction, 'CANCELED', {})
+        : transaction;
+    }
     let outcome;
     try {
-      outcome = await this.gateway.status(
+      outcome = await gateway.status(
         transaction.providerReference,
         metadataOf(transaction).language === 'EN' ? 'EN' : 'FR',
       );
@@ -205,7 +243,7 @@ export class CheckoutService {
           provider: outcome.details,
         });
       case 'PAID':
-        return this.activate(transaction, outcome.paidAt, outcome.amountMinor, outcome.details);
+        return this.activate(transaction, outcome);
     }
   }
 
@@ -335,10 +373,16 @@ export class CheckoutService {
 
   private async activate(
     transaction: Transaction,
-    paidAt: Date,
-    paidAmountMinor: number,
-    details: Record<string, string>,
+    outcome: Extract<OrderOutcome, { status: 'PAID' }>,
   ): Promise<Transaction> {
+    const { paidAt, amountMinor: paidAmountMinor, details } = outcome;
+    // A fee the gateway reports is the actual fee; a missing or implausible one is estimated later.
+    const fees =
+      outcome.feesMinor !== undefined &&
+      outcome.feesMinor >= 0 &&
+      outcome.feesMinor <= transaction.amountMinor
+        ? outcome.feesMinor
+        : null;
     const plan = await this.plans.byId(transaction.planId);
     const settled = await this.prisma.$transaction(async (tx) => {
       const { count } = await tx.transaction.updateMany({
@@ -346,6 +390,9 @@ export class CheckoutService {
         data: {
           status: 'SUCCEEDED',
           paymentDate: paidAt,
+          ...(fees === null
+            ? {}
+            : { paymentFeesMinor: fees, netAmountMinor: transaction.amountMinor - fees }),
           metadata: {
             ...metadataOf(transaction),
             provider: details,
@@ -412,7 +459,7 @@ export function metadataOf(transaction: Pick<Transaction, 'metadata'>): Prisma.J
   return value !== null && typeof value === 'object' && !Array.isArray(value) ? { ...value } : {};
 }
 
-/** SATIM order numbers are at most 10 characters: DT-2026-000123 → 26000123. */
+/** Short order number (SATIM takes at most 10 characters): DT-2026-000123 → 26000123. */
 export function orderNumberOf(transactionId: string): string {
   const [, year, number] = transactionId.split('-');
   return `${year!.slice(-2)}${number}`;

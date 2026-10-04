@@ -51,16 +51,17 @@ Phase 18's exit criterion is this checklist, signed. **Engineering** items are d
 ## 4. Operations (operator)
 
 - [ ] PostgreSQL 18 (as in CI) in production with daily backups; run `npm run prisma:migrate:deploy -w @doktool/api`.
-- [ ] API environment (`apps/api/.env.example` lists every variable): `DATABASE_URL`, `NODE_ENV=production`, `TRUST_PROXY_HOPS`, `USER_JWT_SECRET`, `OTP_HMAC_SECRET`, `ANALYTICS_SUBJECT_SECRET` (set once — changing it splits analytics history), `ADMIN_TOTP_ENCRYPTION_KEY`, `ADMIN_WEB_ORIGIN`, `TERMS_VERSION`, `TERMS_URL`, `PRIVACY_URL`, `SMTP_URL`, `MAIL_FROM`, `STORAGE_DRIVER=r2` and the `R2_*` keys, `PUBLIC_API_URL`, `JOBS_ENABLED`.
+- [ ] API environment (`apps/api/.env.example` lists every variable): `DATABASE_URL`, `NODE_ENV=production`, `TRUST_PROXY_HOPS`, `USER_JWT_SECRET`, `OTP_HMAC_SECRET`, `ANALYTICS_SUBJECT_SECRET` (set once — changing it splits analytics history), `ADMIN_TOTP_ENCRYPTION_KEY`, `ADMIN_WEB_ORIGIN`, `TERMS_VERSION`, `TERMS_URL`, `PRIVACY_URL`, `SMTP_URL`, `MAIL_FROM`, `STORAGE_DRIVER=r2` and the `R2_*` keys, `PAYMENT_GATEWAYS` and `CHARGILY_*`, `PUBLIC_API_URL`, `JOBS_ENABLED`.
 - [ ] Admin Web environment: `DOKTOOL_API_ORIGIN`, `DOKTOOL_STORAGE_ORIGINS` (the R2 endpoints), `NEXT_PUBLIC_DOKTOOL_ENVIRONMENT=production`.
 - [ ] Cloudflare R2: both buckets private, CORS for Admin Web — [`docs/operations/r2-setup.md`](operations/r2-setup.md).
 - [ ] Cloudflare (or equivalent) in front of the API and Admin Web: TLS, WAF, edge rate limiting.
-- [ ] SMTP provider for OTP e-mails; SMS provider when contracted (SMS stays off until then).
+- [ ] SMTP provider for OTP e-mails.
+- [ ] SMS provider(s) ([`docs/operations/sms-setup.md`](operations/sms-setup.md), ADR-022): `SMS_GATEWAYS` (Infobip first, Twilio as backup recommended), « DokTool » registered as sender for Algeria, `SMS_DAILY_LIMIT` set to the budget; the guide's checks pass (code by SMS, reset, fallback).
 - [ ] First Super Admin: `npm run admin:create -w @doktool/api`, then TOTP enrolment at first sign-in; create the other admins from Permissions with presets that respect separation of duties.
 - [ ] Content: reference PDFs (ordonnances, certificates, `demoSample` flags), calculator definitions authored and reviewed by a second admin, search synonyms.
 - [ ] Reference lists (specialties, wilayas, institutions) in Settings.
 - [ ] Plan prices (Pro Monthly, Pro Annual) and payment fee rates in Finance.
-- [ ] **Payment provider**: being changed by the Product Owner; the integration and its security review are completed before subscriptions open.
+- [ ] **Payments — Chargily Pay** ([`docs/operations/chargily-setup.md`](operations/chargily-setup.md), ADR-021): account verified by Chargily, `PAYMENT_GATEWAYS=chargily`, `CHARGILY_MODE=live`, live secret key; the test-mode checks of the guide pass; fee rates entered for « Chargily · CIB » and « Chargily · Edahabia ».
 
 ## Sign-off
 

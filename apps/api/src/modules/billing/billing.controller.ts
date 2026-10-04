@@ -5,7 +5,6 @@ import {
   Header,
   HttpCode,
   HttpStatus,
-  Inject,
   NotFoundException,
   Param,
   Post,
@@ -22,7 +21,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { ENV, type Env } from '../../config/env.js';
 import { DomainError } from '../../common/errors/domain-error.js';
 import { ErrorResponse } from '../../common/errors/error-response.js';
 import { USER_API_PREFIX } from '../../http/api-prefix.js';
@@ -48,7 +46,7 @@ import {
 } from './billing.dto.js';
 import { CheckoutService } from './checkout.service.js';
 import { FakeGateway } from './payments/fake.gateway.js';
-import { PaymentGateway } from './payments/payment-provider.js';
+import { PaymentGateways } from './payments/payment-gateways.js';
 import { PlansService } from './plans.service.js';
 
 const errors = ApiResponse({
@@ -65,8 +63,7 @@ export class BillingController {
     private readonly checkout: CheckoutService,
     private readonly plans: PlansService,
     private readonly users: UsersService,
-    private readonly gateway: PaymentGateway,
-    @Inject(ENV) private readonly env: Env,
+    private readonly gateways: PaymentGateways,
   ) {}
 
   @Get()
@@ -102,6 +99,7 @@ export class BillingController {
         eligibility: { state: 'ACCOUNT_REQUIRED' },
         plans: (await this.plans.purchasable(viewer.demoContext)).map((plan) => PlanDto.from(plan)),
         acknowledgementVersion: ACKNOWLEDGEMENT_VERSION,
+        paymentMethods: await this.gateways.availableMethods(),
       };
     }
     const eligibility = await this.checkout.eligibility(viewer.userId);
@@ -111,6 +109,7 @@ export class BillingController {
       eligibility: EligibilityDto.from(eligibility),
       plans: plans.map((plan) => PlanDto.from(plan)),
       acknowledgementVersion: ACKNOWLEDGEMENT_VERSION,
+      paymentMethods: await this.gateways.availableMethods(),
     };
   }
 
@@ -132,7 +131,7 @@ export class BillingController {
     }
     return this.checkout.start(user.userId, {
       planId: body.planId,
-      provider: body.provider,
+      method: body.method,
       language: body.language ?? 'FR',
     });
   }
@@ -217,10 +216,9 @@ export class BillingController {
   }
 
   private fake(): FakeGateway {
-    if (this.env.PAYMENT_PROVIDER !== 'fake' || !(this.gateway instanceof FakeGateway)) {
-      throw new NotFoundException();
-    }
-    return this.gateway;
+    const fake = this.gateways.byId('fake');
+    if (!(fake instanceof FakeGateway)) throw new NotFoundException();
+    return fake;
   }
 }
 

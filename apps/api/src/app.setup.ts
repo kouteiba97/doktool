@@ -5,6 +5,7 @@ import { type Express, type NextFunction, type Request, type Response, raw } fro
 import helmet from 'helmet';
 import { ErrorFilter } from './common/errors/error.filter.js';
 import type { Env } from './config/env.js';
+import { PAYMENT_WEBHOOKS_PATH } from './modules/billing/index.js';
 import { LOCAL_OBJECTS_PATH } from './modules/storage/index.js';
 import { buildOpenApiDocument } from './openapi/document.js';
 
@@ -17,6 +18,8 @@ export function configureApp(app: INestApplication, env: Env): void {
 
   app.use(helmet());
   app.use(cookieParser());
+  // Gateway webhooks are signed over their exact bytes (ADR-021): keep them raw, and small.
+  app.use(PAYMENT_WEBHOOKS_PATH, raw({ type: () => true, limit: '64kb' }));
   if (env.STORAGE_DRIVER === 'local') {
     // Local signed uploads carry raw file bytes (ADR-011); R2 uploads never reach the API.
     app.use(LOCAL_OBJECTS_PATH, raw({ type: () => true, limit: '21mb' }));

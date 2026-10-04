@@ -8,7 +8,7 @@ import '../../core/api/api_error.dart';
 import '../../core/api/generated/models/checkout_dto.dart';
 import '../../core/api/generated/models/checkout_dto_language.dart';
 import '../../core/api/generated/models/checkout_eligibility.dart';
-import '../../core/api/generated/models/payment_provider.dart';
+import '../../core/api/generated/models/payment_method.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../router/app_router.dart';
 import '../../theme/doktool_tokens.dart';
@@ -34,12 +34,13 @@ class ReviewScreen extends ConsumerStatefulWidget {
 }
 
 class _ReviewScreenState extends ConsumerState<ReviewScreen> {
-  PaymentProvider _method = PaymentProvider.satimCib;
+  /// The card chosen; null until the person picks one of those the API accepts right now.
+  PaymentMethod? _choice;
   bool _acknowledged = false;
   bool _paying = false;
   ApiError? _error;
 
-  Future<void> _pay(String acknowledgementVersion) async {
+  Future<void> _pay(String acknowledgementVersion, PaymentMethod method) async {
     setState(() {
       _paying = true;
       _error = null;
@@ -52,7 +53,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
           .billingControllerStart(
             body: CheckoutDto(
               planId: widget.planId,
-              provider: _method,
+              method: method,
               acknowledged: true,
               acknowledgementVersion: acknowledgementVersion,
               language: english ? CheckoutDtoLanguage.en : CheckoutDtoLanguage.fr,
@@ -82,6 +83,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     final start = renewal && currentEnd != null && currentEnd.isAfter(DateTime.now()) ? currentEnd : DateTime.now();
     final end = start.add(Duration(days: plan.durationDays.toInt()));
     final open = plans.eligibility.state == CheckoutEligibility.open;
+    // Only the cards the API accepts now (ADR-021); a card unknown to this app version is skipped.
+    final methods = plans.paymentMethods.where((method) => method != PaymentMethod.$unknown).toList();
+    final method = methods.contains(_choice) ? _choice : methods.firstOrNull;
 
     Widget row(String label, String value) => Padding(
       padding: const EdgeInsets.symmetric(vertical: DtSpace.s2),
@@ -103,10 +107,13 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       title: l10n.reviewTitle,
       actions: [
         if (_error != null) DtAlert(severity: DtAlertSeverity.critical, body: _message(context, _error!)),
+        if (methods.isEmpty) DtAlert(severity: DtAlertSeverity.info, body: l10n.reviewMethodsPaused),
         DtButton(
           label: l10n.reviewPay,
           loading: _paying,
-          onPressed: open && _acknowledged ? () => _pay(plans.acknowledgementVersion) : null,
+          onPressed: open && _acknowledged && method != null
+              ? () => _pay(plans.acknowledgementVersion, method)
+              : null,
         ),
         Text(
           l10n.reviewRedirectNote,
@@ -121,17 +128,19 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         row(l10n.reviewAccessLevel, l10n.plansAccess),
         row(l10n.reviewRenewal, l10n.reviewRenewalManual),
         const SizedBox(height: DtSpace.s4),
-        Text(l10n.reviewMethod, style: DtType.label.copyWith(color: colors.inkSecondary)),
-        const SizedBox(height: DtSpace.s1),
-        DtSegmentedControl<PaymentProvider>(
-          semanticLabel: l10n.reviewMethod,
-          selected: _method,
-          onChanged: (method) => setState(() => _method = method),
-          segments: [
-            DtSegment(value: PaymentProvider.satimCib, label: l10n.reviewCib),
-            DtSegment(value: PaymentProvider.satimEdahabia, label: l10n.reviewEdahabia),
-          ],
-        ),
+        if (method != null) ...[
+          Text(l10n.reviewMethod, style: DtType.label.copyWith(color: colors.inkSecondary)),
+          const SizedBox(height: DtSpace.s1),
+          if (methods.length == 1)
+            Text(methodText(l10n, method), style: DtType.body.copyWith(color: colors.ink))
+          else
+            DtSegmentedControl<PaymentMethod>(
+              semanticLabel: l10n.reviewMethod,
+              selected: method,
+              onChanged: (choice) => setState(() => _choice = choice),
+              segments: [for (final option in methods) DtSegment(value: option, label: methodText(l10n, option))],
+            ),
+        ],
         const SizedBox(height: DtSpace.s6),
         MergeSemantics(
           child: CheckboxListTile(
@@ -151,7 +160,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     final l10n = AppLocalizations.of(context);
     return switch (error.code) {
       'INVALID_STATE' => l10n.paymentInProgress,
-      'CHANNEL_UNAVAILABLE' => l10n.paymentFailed,
+      'CHANNEL_UNAVAILABLE' => l10n.reviewMethodsPaused,
       _ => commonErrorText(context, error),
     };
   }

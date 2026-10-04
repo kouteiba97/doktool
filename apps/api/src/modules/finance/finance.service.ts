@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PaymentProvider as PaymentProviders } from '../../generated/prisma/enums.js';
 import { DomainError } from '../../common/errors/domain-error.js';
 import type { ClientInfo } from '../../common/http/client-info.js';
 import {
@@ -33,7 +34,8 @@ import {
   previousPeriod,
 } from './finance.policy.js';
 
-const PROVIDERS: PaymentProvider[] = ['SATIM_CIB', 'SATIM_EDAHABIA'];
+/** Every payment channel (ADR-021): a fee rate is set per gateway × card. */
+const PROVIDERS = Object.values(PaymentProviders);
 /** A checkout pending longer than this is an incident on the overview. */
 const STALE_PENDING_MINUTES = 60;
 

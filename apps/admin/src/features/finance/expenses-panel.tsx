@@ -20,6 +20,7 @@ import { ReasonDialog } from '@/ui/reason-dialog';
 import { useToast } from '@/ui/toast';
 import { parsePrice } from '../subscriptions/plan-form';
 import { type PaymentProvider, PROVIDER_LABELS } from '../subscriptions/labels';
+import { PaymentMethodsCard } from './payment-methods-card';
 
 type Expense = Schemas['ExpenseDto'];
 type Category = Schemas['ExpenseCategory'];
@@ -53,7 +54,10 @@ export function parseSettlementLines(text: string): {
   return { items, invalid };
 }
 
-/** « Dépenses »: operating expenses, provider fee rates and fee settlement (section 15). */
+/**
+ * « Dépenses »: operating expenses, payment methods, provider fee rates and fee settlement
+ * (section 15, ADR-021).
+ */
 export function ExpensesPanel({ period }: { period: Period }) {
   const { t, locale } = useI18n();
   const errorText = useErrorText();
@@ -171,6 +175,8 @@ export function ExpensesPanel({ period }: { period: Period }) {
           />
         )}
       </section>
+
+      <PaymentMethodsCard />
 
       <section className="dt-card">
         <div className="flex items-center gap-2">

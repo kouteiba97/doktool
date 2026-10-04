@@ -1,5 +1,29 @@
 import { z } from 'zod';
 
+/** The payment gateways the API can talk to (ADR-021). `fake` exists only outside production. */
+export const GATEWAY_IDS = ['chargily', 'satim', 'fake'] as const;
+
+/** The SMS providers the API can send through (ADR-022). */
+export const SMS_GATEWAY_IDS = ['twilio', 'infobip'] as const;
+
+/** A comma-separated list of ids, trimmed and lower-cased, without repeats. */
+const idList = <const T extends readonly [string, ...string[]]>(
+  ids: T,
+  label: string,
+  fallback = '',
+) =>
+  z
+    .string()
+    .default(fallback)
+    .transform((value) =>
+      value
+        .split(',')
+        .map((part) => part.trim().toLowerCase())
+        .filter(Boolean),
+    )
+    .pipe(z.array(z.enum(ids)))
+    .refine((list) => new Set(list).size === list.length, `a ${label} is listed twice`);
+
 const booleanFlag = z
   .enum(['true', 'false'])
   .default('true')
@@ -56,6 +80,50 @@ const envSchema = z
       .optional(),
     MAIL_FROM: z.string().trim().min(3).optional(),
 
+    /**
+     * SMS providers by priority (ADR-022, docs/operations/sms-setup.md), e.g. `infobip,twilio`: a
+     * provider that fails for a temporary reason hands over to the next. Empty: no SMS (sign-up
+     * and codes by phone are refused in production; in development codes go to the log).
+     */
+    SMS_GATEWAYS: idList(SMS_GATEWAY_IDS, 'SMS provider'),
+    /** Calling codes texts may go to (SMS pumping protection), e.g. `213` or `213,216`. */
+    SMS_ALLOWED_COUNTRY_CODES: z
+      .string()
+      .default('213')
+      .transform((value) =>
+        value
+          .split(',')
+          .map((part) => part.trim().replace(/^\+/, ''))
+          .filter(Boolean),
+      )
+      .pipe(z.array(z.string().regex(/^[1-9]\d{0,2}$/, 'a calling code is 1–3 digits')).min(1)),
+    /** Texts the whole server may send in 24 hours: a cost ceiling if something goes wrong. */
+    SMS_DAILY_LIMIT: z.coerce.number().int().min(1).max(1_000_000).default(2000),
+    TWILIO_ACCOUNT_SID: z
+      .string()
+      .trim()
+      .regex(/^AC[0-9a-f]{32}$/i, 'TWILIO_ACCOUNT_SID starts with AC')
+      .optional(),
+    TWILIO_AUTH_TOKEN: z.string().trim().min(1).optional(),
+    /** Recommended: a Messaging Service picks the right sender for each country. */
+    TWILIO_MESSAGING_SERVICE_SID: z
+      .string()
+      .trim()
+      .regex(/^MG[0-9a-f]{32}$/i, 'TWILIO_MESSAGING_SERVICE_SID starts with MG')
+      .optional(),
+    /** Otherwise the sender: a Twilio number (E.164) or a registered alphanumeric sender id. */
+    TWILIO_FROM: z.string().trim().min(3).max(16).optional(),
+    /** Your personal Infobip API base, e.g. https://xxxxx.api.infobip.com */
+    INFOBIP_BASE_URL: z
+      .string()
+      .url()
+      .refine((value) => value.startsWith('https://'), 'INFOBIP_BASE_URL must use https')
+      .transform((value) => value.replace(/\/+$/, ''))
+      .optional(),
+    INFOBIP_API_KEY: z.string().trim().min(1).optional(),
+    /** Registered sender: alphanumeric (3–11 characters, e.g. DokTool) or a number. */
+    INFOBIP_SENDER: z.string().trim().min(3).max(16).optional(),
+
     /** Object storage (ADR-011): Cloudflare R2, or local files for development and tests. */
     STORAGE_DRIVER: z.enum(['local', 'r2']).default('local'),
     LOCAL_STORAGE_DIR: z.string().trim().min(1).default('.storage'),
@@ -75,10 +143,18 @@ const envSchema = z
     R2_PRIVATE_SECRET_ACCESS_KEY: z.string().trim().min(1).optional(),
 
     /**
-     * Card payments (ADR-015): SATIM (CIB and Edahabia) in production; `fake` simulates the payment
-     * page for development and tests and is refused in production.
+     * Card payment gateways by priority (ADR-021), e.g. `chargily` or `chargily,satim`: each method
+     * (CIB, Edahabia) goes to the first gateway that accepts it. `fake` simulates the payment page
+     * for development and tests and is refused in production.
      */
-    PAYMENT_PROVIDER: z.enum(['satim', 'fake']).default('fake'),
+    PAYMENT_GATEWAYS: idList(GATEWAY_IDS, 'gateway', 'fake').refine(
+      (ids) => ids.length > 0,
+      'name at least one payment gateway',
+    ),
+    /** Chargily Pay mode; its secret key must be of the same mode (test_sk_… / live_sk_…). */
+    CHARGILY_MODE: z.enum(['test', 'live']).default('test'),
+    /** Chargily Pay API secret key (dashboard › Developers corner); also signs its webhooks. */
+    CHARGILY_SECRET_KEY: z.string().trim().min(1).optional(),
     /** SATIM e-payment REST base, e.g. https://test2.satim.dz/payment/rest (test) — from SATIM. */
     SATIM_BASE_URL: z
       .string()
@@ -119,14 +195,44 @@ const envSchema = z
         }
       }
     }
-    if (env.NODE_ENV === 'production' && env.PAYMENT_PROVIDER !== 'satim') {
+    if (env.NODE_ENV === 'production' && env.PAYMENT_GATEWAYS.includes('fake')) {
       context.addIssue({
         code: 'custom',
-        path: ['PAYMENT_PROVIDER'],
-        message: 'production takes real payments (PAYMENT_PROVIDER=satim)',
+        path: ['PAYMENT_GATEWAYS'],
+        message: 'production takes real payments (no fake gateway)',
       });
     }
-    if (env.PAYMENT_PROVIDER === 'satim') {
+    if (env.PAYMENT_GATEWAYS.some((id) => id !== 'fake') && !env.PUBLIC_API_URL) {
+      context.addIssue({
+        code: 'custom',
+        path: ['PUBLIC_API_URL'],
+        message: 'PUBLIC_API_URL is required with a real payment gateway (return and webhook URLs)',
+      });
+    }
+    if (env.PAYMENT_GATEWAYS.includes('chargily')) {
+      const key = env.CHARGILY_SECRET_KEY;
+      if (!key) {
+        context.addIssue({
+          code: 'custom',
+          path: ['CHARGILY_SECRET_KEY'],
+          message: 'CHARGILY_SECRET_KEY is required with the chargily gateway',
+        });
+      } else if (!key.startsWith(`${env.CHARGILY_MODE}_sk_`)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['CHARGILY_SECRET_KEY'],
+          message: `CHARGILY_SECRET_KEY must be a ${env.CHARGILY_MODE} secret key (${env.CHARGILY_MODE}_sk_…)`,
+        });
+      }
+      if (env.NODE_ENV === 'production' && env.CHARGILY_MODE !== 'live') {
+        context.addIssue({
+          code: 'custom',
+          path: ['CHARGILY_MODE'],
+          message: 'production takes real payments (CHARGILY_MODE=live)',
+        });
+      }
+    }
+    if (env.PAYMENT_GATEWAYS.includes('satim')) {
       for (const key of [
         'SATIM_BASE_URL',
         'SATIM_USERNAME',
@@ -137,16 +243,9 @@ const envSchema = z
           context.addIssue({
             code: 'custom',
             path: [key],
-            message: `${key} is required with PAYMENT_PROVIDER=satim`,
+            message: `${key} is required with the satim gateway`,
           });
         }
-      }
-      if (!env.PUBLIC_API_URL) {
-        context.addIssue({
-          code: 'custom',
-          path: ['PUBLIC_API_URL'],
-          message: 'PUBLIC_API_URL is required with PAYMENT_PROVIDER=satim (payment return URL)',
-        });
       }
     }
     if (env.NODE_ENV === 'production' && (!env.TERMS_URL || !env.PRIVACY_URL)) {
@@ -155,6 +254,35 @@ const envSchema = z
         path: ['TERMS_URL'],
         message: 'TERMS_URL and PRIVACY_URL are required in production (linked at sign-up)',
       });
+    }
+    if (env.SMS_GATEWAYS.includes('twilio')) {
+      for (const key of ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN'] as const) {
+        if (!env[key]) {
+          context.addIssue({
+            code: 'custom',
+            path: [key],
+            message: `${key} is required with the twilio SMS provider`,
+          });
+        }
+      }
+      if (!env.TWILIO_MESSAGING_SERVICE_SID && !env.TWILIO_FROM) {
+        context.addIssue({
+          code: 'custom',
+          path: ['TWILIO_FROM'],
+          message: 'Twilio needs TWILIO_MESSAGING_SERVICE_SID or TWILIO_FROM (the sender)',
+        });
+      }
+    }
+    if (env.SMS_GATEWAYS.includes('infobip')) {
+      for (const key of ['INFOBIP_BASE_URL', 'INFOBIP_API_KEY', 'INFOBIP_SENDER'] as const) {
+        if (!env[key]) {
+          context.addIssue({
+            code: 'custom',
+            path: [key],
+            message: `${key} is required with the infobip SMS provider`,
+          });
+        }
+      }
     }
     if (env.NODE_ENV === 'production' && (!env.SMTP_URL || !env.MAIL_FROM)) {
       context.addIssue({

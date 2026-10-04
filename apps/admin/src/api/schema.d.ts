@@ -672,6 +672,38 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/admin/v1/payment-methods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PaymentMethodsAdminController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/v1/payment-methods/{method}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["PaymentMethodsAdminController_setEnabled"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/v1/plans": {
         parameters: {
             query?: never;
@@ -3037,9 +3069,10 @@ export type components = {
              * @enum {string}
              */
             language?: "FR" | "EN";
+            /** @description The card chosen; the API routes it to the gateway that accepts it (ADR-021). */
+            method: components["schemas"]["PaymentMethod"];
             /** Format: uuid */
             planId: string;
-            provider: components["schemas"]["PaymentProvider"];
         };
         /** @enum {string} */
         CheckoutEligibility: "OPEN" | "STUDENT_FREE" | "ROLE_REQUIRED" | "VERIFICATION_REQUIRED" | "VERIFICATION_PENDING" | "ACCOUNT_SUSPENDED" | "ACTIVE" | "ACCOUNT_REQUIRED";
@@ -3769,7 +3802,25 @@ export type components = {
             language: components["schemas"]["Language"];
         };
         /** @enum {string} */
-        PaymentProvider: "SATIM_CIB" | "SATIM_EDAHABIA";
+        PaymentMethod: "CIB" | "EDAHABIA";
+        PaymentMethodRouteDto: {
+            /** @description The channel new payments are recorded under (fees are set per channel). */
+            channel: components["schemas"]["PaymentProvider"] | null;
+            /** @description Offered in the app (when a gateway takes it). */
+            enabled: boolean;
+            /**
+             * @description The configured gateway that takes it; null when none does.
+             * @example chargily
+             */
+            gateway?: string | null;
+            method: components["schemas"]["PaymentMethod"];
+        };
+        PaymentMethodSwitchDto: {
+            enabled: boolean;
+            reason: string;
+        };
+        /** @enum {string} */
+        PaymentProvider: "SATIM_CIB" | "SATIM_EDAHABIA" | "CHARGILY_CIB" | "CHARGILY_EDAHABIA";
         PeriodDto: {
             /** Format: date-time */
             from: string;
@@ -3857,6 +3908,8 @@ export type components = {
             /** @description Version of the acknowledgement the review screen shows (« non remboursable »). */
             acknowledgementVersion: string;
             eligibility: components["schemas"]["EligibilityDto"];
+            /** @description The cards accepted right now, in display order; empty while payment is paused. */
+            paymentMethods: components["schemas"]["PaymentMethod"][];
             /** @description Empty for students (no subscription, ADR-006 Q2). */
             plans: components["schemas"]["PlanDto"][];
         };
@@ -3998,7 +4051,7 @@ export type components = {
             isPurchasable: boolean;
             nameEn: string;
             nameFr: string;
-            /** @description Price in centimes, taxes included (e.g. 150000 = 1 500 DZD). */
+            /** @description Price in centimes, taxes included, whole dinars (e.g. 150000 = 1 500 DZD); gateways take whole dinars. */
             priceMinor: number;
             reason: string;
         };
@@ -4355,7 +4408,7 @@ export type components = {
             currency: string;
             /** Format: date-time */
             paymentDate?: string | null;
-            paymentProvider: components["schemas"]["PaymentProvider"];
+            paymentMethod: components["schemas"]["PaymentMethod"];
             planCode: string;
             /** @description FAILED only: the provider’s own message, shown as is. */
             providerMessage?: string | null;
@@ -6164,6 +6217,57 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["OverviewDto"];
                 };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PaymentMethodsAdminController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentMethodRouteDto"][];
+                };
+            };
+        };
+    };
+    PaymentMethodsAdminController_setEnabled: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                method: components["schemas"]["PaymentMethod"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentMethodSwitchDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error envelope */
             default: {
