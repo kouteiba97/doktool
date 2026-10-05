@@ -544,13 +544,34 @@ async function seed(prisma: PrismaService, storage: StorageService): Promise<voi
           ? new Date(Date.now() - between(1, 30) * 3_600_000)
           : new Date(joined.getTime() + between(1, 20) * 3_600_000);
     const decided = status === 'VERIFIED' || status === 'REJECTED';
+    // Identity first, as in the app: accepted for everyone who went through verification.
+    if (submittedAt) {
+      await prisma.verificationCase.create({
+        data: {
+          userId: user.id,
+          type: 'IDENTITY',
+          status: 'VERIFIED',
+          submittedAt,
+          decidedAt: new Date(
+            Math.min(submittedAt.getTime() + between(1, 6) * 3_600_000, Date.now() - 600_000),
+          ),
+          reviewerId: team.VERIFICATION_REVIEWER,
+          declaredDetails: { documentKind: 'NATIONAL_ID' },
+          createdAt: joined,
+        },
+      });
+    }
     const verification = await prisma.verificationCase.create({
       data: {
         userId: user.id,
         type: caseType,
         status,
         submittedAt,
-        decidedAt: decided ? new Date(submittedAt!.getTime() + between(2, 22) * 3_600_000) : null,
+        decidedAt: decided
+          ? new Date(
+              Math.min(submittedAt!.getTime() + between(2, 22) * 3_600_000, Date.now() - 300_000),
+            )
+          : null,
         reviewerId: decided ? team.VERIFICATION_REVIEWER : null,
         rejectionReasonCode: status === 'REJECTED' ? pick(['ILLEGIBLE', 'NAME_MISMATCH']) : null,
         rejectionNote:
