@@ -24,7 +24,8 @@
     "openapi:generate": "npm run build && node dist/scripts/generate-openapi.js",
     "openapi:check": "npm run build && node dist/scripts/generate-openapi.js --check",
     "postinstall": "prisma generate",
-    "admin:create": "npm run build && node --env-file-if-exists=.env dist/scripts/create-admin.js"
+    "admin:create": "npm run build && node --env-file-if-exists=.env dist/scripts/create-admin.js",
+    "demo:seed": "npm run build && node --env-file-if-exists=.env dist/scripts/seed-demo.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1140.0",

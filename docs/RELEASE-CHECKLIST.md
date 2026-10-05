@@ -60,6 +60,7 @@ Phase 18's exit criterion is this checklist, signed. **Engineering** items are d
 - [ ] Cloudflare (or equivalent) in front of the API and Admin Web: TLS, WAF, edge rate limiting.
 - [ ] SMTP provider for OTP e-mails.
 - [ ] SMS provider(s) ([`docs/operations/sms-setup.md`](operations/sms-setup.md), ADR-022): `SMS_GATEWAYS` (Infobip first, Twilio as backup recommended), « DokTool » registered as sender for Algeria, `SMS_DAILY_LIMIT` set to the budget; the guide's checks pass (code by SMS, reset, fallback).
+- [ ] Store screenshots and demos from a separate `…_demo` database filled by `npm run demo:seed -w @doktool/api` (docs/operations/demo-data.md), plus the doctor's published clinical content — never from the test database.
 - [ ] First Super Admin: `npm run admin:create -w @doktool/api`, then TOTP enrolment at first sign-in; create the other admins from Permissions with presets that respect separation of duties.
 - [ ] Content: reference PDFs (ordonnances, certificates, `demoSample` flags), calculator definitions authored and reviewed by a second admin, search synonyms.
 - [ ] Reference lists (specialties, wilayas, institutions) in Settings.

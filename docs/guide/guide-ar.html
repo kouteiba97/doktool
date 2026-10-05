@@ -508,6 +508,7 @@
   <h3>الدخول</h3>
   <ol>
     <li>أول مدير عام يُنشأ من سطر الأوامر على الخادم:<br><span class="code">npm run admin:create -w @doktool/api -- --email ... --name "..."</span></li>
+    <li>للعروض ولقطات المتجر: قاعدة بيانات منفصلة ينتهي اسمها بـ <span class="code">_demo</span> تُملأ ببيانات خيالية واقعية (فريق، مستخدمون، طابور تحقق، مدفوعات، إحصاءات، ملفات PDF موسومة «Document de démonstration»):<br><span class="code">npm run demo:seed -w @doktool/api</span><br>لا تحتوي أي محتوى سريري: الحاسبات وملفات الحمل يكتبها الطبيب في لوحة الإدارة. التفاصيل في <span class="code">docs/operations/demo-data.md</span>.</li>
     <li>الدخول بالبريد وكلمة المرور، ثم <b>رمز TOTP إلزامي</b> من تطبيق مصادقة (Google Authenticator، Microsoft Authenticator…). عند أول دخول يُعرض رمز QR للربط.</li>
     <li>الجلسة في «كعكة» آمنة لا تقرأها الصفحات، مع حماية من الطلبات المزوّرة.</li>
   </ol>
