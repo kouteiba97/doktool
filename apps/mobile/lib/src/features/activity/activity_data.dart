@@ -1,5 +1,6 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/api/generated/models/activity_dto.dart';
@@ -8,6 +9,7 @@ import '../../core/api/generated/models/calculator_summary_dto.dart';
 import '../../core/api/generated/models/item_access_dto.dart';
 import '../../core/api/generated/models/reference_document_type.dart';
 import '../../core/api/generated/models/reference_item_dto.dart';
+import '../../core/api/generated/models/substance_item_dto.dart';
 import '../../core/auth/session.dart';
 import '../../core/auth/session_controller.dart';
 import '../library/library_data.dart';
@@ -22,6 +24,7 @@ class ContentRef {
     required this.access,
     this.slug,
     this.referenceType,
+    this.isSubstance = false,
   });
 
   final String id;
@@ -33,7 +36,21 @@ class ContentRef {
   final String? slug;
   final ReferenceDocumentType? referenceType;
 
+  /// A « Grossesse · Allaitement » profile (ADR-019).
+  final bool isSubstance;
+
   bool get isCalculator => slug != null;
+
+  IconData get icon => isSubstance
+      ? LucideIcons.baby
+      : isCalculator
+      ? LucideIcons.calculator
+      : referenceType == ReferenceDocumentType.certificate
+      ? LucideIcons.fileBadge
+      : LucideIcons.fileText;
+
+  /// Calculators and profiles « Ouvrir », models « Voir le modèle ».
+  bool get opens => isCalculator || isSubstance;
 }
 
 /// Every published model and calculator the viewer sees, by id (from the cached library lists).
@@ -41,6 +58,8 @@ final contentIndexProvider = FutureProvider<Map<String, ContentRef>>((ref) async
   final ordonnances = await ref.watch(referenceListProvider(ReferenceDocumentType.ordonnance).future);
   final certificates = await ref.watch(referenceListProvider(ReferenceDocumentType.certificate).future);
   final calculators = await ref.watch(calculatorListProvider.future);
+  // Profiles are optional here: a failure to list them never hides models and calculators.
+  final substances = await ref.watch(substanceListProvider.future).catchError((Object _) => <SubstanceItemDto>[]);
   ContentRef reference(ReferenceItemDto item) => ContentRef(
     id: item.id,
     titleFr: item.titleFr,
@@ -54,6 +73,14 @@ final contentIndexProvider = FutureProvider<Map<String, ContentRef>>((ref) async
     for (final item in ordonnances) item.id: reference(item),
     for (final item in certificates) item.id: reference(item),
     for (final item in calculators) item.id: calculator(item),
+    for (final item in substances)
+      item.id: ContentRef(
+        id: item.id,
+        titleFr: item.nameFr,
+        titleEn: item.nameEn,
+        access: item.access,
+        isSubstance: true,
+      ),
   };
 });
 

@@ -61,8 +61,15 @@ final calculatorListProvider = FutureProvider<List<CalculatorSummaryDto>>((ref) 
 });
 
 /// « Grossesse · Allaitement »: substances with a published profile, each with the server's access
-/// decision. Profiles are read online (ADR-019).
+/// decision; without a connection, the profiles kept for offline reading (ADR-019).
 final substanceListProvider = FutureProvider<List<SubstanceItemDto>>((ref) async {
   ref.watch(sessionControllerProvider);
-  return ref.watch(apiProvider).pregnancy.pregnancyControllerList();
+  try {
+    return await ref.watch(apiProvider).pregnancy.pregnancyControllerList();
+  } catch (error) {
+    if (!ApiError.from(error).isNetwork) rethrow;
+    final offline = await ref.read(offlineStoreProvider).substanceItems();
+    if (offline.isEmpty) rethrow;
+    return offline;
+  }
 });

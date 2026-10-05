@@ -58,6 +58,22 @@ class OfflineCalculators extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Pregnancy · lactation profiles kept for offline reading (ADR-019): the API's opened profile as
+/// JSON, replaced when a newer version is published.
+class OfflineSubstances extends Table {
+  TextColumn get id => text()();
+  TextColumn get nameFr => text()();
+  TextColumn get nameEn => text().nullable()();
+  IntColumn get version => integer()();
+
+  /// SubstanceProfileDto as JSON.
+  TextColumn get profile => text()();
+  DateTimeColumn get savedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 /// Analytics events waiting to be sent (section 16): at most 5 000, kept with their original time,
 /// and only for the session that recorded them. Codes, counts and flags only — never free text.
 @DataClassName('QueuedAnalyticsEvent')
@@ -77,7 +93,7 @@ class AnalyticsQueue extends Table {
 }
 
 /// The app's SQLite store (drift).
-@DriftDatabase(tables: [LocalSettings, OfflineDocuments, OfflineCalculators, AnalyticsQueue])
+@DriftDatabase(tables: [LocalSettings, OfflineDocuments, OfflineCalculators, OfflineSubstances, AnalyticsQueue])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
@@ -85,7 +101,7 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.onDevice() => AppDatabase(driftDatabase(name: 'doktool'));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -95,6 +111,7 @@ class AppDatabase extends _$AppDatabase {
         await migrator.createTable(offlineCalculators);
       }
       if (from < 3) await migrator.createTable(analyticsQueue);
+      if (from < 4) await migrator.createTable(offlineSubstances);
     },
   );
 

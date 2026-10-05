@@ -12,6 +12,7 @@ import '../../core/api/generated/models/access_state.dart';
 import '../../core/api/generated/models/favorite_target_type.dart';
 import '../../core/api/generated/models/feature_key.dart';
 import '../../core/api/generated/models/manifest_calculator_dto.dart';
+import '../../core/api/generated/models/substance_profile_dto.dart';
 import '../../core/api/generated/models/manifest_reference_dto.dart';
 import '../../core/auth/session.dart';
 import '../../core/auth/session_controller.dart';
@@ -41,6 +42,7 @@ class OfflineStatus {
     this.failure,
     this.documents = 0,
     this.calculators = 0,
+    this.substances = 0,
     this.storageBytes = 0,
     this.pendingDocuments = 0,
     this.scope = OfflineScope.all,
@@ -57,6 +59,9 @@ class OfflineStatus {
   final ApiError? failure;
   final int documents;
   final int calculators;
+
+  /// Pregnancy · lactation profiles kept for offline reading.
+  final int substances;
   final int storageBytes;
 
   /// Models waiting for Wi-Fi (or for « Tous les modèles »): « Mise à jour disponible ».
@@ -85,6 +90,7 @@ class OfflineStatus {
     failure: clearFailure ? null : failure ?? this.failure,
     documents: documents,
     calculators: calculators,
+    substances: substances,
     storageBytes: storageBytes,
     pendingDocuments: pendingDocuments,
     scope: scope,
@@ -137,6 +143,7 @@ class OfflineSyncController extends AsyncNotifier<OfflineStatus> {
       syncedAt: syncedAt == null ? null : DateTime.tryParse(syncedAt),
       documents: (await _store.documents()).length,
       calculators: (await _store.calculators()).length,
+      substances: (await _store.substances()).length,
       storageBytes: await _store.storageBytes(),
       pendingDocuments: int.tryParse(await _database.readSetting(_pendingKey) ?? '') ?? 0,
       scope: await _database.readSetting(_scopeKey) == OfflineScope.favorites.name
@@ -164,7 +171,10 @@ class OfflineSyncController extends AsyncNotifier<OfflineStatus> {
       final access = await ref.read(accessControllerProvider.notifier).future;
       final offline = access?.feature(FeatureKey.offlineSync);
       if (offline == null || offline.state != AccessState.available) {
-        final hadCopies = (await _store.documents()).isNotEmpty || (await _store.calculators()).isNotEmpty;
+        final hadCopies =
+            (await _store.documents()).isNotEmpty ||
+            (await _store.calculators()).isNotEmpty ||
+            (await _store.substances()).isNotEmpty;
         await _store.purge();
         if (hadCopies) await _database.writeSetting(_lostKey, 'true');
         final status = await _load(enabled: true);
@@ -185,6 +195,7 @@ class OfflineSyncController extends AsyncNotifier<OfflineStatus> {
 
       final pending = await _syncDocuments(manifest.referenceDocuments, wanted);
       await _syncCalculators(manifest.calculators);
+      await _syncSubstances(manifest.substances);
       await _database.writeSetting(_dataVersionKey, manifest.dataVersion);
       await _database.writeSetting(_syncedAtKey, DateTime.now().toIso8601String());
       await _database.writeSetting(_pendingKey, '$pending');
@@ -280,6 +291,18 @@ class OfflineSyncController extends AsyncNotifier<OfflineStatus> {
     await _database.writeSetting(_scopeKey, scope.name);
     state = AsyncData(await _load(enabled: true));
     unawaited(sync());
+  }
+
+  /// Keeps the listed profiles (they are small: always all of them), replaced on a new version.
+  Future<void> _syncSubstances(List<SubstanceProfileDto> items) async {
+    final listed = {for (final item in items) item.id: item};
+    final kept = {for (final row in await _store.substances()) row.id: row.version};
+    for (final id in kept.keys) {
+      if (!listed.containsKey(id)) await _store.deleteSubstance(id);
+    }
+    for (final item in items) {
+      if (kept[item.id] != item.version.toInt()) await _store.saveSubstance(item);
+    }
   }
 
   Future<void> setMobileData(bool allowed) async {

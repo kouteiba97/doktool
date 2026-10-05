@@ -1,4 +1,6 @@
 import 'package:doktool/src/core/api/api_client.dart';
+import 'package:doktool/src/core/api/api_error.dart';
+import 'package:doktool/src/core/api/provider_retry.dart';
 import 'package:doktool/src/core/storage/secure_store.dart';
 import 'package:doktool/src/features/settings/app_settings.dart';
 import 'package:doktool/src/l10n/generated/app_localizations.dart';
@@ -62,6 +64,33 @@ void main() {
       final first = await store.installationId();
       expect(first, matches(RegExp(r'^[0-9a-f-]{36}$')));
       expect(await store.installationId(), first);
+    });
+  });
+
+  group('provider retry', () {
+    final options = RequestOptions(path: '/v1/x');
+    DioException failure(DioExceptionType type, [int? status]) => DioException(
+      requestOptions: options,
+      type: type,
+      response: status == null ? null : Response(requestOptions: options, statusCode: status),
+    );
+
+    test('shows « Connexion requise » at once when the device is offline', () {
+      expect(providerRetry(0, failure(DioExceptionType.connectionError)), isNull);
+      expect(providerRetry(0, const ApiError.network()), isNull);
+    });
+
+    test('never retries an answer of the server (4xx) or a programming error', () {
+      expect(providerRetry(0, failure(DioExceptionType.badResponse, 403)), isNull);
+      expect(providerRetry(0, const ApiError(code: 'CONTENT_UNAVAILABLE', statusCode: 404)), isNull);
+      expect(providerRetry(0, StateError('bug')), isNull);
+    });
+
+    test('gives a timeout or a server error two quick attempts', () {
+      expect(providerRetry(0, failure(DioExceptionType.receiveTimeout)), const Duration(milliseconds: 400));
+      expect(providerRetry(1, failure(DioExceptionType.badResponse, 503)), const Duration(milliseconds: 800));
+      expect(providerRetry(2, failure(DioExceptionType.badResponse, 503)), isNull);
+      expect(providerRetry(0, const ApiError(code: 'UNKNOWN', statusCode: 500)), const Duration(milliseconds: 400));
     });
   });
 

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CalculatorsModule } from '../calculators/index.js';
+import { PregnancyModule } from '../pregnancy/index.js';
 import { ReferenceLibraryModule } from '../reference-library/index.js';
 import { ActivityController } from './activity.controller.js';
 import { ActivityService } from './activity.service.js';
@@ -11,7 +12,7 @@ import { ActivityService } from './activity.service.js';
  * Other modules reach it only through ./index.ts.
  */
 @Module({
-  imports: [CalculatorsModule, ReferenceLibraryModule],
+  imports: [CalculatorsModule, ReferenceLibraryModule, PregnancyModule],
   controllers: [ActivityController],
   providers: [ActivityService],
   exports: [ActivityService],

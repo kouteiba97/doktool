@@ -2658,7 +2658,7 @@ export type components = {
             targetType?: components["schemas"]["FavoriteTargetType"];
         };
         /** @enum {string} */
-        ActivityKind: "SEARCH" | "REFERENCE_VIEW" | "CALCULATOR_USE";
+        ActivityKind: "SEARCH" | "REFERENCE_VIEW" | "CALCULATOR_USE" | "PREGNANCY_VIEW";
         ActorDto: {
             fullName: string;
             /** Format: uuid */
@@ -3682,13 +3682,13 @@ export type components = {
         FavoriteItemDto: {
             access: components["schemas"]["ItemAccessDto"];
             /** @enum {string} */
-            kind: "ORDONNANCE" | "CERTIFICATE" | "CALCULATOR";
+            kind: "ORDONNANCE" | "CERTIFICATE" | "CALCULATOR" | "SUBSTANCE";
             slug?: string | null;
             titleEn?: string | null;
             titleFr: string;
         };
         /** @enum {string} */
-        FavoriteTargetType: "REFERENCE_DOCUMENT" | "CALCULATOR";
+        FavoriteTargetType: "REFERENCE_DOCUMENT" | "CALCULATOR" | "SUBSTANCE";
         FeatureDecisionDto: {
             key: components["schemas"]["FeatureKey"];
             lockReason: components["schemas"]["LockReason"] | null;
@@ -4015,6 +4015,8 @@ export type components = {
             /** Format: date-time */
             generatedAt: string;
             referenceDocuments: components["schemas"]["ManifestReferenceDto"][];
+            /** @description Opened profiles, in full (ADR-019). */
+            substances: components["schemas"]["SubstanceProfileDto"][];
         };
         OnboardingDashboardDto: {
             /** @description null when fewer than 10 people (« < 10 »). */

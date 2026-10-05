@@ -259,7 +259,8 @@
         "enum": [
           "SEARCH",
           "REFERENCE_VIEW",
-          "CALCULATOR_USE"
+          "CALCULATOR_USE",
+          "PREGNANCY_VIEW"
         ],
         "type": "string"
       },
@@ -4149,7 +4150,8 @@
             "enum": [
               "ORDONNANCE",
               "CERTIFICATE",
-              "CALCULATOR"
+              "CALCULATOR",
+              "SUBSTANCE"
             ],
             "type": "string"
           },
@@ -4175,7 +4177,8 @@
       "FavoriteTargetType": {
         "enum": [
           "REFERENCE_DOCUMENT",
-          "CALCULATOR"
+          "CALCULATOR",
+          "SUBSTANCE"
         ],
         "type": "string"
       },
@@ -5514,13 +5517,21 @@
               "$ref": "#/components/schemas/ManifestReferenceDto"
             },
             "type": "array"
+          },
+          "substances": {
+            "description": "Opened profiles, in full (ADR-019).",
+            "items": {
+              "$ref": "#/components/schemas/SubstanceProfileDto"
+            },
+            "type": "array"
           }
         },
         "required": [
           "generatedAt",
           "dataVersion",
           "referenceDocuments",
-          "calculators"
+          "calculators",
+          "substances"
         ],
         "type": "object"
       },

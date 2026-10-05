@@ -220,6 +220,44 @@ describe('in the app', () => {
     expect(search.body.groups[0].hits[0].terms).toBeUndefined();
   });
 
+  it('is a favorite, a history entry and part of the offline store of a professional', async () => {
+    const { id, name } = await publishedSubstance();
+    const { auth } = await userActor(app, 'PROFESSIONAL');
+
+    await app.http().put(`/v1/me/favorites/SUBSTANCE/${id}`).set(auth).expect(204);
+    await app.http().put(`/v1/me/favorites/SUBSTANCE/${randomUUID()}`).set(auth).expect(404);
+    const favorites = await app.http().get('/v1/me/favorites').set(auth).expect(200);
+    expect(favorites.body).toContainEqual(
+      expect.objectContaining({
+        targetType: 'SUBSTANCE',
+        targetId: id,
+        item: expect.objectContaining({ kind: 'SUBSTANCE', titleFr: name }),
+      }),
+    );
+
+    await app
+      .http()
+      .post('/v1/me/activity')
+      .set(auth)
+      .send({
+        deviceId: `device-${randomUUID()}`,
+        entries: [{ kind: 'PREGNANCY_VIEW', targetId: id, occurredAt: new Date().toISOString() }],
+      })
+      .expect(204);
+    const history = await app.http().get('/v1/me/activity').set(auth).expect(200);
+    expect(history.body[0]).toMatchObject({
+      kind: 'PREGNANCY_VIEW',
+      targetType: 'SUBSTANCE',
+      targetId: id,
+    });
+
+    const manifest = await app.http().get('/v1/offline/manifest').set(auth).expect(200);
+    const offline = manifest.body.substances.find((entry: { id: string }) => entry.id === id);
+    expect(offline).toMatchObject({ nameFr: name, access: { state: 'AVAILABLE' } });
+    expect(offline.content.pregnancy.periods.T3.conduct).toBe('CONTRAINDICATED');
+    expect(offline.sources).toHaveLength(2);
+  });
+
   it('keeps a profile listed but locked for a student and a demo, except demo samples', async () => {
     const locked = await publishedSubstance();
     const sample = await publishedSubstance({ demoSample: true });

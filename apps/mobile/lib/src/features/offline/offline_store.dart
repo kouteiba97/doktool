@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
@@ -15,6 +14,8 @@ import '../../core/api/generated/models/published_test_case_dto.dart';
 import '../../core/api/generated/models/published_version_dto.dart';
 import '../../core/api/generated/models/reference_document_type.dart';
 import '../../core/api/generated/models/reference_item_dto.dart';
+import '../../core/api/generated/models/substance_item_dto.dart';
+import '../../core/api/generated/models/substance_profile_dto.dart';
 import '../../core/database/app_database.dart';
 
 const _available = ItemAccessDto(state: AccessState.available, lockReason: null, unlockPath: null);
@@ -57,6 +58,47 @@ class OfflineStore {
 
   Future<OfflineCalculator?> calculatorBySlug(String slug) =>
       (_database.select(_database.offlineCalculators)..where((row) => row.slug.equals(slug))).getSingleOrNull();
+
+  Future<List<OfflineSubstance>> substances() => _database.select(_database.offlineSubstances).get();
+
+  /// A profile kept for offline reading, as the API gave it.
+  Future<SubstanceProfileDto?> substance(String id) async {
+    final row = await (_database.select(
+      _database.offlineSubstances,
+    )..where((row) => row.id.equals(id))).getSingleOrNull();
+    return row == null ? null : SubstanceProfileDto.fromJson(jsonDecode(row.profile) as Map<String, Object?>);
+  }
+
+  /// « Grossesse » rows built from the store.
+  Future<List<SubstanceItemDto>> substanceItems() async => [
+    for (final row in await substances())
+      if (await substance(row.id) case final profile?)
+        SubstanceItemDto(
+          access: _available,
+          id: profile.id,
+          nameEn: profile.nameEn,
+          nameFr: profile.nameFr,
+          publishedAt: profile.publishedAt,
+          synonyms: profile.synonyms,
+          version: profile.version,
+        ),
+  ]..sort((a, b) => a.nameFr.compareTo(b.nameFr));
+
+  Future<void> saveSubstance(SubstanceProfileDto profile) => _database
+      .into(_database.offlineSubstances)
+      .insertOnConflictUpdate(
+        OfflineSubstancesCompanion.insert(
+          id: profile.id,
+          nameFr: profile.nameFr,
+          nameEn: Value(profile.nameEn),
+          version: profile.version.toInt(),
+          profile: jsonEncode(profile.toJson()),
+          savedAt: DateTime.now(),
+        ),
+      );
+
+  Future<void> deleteSubstance(String id) =>
+      (_database.delete(_database.offlineSubstances)..where((row) => row.id.equals(id))).go();
 
   /// Library rows built from the store, with the access they had at sync time.
   Future<List<ReferenceItemDto>> referenceItems(ReferenceDocumentType type) async => [
@@ -114,7 +156,10 @@ class OfflineStore {
       if (file.existsSync()) await file.delete();
     }
     await _database.delete(_database.offlineDocuments).go();
-    if (calculators) await _database.delete(_database.offlineCalculators).go();
+    if (calculators) {
+      await _database.delete(_database.offlineCalculators).go();
+      await _database.delete(_database.offlineSubstances).go();
+    }
   }
 
   Future<int> storageBytes() async => (await documents()).fold<int>(0, (total, document) => total + document.sizeBytes);

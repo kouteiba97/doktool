@@ -8,6 +8,9 @@ import 'package:doktool/src/core/api/api_client.dart';
 import 'package:doktool/src/core/api/generated/dok_tool_api.dart';
 import 'package:doktool/src/core/database/app_database.dart';
 import 'package:doktool/src/features/analytics/analytics_event.dart';
+import 'package:doktool/src/core/api/generated/models/substance_profile_dto.dart';
+import 'package:doktool/src/core/api/provider_retry.dart';
+import 'package:doktool/src/features/offline/offline_store.dart';
 import 'package:doktool/src/features/pregnancy/substance_screen.dart';
 import 'package:doktool/src/router/app_router.dart';
 import 'package:flutter/widgets.dart';
@@ -80,9 +83,12 @@ Map<String, Object?> _profile({bool locked = false}) => {
 };
 
 class _Api implements HttpClientAdapter {
-  _Api(this.body);
+  _Api(this.body, {this.offline = false});
 
   final Map<String, Object?> body;
+
+  /// No connection: every call fails as the network would.
+  final bool offline;
 
   @override
   Future<ResponseBody> fetch(
@@ -90,6 +96,7 @@ class _Api implements HttpClientAdapter {
     Stream<List<int>>? requestStream,
     Future<void>? cancelFuture,
   ) async {
+    if (offline) throw DioException(requestOptions: options, type: DioExceptionType.connectionError);
     if (options.path == '/v1/pregnancy/substances/$_id') {
       return ResponseBody.fromString(
         jsonEncode(body),
@@ -112,11 +119,17 @@ void main() {
   setUp(() => database = memoryDatabase());
   tearDown(() => database.close());
 
-  Future<void> pump(WidgetTester tester, Map<String, Object?> body, {String appearance = 'light'}) async {
+  Future<void> pump(
+    WidgetTester tester,
+    Map<String, Object?> body, {
+    String appearance = 'light',
+    bool offline = false,
+  }) async {
     await database.writeSetting('appearance', appearance);
-    final dio = Dio(BaseOptions(baseUrl: 'http://api.test'))..httpClientAdapter = _Api(body);
+    final dio = Dio(BaseOptions(baseUrl: 'http://api.test'))..httpClientAdapter = _Api(body, offline: offline);
     await tester.pumpWidget(
       ProviderScope(
+        retry: providerRetry,
         overrides: [
           ...testOverrides(database: database),
           apiProvider.overrideWithValue(DokToolApi(dio)),
@@ -127,6 +140,19 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets('opens a profile kept for offline reading when there is no connection', (tester) async {
+    await OfflineStore(database).saveSubstance(SubstanceProfileDto.fromJson(_profile()));
+    await pump(tester, _profile(), offline: true);
+    expect(find.text('Ibuprofène'), findsOneWidget);
+    expect(find.text("Ce n'est pas une preuve d'innocuité."), findsOneWidget);
+  });
+
+  testWidgets('says the connection is needed for a profile never kept offline', (tester) async {
+    await pump(tester, _profile(), offline: true);
+    expect(find.text('Ibuprofène'), findsNothing);
+    expect(find.text('Connexion requise'), findsOneWidget);
+  });
 
   testWidgets('shows « Absence de données » as a full block, never an empty area', (tester) async {
     await pump(tester, _profile());

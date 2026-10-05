@@ -970,7 +970,7 @@
       }
     }
   },
-  "offlineIntro": "Les modèles et calculateurs de votre accès restent disponibles sans connexion. La vérification, les paiements et la photo de profil demandent une connexion.",
+  "offlineIntro": "Les modèles, calculateurs et profils Grossesse · Allaitement de votre accès restent disponibles sans connexion. La vérification, les paiements et la photo de profil demandent une connexion.",
   "@offlineIntro": {
     "description": "mobile.offline.intro"
   },
@@ -1047,6 +1047,15 @@
   "offlineSearchLocal": "Résultats locaux — recherche complète indisponible.",
   "@offlineSearchLocal": {
     "description": "mobile.offline.searchLocal"
+  },
+  "offlineSubstances": "{count, plural, =0 {Aucun profil Grossesse · Allaitement} one {# profil Grossesse · Allaitement} other {# profils Grossesse · Allaitement}}",
+  "@offlineSubstances": {
+    "description": "mobile.offline.substances",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
   },
   "offlineTitle": "Données et hors ligne",
   "@offlineTitle": {
@@ -1393,7 +1402,7 @@
   "@pregnancyNoDataTitle": {
     "description": "mobile.pregnancy.noDataTitle"
   },
-  "pregnancyOnline": "Les profils grossesse et allaitement s'ouvrent avec une connexion.",
+  "pregnancyOnline": "Ce profil n’est pas encore enregistré sur l’appareil. Il s’ouvrira dès que vous serez connecté, puis restera disponible hors ligne.",
   "@pregnancyOnline": {
     "description": "mobile.pregnancy.online"
   },

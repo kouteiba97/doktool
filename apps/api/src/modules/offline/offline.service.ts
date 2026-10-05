@@ -6,6 +6,7 @@ import {
   type PublishedTestCase,
   type PublishedVersion,
 } from '../calculators/index.js';
+import { PregnancyService, type SubstanceProfile } from '../pregnancy/index.js';
 import { type ReferenceItem, ReferenceDocumentsService } from '../reference-library/index.js';
 
 export interface ManifestReference {
@@ -37,11 +38,13 @@ export interface OfflineManifest {
   dataVersion: string;
   referenceDocuments: ManifestReference[];
   calculators: ManifestCalculator[];
+  /** Pregnancy · lactation profiles the account opens, in full (ADR-019). */
+  substances: SubstanceProfile[];
 }
 
 /**
- * What an account may keep on its device (audit Appendix A, Lock L44): the reference PDFs and the
- * published calculator versions its profile opens. The app diff-syncs against this list and
+ * What an account may keep on its device (audit Appendix A, Lock L44): the reference PDFs, the
+ * published calculator versions and the pregnancy · lactation profiles its profile opens. The app diff-syncs against this list and
  * deletes anything no longer listed.
  */
 @Injectable()
@@ -49,12 +52,14 @@ export class OfflineService {
   constructor(
     private readonly references: ReferenceDocumentsService,
     private readonly calculators: CalculatorsService,
+    private readonly pregnancy: PregnancyService,
   ) {}
 
   async manifest(viewer: Viewer): Promise<OfflineManifest> {
-    const [referenceItems, calculatorItems] = await Promise.all([
+    const [referenceItems, calculatorItems, substances] = await Promise.all([
       this.references.openable(viewer),
       this.calculators.openable(viewer),
+      this.pregnancy.openable(viewer),
     ]);
     const referenceDocuments = referenceItems.map((item): ManifestReference => ({
       id: item.id,
@@ -82,6 +87,7 @@ export class OfflineService {
         (entry) =>
           `calc:${entry.id}:${entry.published.version}:${entry.published.definitionSha256}`,
       ),
+      ...substances.map((entry) => `sub:${entry.id}:${entry.version}`),
     ]
       .sort()
       .join('\n');
@@ -90,6 +96,7 @@ export class OfflineService {
       dataVersion: createHash('sha256').update(fingerprint).digest('hex').slice(0, 16),
       referenceDocuments,
       calculators,
+      substances,
     };
   }
 }

@@ -970,7 +970,7 @@
       }
     }
   },
-  "offlineIntro": "The models and calculators of your access stay available without a connection. Verification, payments and the profile photo need a connection.",
+  "offlineIntro": "The models, calculators and pregnancy · lactation profiles of your access stay available without a connection. Verification, payments and the profile photo need a connection.",
   "@offlineIntro": {
     "description": "mobile.offline.intro"
   },
@@ -1047,6 +1047,15 @@
   "offlineSearchLocal": "Local results — full search unavailable.",
   "@offlineSearchLocal": {
     "description": "mobile.offline.searchLocal"
+  },
+  "offlineSubstances": "{count, plural, =0 {No pregnancy · lactation profile} one {# pregnancy · lactation profile} other {# pregnancy · lactation profiles}}",
+  "@offlineSubstances": {
+    "description": "mobile.offline.substances",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
   },
   "offlineTitle": "Data and offline",
   "@offlineTitle": {
@@ -1393,7 +1402,7 @@
   "@pregnancyNoDataTitle": {
     "description": "mobile.pregnancy.noDataTitle"
   },
-  "pregnancyOnline": "Pregnancy and lactation profiles open with a connection.",
+  "pregnancyOnline": "This profile is not saved on the device yet. It opens as soon as you are connected, then stays available offline.",
   "@pregnancyOnline": {
     "description": "mobile.pregnancy.online"
   },

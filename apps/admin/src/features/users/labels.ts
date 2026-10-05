@@ -40,11 +40,13 @@ export const ACTIVITY_KIND_LABELS: Record<Schemas['ActivityKind'], MessageKey> =
   SEARCH: 'admin.users.activitySearch',
   REFERENCE_VIEW: 'admin.users.activityReferenceView',
   CALCULATOR_USE: 'admin.users.activityCalculatorUse',
+  PREGNANCY_VIEW: 'admin.users.activityPregnancyView',
 };
 
 export const FAVORITE_TYPE_LABELS: Record<Schemas['FavoriteTargetType'], MessageKey> = {
   REFERENCE_DOCUMENT: 'admin.users.favoriteModels',
   CALCULATOR: 'admin.users.favoriteCalculators',
+  SUBSTANCE: 'admin.users.favoriteSubstances',
 };
 
 export const usersKey = ['admin', 'users'] as const;

@@ -25,7 +25,6 @@ import '../account/account_controller.dart';
 import '../library/library_data.dart';
 import '../notifications/notifications_screen.dart';
 import '../verification/verification_controller.dart';
-import '../../core/api/generated/models/reference_document_type.dart';
 import '../../ui/content_row.dart';
 import '../activity/activity_data.dart';
 import '../activity/activity_screen.dart';
@@ -386,14 +385,10 @@ class _RecentsAndFavorites extends ConsumerWidget {
     final favorites = [for (final key in favoriteKeys) ?index[key.id]].take(5).toList();
 
     Widget row(ContentRef content) => ContentRow(
-      icon: content.isCalculator
-          ? LucideIcons.calculator
-          : content.referenceType == ReferenceDocumentType.certificate
-          ? LucideIcons.fileBadge
-          : LucideIcons.fileText,
+      icon: content.icon,
       title: localizedTitle(context, content.titleFr, content.titleEn),
       access: content.access,
-      actionLabel: content.isCalculator ? l10n.libraryOpen : l10n.libraryViewModel,
+      actionLabel: content.opens ? l10n.libraryOpen : l10n.libraryViewModel,
       onOpen: () => openContent(context, content),
     );
 

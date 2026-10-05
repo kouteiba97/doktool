@@ -108,6 +108,12 @@ export class PregnancyService {
     };
   }
 
+  /** The profiles this viewer may open, in full, for the offline store (Lock L44). */
+  async openable(viewer: Viewer): Promise<SubstanceProfile[]> {
+    const items = (await this.list(viewer)).filter((item) => item.access.state === 'AVAILABLE');
+    return Promise.all(items.map((item) => this.get(viewer, item.id)));
+  }
+
   /** « Signaler une erreur »: kept for the clinical team; a demo report has no account. */
   async report(
     viewer: Viewer,

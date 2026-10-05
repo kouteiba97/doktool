@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AccessModule } from '../access/index.js';
 import { CalculatorsModule } from '../calculators/index.js';
+import { PregnancyModule } from '../pregnancy/index.js';
 import { ReferenceLibraryModule } from '../reference-library/index.js';
 import { OfflineController } from './offline.controller.js';
 import { OfflineService } from './offline.service.js';
@@ -12,7 +13,7 @@ import { OfflineService } from './offline.service.js';
  * Other modules reach it only through ./index.ts.
  */
 @Module({
-  imports: [AccessModule, ReferenceLibraryModule, CalculatorsModule],
+  imports: [AccessModule, ReferenceLibraryModule, CalculatorsModule, PregnancyModule],
   controllers: [OfflineController],
   providers: [OfflineService],
 })

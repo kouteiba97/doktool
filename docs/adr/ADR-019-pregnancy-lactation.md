@@ -27,6 +27,6 @@
 
 ## Consequences
 
-- Profiles are not part of the offline store yet; opening one needs the network (the app says so). Adding them to the offline manifest is the next step for this module.
-- Favorites do not include substances yet.
+- **Offline (5 October 2026).** The offline manifest (`GET /v1/offline/manifest`) carries every profile the account opens, in full (`substances`, part of the data version as `sub:id:version`); the app keeps them in its `offline_substances` table, replaces one when its version changes and purges them with the calculators when the entitlement is lost or the person signs out. Without a connection the library and the profile screen read that copy; a profile never kept says « Connexion requise ».
+- **Favorites and history (5 October 2026).** `FavoriteTargetType.SUBSTANCE` and `ActivityKind.PREGNANCY_VIEW` (one entry per opening, the substance id only — never a section or a note); the favorite star sits on the profile header, and « Activité » lists them under « Grossesse ». Admin Web counts them with the other favorites and history entries.
 - No profile content ships with the code: the doctor authors every profile in Admin Web.

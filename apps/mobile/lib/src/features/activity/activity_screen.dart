@@ -73,7 +73,9 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
 }
 
 void openContent(BuildContext context, ContentRef content) {
-  if (content.slug != null) {
+  if (content.isSubstance) {
+    context.push(Routes.substance(content.id));
+  } else if (content.slug != null) {
     context.push(Routes.calculator(content.slug!));
   } else if (content.referenceType != null) {
     openReference(context, content.id, content.referenceType!);
@@ -115,6 +117,7 @@ class _FavoritesList extends ConsumerWidget {
       (FavoriteItemDtoKind.ordonnance, l10n.typesOrdonnances, LucideIcons.fileText),
       (FavoriteItemDtoKind.certificate, l10n.typesCertificates, LucideIcons.fileBadge),
       (FavoriteItemDtoKind.calculator, l10n.typesCalculators, LucideIcons.calculator),
+      (FavoriteItemDtoKind.substance, l10n.typesPregnancy, LucideIcons.baby),
     ];
     final unavailable = entries.where((entry) => entry.item == null).toList();
     return RefreshIndicator(
@@ -131,7 +134,9 @@ class _FavoritesList extends ConsumerWidget {
                       icon: icon,
                       title: localizedTitle(context, entry.item!.titleFr, entry.item!.titleEn),
                       access: entry.item!.access,
-                      actionLabel: kind == FavoriteItemDtoKind.calculator ? l10n.libraryOpen : l10n.libraryViewModel,
+                      actionLabel: kind == FavoriteItemDtoKind.calculator || kind == FavoriteItemDtoKind.substance
+                          ? l10n.libraryOpen
+                          : l10n.libraryViewModel,
                       onOpen: () => openContent(
                         context,
                         ContentRef(
@@ -140,6 +145,7 @@ class _FavoritesList extends ConsumerWidget {
                           titleEn: entry.item!.titleEn,
                           access: entry.item!.access,
                           slug: entry.item!.slug,
+                          isSubstance: kind == FavoriteItemDtoKind.substance,
                         ),
                       ),
                     ),
@@ -242,14 +248,10 @@ class _History extends ConsumerWidget {
       } else if (content != null) {
         rows.add(
           ContentRow(
-            icon: content.isCalculator
-                ? LucideIcons.calculator
-                : content.referenceType == ReferenceDocumentType.certificate
-                ? LucideIcons.fileBadge
-                : LucideIcons.fileText,
+            icon: content.icon,
             title: localizedTitle(context, content.titleFr, content.titleEn),
             access: content.access,
-            actionLabel: content.isCalculator ? l10n.libraryOpen : l10n.libraryViewModel,
+            actionLabel: content.opens ? l10n.libraryOpen : l10n.libraryViewModel,
             onOpen: () => openContent(context, content),
           ),
         );
@@ -274,6 +276,7 @@ class _History extends ConsumerWidget {
                 (ActivityKind.search, l10n.activityFilterSearches),
                 (ActivityKind.referenceView, l10n.activityFilterModels),
                 (ActivityKind.calculatorUse, l10n.activityFilterCalculations),
+                (ActivityKind.pregnancyView, l10n.typesPregnancy),
               ])
                 Padding(
                   padding: const EdgeInsets.only(right: DtSpace.s2),

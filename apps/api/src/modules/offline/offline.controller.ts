@@ -6,6 +6,7 @@ import { USER_API_PREFIX } from '../../http/api-prefix.js';
 import { CurrentViewer, type Viewer } from '../../infrastructure/security/viewer-auth.guard.js';
 import { RequireFeature } from '../access/index.js';
 import { PublishedTestCaseDto, PublishedVersionDto } from '../calculators/index.js';
+import { SubstanceProfileDto } from '../pregnancy/index.js';
 import { OfflineService } from './offline.service.js';
 
 export class ManifestReferenceDto {
@@ -72,6 +73,8 @@ export class OfflineManifestDto {
 
   @ApiProperty({ type: [ManifestCalculatorDto] })
   calculators!: ManifestCalculatorDto[];
+  @ApiProperty({ type: [SubstanceProfileDto], description: 'Opened profiles, in full (ADR-019).' })
+  substances!: SubstanceProfileDto[];
 }
 
 @ApiTags('offline')
@@ -98,6 +101,7 @@ export class OfflineController {
         published: PublishedVersionDto.from(entry.published),
         testCases: entry.testCases.map((testCase) => PublishedTestCaseDto.from(testCase)),
       })),
+      substances: manifest.substances.map((profile) => SubstanceProfileDto.fromProfile(profile)),
     };
   }
 }

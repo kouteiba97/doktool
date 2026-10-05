@@ -31,6 +31,8 @@ class ActivityRecorder {
 
   Future<void> calculatorUsed(String calculatorId) => _add(ActivityKind.calculatorUse, targetId: calculatorId);
 
+  Future<void> substanceViewed(String substanceId) => _add(ActivityKind.pregnancyView, targetId: substanceId);
+
   Future<void> _add(ActivityKind kind, {String? queryText, String? targetId}) async {
     if (_ref.read(sessionControllerProvider).value is! UserSession) return;
     if (kind == ActivityKind.search && (queryText == null || queryText.length < 2)) return;

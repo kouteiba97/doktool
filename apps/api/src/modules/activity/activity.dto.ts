@@ -27,8 +27,8 @@ export class FavoriteTargetParams {
 }
 
 export class FavoriteItemDto {
-  @ApiProperty({ enum: ['ORDONNANCE', 'CERTIFICATE', 'CALCULATOR'] })
-  kind!: 'ORDONNANCE' | 'CERTIFICATE' | 'CALCULATOR';
+  @ApiProperty({ enum: ['ORDONNANCE', 'CERTIFICATE', 'CALCULATOR', 'SUBSTANCE'] })
+  kind!: 'ORDONNANCE' | 'CERTIFICATE' | 'CALCULATOR' | 'SUBSTANCE';
 
   @ApiPropertyOptional({ type: String, nullable: true })
   slug!: string | null;

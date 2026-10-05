@@ -214,6 +214,8 @@ enum CalculatorTestOutcome {
 enum FavoriteTargetType {
   REFERENCE_DOCUMENT
   CALCULATOR
+  /// A substance of « Grossesse · Allaitement » (ADR-019).
+  SUBSTANCE
 
   @@map("favorite_target_type")
 }
@@ -222,6 +224,8 @@ enum ActivityKind {
   SEARCH
   REFERENCE_VIEW
   CALCULATOR_USE
+  /// A pregnancy · lactation profile opened (ADR-019).
+  PREGNANCY_VIEW
 
   @@map("activity_kind")
 }

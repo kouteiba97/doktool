@@ -5,7 +5,15 @@ import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 import type { Viewer } from '../../infrastructure/security/viewer-auth.guard.js';
 import type { ItemAccess } from '../access/index.js';
 import { CalculatorsService } from '../calculators/index.js';
+import { PregnancyService } from '../pregnancy/index.js';
 import { ReferenceDocumentsService } from '../reference-library/index.js';
+
+/** What each kind of history entry points at. */
+const TARGETS = {
+  REFERENCE_VIEW: 'REFERENCE_DOCUMENT',
+  CALCULATOR_USE: 'CALCULATOR',
+  PREGNANCY_VIEW: 'SUBSTANCE',
+} as const satisfies Record<Exclude<ActivityKind, 'SEARCH'>, FavoriteTargetType>;
 
 /** Favorites a person can keep (section 13: favorites first everywhere). */
 export const MAX_FAVORITES = 500;
@@ -19,7 +27,7 @@ export interface FavoriteView {
   createdAt: Date;
   /** Null when the model or calculator is no longer published (« N'est plus disponible »). */
   item: {
-    kind: 'ORDONNANCE' | 'CERTIFICATE' | 'CALCULATOR';
+    kind: 'ORDONNANCE' | 'CERTIFICATE' | 'CALCULATOR' | 'SUBSTANCE';
     slug: string | null;
     titleFr: string;
     titleEn: string | null;
@@ -54,6 +62,7 @@ export class ActivityService {
     private readonly prisma: PrismaService,
     private readonly references: ReferenceDocumentsService,
     private readonly calculators: CalculatorsService,
+    private readonly pregnancy: PregnancyService,
   ) {}
 
   /** Account deletion: the person's favorites and research history go with the account. */
@@ -152,8 +161,9 @@ export class ActivityService {
             occurredAt,
           };
         case 'REFERENCE_VIEW':
-        case 'CALCULATOR_USE': {
-          const targetType = entry.kind === 'REFERENCE_VIEW' ? 'REFERENCE_DOCUMENT' : 'CALCULATOR';
+        case 'CALCULATOR_USE':
+        case 'PREGNANCY_VIEW': {
+          const targetType = TARGETS[entry.kind];
           if (!entry.targetId || (entry.targetType && entry.targetType !== targetType)) {
             throw new DomainError('VALIDATION_FAILED', 'This entry needs its target.', {
               fields: { targetId: [`Required, of type ${targetType}.`] },
@@ -239,6 +249,15 @@ export class ActivityService {
         titleFr: calculator.nameFr,
         titleEn: calculator.nameEn,
         access: calculator.access,
+      });
+    }
+    for (const substance of await this.pregnancy.list(viewer)) {
+      items.set(`SUBSTANCE:${substance.id}`, {
+        kind: 'SUBSTANCE',
+        slug: null,
+        titleFr: substance.nameFr,
+        titleEn: substance.nameEn,
+        access: substance.access,
       });
     }
     return items;

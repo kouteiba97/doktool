@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../activity/activity_recorder.dart';
+import '../activity/favorite_button.dart';
+import '../offline/offline_store.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_error.dart';
 import '../../core/api/generated/models/access_state.dart';
@@ -14,6 +19,7 @@ import '../../core/api/generated/models/pregnancy_period_dto.dart';
 import '../../core/api/generated/models/profile_conflict_dto.dart';
 import '../../core/api/generated/models/profile_evidence_dto.dart';
 import '../../core/api/generated/models/profile_text_dto.dart';
+import '../../core/api/generated/models/favorite_target_type.dart';
 import '../../core/api/generated/models/substance_profile_dto.dart';
 import '../../core/api/generated/models/substance_ref_dto.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -35,9 +41,17 @@ import '../analytics/analytics_recorder.dart';
 import 'report_sheet.dart';
 
 /// One substance's published profile, with the server's access decision (ADR-019).
-final substanceProvider = FutureProvider.autoDispose.family<SubstanceProfileDto, String>(
-  (ref, id) => ref.watch(apiProvider).pregnancy.pregnancyControllerGet(id: id),
-);
+/// One profile; without a connection, the copy kept for offline reading (ADR-019).
+final substanceProvider = FutureProvider.autoDispose.family<SubstanceProfileDto, String>((ref, id) async {
+  try {
+    return await ref.watch(apiProvider).pregnancy.pregnancyControllerGet(id: id);
+  } catch (error) {
+    if (!ApiError.from(error).isNetwork) rethrow;
+    final offline = await ref.read(offlineStoreProvider).substance(id);
+    if (offline == null) rethrow;
+    return offline;
+  }
+});
 
 enum _Period { t1, t2, t3, peripartum }
 
@@ -57,8 +71,15 @@ class _SubstanceScreenState extends ConsumerState<SubstanceScreen> {
   PregnancySection _section = PregnancySection.pregnancy;
   final Set<PregnancySection> _recorded = {};
 
+  bool _historyRecorded = false;
+
   void _record(SubstanceProfileDto profile) {
-    if (profile.access.state != AccessState.available || !_recorded.add(_section)) return;
+    if (profile.access.state != AccessState.available) return;
+    if (!_historyRecorded) {
+      _historyRecorded = true;
+      unawaited(ref.read(activityRecorderProvider).substanceViewed(profile.id));
+    }
+    if (!_recorded.add(_section)) return;
     ref
         .read(analyticsRecorderProvider)
         .record(AnalyticsEvent.pregnancyViewed(id: profile.id, section: _section, version: profile.version.toInt()));
@@ -77,6 +98,10 @@ class _SubstanceScreenState extends ConsumerState<SubstanceScreen> {
     return Scaffold(
       backgroundColor: colors.bg,
       appBar: DtHeroAppBar(
+        actions: [
+          if (item != null && item.access.state == AccessState.available)
+            FavoriteButton(type: FavoriteTargetType.substance, id: item.id, onHero: true),
+        ],
         titleWidget: item == null
             ? null
             : Column(

@@ -71,6 +71,7 @@ class OfflineSettingsScreen extends ConsumerWidget {
                 if (status.dataVersion != null) line(l10n.offlineDataVersion(status.dataVersion!.substring(0, 12))),
                 line(l10n.offlineModels(status.documents, sizeText(context, status.storageBytes))),
                 line(l10n.offlineCalculators(status.calculators)),
+                line(l10n.offlineSubstances(status.substances)),
                 if (status.pendingDocuments > 0) line(l10n.offlinePending(status.pendingDocuments)),
                 if (status.phase == SyncPhase.syncing) ...[
                   const SizedBox(height: DtSpace.s2),
