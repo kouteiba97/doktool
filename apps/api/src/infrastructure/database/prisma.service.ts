@@ -13,7 +13,11 @@ import { PrismaClient } from '../../generated/prisma/client.js';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleDestroy {
   constructor(@Inject(ENV) env: Env) {
-    super({ adapter: new PrismaPg({ connectionString: env.DATABASE_URL }) });
+    // Every session runs in UTC: the adapter sends dates without an offset, and a server whose
+    // time zone is not UTC would otherwise store them shifted by its offset.
+    super({
+      adapter: new PrismaPg({ connectionString: env.DATABASE_URL, options: '-c TimeZone=UTC' }),
+    });
   }
 
   /** True when the database answers a trivial query. */
