@@ -18,6 +18,8 @@ const version = z.number().int().min(1).max(100_000);
 const bandCode = z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/);
 const referenceType = z.enum(['ORDONNANCE', 'CERTIFICATE']);
 const targetType = z.enum(['REFERENCE_DOCUMENT', 'CALCULATOR']);
+/** What a favorite points at, pregnancy · lactation profiles included (ADR-019). */
+const favoriteTarget = z.enum(['REFERENCE_DOCUMENT', 'CALCULATOR', 'SUBSTANCE']);
 
 /** Screens the demo can open or be stopped at (DEMO_FEATURE_VIEWED `module`). */
 export const DEMO_MODULES = [
@@ -73,8 +75,8 @@ export const CLIENT_EVENTS = {
     entity: true,
     properties: z.strictObject({ section: z.enum(['pregnancy', 'lactation']), version }),
   },
-  FAVORITE_ADDED: { entity: true, properties: z.strictObject({ targetType }) },
-  FAVORITE_REMOVED: { entity: true, properties: z.strictObject({ targetType }) },
+  FAVORITE_ADDED: { entity: true, properties: z.strictObject({ targetType: favoriteTarget }) },
+  FAVORITE_REMOVED: { entity: true, properties: z.strictObject({ targetType: favoriteTarget }) },
   SUBSCRIPTION_VIEWED: {
     entity: false,
     properties: z.strictObject({ screen: z.enum(['plans', 'subscription', 'review']) }),

@@ -121,6 +121,20 @@ describe('analytics events', () => {
     });
   });
 
+  it('counts favorite pregnancy · lactation profiles as substances (ADR-019)', () => {
+    const checked = checkEvent(
+      {
+        type: 'FAVORITE_ADDED',
+        occurredAt: new Date('2026-09-26T11:00:00Z'),
+        entityId: '0199a8c4-5a3e-7c1b-9d2f-3e4a5b6c7d8e',
+        properties: { targetType: 'SUBSTANCE' },
+      },
+      false,
+      now,
+    );
+    expect(checked).toMatchObject({ ok: true, columns: { entityType: 'SUBSTANCE' } });
+  });
+
   it('refuses free text, missing entities, stale times and demo-only events outside the demo', () => {
     const base = { occurredAt: new Date('2026-09-26T11:00:00Z') };
     expect(

@@ -117,6 +117,7 @@ final class AnalyticsEvent {
     bool oneOf(Object? value, Iterable<Object?> allowed) => value != null && allowed.contains(value);
     final referenceTypes = [ReferenceDocumentType.ordonnance.json, ReferenceDocumentType.certificate.json];
     final targetTypes = [FavoriteTargetType.referenceDocument.json, FavoriteTargetType.calculator.json];
+    final favoriteTargets = [...targetTypes, FavoriteTargetType.substance.json];
     final p = properties;
     final keysOk = switch (type) {
       ClientAnalyticsEventType.searchPerformed =>
@@ -137,7 +138,7 @@ final class AnalyticsEvent {
             p['engine'] is String &&
             _engine.hasMatch(p['engine']! as String),
       ClientAnalyticsEventType.favoriteAdded ||
-      ClientAnalyticsEventType.favoriteRemoved => oneOf(p['targetType'], targetTypes),
+      ClientAnalyticsEventType.favoriteRemoved => oneOf(p['targetType'], favoriteTargets),
       ClientAnalyticsEventType.subscriptionViewed => oneOf(
         p['screen'],
         SubscriptionScreen.values.map((screen) => screen.name),

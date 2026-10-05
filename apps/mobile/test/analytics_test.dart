@@ -51,6 +51,10 @@ void main() {
       final viewed = AnalyticsEvent.referenceViewed(id: _model, fileVersion: 3, offline: true);
       expect(viewed.properties, {'fileVersion': 3, 'source': 'offline'});
       expect(viewed.isValid, isTrue);
+
+      final profile = AnalyticsEvent.favorite(id: _model, targetType: FavoriteTargetType.substance, added: true);
+      expect(profile.properties, {'targetType': 'SUBSTANCE'});
+      expect(profile.isValid, isTrue);
     });
 
     test('are refused when the API would refuse them', () {
