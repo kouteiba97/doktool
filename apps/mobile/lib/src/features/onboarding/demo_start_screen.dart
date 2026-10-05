@@ -64,7 +64,10 @@ class _DemoStartScreenState extends ConsumerState<DemoStartScreen> {
         DtButton(label: l10n.demoStart, loading: _starting, onPressed: _start),
       ],
       children: [
-        Text(l10n.demoYouAre, style: DtType.label.copyWith(color: colors.inkSecondary)),
+        // Read once, as the label of the choice below.
+        ExcludeSemantics(
+          child: Text(l10n.demoYouAre, style: DtType.label.copyWith(color: colors.inkSecondary)),
+        ),
         const SizedBox(height: DtSpace.s1),
         DtSegmentedControl<DemoContext>(
           semanticLabel: l10n.demoYouAre,

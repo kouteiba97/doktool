@@ -52,7 +52,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(DtSpace.s4, 0, DtSpace.s4, DtSpace.s3),
             child: DtSegmentedControl<_Segment>(
-              semanticLabel: l10n.activityTitle,
+              semanticLabel: l10n.activitySections,
               selected: _segment,
               onChanged: (segment) => setState(() => _segment = segment),
               segments: [

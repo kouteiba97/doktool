@@ -127,7 +127,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         row(l10n.reviewRenewal, l10n.reviewRenewalManual),
         const SizedBox(height: DtSpace.s4),
         if (method != null) ...[
-          Text(l10n.reviewMethod, style: DtType.label.copyWith(color: colors.inkSecondary)),
+          // Read once, as the label of the choice below.
+          ExcludeSemantics(
+            child: Text(l10n.reviewMethod, style: DtType.label.copyWith(color: colors.inkSecondary)),
+          ),
           const SizedBox(height: DtSpace.s1),
           if (methods.length == 1)
             Text(methodText(l10n, method), style: DtType.body.copyWith(color: colors.ink))

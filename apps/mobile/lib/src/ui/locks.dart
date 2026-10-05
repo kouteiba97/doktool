@@ -85,7 +85,10 @@ Future<void> showLockSheet(BuildContext context, ItemAccessDto access, {required
           Row(
             children: [
               Expanded(
-                child: Text(title, style: DtType.heading.copyWith(color: colors.ink)),
+                child: Semantics(
+                  header: true,
+                  child: Text(title, style: DtType.heading.copyWith(color: colors.ink)),
+                ),
               ),
               LockLabel(reason: access.lockReason),
             ],

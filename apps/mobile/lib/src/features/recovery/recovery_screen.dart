@@ -384,7 +384,10 @@ class _PhotoTile extends StatelessWidget {
               Icon(sent ? LucideIcons.circleCheck : icon, color: sent ? colors.success : colors.brand),
               const SizedBox(width: DtSpace.s3),
               Expanded(
-                child: Text(title, style: DtType.heading.copyWith(color: colors.ink)),
+                child: Semantics(
+                  header: true,
+                  child: Text(title, style: DtType.heading.copyWith(color: colors.ink)),
+                ),
               ),
             ],
           ),

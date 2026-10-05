@@ -115,7 +115,10 @@ class DtSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (title != null) ...[
-            Text(title!, style: DtType.heading.copyWith(color: colors.ink)),
+            Semantics(
+              header: true,
+              child: Text(title!, style: DtType.heading.copyWith(color: colors.ink)),
+            ),
             const SizedBox(height: DtSpace.s1),
           ],
           child,

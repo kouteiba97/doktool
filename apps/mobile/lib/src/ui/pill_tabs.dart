@@ -53,6 +53,7 @@ class DtPillTabs<T> extends StatelessWidget {
               selected: on,
               inMutuallyExclusiveGroup: true,
               label: tab.label,
+              onTap: on ? null : () => onChanged(tab.value),
               excludeSemantics: true,
               child: Material(
                 color: on ? colors.brand : colors.surface,

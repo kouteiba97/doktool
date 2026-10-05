@@ -112,7 +112,10 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(l10n.pregnancyReport, style: DtType.heading.copyWith(color: colors.ink)),
+          Semantics(
+            header: true,
+            child: Text(l10n.pregnancyReport, style: DtType.heading.copyWith(color: colors.ink)),
+          ),
           const SizedBox(height: DtSpace.s1),
           Text(
             widget.section == PregnancySection.pregnancy

@@ -71,7 +71,10 @@ class SubscriptionScreen extends ConsumerWidget {
           ],
           if (data.transactions.isNotEmpty) ...[
             const SizedBox(height: DtSpace.s6),
-            Text(l10n.subscriptionHistory, style: DtType.heading.copyWith(color: context.colors.ink)),
+            Semantics(
+              header: true,
+              child: Text(l10n.subscriptionHistory, style: DtType.heading.copyWith(color: context.colors.ink)),
+            ),
             for (final transaction in data.transactions) _TransactionRow(transaction: transaction),
           ],
         ],

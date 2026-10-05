@@ -167,6 +167,7 @@ class _Destination extends StatelessWidget {
         button: true,
         selected: selected,
         label: label,
+        onTap: onTap,
         excludeSemantics: true,
         child: InkResponse(
           onTap: onTap,

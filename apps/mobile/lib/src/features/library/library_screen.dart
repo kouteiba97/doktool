@@ -100,7 +100,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           Padding(
             padding: const EdgeInsets.only(bottom: DtSpace.s3),
             child: DtPillTabs<LibrarySection>(
-              semanticLabel: l10n.libraryTitle,
+              semanticLabel: l10n.librarySections,
               selected: section,
               onChanged: (next) => context.go(Routes.library(next)),
               tabs: [

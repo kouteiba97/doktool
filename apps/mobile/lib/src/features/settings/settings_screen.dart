@@ -34,10 +34,10 @@ class SettingsScreen extends ConsumerWidget {
           : ListView(
               padding: const EdgeInsets.all(DtSpace.s4),
               children: [
+                // The section heading names each control; a group label would read it twice.
                 _Section(
                   title: l10n.settingsAppearanceTitle,
                   child: DtSegmentedControl<AppearancePreference>(
-                    semanticLabel: l10n.settingsAppearanceTitle,
                     selected: settings.appearance,
                     onChanged: controller.setAppearance,
                     segments: [
@@ -52,7 +52,6 @@ class SettingsScreen extends ConsumerWidget {
                   title: l10n.settingsLanguageTitle,
                   helper: l10n.settingsLanguageHelper,
                   child: DtSegmentedControl<AppLanguage>(
-                    semanticLabel: l10n.settingsLanguageTitle,
                     selected: settings.language,
                     onChanged: controller.setLanguage,
                     segments: [
@@ -64,14 +63,18 @@ class SettingsScreen extends ConsumerWidget {
                 const SizedBox(height: DtSpace.s6),
                 _Section(
                   title: l10n.settingsMore,
-                  child: Material(
-                    type: MaterialType.transparency,
-                    child: ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(LucideIcons.hardDriveDownload, color: colors.inkSecondary),
-                      title: Text(l10n.settingsOffline, style: DtType.body.copyWith(color: colors.ink)),
-                      trailing: Icon(LucideIcons.chevronRight, color: colors.inkMuted),
-                      onTap: () => context.push(Routes.offlineSettings),
+                  // Its own node: a single row would otherwise merge into the section heading.
+                  child: Semantics(
+                    container: true,
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(LucideIcons.hardDriveDownload, color: colors.inkSecondary),
+                        title: Text(l10n.settingsOffline, style: DtType.body.copyWith(color: colors.ink)),
+                        trailing: Icon(LucideIcons.chevronRight, color: colors.inkMuted),
+                        onTap: () => context.push(Routes.offlineSettings),
+                      ),
                     ),
                   ),
                 ),

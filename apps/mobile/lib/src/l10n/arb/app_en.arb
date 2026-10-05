@@ -101,6 +101,10 @@
       }
     }
   },
+  "activitySections": "Favorites or activity",
+  "@activitySections": {
+    "description": "mobile.activity.sections"
+  },
   "activitySegment": "Activity",
   "@activitySegment": {
     "description": "mobile.activity.segment"
@@ -195,7 +199,7 @@
   "@calculatorNo": {
     "description": "mobile.calculator.no"
   },
-  "calculatorPending": "{count, plural, one {# required field to fill} other {# required fields to fill}}",
+  "calculatorPending": "{count, plural, one {{count} required field to fill} other {{count} required fields to fill}}",
   "@calculatorPending": {
     "description": "mobile.calculator.pending",
     "placeholders": {
@@ -263,7 +267,7 @@
   "@calculatorReview": {
     "description": "mobile.calculator.review"
   },
-  "calculatorReviewLine": "Reviewed by {reviewer} on {date} · {count, plural, one {# reference test passed} other {# reference tests passed}}",
+  "calculatorReviewLine": "Reviewed by {reviewer} on {date} · {count, plural, one {{count} reference test passed} other {{count} reference tests passed}}",
   "@calculatorReviewLine": {
     "description": "mobile.calculator.reviewLine",
     "placeholders": {
@@ -355,6 +359,10 @@
   "@commonContinue": {
     "description": "mobile.common.continue"
   },
+  "commonHidePassword": "Hide password",
+  "@commonHidePassword": {
+    "description": "mobile.common.hidePassword"
+  },
   "commonLater": "Later",
   "@commonLater": {
     "description": "mobile.common.later"
@@ -374,6 +382,10 @@
   "commonSearch": "Search",
   "@commonSearch": {
     "description": "mobile.common.search"
+  },
+  "commonShowPassword": "Show password",
+  "@commonShowPassword": {
+    "description": "mobile.common.showPassword"
   },
   "commonStepOf": "Step {current} of {total}",
   "@commonStepOf": {
@@ -699,6 +711,10 @@
   "@librarySearchPregnancy": {
     "description": "mobile.library.searchPregnancy"
   },
+  "librarySections": "Library sections",
+  "@librarySections": {
+    "description": "mobile.library.sections"
+  },
   "libraryTitle": "Library",
   "@libraryTitle": {
     "description": "mobile.library.title"
@@ -935,7 +951,7 @@
   "@offlineBarSyncing": {
     "description": "mobile.offline.barSyncing"
   },
-  "offlineCalculators": "{count, plural, =0 {No calculator installed} one {# calculator installed} other {# calculators installed}}",
+  "offlineCalculators": "{count, plural, =0 {No calculator installed} one {{count} calculator installed} other {{count} calculators installed}}",
   "@offlineCalculators": {
     "description": "mobile.offline.calculators",
     "placeholders": {
@@ -999,7 +1015,7 @@
   "@offlineMobileDataHelper": {
     "description": "mobile.offline.mobileDataHelper"
   },
-  "offlineModels": "{count, plural, =0 {No model downloaded} one {# model downloaded} other {# models downloaded}} · {size}",
+  "offlineModels": "{count, plural, =0 {No model downloaded} one {{count} model downloaded} other {{count} models downloaded}} · {size}",
   "@offlineModels": {
     "description": "mobile.offline.models",
     "placeholders": {
@@ -1015,7 +1031,7 @@
   "@offlineNeverSynced": {
     "description": "mobile.offline.neverSynced"
   },
-  "offlinePending": "{count, plural, one {# model waiting (Wi-Fi or “All models”)} other {# models waiting (Wi-Fi or “All models”)}}",
+  "offlinePending": "{count, plural, one {{count} model waiting (Wi-Fi or “All models”)} other {{count} models waiting (Wi-Fi or “All models”)}}",
   "@offlinePending": {
     "description": "mobile.offline.pending",
     "placeholders": {
@@ -1048,7 +1064,7 @@
   "@offlineSearchLocal": {
     "description": "mobile.offline.searchLocal"
   },
-  "offlineSubstances": "{count, plural, =0 {No pregnancy · lactation profile} one {# pregnancy · lactation profile} other {# pregnancy · lactation profiles}}",
+  "offlineSubstances": "{count, plural, =0 {No pregnancy · lactation profile} one {{count} pregnancy · lactation profile} other {{count} pregnancy · lactation profiles}}",
   "@offlineSubstances": {
     "description": "mobile.offline.substances",
     "placeholders": {
@@ -1082,7 +1098,7 @@
   "@otpExpired": {
     "description": "mobile.otp.expired"
   },
-  "otpInvalid": "Wrong code. {attempts, plural, one {# try left.} other {# tries left.}}",
+  "otpInvalid": "Wrong code. {attempts, plural, one {{attempts} try left.} other {{attempts} tries left.}}",
   "@otpInvalid": {
     "description": "mobile.otp.invalid",
     "placeholders": {
@@ -1231,7 +1247,7 @@
   "@plansChoose": {
     "description": "mobile.plans.choose"
   },
-  "plansDurationDays": "{days, plural, one {# day} other {# days}}",
+  "plansDurationDays": "{days, plural, one {{days} day} other {{days} days}}",
   "@plansDurationDays": {
     "description": "mobile.plans.durationDays",
     "placeholders": {
@@ -2508,6 +2524,10 @@
   "@verificationIdentityIntroStudent": {
     "description": "mobile.verification.identity.introStudent"
   },
+  "verificationIdentityKind": "Type of identity document",
+  "@verificationIdentityKind": {
+    "description": "mobile.verification.identity.kind"
+  },
   "verificationIdentityKindNationalId": "Biometric ID card",
   "@verificationIdentityKindNationalId": {
     "description": "mobile.verification.identity.kindNationalId"
@@ -2761,7 +2781,7 @@
   "@verificationStatusUniversity": {
     "description": "mobile.verification.status.university"
   },
-  "verificationStatusYear": "{year, plural, =1 {Year 1} other {Year #}}",
+  "verificationStatusYear": "{year, plural, =1 {Year 1} other {Year {year}}}",
   "@verificationStatusYear": {
     "description": "mobile.verification.status.year",
     "placeholders": {
@@ -2863,6 +2883,18 @@
   "viewerPage": "{current} / {total}",
   "@viewerPage": {
     "description": "mobile.viewer.page",
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "viewerPageSpoken": "Page {current} of {total}",
+  "@viewerPageSpoken": {
+    "description": "mobile.viewer.pageSpoken",
     "placeholders": {
       "current": {
         "type": "String"

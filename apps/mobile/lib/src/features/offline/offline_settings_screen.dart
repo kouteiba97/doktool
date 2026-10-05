@@ -88,7 +88,10 @@ class OfflineSettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: DtSpace.s4),
-          Text(l10n.offlineScope, style: DtType.label.copyWith(color: colors.inkSecondary)),
+          // Read once, as the label of the choice below.
+          ExcludeSemantics(
+            child: Text(l10n.offlineScope, style: DtType.label.copyWith(color: colors.inkSecondary)),
+          ),
           const SizedBox(height: DtSpace.s1),
           DtSegmentedControl<OfflineScope>(
             semanticLabel: l10n.offlineScope,

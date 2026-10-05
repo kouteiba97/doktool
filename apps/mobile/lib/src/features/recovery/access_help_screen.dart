@@ -85,7 +85,10 @@ class _Choice extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title, style: DtType.heading.copyWith(color: colors.ink)),
+                        Semantics(
+                          header: true,
+                          child: Text(title, style: DtType.heading.copyWith(color: colors.ink)),
+                        ),
                         const SizedBox(height: DtSpace.s1),
                         Text(body, style: DtType.body.copyWith(color: colors.inkSecondary)),
                       ],

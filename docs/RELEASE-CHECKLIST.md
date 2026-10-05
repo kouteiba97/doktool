@@ -28,7 +28,7 @@ Phase 18's exit criterion is this checklist, signed. **Engineering** items are d
 
 **Manual — operator, on real devices**
 
-- [ ] TalkBack (Android) pass: onboarding, search, library, PDF viewer, calculator (inputs, result, band), favourites, subscription screens, offline settings.
+- [ ] TalkBack (Android) pass: onboarding, search, library, PDF viewer, calculator (inputs, result, band), favourites, subscription screens, offline settings. Emulator audit done on 5 October 2026 (docs/qa/talkback-audit-2026-10-05.md); still to do on a real phone by a TalkBack user, with calculators and Grossesse content.
 - [ ] VoiceOver (iOS) pass on the same journeys.
 - [ ] Admin Web keyboard-only pass: sign-in with TOTP, verification decision, PDF upload, calculator review, permissions.
 

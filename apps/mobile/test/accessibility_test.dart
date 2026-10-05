@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/semantics_guidelines.dart';
 import 'support/test_app.dart';
 
 void main() {
@@ -65,6 +66,8 @@ void main() {
         await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
         await expectLater(tester, meetsGuideline(textContrastGuideline));
+        await expectLater(tester, meetsGuideline(buttonsHaveTapAction));
+        await expectLater(tester, meetsGuideline(textFieldsAreLabelled));
         semantics.dispose();
       });
     }

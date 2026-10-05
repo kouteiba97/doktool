@@ -44,26 +44,50 @@ class DtPickerField<T> extends StatelessWidget {
     final colors = context.colors;
     final current = options.where((option) => option.value == selected).firstOrNull;
     final hasError = error != null;
+    Future<void> open() async {
+      final picked = await showModalBottomSheet<T>(
+        // Above the floating tab bar (ADR-020), never under it.
+        useRootNavigator: true,
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: colors.surface,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(DtRadius.xl))),
+        builder: (context) => _PickerSheet<T>(
+          title: label,
+          options: options,
+          selected: selected,
+          searchable: searchable,
+          emptyMessage: emptyMessage,
+        ),
+      );
+      if (picked != null) onSelected(picked);
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text.rich(
-          TextSpan(
-            text: label,
-            children: [
-              if (requiredMark != null)
-                TextSpan(
-                  text: ' · $requiredMark',
-                  style: DtType.caption.copyWith(color: colors.inkMuted),
-                ),
-            ],
+        // Read as part of the field below (« label, value »), not twice.
+        ExcludeSemantics(
+          child: Text.rich(
+            TextSpan(
+              text: label,
+              children: [
+                if (requiredMark != null)
+                  TextSpan(
+                    text: ' · $requiredMark',
+                    style: DtType.caption.copyWith(color: colors.inkMuted),
+                  ),
+              ],
+            ),
+            style: DtType.label.copyWith(color: colors.inkSecondary),
           ),
-          style: DtType.label.copyWith(color: colors.inkSecondary),
         ),
         const SizedBox(height: DtSpace.s1),
         Semantics(
           button: true,
           label: '$label, ${current?.label ?? placeholder}',
+          onTap: open,
           excludeSemantics: true,
           child: Material(
             color: colors.surface,
@@ -76,27 +100,7 @@ class DtPickerField<T> extends StatelessWidget {
             ),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
-              onTap: () async {
-                final picked = await showModalBottomSheet<T>(
-                  // Above the floating tab bar (ADR-020), never under it.
-                  useRootNavigator: true,
-                  context: context,
-                  isScrollControlled: true,
-                  useSafeArea: true,
-                  backgroundColor: colors.surface,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(DtRadius.xl)),
-                  ),
-                  builder: (context) => _PickerSheet<T>(
-                    title: label,
-                    options: options,
-                    selected: selected,
-                    searchable: searchable,
-                    emptyMessage: emptyMessage,
-                  ),
-                );
-                if (picked != null) onSelected(picked);
-              },
+              onTap: open,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(minHeight: DtSize.controlLg),
                 child: Padding(

@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { arbKey, placeholders, renderArb } from './arb.mjs';
+import { arbKey, placeholders, renderArb, toFlutterMessage } from './arb.mjs';
 
 describe('arbKey', () => {
   it('drops the namespace and camel-cases the rest', () => {
@@ -19,6 +19,22 @@ describe('placeholders', () => {
       },
     );
     assert.deepEqual(placeholders('Sans argument'), {});
+  });
+});
+
+describe('toFlutterMessage', () => {
+  it('spells out the plural argument where ICU writes #, which gen-l10n prints as is', () => {
+    assert.equal(
+      toFlutterMessage(
+        '{count, plural, =0 {Aucun modèle} one {# modèle} other {# modèles}} · {size}',
+      ),
+      '{count, plural, =0 {Aucun modèle} one {{count} modèle} other {{count} modèles}} · {size}',
+    );
+    assert.equal(
+      toFlutterMessage('{n, plural, other {# sur {total, plural, other {# pages}}}}'),
+      '{n, plural, other {{n} sur {total, plural, other {{total} pages}}}}',
+    );
+    assert.equal(toFlutterMessage('Sans # hors pluriel'), 'Sans # hors pluriel');
   });
 });
 

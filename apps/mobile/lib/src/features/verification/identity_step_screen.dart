@@ -116,7 +116,7 @@ class _IdentityStepState extends ConsumerState<_IdentityStep> {
       ],
       children: [
         DtSegmentedControl<VerificationDetailsDtoDocumentKind>(
-          semanticLabel: l10n.verificationIdentityTitle,
+          semanticLabel: l10n.verificationIdentityKind,
           selected: _kind,
           onChanged: _changeKind,
           segments: [

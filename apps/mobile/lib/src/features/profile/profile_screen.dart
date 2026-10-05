@@ -98,10 +98,13 @@ class ProfileScreen extends ConsumerWidget {
                         const SizedBox(height: DtSpace.s4),
                         Row(
                           children: [
-                            DtGlass.onHero(
-                              radius: DtRadius.full,
-                              padding: const EdgeInsets.all(DtSpace.s1),
-                              child: ProfileAvatar(url: me.avatarUrl, initials: _initials(me.firstName, me.lastName)),
+                            // The initials repeat the name read just after.
+                            ExcludeSemantics(
+                              child: DtGlass.onHero(
+                                radius: DtRadius.full,
+                                padding: const EdgeInsets.all(DtSpace.s1),
+                                child: ProfileAvatar(url: me.avatarUrl, initials: _initials(me.firstName, me.lastName)),
+                              ),
                             ),
                             const SizedBox(width: DtSpace.s3),
                             Expanded(
@@ -123,22 +126,30 @@ class ProfileScreen extends ConsumerWidget {
                                 ],
                               ),
                             ),
-                            DtGlass.onHero(
-                              radius: DtRadius.full,
-                              child: Material(
-                                type: MaterialType.transparency,
-                                child: InkWell(
-                                  customBorder: const StadiumBorder(),
-                                  onTap: () => context.push(Routes.profileEdit),
-                                  child: ConstrainedBox(
-                                    constraints: const BoxConstraints(minHeight: DtSize.touchMin),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: DtSpace.s4),
-                                      child: Center(
-                                        widthFactor: 1,
-                                        child: Text(
-                                          l10n.profileEdit,
-                                          style: DtType.label.copyWith(color: colors.onHero),
+                            // Its own button: otherwise the whole identity block reads as one control.
+                            Semantics(
+                              container: true,
+                              button: true,
+                              label: l10n.profileEdit,
+                              onTap: () => context.push(Routes.profileEdit),
+                              excludeSemantics: true,
+                              child: DtGlass.onHero(
+                                radius: DtRadius.full,
+                                child: Material(
+                                  type: MaterialType.transparency,
+                                  child: InkWell(
+                                    customBorder: const StadiumBorder(),
+                                    onTap: () => context.push(Routes.profileEdit),
+                                    child: ConstrainedBox(
+                                      constraints: const BoxConstraints(minHeight: DtSize.touchMin),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: DtSpace.s4),
+                                        child: Center(
+                                          widthFactor: 1,
+                                          child: Text(
+                                            l10n.profileEdit,
+                                            style: DtType.label.copyWith(color: colors.onHero),
+                                          ),
                                         ),
                                       ),
                                     ),

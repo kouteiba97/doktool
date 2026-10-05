@@ -63,50 +63,56 @@ class DtTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text.rich(
-          TextSpan(
-            text: label,
-            children: [
-              if (requiredMark != null)
-                TextSpan(
-                  text: ' · $requiredMark',
-                  style: DtType.caption.copyWith(color: colors.inkMuted),
-                ),
-            ],
+        // Read as the field's own label below, not as a separate line.
+        ExcludeSemantics(
+          child: Text.rich(
+            TextSpan(
+              text: label,
+              children: [
+                if (requiredMark != null)
+                  TextSpan(
+                    text: ' · $requiredMark',
+                    style: DtType.caption.copyWith(color: colors.inkMuted),
+                  ),
+              ],
+            ),
+            style: DtType.label.copyWith(color: colors.inkSecondary),
           ),
-          style: DtType.label.copyWith(color: colors.inkSecondary),
         ),
         const SizedBox(height: DtSpace.s1),
-        TextField(
-          controller: controller,
-          focusNode: focusNode,
-          enabled: enabled,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          textInputAction: textInputAction,
-          autofillHints: autofillHints,
-          onChanged: onChanged,
-          onSubmitted: onSubmitted,
-          onEditingComplete: onEditingComplete,
-          inputFormatters: inputFormatters,
-          textCapitalization: textCapitalization,
-          maxLength: maxLength,
-          style: DtType.body.copyWith(color: colors.ink),
-          cursorColor: colors.brand,
-          decoration: InputDecoration(
-            isDense: true,
-            counterText: '',
-            filled: true,
-            fillColor: colors.surface,
-            constraints: const BoxConstraints(minHeight: DtSize.controlLg),
-            contentPadding: const EdgeInsets.symmetric(horizontal: DtSpace.s3, vertical: DtSpace.s3),
-            suffixIcon: trailing,
-            enabledBorder: border(
-              hasError ? colors.critical : colors.borderStrong,
-              hasError ? DtBorder.focus : DtBorder.control,
+        Semantics(
+          label: requiredMark == null ? label : '$label, $requiredMark',
+          child: TextField(
+            controller: controller,
+            focusNode: focusNode,
+            enabled: enabled,
+            obscureText: obscureText,
+            keyboardType: keyboardType,
+            textInputAction: textInputAction,
+            autofillHints: autofillHints,
+            onChanged: onChanged,
+            onSubmitted: onSubmitted,
+            onEditingComplete: onEditingComplete,
+            inputFormatters: inputFormatters,
+            textCapitalization: textCapitalization,
+            maxLength: maxLength,
+            style: DtType.body.copyWith(color: colors.ink),
+            cursorColor: colors.brand,
+            decoration: InputDecoration(
+              isDense: true,
+              counterText: '',
+              filled: true,
+              fillColor: colors.surface,
+              constraints: const BoxConstraints(minHeight: DtSize.controlLg),
+              contentPadding: const EdgeInsets.symmetric(horizontal: DtSpace.s3, vertical: DtSpace.s3),
+              suffixIcon: trailing,
+              enabledBorder: border(
+                hasError ? colors.critical : colors.borderStrong,
+                hasError ? DtBorder.focus : DtBorder.control,
+              ),
+              focusedBorder: border(hasError ? colors.critical : colors.focus, DtBorder.focus),
+              disabledBorder: border(colors.border, DtBorder.control),
             ),
-            focusedBorder: border(hasError ? colors.critical : colors.focus, DtBorder.focus),
-            disabledBorder: border(colors.border, DtBorder.control),
           ),
         ),
         if (hasError || helper != null) ...[

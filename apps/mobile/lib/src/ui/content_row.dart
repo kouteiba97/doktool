@@ -41,12 +41,14 @@ class ContentRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final locked = access.state == AccessState.locked;
+    final VoidCallback open = locked ? () => showLockSheet(context, access, title: title) : onOpen;
     return Semantics(
       button: true,
       label: locked ? '$title, ${lockWord(AppLocalizations.of(context), access.lockReason)}' : '$title, $actionLabel',
+      onTap: open,
       excludeSemantics: true,
       child: InkWell(
-        onTap: locked ? () => showLockSheet(context, access, title: title) : onOpen,
+        onTap: open,
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: DtSize.row),
           child: Padding(

@@ -63,7 +63,7 @@ class _PasswordFieldState extends State<PasswordField> {
       onChanged: widget.onChanged,
       onSubmitted: widget.onSubmitted,
       trailing: IconButton(
-        tooltip: widget.label,
+        tooltip: _visible ? l10n.commonHidePassword : l10n.commonShowPassword,
         icon: Icon(_visible ? LucideIcons.eyeOff : LucideIcons.eye, color: colors.inkMuted),
         onPressed: () => setState(() => _visible = !_visible),
       ),

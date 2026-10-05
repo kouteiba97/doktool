@@ -208,6 +208,7 @@ class _GlassSearchField extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
+      onTap: onTap,
       excludeSemantics: true,
       child: DecoratedBox(
         decoration: BoxDecoration(
@@ -266,6 +267,7 @@ class _QuickActions extends StatelessWidget {
               child: Semantics(
                 button: true,
                 label: label,
+                onTap: () => context.go(Routes.library(section)),
                 excludeSemantics: true,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(DtRadius.lg),
@@ -396,7 +398,10 @@ class _RecentsAndFavorites extends ConsumerWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.homeStartTitle, style: DtType.heading.copyWith(color: colors.ink)),
+          Semantics(
+            header: true,
+            child: Text(l10n.homeStartTitle, style: DtType.heading.copyWith(color: colors.ink)),
+          ),
           const SizedBox(height: DtSpace.s3),
           DtLiftedCard(
             padding: const EdgeInsets.symmetric(vertical: DtSpace.s1),
@@ -425,7 +430,10 @@ class _RecentsAndFavorites extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (recents.isNotEmpty) ...[
-          Text(l10n.homeRecents, style: DtType.heading.copyWith(color: colors.ink)),
+          Semantics(
+            header: true,
+            child: Text(l10n.homeRecents, style: DtType.heading.copyWith(color: colors.ink)),
+          ),
           const SizedBox(height: DtSpace.s3),
           DtLiftedCard(
             padding: EdgeInsets.zero,
@@ -434,7 +442,10 @@ class _RecentsAndFavorites extends ConsumerWidget {
           const SizedBox(height: DtSpace.s5),
         ],
         if (favorites.isNotEmpty) ...[
-          Text(l10n.homeFavorites, style: DtType.heading.copyWith(color: colors.ink)),
+          Semantics(
+            header: true,
+            child: Text(l10n.homeFavorites, style: DtType.heading.copyWith(color: colors.ink)),
+          ),
           const SizedBox(height: DtSpace.s3),
           DtLiftedCard(
             padding: EdgeInsets.zero,

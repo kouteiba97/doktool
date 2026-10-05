@@ -39,6 +39,35 @@ export function placeholders(message) {
 }
 
 /**
+ * The message as Flutter gen-l10n reads it. gen-l10n does not know the ICU `#` shorthand of plural
+ * branches and would print it as is (« # modèles »): each `#` becomes the plural's own argument.
+ */
+export function toFlutterMessage(message) {
+  const pounds = [];
+  const walk = (elements, plural) => {
+    for (const element of elements) {
+      if (element.type === TYPE.pound && plural) {
+        pounds.push({
+          start: element.location.start.offset,
+          end: element.location.end.offset,
+          plural,
+        });
+      }
+      if (element.type === TYPE.select || element.type === TYPE.plural) {
+        const scope = element.type === TYPE.plural ? element.value : plural;
+        for (const option of Object.values(element.options)) walk(option.value, scope);
+      }
+    }
+  };
+  walk(parse(message, { captureLocation: true }), null);
+  let result = message;
+  for (const pound of pounds.sort((a, b) => b.start - a.start)) {
+    result = `${result.slice(0, pound.start)}{${pound.plural}}${result.slice(pound.end)}`;
+  }
+  return result;
+}
+
+/**
  * ARB document for one locale. Keys come out sorted so the files are stable; a collision after
  * dropping the namespace is an error.
  */
@@ -52,7 +81,7 @@ export function renderArb(locale, catalogue) {
     if (origin.has(name))
       throw new Error(`ARB key "${name}" comes from both ${origin.get(name)} and ${key}`);
     origin.set(name, key);
-    arb[name] = catalogue[key];
+    arb[name] = toFlutterMessage(catalogue[key]);
     const args = placeholders(catalogue[key]);
     arb[`@${name}`] =
       Object.keys(args).length > 0

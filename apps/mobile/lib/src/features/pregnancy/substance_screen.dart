@@ -449,7 +449,10 @@ class _NoData extends StatelessWidget {
             Icon(LucideIcons.searchX, color: colors.inkSecondary, size: DtSpace.s5),
             const SizedBox(width: DtSpace.s2),
             Expanded(
-              child: Text(l10n.pregnancyNoDataTitle, style: DtType.heading.copyWith(color: colors.ink)),
+              child: Semantics(
+                header: true,
+                child: Text(l10n.pregnancyNoDataTitle, style: DtType.heading.copyWith(color: colors.ink)),
+              ),
             ),
           ],
         ),
@@ -537,7 +540,10 @@ class _PregnancyBlockState extends State<_PregnancyBlock> {
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_label(l10n, _period), style: DtType.heading.copyWith(color: colors.ink)),
+                    Semantics(
+                      header: true,
+                      child: Text(_label(l10n, _period), style: DtType.heading.copyWith(color: colors.ink)),
+                    ),
                     const SizedBox(height: DtSpace.s3),
                     if (value.conduct != null && value.conduct != Conduct.$unknown) ...[
                       ConductBadge(conduct: value.conduct!),

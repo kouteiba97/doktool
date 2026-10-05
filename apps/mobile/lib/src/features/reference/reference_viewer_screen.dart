@@ -253,9 +253,14 @@ class _ZoomControl extends StatelessWidget {
               IconButton(tooltip: l10n.viewerZoomIn, icon: const Icon(LucideIcons.zoomIn), onPressed: onZoomIn),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: DtSpace.s2),
-                child: Text(
-                  l10n.viewerPage('$page', '$pages'),
-                  style: DtType.label.copyWith(color: colors.ink, fontFeatures: const [FontFeature.tabularFigures()]),
+                // « page n sur N » for screen readers (section 20), « n / N » on screen.
+                child: Semantics(
+                  label: l10n.viewerPageSpoken('$page', '$pages'),
+                  excludeSemantics: true,
+                  child: Text(
+                    l10n.viewerPage('$page', '$pages'),
+                    style: DtType.label.copyWith(color: colors.ink, fontFeatures: const [FontFeature.tabularFigures()]),
+                  ),
                 ),
               ),
             ],

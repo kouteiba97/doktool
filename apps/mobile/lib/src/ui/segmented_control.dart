@@ -84,10 +84,16 @@ class _SegmentButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    // One node per segment, with its own action: merged into the control, the segments could not
+    // be chosen with TalkBack or VoiceOver.
     return Semantics(
+      container: true,
       button: true,
       selected: selected,
       inMutuallyExclusiveGroup: true,
+      label: label,
+      onTap: selected ? null : onTap,
+      excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,

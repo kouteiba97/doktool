@@ -104,6 +104,9 @@ class DtGlassIconButton extends StatelessWidget {
       child: Semantics(
         button: true,
         label: tooltip,
+        // The InkWell below is excluded with its tap action: the action is given here, so
+        // TalkBack and VoiceOver can activate the button.
+        onTap: onPressed,
         excludeSemantics: true,
         child: SizedBox.square(
           dimension: DtSize.touchMin,

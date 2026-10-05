@@ -114,7 +114,10 @@ class _SummaryCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(caseName(l10n, draft.type), style: DtType.heading.copyWith(color: colors.ink)),
+                child: Semantics(
+                  header: true,
+                  child: Text(caseName(l10n, draft.type), style: DtType.heading.copyWith(color: colors.ink)),
+                ),
               ),
               DtBadge(
                 text: complete ? l10n.verificationSummaryComplete : l10n.verificationSummaryIncomplete,

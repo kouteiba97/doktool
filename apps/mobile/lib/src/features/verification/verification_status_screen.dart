@@ -239,7 +239,10 @@ class _CaseCardState extends ConsumerState<_CaseCard> {
           Row(
             children: [
               Expanded(
-                child: Text(caseName(l10n, widget.state.type), style: DtType.heading.copyWith(color: colors.ink)),
+                child: Semantics(
+                  header: true,
+                  child: Text(caseName(l10n, widget.state.type), style: DtType.heading.copyWith(color: colors.ink)),
+                ),
               ),
               badge,
               if (decided && (latest?.documents.isNotEmpty ?? false))

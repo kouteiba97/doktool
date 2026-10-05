@@ -134,7 +134,10 @@ class _PlanCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(english ? plan.nameEn : plan.nameFr, style: DtType.heading.copyWith(color: colors.ink)),
+          Semantics(
+            header: true,
+            child: Text(english ? plan.nameEn : plan.nameFr, style: DtType.heading.copyWith(color: colors.ink)),
+          ),
           const SizedBox(height: DtSpace.s1),
           Text(
             l10n.plansPrice(moneyText(context, plan.priceMinor, plan.currency)),
