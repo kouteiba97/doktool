@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AccessModule } from '../access/index.js';
 import { AdminAuthModule } from '../admin-auth/index.js';
 import { AuditModule } from '../audit/index.js';
+import { ClinicalReviewModule } from '../clinical-review/index.js';
 import { PregnancyAdminController } from './pregnancy-admin.controller.js';
 import { PregnancyAdminService } from './pregnancy-admin.service.js';
 import { PregnancyController } from './pregnancy.controller.js';
@@ -17,7 +18,7 @@ import { PregnancyService } from './pregnancy.service.js';
  * Other modules reach it only through ./index.ts.
  */
 @Module({
-  imports: [AccessModule, AdminAuthModule, AuditModule],
+  imports: [AccessModule, AdminAuthModule, AuditModule, ClinicalReviewModule],
   controllers: [PregnancyController, PregnancyAdminController],
   providers: [PregnancyService, PregnancyAdminService],
   exports: [PregnancyService, PregnancyAdminService],

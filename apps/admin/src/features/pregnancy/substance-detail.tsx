@@ -15,6 +15,7 @@ import { Alert, EmptyState, PageHeader, Skeleton } from '@/ui/feedback';
 import { Switch } from '@/ui/field';
 import { ReasonDialog } from '@/ui/reason-dialog';
 import { useToast } from '@/ui/toast';
+import { approvalStep, SignOffRows } from '../clinical-review/sign-offs';
 import { SourceDialog, SubstanceDialog } from './dialogs';
 import {
   isEditable,
@@ -97,7 +98,9 @@ export function SubstanceDetailPage({ id }: { id: string }) {
   const mine = loaded?.authoredBy.id === me?.id;
   const canEdit =
     loaded !== undefined && isEditable(loaded.status) && mine && has('pregnancy.draft');
-  const canReview = loaded?.status === 'IN_REVIEW' && !mine && has('pregnancy.review');
+  const step = loaded ? approvalStep(loaded, me?.id, 'admin.pregnancy.approve') : null;
+  const canReview =
+    loaded?.status === 'IN_REVIEW' && !mine && !step?.signedByMe && has('pregnancy.review');
 
   return (
     <>
@@ -216,6 +219,9 @@ export function SubstanceDetailPage({ id }: { id: string }) {
               {loaded.status === 'IN_REVIEW' && mine ? (
                 <Alert tone="info">{t('admin.pregnancy.waitingForReviewer')}</Alert>
               ) : null}
+              {loaded.status === 'IN_REVIEW' && step?.signedByMe ? (
+                <Alert tone="info">{t('admin.review.waitingSecond')}</Alert>
+              ) : null}
               {isEditable(loaded.status) && loaded.problems.length > 0 ? (
                 <Alert tone="warning" title={t('admin.pregnancy.missingTitle')}>
                   <ul className="list-disc ps-5">
@@ -247,7 +253,7 @@ export function SubstanceDetailPage({ id }: { id: string }) {
                 {canReview ? (
                   <>
                     <Button variant="primary" onClick={() => setAction('approve')}>
-                      {t('admin.pregnancy.approve')}
+                      {t(step?.label ?? 'admin.pregnancy.approve')}
                     </Button>
                     <Button onClick={() => setAction('changes')}>
                       {t('admin.pregnancy.requestChanges')}
@@ -378,18 +384,26 @@ export function SubstanceDetailPage({ id }: { id: string }) {
           <ReasonDialog
             open={action === 'approve'}
             onOpenChange={(next) => setAction(next ? 'approve' : null)}
-            title={t('admin.pregnancy.approveTitle', { version: loaded.version })}
-            description={t('admin.pregnancy.approveBody')}
-            confirmLabel={t('admin.pregnancy.approve')}
+            title={
+              step?.title
+                ? t(step.title)
+                : t('admin.pregnancy.approveTitle', { version: loaded.version })
+            }
+            description={t(step?.body ?? 'admin.pregnancy.approveBody')}
+            confirmLabel={t(step?.label ?? 'admin.pregnancy.approve')}
             onConfirm={async (comment) => {
-              await call(
+              const result = await call(
                 api.POST('/admin/v1/pregnancy/versions/{versionId}/approve', {
                   params: { path: { versionId: loaded.id } },
                   body: { comment },
                 }),
               );
               await refresh(loaded.id);
-              toast(t('admin.pregnancy.published', { version: loaded.version }));
+              toast(
+                result.status === 'PUBLISHED'
+                  ? t('admin.pregnancy.published', { version: loaded.version })
+                  : t('admin.review.signedOff'),
+              );
             }}
           />
           <ReasonDialog
@@ -435,6 +449,7 @@ function VersionHeader({ version }: { version: ProfileVersion }) {
         </dd>
         <dt>{t('admin.pregnancy.changeReason')}</dt>
         <dd>{version.changeReason}</dd>
+        <SignOffRows version={version} />
         {version.reviewedBy ? (
           <>
             <dt>{t('admin.pregnancy.reviewer')}</dt>

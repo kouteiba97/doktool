@@ -850,6 +850,13 @@ model CalculatorVersion {
   reviewedBy       AdminAccount?           @relation("CalculatorVersionReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
   reviewNote       String?                 @map("review_note")
   reviewedAt       DateTime?               @map("reviewed_at") @db.Timestamptz(3)
+  /// Independent sign-offs this version needs before it is published (1 or 2, ADR-024).
+  requiredSignOffs Int                     @default(1) @map("required_sign_offs")
+  /// The first of two sign-offs; the publishing reviewer is the second. Cleared on return to draft.
+  firstSignOffById String?                 @map("first_sign_off_by_id") @db.Uuid
+  firstSignOffBy   AdminAccount?           @relation("CalculatorVersionFirstSignOff", fields: [firstSignOffById], references: [id], onDelete: Restrict)
+  firstSignOffNote String?                 @map("first_sign_off_note")
+  firstSignOffAt   DateTime?               @map("first_sign_off_at") @db.Timestamptz(3)
   publishedAt      DateTime?               @map("published_at") @db.Timestamptz(3)
   engineVersion    String?                 @map("engine_version")
   /// { passed: boolean, ranAt: ISO date, results: [...] } from the backend engine.
@@ -907,6 +914,28 @@ model CalculatorTestCase {
   @@map("calculator_test_cases")
 }
 
+// ──────────────────────────── [clinical-review] ────────────────────────────
+
+/// Clinical content governed by author ≠ reviewer, and how many sign-offs it needs (ADR-024).
+enum ClinicalContentKind {
+  CALCULATOR
+  PREGNANCY_PROFILE
+
+  @@map("clinical_content_kind")
+}
+
+/// How many independent sign-offs a kind of clinical content needs before publication, set by the
+/// Super Admin. No row means one (the reviewer who publishes).
+model ClinicalReviewPolicy {
+  content          ClinicalContentKind @id
+  requiredSignOffs Int                 @map("required_sign_offs")
+  updatedById      String              @map("updated_by_id") @db.Uuid
+  updatedBy        AdminAccount        @relation("ClinicalReviewPolicyUpdater", fields: [updatedById], references: [id], onDelete: Restrict)
+  updatedAt        DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("clinical_review_policies")
+}
+
 // ─────────────────────────────── [pregnancy] ───────────────────────────────
 
 /// A medicine (DCI) of « Grossesse · Allaitement » (ADR-019). Only what the profiles need, not a
@@ -937,26 +966,33 @@ model Substance {
 /// One version of a substance's pregnancy and lactation profile. Published versions are immutable;
 /// a correction is a new version (section 25 Appendix B).
 model SubstanceProfileVersion {
-  id            String                 @id @default(uuid(7)) @db.Uuid
-  substanceId   String                 @map("substance_id") @db.Uuid
-  substance     Substance              @relation(fields: [substanceId], references: [id], onDelete: Restrict)
-  version       Int
-  status        ProfileVersionStatus   @default(DRAFT)
+  id               String                 @id @default(uuid(7)) @db.Uuid
+  substanceId      String                 @map("substance_id") @db.Uuid
+  substance        Substance              @relation(fields: [substanceId], references: [id], onDelete: Restrict)
+  version          Int
+  status           ProfileVersionStatus   @default(DRAFT)
   /// Structured pregnancy and lactation content, validated by pregnancy.content.ts.
-  content       Json
-  changeReason  String                 @map("change_reason")
-  authoredById  String                 @map("authored_by_id") @db.Uuid
-  authoredBy    AdminAccount           @relation("ProfileVersionAuthor", fields: [authoredById], references: [id], onDelete: Restrict)
-  submittedAt   DateTime?              @map("submitted_at") @db.Timestamptz(3)
-  reviewedById  String?                @map("reviewed_by_id") @db.Uuid
-  reviewedBy    AdminAccount?          @relation("ProfileVersionReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
-  reviewComment String?                @map("review_comment")
-  reviewedAt    DateTime?              @map("reviewed_at") @db.Timestamptz(3)
-  publishedAt   DateTime?              @map("published_at") @db.Timestamptz(3)
-  sources       ProfileVersionSource[]
-  reports       ContentReport[]
-  createdAt     DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt     DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+  content          Json
+  changeReason     String                 @map("change_reason")
+  authoredById     String                 @map("authored_by_id") @db.Uuid
+  authoredBy       AdminAccount           @relation("ProfileVersionAuthor", fields: [authoredById], references: [id], onDelete: Restrict)
+  submittedAt      DateTime?              @map("submitted_at") @db.Timestamptz(3)
+  reviewedById     String?                @map("reviewed_by_id") @db.Uuid
+  reviewedBy       AdminAccount?          @relation("ProfileVersionReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+  reviewComment    String?                @map("review_comment")
+  reviewedAt       DateTime?              @map("reviewed_at") @db.Timestamptz(3)
+  /// Independent sign-offs this version needs before it is published (1 or 2, ADR-024).
+  requiredSignOffs Int                    @default(1) @map("required_sign_offs")
+  /// The first of two sign-offs; the publishing reviewer is the second. Cleared on a change request.
+  firstSignOffById String?                @map("first_sign_off_by_id") @db.Uuid
+  firstSignOffBy   AdminAccount?          @relation("ProfileVersionFirstSignOff", fields: [firstSignOffById], references: [id], onDelete: Restrict)
+  firstSignOffNote String?                @map("first_sign_off_note")
+  firstSignOffAt   DateTime?              @map("first_sign_off_at") @db.Timestamptz(3)
+  publishedAt      DateTime?              @map("published_at") @db.Timestamptz(3)
+  sources          ProfileVersionSource[]
+  reports          ContentReport[]
+  createdAt        DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([substanceId, version])
   @@index([status])
@@ -1305,10 +1341,13 @@ model AdminAccount {
   referenceFilesUploaded     ReferenceDocumentFile[]   @relation("ReferenceDocumentFileUploader")
   calculatorVersionsAuthored CalculatorVersion[]       @relation("CalculatorVersionAuthor")
   calculatorVersionsReviewed CalculatorVersion[]       @relation("CalculatorVersionReviewer")
+  calculatorVersionsSigned   CalculatorVersion[]       @relation("CalculatorVersionFirstSignOff")
   substancesCreated          Substance[]               @relation("SubstanceCreator")
   substancesUpdated          Substance[]               @relation("SubstanceUpdater")
   profileVersionsAuthored    SubstanceProfileVersion[] @relation("ProfileVersionAuthor")
   profileVersionsReviewed    SubstanceProfileVersion[] @relation("ProfileVersionReviewer")
+  profileVersionsSigned      SubstanceProfileVersion[] @relation("ProfileVersionFirstSignOff")
+  reviewPoliciesUpdated      ClinicalReviewPolicy[]    @relation("ClinicalReviewPolicyUpdater")
   clinicalSourcesCreated     ClinicalSource[]          @relation("ClinicalSourceCreator")
   contentReportsResolved     ContentReport[]           @relation("ContentReportResolver")
 

@@ -1076,6 +1076,24 @@
             "format": "date-time",
             "type": "string"
           },
+          "firstSignOffAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "firstSignOffBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfilePersonDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "firstSignOffNote": {
+            "nullable": true,
+            "type": "string"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -1091,6 +1109,14 @@
             "format": "date-time",
             "nullable": true,
             "type": "string"
+          },
+          "requiredSignOffs": {
+            "description": "Independent sign-offs needed before publication (ADR-024).",
+            "enum": [
+              1,
+              2
+            ],
+            "type": "number"
           },
           "reviewComment": {
             "nullable": true,
@@ -1142,6 +1168,10 @@
           "authoredBy",
           "reviewedBy",
           "reviewComment",
+          "requiredSignOffs",
+          "firstSignOffBy",
+          "firstSignOffNote",
+          "firstSignOffAt",
           "submittedAt",
           "publishedAt",
           "createdAt",
@@ -2455,6 +2485,24 @@
             "nullable": true,
             "type": "string"
           },
+          "firstSignOffAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "firstSignOffBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonRefDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "firstSignOffNote": {
+            "nullable": true,
+            "type": "string"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -2463,6 +2511,14 @@
             "format": "date-time",
             "nullable": true,
             "type": "string"
+          },
+          "requiredSignOffs": {
+            "description": "Independent sign-offs needed before publication (ADR-024).",
+            "enum": [
+              1,
+              2
+            ],
+            "type": "number"
           },
           "reviewNote": {
             "nullable": true,
@@ -2521,6 +2577,10 @@
           "reviewedBy",
           "reviewNote",
           "reviewedAt",
+          "requiredSignOffs",
+          "firstSignOffBy",
+          "firstSignOffNote",
+          "firstSignOffAt",
           "publishedAt",
           "engineVersion",
           "testRun",
@@ -3102,6 +3162,13 @@
           "SUBSCRIPTION_VIEWED",
           "DEMO_STARTED",
           "DEMO_FEATURE_VIEWED"
+        ],
+        "type": "string"
+      },
+      "ClinicalContentKind": {
+        "enum": [
+          "CALCULATOR",
+          "PREGNANCY_PROFILE"
         ],
         "type": "string"
       },
@@ -6233,6 +6300,21 @@
         ],
         "type": "object"
       },
+      "PolicyEditorDto": {
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ],
+        "type": "object"
+      },
       "PreferencesDto": {
         "properties": {
           "language": {
@@ -6584,6 +6666,24 @@
             "format": "date-time",
             "type": "string"
           },
+          "firstSignOffAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "firstSignOffBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfilePersonDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "firstSignOffNote": {
+            "nullable": true,
+            "type": "string"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -6592,6 +6692,14 @@
             "format": "date-time",
             "nullable": true,
             "type": "string"
+          },
+          "requiredSignOffs": {
+            "description": "Independent sign-offs needed before publication (ADR-024).",
+            "enum": [
+              1,
+              2
+            ],
+            "type": "number"
           },
           "reviewComment": {
             "nullable": true,
@@ -6634,6 +6742,10 @@
           "authoredBy",
           "reviewedBy",
           "reviewComment",
+          "requiredSignOffs",
+          "firstSignOffBy",
+          "firstSignOffNote",
+          "firstSignOffAt",
           "submittedAt",
           "publishedAt",
           "createdAt",
@@ -7532,6 +7644,50 @@
           "reviewedBy",
           "reviewedAt",
           "testsPassed"
+        ],
+        "type": "object"
+      },
+      "ReviewPolicyDto": {
+        "properties": {
+          "content": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClinicalContentKind"
+              }
+            ]
+          },
+          "eligibleReviewers": {
+            "description": "Active admins who may approve this content.",
+            "type": "number"
+          },
+          "requiredSignOffs": {
+            "enum": [
+              1,
+              2
+            ],
+            "type": "number"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "updatedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolicyEditorDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "content",
+          "requiredSignOffs",
+          "eligibleReviewers",
+          "updatedBy",
+          "updatedAt"
         ],
         "type": "object"
       },
@@ -8679,6 +8835,28 @@
           }
         },
         "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
+      "UpdateReviewPolicyDto": {
+        "properties": {
+          "reason": {
+            "description": "Audit log.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "requiredSignOffs": {
+            "enum": [
+              1,
+              2
+            ],
+            "type": "number"
+          }
+        },
+        "required": [
+          "requiredSignOffs",
           "reason"
         ],
         "type": "object"
@@ -11860,6 +12038,100 @@
         ],
         "tags": [
           "admin-calculators"
+        ]
+      }
+    },
+    "/admin/v1/clinical-review/policies": {
+      "get": {
+        "operationId": "ClinicalReviewController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReviewPolicyDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-clinical-review"
+        ]
+      }
+    },
+    "/admin/v1/clinical-review/policies/{content}": {
+      "put": {
+        "operationId": "ClinicalReviewController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "content",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ClinicalContentKind"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReviewPolicyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewPolicyDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-clinical-review"
         ]
       }
     },

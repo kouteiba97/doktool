@@ -10,6 +10,7 @@ import {
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 import type { AdminPrincipal } from '../admin-auth/index.js';
 import { AuditService } from '../audit/index.js';
+import { ClinicalReviewService } from '../clinical-review/index.js';
 import { DRAFTING_ACTIONS } from './calculators.policy.js';
 import {
   type CalculatorDefinition,
@@ -76,6 +77,7 @@ const VERSION_INCLUDE = {
   testCases: { orderBy: { createdAt: 'asc' } },
   authoredBy: { select: { id: true, fullName: true } },
   reviewedBy: { select: { id: true, fullName: true } },
+  firstSignOffBy: { select: { id: true, fullName: true } },
 } satisfies Prisma.CalculatorVersionInclude;
 
 export type VersionRecord = Prisma.CalculatorVersionGetPayload<{ include: typeof VERSION_INCLUDE }>;
@@ -90,6 +92,7 @@ export class CalculatorsAdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly review: ClinicalReviewService,
   ) {}
 
   // ─────────────────────────── calculators ───────────────────────────
@@ -456,9 +459,10 @@ export class CalculatorsAdminService {
   ): Promise<VersionRecord> {
     const version = await this.requireStatus(versionId, ['DRAFT']);
     this.assertPublishable(version, this.storedRun(version));
+    const requiredSignOffs = await this.review.required('CALCULATOR');
     await this.prisma.calculatorVersion.update({
       where: { id: versionId },
-      data: { status: 'IN_REVIEW' },
+      data: { status: 'IN_REVIEW', requiredSignOffs },
     });
     await this.record(
       admin,
@@ -467,7 +471,7 @@ export class CalculatorsAdminService {
       'CalculatorVersion',
       versionId,
       {
-        after: { status: 'IN_REVIEW' },
+        after: { status: 'IN_REVIEW', requiredSignOffs },
       },
     );
     return this.version(versionId);
@@ -482,9 +486,15 @@ export class CalculatorsAdminService {
   ): Promise<VersionRecord> {
     await this.requireStatus(versionId, ['IN_REVIEW']);
     await this.assertIndependentReviewer(admin, versionId);
+    // A draft changed after a first sign-off is signed again from the start.
     await this.prisma.calculatorVersion.update({
       where: { id: versionId },
-      data: { status: 'DRAFT' },
+      data: {
+        status: 'DRAFT',
+        firstSignOffById: null,
+        firstSignOffAt: null,
+        firstSignOffNote: null,
+      },
     });
     await this.record(
       admin,
@@ -501,8 +511,9 @@ export class CalculatorsAdminService {
   }
 
   /**
-   * « Approuver et publier »: re-runs every test on the backend engine, checks sources and the
-   * four-eyes rule, publishes, makes it current and retires the previously published version.
+   * « Approuver »: re-runs every test on the backend engine and checks sources and the four-eyes
+   * rule. When two sign-offs are required and none is recorded yet, records the first one (ADR-024);
+   * otherwise publishes, makes it current and retires the previously published version.
    */
   async publish(
     admin: AdminPrincipal,
@@ -514,6 +525,8 @@ export class CalculatorsAdminService {
     await this.assertIndependentReviewer(admin, versionId);
     const run = this.testRunFor(version);
     this.assertPublishable(version, run);
+    const approval = await this.review.approval('CALCULATOR', version, admin);
+    if (!approval.publish) return this.signOff(admin, version, reviewNote, run, client);
 
     const now = new Date();
     const previous = await this.prisma.$transaction(async (tx) => {
@@ -527,6 +540,7 @@ export class CalculatorsAdminService {
           reviewedById: admin.adminId,
           reviewedAt: now,
           reviewNote: reviewNote.trim(),
+          requiredSignOffs: approval.requiredSignOffs,
           publishedAt: now,
           engineVersion: ENGINE_VERSION,
           testRun: run as unknown as Prisma.InputJsonValue,
@@ -557,11 +571,44 @@ export class CalculatorsAdminService {
           engineVersion: ENGINE_VERSION,
           testsPassed: run.total,
           retiredVersionId: previous,
+          firstSignOffById: version.firstSignOffById,
         },
         reason: reviewNote,
       },
     );
     return this.version(versionId);
+  }
+
+  /** The first of two sign-offs: the version stays in review for a second, different reviewer. */
+  private async signOff(
+    admin: AdminPrincipal,
+    version: VersionRecord,
+    note: string,
+    run: TestRun,
+    client: ClientInfo,
+  ): Promise<VersionRecord> {
+    await this.prisma.calculatorVersion.update({
+      where: { id: version.id },
+      data: {
+        requiredSignOffs: 2,
+        firstSignOffById: admin.adminId,
+        firstSignOffAt: new Date(),
+        firstSignOffNote: note.trim(),
+        testRun: run as unknown as Prisma.InputJsonValue,
+      },
+    });
+    await this.record(
+      admin,
+      client,
+      'calculator.version.signed_off',
+      'CalculatorVersion',
+      version.id,
+      {
+        after: { version: version.version, signOff: 1, requiredSignOffs: 2 },
+        reason: note,
+      },
+    );
+    return this.version(version.id);
   }
 
   /** « Retirer »: devices drop it at the next sync; a retired current version leaves the calculator unavailable. */
@@ -622,7 +669,8 @@ export class CalculatorsAdminService {
       include: VERSION_INCLUDE,
     });
     if (!version) throw new DomainError('NOT_FOUND', 'Calculator version not found.');
-    return version;
+    if (version.status !== 'DRAFT' && version.status !== 'IN_REVIEW') return version;
+    return { ...version, requiredSignOffs: await this.review.requiredFor('CALCULATOR', version) };
   }
 
   // ─────────────────────────── rules ───────────────────────────

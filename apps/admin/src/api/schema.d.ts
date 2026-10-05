@@ -608,6 +608,38 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/admin/v1/clinical-review/policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ClinicalReviewController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/v1/clinical-review/policies/{content}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["ClinicalReviewController_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/v1/finance/expenses": {
         parameters: {
             query?: never;
@@ -2830,12 +2862,21 @@ export type components = {
             content: components["schemas"]["ProfileContentDto"];
             /** Format: date-time */
             createdAt: string;
+            /** Format: date-time */
+            firstSignOffAt: string | null;
+            firstSignOffBy: components["schemas"]["ProfilePersonDto"] | null;
+            firstSignOffNote: string | null;
             /** Format: uuid */
             id: string;
             /** @description What still prevents submission for review (empty = ready). */
             problems: string[];
             /** Format: date-time */
             publishedAt: string | null;
+            /**
+             * @description Independent sign-offs needed before publication (ADR-024).
+             * @enum {number}
+             */
+            requiredSignOffs: 1 | 2;
             reviewComment: string | null;
             reviewedBy: components["schemas"]["ProfilePersonDto"] | null;
             sources: components["schemas"]["ClinicalSourceDto"][];
@@ -3171,10 +3212,19 @@ export type components = {
             };
             definitionSha256: string;
             engineVersion: string | null;
+            /** Format: date-time */
+            firstSignOffAt: string | null;
+            firstSignOffBy: components["schemas"]["PersonRefDto"] | null;
+            firstSignOffNote: string | null;
             /** Format: uuid */
             id: string;
             /** Format: date-time */
             publishedAt: string | null;
+            /**
+             * @description Independent sign-offs needed before publication (ADR-024).
+             * @enum {number}
+             */
+            requiredSignOffs: 1 | 2;
             /** Format: date-time */
             reviewedAt: string | null;
             reviewedBy: components["schemas"]["PersonRefDto"] | null;
@@ -3365,6 +3415,8 @@ export type components = {
         };
         /** @enum {string} */
         ClientAnalyticsEventType: "SEARCH_PERFORMED" | "REFERENCE_SEARCHED" | "REFERENCE_OPENED" | "REFERENCE_VIEWED" | "CALCULATOR_STARTED" | "CALCULATOR_COMPLETED" | "PREGNANCY_VIEWED" | "FAVORITE_ADDED" | "FAVORITE_REMOVED" | "SUBSCRIPTION_VIEWED" | "DEMO_STARTED" | "DEMO_FEATURE_VIEWED";
+        /** @enum {string} */
+        ClinicalContentKind: "CALCULATOR" | "PREGNANCY_PROFILE";
         ClinicalSourceDto: {
             edition: string | null;
             /** Format: uuid */
@@ -4230,6 +4282,10 @@ export type components = {
             /** @description Empty for students (no subscription, ADR-006 Q2). */
             plans: components["schemas"]["PlanDto"][];
         };
+        PolicyEditorDto: {
+            fullName: string;
+            id: string;
+        };
         PreferencesDto: {
             language: components["schemas"]["Language"];
             theme: components["schemas"]["ThemePreference"];
@@ -4308,10 +4364,19 @@ export type components = {
             changeReason: string;
             /** Format: date-time */
             createdAt: string;
+            /** Format: date-time */
+            firstSignOffAt: string | null;
+            firstSignOffBy: components["schemas"]["ProfilePersonDto"] | null;
+            firstSignOffNote: string | null;
             /** Format: uuid */
             id: string;
             /** Format: date-time */
             publishedAt: string | null;
+            /**
+             * @description Independent sign-offs needed before publication (ADR-024).
+             * @enum {number}
+             */
+            requiredSignOffs: 1 | 2;
             reviewComment: string | null;
             reviewedBy: components["schemas"]["ProfilePersonDto"] | null;
             status: components["schemas"]["ProfileVersionStatus"];
@@ -4577,6 +4642,16 @@ export type components = {
             reviewedAt: string;
             reviewedBy: string;
             testsPassed: number;
+        };
+        ReviewPolicyDto: {
+            content: components["schemas"]["ClinicalContentKind"];
+            /** @description Active admins who may approve this content. */
+            eligibleReviewers: number;
+            /** @enum {number} */
+            requiredSignOffs: 1 | 2;
+            /** Format: date-time */
+            updatedAt: string | null;
+            updatedBy: components["schemas"]["PolicyEditorDto"] | null;
         };
         SaveDefinitionDto: {
             /** @description Calculator definition, schema version 1 (docs/adr/ADR-012-calculator-engine.md). */
@@ -4888,6 +4963,12 @@ export type components = {
             reason: string;
             titleEn?: string | null;
             titleFr?: string;
+        };
+        UpdateReviewPolicyDto: {
+            /** @description Audit log. */
+            reason: string;
+            /** @enum {number} */
+            requiredSignOffs: 1 | 2;
         };
         UpdateSubstanceDto: {
             atcCode?: string | null;
@@ -6489,6 +6570,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminVersionDto"];
+                };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ClinicalReviewController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewPolicyDto"][];
+                };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ClinicalReviewController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                content: components["schemas"]["ClinicalContentKind"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateReviewPolicyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewPolicyDto"];
                 };
             };
             /** @description Error envelope */

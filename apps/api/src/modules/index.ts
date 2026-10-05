@@ -8,6 +8,7 @@ import { BillingModule } from './billing/index.js';
 import { FinanceModule } from './finance/index.js';
 import { ReferenceLibraryModule } from './reference-library/index.js';
 import { CalculatorsModule } from './calculators/index.js';
+import { ClinicalReviewModule } from './clinical-review/index.js';
 import { PregnancyModule } from './pregnancy/index.js';
 import { SearchModule } from './search/index.js';
 import { ActivityModule } from './activity/index.js';
@@ -28,6 +29,7 @@ export const DOMAIN_MODULES = [
   BillingModule,
   FinanceModule,
   ReferenceLibraryModule,
+  ClinicalReviewModule,
   CalculatorsModule,
   PregnancyModule,
   SearchModule,

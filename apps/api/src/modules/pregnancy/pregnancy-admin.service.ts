@@ -6,6 +6,7 @@ import { type ClinicalSourceType, Prisma } from '../../generated/prisma/client.j
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 import type { AdminPrincipal } from '../admin-auth/index.js';
 import { AuditService } from '../audit/index.js';
+import { ClinicalReviewService } from '../clinical-review/index.js';
 import {
   EMPTY_CONTENT,
   type ProfileContent,
@@ -42,6 +43,7 @@ const PERSON = { select: { id: true, fullName: true } } as const;
 const VERSION_INCLUDE = {
   authoredBy: PERSON,
   reviewedBy: PERSON,
+  firstSignOffBy: PERSON,
   sources: { select: { source: true } },
   substance: { select: { id: true, nameFr: true, nameEn: true } },
 } satisfies Prisma.SubstanceProfileVersionInclude;
@@ -63,6 +65,7 @@ export class PregnancyAdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly review: ClinicalReviewService,
   ) {}
 
   // ─────────────────────────────── substances ───────────────────────────────
@@ -93,7 +96,7 @@ export class PregnancyAdminService {
       include: {
         versions: {
           orderBy: { version: 'desc' },
-          include: { authoredBy: PERSON, reviewedBy: PERSON },
+          include: { authoredBy: PERSON, reviewedBy: PERSON, firstSignOffBy: PERSON },
         },
         _count: { select: { reports: { where: { resolvedAt: null } } } },
       },
@@ -212,7 +215,14 @@ export class PregnancyAdminService {
       include: VERSION_INCLUDE,
     });
     if (!row) throw new DomainError('NOT_FOUND', 'Profile version not found.');
-    return { ...row, problems: await this.problemsOf(row) };
+    const open = (OPEN_STATUSES as readonly string[]).includes(row.status);
+    return {
+      ...row,
+      requiredSignOffs: open
+        ? await this.review.requiredFor('PREGNANCY_PROFILE', row)
+        : row.requiredSignOffs,
+      problems: await this.problemsOf(row),
+    };
   }
 
   /** Saves the draft as written: incomplete is fine until submission. */
@@ -274,7 +284,12 @@ export class PregnancyAdminService {
     }
     await this.prisma.substanceProfileVersion.update({
       where: { id: versionId },
-      data: { status: 'IN_REVIEW', submittedAt: new Date(), changeReason: reason },
+      data: {
+        status: 'IN_REVIEW',
+        submittedAt: new Date(),
+        changeReason: reason,
+        requiredSignOffs: await this.review.required('PREGNANCY_PROFILE'),
+      },
     });
     await this.record(
       admin,
@@ -289,11 +304,39 @@ export class PregnancyAdminService {
     return this.version(versionId);
   }
 
-  /** Approves and publishes; the previous published version is superseded in the same step. */
+  /**
+   * Approves. When two sign-offs are required and none is recorded yet, records the first one
+   * (ADR-024); otherwise publishes, and the previous published version is superseded in the same
+   * step.
+   */
   async approve(admin: AdminPrincipal, versionId: string, comment: string, client: ClientInfo) {
     const current = await this.version(versionId);
     this.assertReviewer(admin, current);
     this.assertStatus(current.status, ['IN_REVIEW'], 'Only a version in review can be approved.');
+    const approval = await this.review.approval('PREGNANCY_PROFILE', current, admin);
+    if (!approval.publish) {
+      await this.prisma.substanceProfileVersion.update({
+        where: { id: versionId },
+        data: {
+          requiredSignOffs: 2,
+          firstSignOffById: admin.adminId,
+          firstSignOffAt: new Date(),
+          firstSignOffNote: comment,
+        },
+      });
+      await this.record(
+        admin,
+        client,
+        'pregnancy.version.signed_off',
+        'SubstanceProfileVersion',
+        versionId,
+        {
+          after: { version: current.version, signOff: 1, requiredSignOffs: 2 },
+          reason: comment,
+        },
+      );
+      return this.version(versionId);
+    }
     const now = new Date();
     const previous = await this.prisma.$transaction(async (tx) => {
       const superseded = await tx.substanceProfileVersion.findFirst({
@@ -313,6 +356,7 @@ export class PregnancyAdminService {
           reviewedById: admin.adminId,
           reviewedAt: now,
           reviewComment: comment,
+          requiredSignOffs: approval.requiredSignOffs,
           publishedAt: now,
         },
       });
@@ -325,7 +369,11 @@ export class PregnancyAdminService {
       'SubstanceProfileVersion',
       versionId,
       {
-        after: { version: current.version, supersedes: previous?.version ?? null },
+        after: {
+          version: current.version,
+          supersedes: previous?.version ?? null,
+          firstSignOffById: current.firstSignOffById,
+        },
         reason: comment,
       },
     );
@@ -343,7 +391,14 @@ export class PregnancyAdminService {
     this.assertStatus(current.status, ['IN_REVIEW'], 'Only a version in review can be sent back.');
     await this.prisma.substanceProfileVersion.update({
       where: { id: versionId },
-      data: { status: 'CHANGES_REQUESTED', reviewComment: comment },
+      // Changed content is signed again from the start.
+      data: {
+        status: 'CHANGES_REQUESTED',
+        reviewComment: comment,
+        firstSignOffById: null,
+        firstSignOffAt: null,
+        firstSignOffNote: null,
+      },
     });
     await this.record(
       admin,

@@ -13,6 +13,7 @@ import { Field, TextInput } from '@/ui/field';
 import { ReasonDialog } from '@/ui/reason-dialog';
 import { Tab, TabList, TabPanel, Tabs } from '@/ui/tabs';
 import { useToast } from '@/ui/toast';
+import { ReviewPolicies } from './review-policies';
 
 type Specialty = Schemas['SpecialtyDto'];
 type Place = Schemas['PlaceDto'];
@@ -26,7 +27,8 @@ const SPECIALTY_CODE = /^[A-Z][A-Z0-9_]{1,39}$/;
 
 /**
  * « Paramètres système » — reference data of the onboarding and verification pickers: specialties,
- * institutions (by wilaya) and universities. Entries are added with a reason, never typed by users.
+ * institutions (by wilaya) and universities, added with a reason, never typed by users — and the
+ * clinical review rule (ADR-024).
  */
 export function ReferenceDataPage() {
   const { t } = useI18n();
@@ -38,6 +40,7 @@ export function ReferenceDataPage() {
           <Tab value="specialties">{t('admin.settings.specialties')}</Tab>
           <Tab value="institutions">{t('admin.settings.institutions')}</Tab>
           <Tab value="universities">{t('admin.settings.universities')}</Tab>
+          <Tab value="review">{t('admin.settings.review')}</Tab>
         </TabList>
         <TabPanel value="specialties">
           <Specialties />
@@ -47,6 +50,9 @@ export function ReferenceDataPage() {
         </TabPanel>
         <TabPanel value="universities">
           <Places kind="universities" />
+        </TabPanel>
+        <TabPanel value="review">
+          <ReviewPolicies />
         </TabPanel>
       </Tabs>
     </>

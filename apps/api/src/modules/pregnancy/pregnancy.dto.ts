@@ -309,6 +309,15 @@ export class ProfileVersionSummaryDto {
   @ApiProperty({ type: ProfilePersonDto }) authoredBy!: ProfilePersonDto;
   @ApiProperty({ type: ProfilePersonDto, nullable: true }) reviewedBy!: ProfilePersonDto | null;
   @ApiProperty({ nullable: true, type: String }) reviewComment!: string | null;
+  @ApiProperty({
+    enum: [1, 2],
+    description: 'Independent sign-offs needed before publication (ADR-024).',
+  })
+  requiredSignOffs!: number;
+  @ApiProperty({ type: ProfilePersonDto, nullable: true }) firstSignOffBy!: ProfilePersonDto | null;
+  @ApiProperty({ nullable: true, type: String }) firstSignOffNote!: string | null;
+  @ApiProperty({ format: 'date-time', nullable: true, type: String })
+  firstSignOffAt!: string | null;
   @ApiProperty({ format: 'date-time', nullable: true, type: String }) submittedAt!: string | null;
   @ApiProperty({ format: 'date-time', nullable: true, type: String }) publishedAt!: string | null;
   @ApiProperty({ format: 'date-time' }) createdAt!: string;
@@ -322,6 +331,10 @@ export class ProfileVersionSummaryDto {
     authoredBy: ProfilePersonDto;
     reviewedBy: ProfilePersonDto | null;
     reviewComment: string | null;
+    requiredSignOffs: number;
+    firstSignOffBy: ProfilePersonDto | null;
+    firstSignOffNote: string | null;
+    firstSignOffAt: Date | null;
     submittedAt: Date | null;
     publishedAt: Date | null;
     createdAt: Date;
@@ -335,6 +348,10 @@ export class ProfileVersionSummaryDto {
       authoredBy: row.authoredBy,
       reviewedBy: row.reviewedBy,
       reviewComment: row.reviewComment,
+      requiredSignOffs: row.requiredSignOffs,
+      firstSignOffBy: row.firstSignOffBy,
+      firstSignOffNote: row.firstSignOffNote,
+      firstSignOffAt: row.firstSignOffAt?.toISOString() ?? null,
       submittedAt: row.submittedAt?.toISOString() ?? null,
       publishedAt: row.publishedAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),

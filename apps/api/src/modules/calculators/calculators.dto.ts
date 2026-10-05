@@ -387,6 +387,15 @@ export class AdminVersionDto {
   @ApiProperty({ type: PersonRefDto, nullable: true }) reviewedBy!: PersonRefDto | null;
   @ApiProperty({ type: String, nullable: true }) reviewNote!: string | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true }) reviewedAt!: string | null;
+  @ApiProperty({
+    enum: [1, 2],
+    description: 'Independent sign-offs needed before publication (ADR-024).',
+  })
+  requiredSignOffs!: number;
+  @ApiProperty({ type: PersonRefDto, nullable: true }) firstSignOffBy!: PersonRefDto | null;
+  @ApiProperty({ type: String, nullable: true }) firstSignOffNote!: string | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  firstSignOffAt!: string | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true }) publishedAt!: string | null;
   @ApiProperty({ type: String, nullable: true }) engineVersion!: string | null;
 
@@ -414,6 +423,10 @@ export class AdminVersionDto {
       reviewedBy: version.reviewedBy,
       reviewNote: version.reviewNote,
       reviewedAt: version.reviewedAt?.toISOString() ?? null,
+      requiredSignOffs: version.requiredSignOffs,
+      firstSignOffBy: version.firstSignOffBy,
+      firstSignOffNote: version.firstSignOffNote,
+      firstSignOffAt: version.firstSignOffAt?.toISOString() ?? null,
       publishedAt: version.publishedAt?.toISOString() ?? null,
       engineVersion: version.engineVersion,
       testRun: version.testRun,

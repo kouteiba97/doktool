@@ -15,6 +15,7 @@ import { Alert } from '@/ui/feedback';
 import { Field, TextArea } from '@/ui/field';
 import { ReasonDialog, reasonSchema } from '@/ui/reason-dialog';
 import { useToast } from '@/ui/toast';
+import { approvalStep, SignOffRows } from '../clinical-review/sign-offs';
 import { currentRun, readDefinition } from './definition';
 import { type Calculator, publicationGates, type Version } from './labels';
 
@@ -44,6 +45,7 @@ export function ReviewPanel({
     .filter((gate) => gate.label !== 'admin.calculators.gateReviewer')
     .every((gate) => gate.ok);
   const iAmAuthor = me?.id === version.authoredBy.id;
+  const step = approvalStep(version, me?.id, 'admin.calculators.publish');
 
   const submit = useMutation({
     mutationFn: () =>
@@ -78,6 +80,7 @@ export function ReviewPanel({
             ? `${version.reviewedBy.fullName}${version.reviewedAt ? ` · ${formatDateTime(locale, version.reviewedAt)}` : ''}`
             : '—'}
         </dd>
+        <SignOffRows version={version} />
         <dt>{t('admin.calculators.reviewNote')}</dt>
         <dd>{version.reviewNote ?? '—'}</dd>
         <dt>{t('admin.calculators.publishedAt')}</dt>
@@ -125,10 +128,10 @@ export function ReviewPanel({
             {has('calculators.publish') ? (
               <Button
                 variant="primary"
-                disabled={iAmAuthor || !authorGatesOk}
+                disabled={iAmAuthor || step.signedByMe || !authorGatesOk}
                 onClick={() => setAction('publish')}
               >
-                {t('admin.calculators.publish')}
+                {t(step.label)}
               </Button>
             ) : null}
             <Button disabled={iAmAuthor} onClick={() => setAction('return')}>
@@ -144,6 +147,9 @@ export function ReviewPanel({
       </div>
       {version.status === 'IN_REVIEW' && iAmAuthor ? (
         <Alert tone="info">{t('admin.calculators.authorCannotReview')}</Alert>
+      ) : null}
+      {version.status === 'IN_REVIEW' && step.signedByMe ? (
+        <Alert tone="info">{t('admin.review.waitingSecond')}</Alert>
       ) : null}
 
       <ReasonDialog
@@ -184,14 +190,21 @@ export function ReviewPanel({
       <PublishDialog
         open={action === 'publish'}
         onOpenChange={(open) => setAction(open ? 'publish' : null)}
+        title={t(step.title ?? 'admin.calculators.publishTitle')}
+        description={t(step.body ?? 'admin.calculators.publishBody')}
+        confirmLabel={t(step.label)}
         onConfirm={async (reviewNote) => {
-          await call(
+          const result = await call(
             api.POST('/admin/v1/calculators/versions/{versionId}/publish', {
               ...path,
               body: { reviewNote },
             }),
           );
-          await done(t('admin.calculators.published'));
+          await done(
+            result.status === 'PUBLISHED'
+              ? t('admin.calculators.published')
+              : t('admin.review.signedOff'),
+          );
         }}
       />
       <DiscardDialog
@@ -206,14 +219,23 @@ export function ReviewPanel({
   );
 }
 
-/** « Approuver et publier »: the review note is the reviewer's written decision. */
+/**
+ * « Approuver et publier », or a first of two sign-offs (ADR-024): the review note is the
+ * reviewer's written decision.
+ */
 function PublishDialog({
   open,
   onOpenChange,
+  title,
+  description,
+  confirmLabel,
   onConfirm,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  confirmLabel: string;
   onConfirm: (note: string) => Promise<void>;
 }) {
   const { t } = useI18n();
@@ -237,8 +259,8 @@ function PublishDialog({
         }
         onOpenChange(next);
       }}
-      title={t('admin.calculators.publishTitle')}
-      description={t('admin.calculators.publishBody')}
+      title={title}
+      description={description}
       onSubmit={() => publish.mutate()}
       footer={
         <>
@@ -246,7 +268,7 @@ function PublishDialog({
             {t('admin.common.cancel')}
           </Button>
           <Button type="submit" variant="primary" busy={publish.isPending} disabled={!valid}>
-            {t('admin.calculators.publish')}
+            {confirmLabel}
           </Button>
         </>
       }
