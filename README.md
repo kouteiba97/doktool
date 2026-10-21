@@ -52,4 +52,6 @@ Requirements: Node ≥ 24 (see `.nvmrc`) and PostgreSQL ≥ 15.
    npm run ci
    ```
 
-Integration tests run each case in a rolled-back transaction, but they still need a migrated database. Point them at a dedicated test database, not at data you care about.
+Integration tests write to the database and do not roll back. Point them at a dedicated, migrated test database, not at data you care about.
+
+Continuing the work on another machine: see `docs/HANDOFF.md`.

@@ -8,6 +8,8 @@ Calculators   SELECT TOOL → ENTER VALIDATED INPUTS → CALCULATE → REVIEW RE
 Prospects     DEMO → EXPLORE → UNDERSTAND → SUBSCRIBE
 ```
 
+**Continuing on a new machine or in a new session:** read `docs/HANDOFF.md` first (state, setup, workflow).
+
 **Read first:** `docs/adr/ADR-006-product-owner-decisions.md` (the Product Owner's answers to Q1–Q8 — they override everything below and in the design system), `docs/ARCHITECTURE-AUDIT.md` (the 17-section audit and target architecture — the Product Owner decisions it records override any older text), then `design/system/README.md` and `design/system/11-design-critique-and-lock.md` (Design Lock L1–L44).
 
 The design system is the visual/UX source of truth; the repository is the implementation source of truth. **Do not redesign. Do not invent modules, formulas or UX.** When something is unspecified, use the nearest hi-fi card and the component contract; if still undecided, stop and ask.

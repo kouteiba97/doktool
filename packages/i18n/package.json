@@ -11,7 +11,8 @@
   "scripts": {
     "check": "node scripts/check-parity.mjs",
     "test": "node --test \"scripts/*.test.mjs\"",
-    "build:arb": "node scripts/build-arb.mjs"
+    "build:arb": "node scripts/build-arb.mjs",
+    "add-keys": "node scripts/add-keys.mjs"
   },
   "dependencies": {
     "@formatjs/icu-messageformat-parser": "3.5.20"
