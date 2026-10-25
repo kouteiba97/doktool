@@ -55,6 +55,7 @@ class DtChoiceList<T> extends StatelessWidget {
   }
 }
 
+/// One answer with its radio mark.
 class _ChoiceRow extends StatelessWidget {
   const _ChoiceRow({required this.label, required this.selected, required this.onTap});
 

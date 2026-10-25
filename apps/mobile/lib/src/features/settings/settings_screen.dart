@@ -37,6 +37,7 @@ class SettingsScreen extends ConsumerWidget {
                 // The section heading names each control; a group label would read it twice.
                 _Section(
                   title: l10n.settingsAppearanceTitle,
+                  // Appearance: light, dark or like the system.
                   child: DtSegmentedControl<AppearancePreference>(
                     selected: settings.appearance,
                     onChanged: controller.setAppearance,
@@ -51,6 +52,7 @@ class SettingsScreen extends ConsumerWidget {
                 _Section(
                   title: l10n.settingsLanguageTitle,
                   helper: l10n.settingsLanguageHelper,
+                  // Language of the app: French or English.
                   child: DtSegmentedControl<AppLanguage>(
                     selected: settings.language,
                     onChanged: controller.setLanguage,
@@ -68,6 +70,7 @@ class SettingsScreen extends ConsumerWidget {
                     container: true,
                     child: Material(
                       type: MaterialType.transparency,
+                      // « Données et hors ligne ».
                       child: ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(LucideIcons.hardDriveDownload, color: colors.inkSecondary),
@@ -86,6 +89,7 @@ class SettingsScreen extends ConsumerWidget {
                       type: MaterialType.transparency,
                       child: Column(
                         children: [
+                          // « Sécurité du compte »: contacts, password, recovery.
                           ListTile(
                             contentPadding: EdgeInsets.zero,
                             leading: Icon(LucideIcons.shieldCheck, color: colors.inkSecondary),
@@ -93,6 +97,7 @@ class SettingsScreen extends ConsumerWidget {
                             trailing: Icon(LucideIcons.chevronRight, color: colors.inkMuted),
                             onTap: () => context.push(Routes.security),
                           ),
+                          // « Supprimer mon compte ».
                           ListTile(
                             contentPadding: EdgeInsets.zero,
                             leading: Icon(LucideIcons.userX, color: colors.critical),
@@ -114,6 +119,7 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
+/// A titled group of settings with an optional helper line.
 class _Section extends StatelessWidget {
   const _Section({required this.title, required this.child, this.helper});
 

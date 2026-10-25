@@ -23,7 +23,9 @@ class VerificationIntroScreen extends ConsumerStatefulWidget {
   ConsumerState<VerificationIntroScreen> createState() => _VerificationIntroScreenState();
 }
 
+/// Ends onboarding when verification is reached.
 class _VerificationIntroScreenState extends ConsumerState<VerificationIntroScreen> {
+  /// Clears the onboarding draft.
   @override
   void initState() {
     super.initState();
@@ -60,11 +62,13 @@ class _VerificationIntroScreenState extends ConsumerState<VerificationIntroScree
     return DtPage(
       showBack: false,
       title: l10n.verificationTitle,
+      // « Plus tard »: back to Home.
       trailing: TextButton(
         onPressed: () => context.go(Routes.home),
         child: Text(l10n.commonLater, style: DtType.bodyStrong.copyWith(color: colors.onHero)),
       ),
       actions: [
+        // « Commencer »: identity first, then the status case.
         DtButton(
           label: l10n.verificationIntroStart,
           onPressed: overview == null

@@ -25,7 +25,9 @@ const openStatuses = {
 
 const pendingStatuses = {VerificationStatus.submitted, VerificationStatus.inReview, VerificationStatus.appealed};
 
+/// Helpers on the verification overview.
 extension VerificationOverviewX on VerificationOverviewDto {
+  /// The state of one case type (cannot start, when the API does not list it).
   VerificationTypeStateDto stateOf(VerificationType type) => types.firstWhere(
     (state) => state.type == type,
     orElse: () => VerificationTypeStateDto(type: type, canStart: false),
@@ -43,6 +45,7 @@ extension VerificationOverviewX on VerificationOverviewDto {
 class VerificationController extends AsyncNotifier<VerificationOverviewDto> {
   VerificationRepository get _repository => ref.read(verificationRepositoryProvider);
 
+  /// Loads the verification overview of the signed-in account.
   @override
   Future<VerificationOverviewDto> build() {
     final session = ref.watch(sessionControllerProvider).value;
@@ -50,6 +53,7 @@ class VerificationController extends AsyncNotifier<VerificationOverviewDto> {
     return ref.watch(verificationRepositoryProvider).overview();
   }
 
+  /// Loads the overview again.
   Future<void> reload() async {
     state = AsyncData(await _repository.overview());
   }
@@ -99,11 +103,13 @@ class VerificationController extends AsyncNotifier<VerificationOverviewDto> {
     await reload();
   }
 
+  /// « Faire appel » of a refusal.
   Future<void> appeal(String caseId) async {
     await _repository.appeal(caseId);
     await reload();
   }
 
+  /// « Effacer mes documents » of a decided case.
   Future<void> erase(String caseId) async {
     replace(await _repository.erase(caseId));
   }

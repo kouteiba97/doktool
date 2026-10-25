@@ -11,13 +11,17 @@ class PendingCheckout {
   final String planId;
 }
 
+/// The payment started in the browser, in memory until its result is known.
 class PendingCheckoutController extends Notifier<PendingCheckout?> {
+  /// No payment pending at launch.
   @override
   PendingCheckout? build() => null;
 
+  /// A payment was started: remembers it while the person is on the payment page.
   void start(String transactionId, String redirectUrl, String planId) =>
       state = PendingCheckout(transactionId: transactionId, redirectUrl: redirectUrl, planId: planId);
 
+  /// The payment is over.
   void clear() => state = null;
 }
 

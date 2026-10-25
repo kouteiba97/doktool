@@ -92,6 +92,7 @@ class HomeScreen extends ConsumerWidget {
                           showBell: session is UserSession,
                         ),
                         const SizedBox(height: DtSpace.s5),
+                        // The search bar: opens the search screen.
                         _GlassSearchField(label: l10n.homeSearchHint, onTap: () => context.push(Routes.search)),
                         const SizedBox(height: DtSpace.s3),
                         // Fastest way to a drug in pregnancy or lactation: straight into typing (ADR-025).
@@ -134,12 +135,14 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  /// The profession's name in the UI language.
   static String _roleName(AppLocalizations l10n, ProfessionalType type) => switch (type) {
     ProfessionalType.doctor => l10n.roleDoctor,
     ProfessionalType.resident => l10n.roleResident,
     _ => l10n.roleStudent,
   };
 
+  /// The access tier's name (Pro, sample, student, demo, restricted).
   static String _accessName(AppLocalizations l10n, AccessProfileDto access) => switch (access.tier) {
     EntitlementTier.professional => l10n.accessPro,
     EntitlementTier.professionalUnpaid => l10n.accessSample,
@@ -149,6 +152,7 @@ class HomeScreen extends ConsumerWidget {
   };
 }
 
+/// The top line: the person's name, role and access, with the notifications bell.
 class _IdentityLine extends ConsumerWidget {
   const _IdentityLine({required this.name, required this.line, required this.showBell});
 
@@ -193,6 +197,7 @@ class _IdentityLine extends ConsumerWidget {
           ),
         ),
         if (showBell)
+          // The bell: opens the notifications.
           DtGlassIconButton(
             tooltip: l10n.homeNotifications,
             onPressed: () => context.push(Routes.notifications),
@@ -203,6 +208,7 @@ class _IdentityLine extends ConsumerWidget {
   }
 }
 
+/// The search bar of Home; tapping it opens the search screen.
 class _GlassSearchField extends StatelessWidget {
   const _GlassSearchField({required this.label, required this.onTap, this.icon = LucideIcons.search});
 
@@ -257,6 +263,7 @@ class _GlassSearchField extends StatelessWidget {
   }
 }
 
+/// Shortcuts to each library section.
 class _QuickActions extends StatelessWidget {
   const _QuickActions({required this.items});
 
@@ -272,6 +279,7 @@ class _QuickActions extends StatelessWidget {
         children: [
           for (final (section, label, icon) in items)
             Expanded(
+              // A shortcut tile: opens that library section.
               child: Semantics(
                 button: true,
                 label: label,
@@ -339,6 +347,7 @@ class _VerificationLine extends ConsumerWidget {
     return DtAlert(
       severity: DtAlertSeverity.info,
       body: message,
+      // « Voir la vérification ».
       action: InkWell(
         onTap: () => context.push(Routes.verificationStatus),
         child: Text(l10n.homeVerificationLink, style: DtType.label.copyWith(color: colors.brand)),
@@ -363,6 +372,7 @@ class _DemoBar extends StatelessWidget {
           Expanded(
             child: Text(l10n.demoBar, style: DtType.caption.copyWith(color: colors.onHero)),
           ),
+          // « Voir les offres ».
           TextButton(
             onPressed: () => context.push(Routes.plans),
             style: TextButton.styleFrom(minimumSize: const Size(0, DtSize.touchMin)),
@@ -421,6 +431,7 @@ class _RecentsAndFavorites extends ConsumerWidget {
                   (LibrarySection.calculators, l10n.homeStartCalculators, LucideIcons.calculator),
                   (LibrarySection.pregnancy, l10n.homeStartPregnancy, LucideIcons.baby),
                 ])
+                  // A row of the « Raccourcis » list.
                   ListTile(
                     minTileHeight: DtSize.row,
                     leading: Icon(icon, color: colors.brand),

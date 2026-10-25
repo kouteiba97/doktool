@@ -35,8 +35,10 @@ class SignUpScreen extends ConsumerStatefulWidget {
   ConsumerState<SignUpScreen> createState() => _SignUpScreenState();
 }
 
+/// The fields of the form.
 enum _Field { firstName, lastName, identifier, password }
 
+/// Text controllers, focus nodes, fields already left (errors show only then), terms and progress.
 class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _controllers = {for (final field in _Field.values) field: TextEditingController()};
   final _focus = {for (final field in _Field.values) field: FocusNode()};
@@ -46,6 +48,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   bool _submitting = false;
   ApiError? _error;
 
+  /// A field shows its error only after the person has left it once.
   @override
   void initState() {
     super.initState();
@@ -58,6 +61,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     }
   }
 
+  /// Frees the text controllers and focus nodes.
   @override
   void dispose() {
     for (final controller in _controllers.values) {
@@ -69,8 +73,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     super.dispose();
   }
 
+  /// The trimmed text of a field.
   String _text(_Field field) => _controllers[field]!.text.trim();
 
+  /// The error under a field (only once left): names required, valid e-mail or phone, strong enough password.
   String? _errorOf(_Field field, AppLocalizations l10n) {
     if (!_touched.contains(field)) return null;
     final value = _text(field);
@@ -95,6 +101,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       _wilayaCode != null &&
       _accepted;
 
+  /// « Créer mon compte »: sends the form with the terms version; the API answers with a code to confirm.
   Future<void> _submit() async {
     final legal = ref.read(legalProvider).value;
     if (!_valid || legal == null) return;
@@ -134,6 +141,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     }
   }
 
+  /// The message for each sign-up refusal (account exists, terms changed, code not sendable, too many codes…).
   String _errorText(AppLocalizations l10n, ApiError error) {
     if (error.code == 'ACCOUNT_EXISTS') return l10n.signUpAccountExists;
     if (error.fields.containsKey('termsVersion')) return l10n.signUpTermsChanged;
@@ -143,11 +151,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     return commonErrorText(context, error);
   }
 
+  /// Opens the terms or privacy page in the browser.
   Future<void> _open(String? url) async {
     if (url == null) return;
     await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
 
+  /// The chosen role's name, shown at the top of the form.
   String _roleName(AppLocalizations l10n, ProfessionalType? role) => switch (role) {
     ProfessionalType.doctor => l10n.roleDoctor,
     ProfessionalType.resident => l10n.roleResident,
@@ -174,6 +184,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             severity: DtAlertSeverity.critical,
             body: _errorText(l10n, _error!),
             action: _error!.code == 'ACCOUNT_EXISTS'
+                // The account exists: « Se connecter ».
                 ? DtButton(
                     label: l10n.welcomeSignIn,
                     variant: DtButtonVariant.secondary,
@@ -183,6 +194,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   )
                 : null,
           ),
+        // « Créer mon compte »: needs every field valid and the terms accepted.
         DtButton(label: l10n.signUpSubmit, loading: _submitting, onPressed: _valid && legal != null ? _submit : null),
         Text(
           l10n.signUpCodeNote,
@@ -268,6 +280,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Accepts the terms and the privacy policy.
               Checkbox(
                 value: _accepted,
                 activeColor: colors.brand,

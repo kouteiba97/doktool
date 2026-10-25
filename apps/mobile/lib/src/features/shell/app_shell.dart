@@ -21,6 +21,7 @@ class AppShell extends ConsumerWidget {
   /// Dot on « Profil » when verification needs an action.
   final bool profileAttention;
 
+  /// Opens a tab; tapping the current tab again goes back to its first screen.
   void _go(int branch) => navigationShell.goBranch(branch, initialLocation: branch == navigationShell.currentIndex);
 
   @override
@@ -51,6 +52,7 @@ class AppShell extends ConsumerWidget {
   }
 }
 
+/// The floating tab bar: Accueil, Bibliothèque, the search button, Activité, Profil.
 class _GlassBar extends StatelessWidget {
   const _GlassBar({
     required this.current,
@@ -87,6 +89,7 @@ class _GlassBar extends StatelessWidget {
               explicitChildNodes: true,
               child: Row(
                 children: [
+                  // « Accueil » tab.
                   _Destination(
                     icon: LucideIcons.house,
                     label: l10n.navHome,
@@ -98,6 +101,7 @@ class _GlassBar extends StatelessWidget {
                       child: Semantics(
                         button: true,
                         label: l10n.navSearch,
+                        // The round search button in the middle of the bar.
                         child: InkResponse(
                           onTap: onSearch,
                           radius: DtSize.controlLg,
@@ -120,12 +124,14 @@ class _GlassBar extends StatelessWidget {
                       ),
                     ),
                   ),
+                  // « Bibliothèque » tab.
                   _Destination(
                     icon: LucideIcons.libraryBig,
                     label: l10n.navLibrary,
                     selected: current == 1,
                     onTap: () => onSelect(1),
                   ),
+                  // « Profil » tab (with a dot when something needs attention).
                   _Destination(
                     icon: LucideIcons.circleUser,
                     label: l10n.navProfile,
@@ -143,6 +149,7 @@ class _GlassBar extends StatelessWidget {
   }
 }
 
+/// One tab of the bar: icon, label and selected state.
 class _Destination extends StatelessWidget {
   const _Destination({
     required this.icon,

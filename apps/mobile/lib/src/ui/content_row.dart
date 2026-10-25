@@ -107,6 +107,7 @@ class ContentRow extends StatelessWidget {
   }
 }
 
+/// A title with the searched letters in bold.
 class _Highlighted extends StatelessWidget {
   const _Highlighted({required this.text, required this.style, this.query});
 
@@ -114,6 +115,7 @@ class _Highlighted extends StatelessWidget {
   final String? query;
   final TextStyle style;
 
+  /// Lower case without accents, so « hepar » finds « Héparine ».
   static String _fold(String value) => value
       .toLowerCase()
       .replaceAll(RegExp('[àâäá]'), 'a')

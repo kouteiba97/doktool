@@ -39,6 +39,7 @@ Future<void> showReportSheet(
   );
 }
 
+/// « Signaler une erreur » sheet for one section of a profile.
 class _ReportSheet extends ConsumerStatefulWidget {
   const _ReportSheet({required this.profile, required this.section});
 
@@ -49,18 +50,21 @@ class _ReportSheet extends ConsumerStatefulWidget {
   ConsumerState<_ReportSheet> createState() => _ReportSheetState();
 }
 
+/// The reason chosen, the optional comment, progress and error.
 class _ReportSheetState extends ConsumerState<_ReportSheet> {
   final _comment = TextEditingController();
   ContentReportReason? _reason;
   bool _sending = false;
   ApiError? _error;
 
+  /// Frees the text controller.
   @override
   void dispose() {
     _comment.dispose();
     super.dispose();
   }
 
+  /// « Envoyer »: sends the report to the review team; closes the sheet with a thank-you message.
   Future<void> _send() async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -128,6 +132,7 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
             Semantics(
               selected: _reason == reason,
               inMutuallyExclusiveGroup: true,
+              // One reason of the report.
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
                 minTileHeight: DtSize.touchMin,
@@ -157,6 +162,7 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
             DtAlert(severity: DtAlertSeverity.critical, body: commonErrorText(context, _error!)),
           ],
           const SizedBox(height: DtSpace.s4),
+          // « Envoyer »: possible once a reason is chosen.
           DtButton(label: l10n.pregnancyReportSend, loading: _sending, onPressed: _reason == null ? null : _send),
         ],
       ),

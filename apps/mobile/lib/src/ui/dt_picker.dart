@@ -138,6 +138,7 @@ class DtPickerField<T> extends StatelessWidget {
   }
 }
 
+/// The bottom sheet of a picker, with a search field for long lists.
 class _PickerSheet<T> extends StatefulWidget {
   const _PickerSheet({
     required this.title,
@@ -157,9 +158,11 @@ class _PickerSheet<T> extends StatefulWidget {
   State<_PickerSheet<T>> createState() => _PickerSheetState<T>();
 }
 
+/// The search text typed in the sheet.
 class _PickerSheetState<T> extends State<_PickerSheet<T>> {
   String _query = '';
 
+  /// Lower case without accents, for the search.
   static String _fold(String value) => value
       .toLowerCase()
       .replaceAll(RegExp('[àâä]'), 'a')
@@ -191,6 +194,7 @@ class _PickerSheetState<T> extends State<_PickerSheet<T>> {
                 Expanded(
                   child: Text(widget.title, style: DtType.title.copyWith(color: colors.ink)),
                 ),
+                // Closes the picker without changing the choice.
                 IconButton(
                   tooltip: l10n.commonClose,
                   icon: Icon(LucideIcons.x, color: colors.inkSecondary),
@@ -202,6 +206,7 @@ class _PickerSheetState<T> extends State<_PickerSheet<T>> {
           if (widget.searchable && widget.options.length > 8)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: DtSpace.s4),
+              // Filters the options as the person types.
               child: TextField(
                 autofocus: false,
                 onChanged: (value) => setState(() => _query = value),
@@ -234,6 +239,7 @@ class _PickerSheetState<T> extends State<_PickerSheet<T>> {
                     itemBuilder: (context, index) {
                       final option = visible[index];
                       final isSelected = option.value == widget.selected;
+                      // One option: tapping it chooses it and closes the sheet.
                       return ListTile(
                         minTileHeight: DtSize.row,
                         title: Text(option.label, style: DtType.body.copyWith(color: colors.ink)),

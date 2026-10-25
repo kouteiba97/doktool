@@ -115,15 +115,37 @@ class AppDatabase extends _$AppDatabase {
     },
   );
 
+  /// Reads one local setting (null when never written).
   Future<String?> readSetting(String key) async {
     final row = await (select(localSettings)..where((s) => s.key.equals(key))).getSingleOrNull();
     return row?.value;
   }
 
+  /// Writes one local setting, replacing the old value.
   Future<void> writeSetting(String key, String value) =>
       into(localSettings).insertOnConflictUpdate(LocalSettingsCompanion.insert(key: key, value: value));
 
+  /// Removes one local setting.
   Future<void> deleteSetting(String key) => (delete(localSettings)..where((s) => s.key.equals(key))).go();
+
+  /// Settings that belong to the person signed in, not to the device: their cached account (name,
+  /// profession), unsent research history and recent searches. Removed when the session ends, so
+  /// the next person on a shared phone neither sees them nor sends them under their own account —
+  /// nor gets the previous person's account as an offline fallback after signing in.
+  static const personalSettings = ['account.summary', 'activity.queue', 'search.recent'];
+
+  /// The last values typed in each calculator (`calculator.inputs.<slug>`): a patient's values,
+  /// never left for the next person either.
+  static const calculatorInputsPrefix = 'calculator.inputs.';
+
+  /// Forgets [personalSettings] and the remembered calculator inputs (sign-out, session ended,
+  /// account deleted).
+  Future<void> forgetPersonalSettings() async {
+    for (final key in personalSettings) {
+      await deleteSetting(key);
+    }
+    await (delete(localSettings)..where((s) => s.key.like('$calculatorInputsPrefix%'))).go();
+  }
 
   /// After an account deletion: everything the account left on the device goes — cached account,
   /// recent searches, queued history and analytics, last calculator inputs, the remembered

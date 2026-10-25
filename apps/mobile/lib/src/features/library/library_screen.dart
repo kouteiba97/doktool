@@ -42,12 +42,14 @@ class LibraryScreen extends ConsumerStatefulWidget {
   ConsumerState<LibraryScreen> createState() => _LibraryScreenState();
 }
 
+/// The filter text of the section, and the timer that reports a library search once typing pauses.
 class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   final _query = TextEditingController();
 
   /// A library search counts once the typing has paused, not per keystroke.
   Timer? _report;
 
+  /// Another section was chosen: clears the filter.
   @override
   void didUpdateWidget(LibraryScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -57,6 +59,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     }
   }
 
+  /// Frees the timer and the text controller.
   @override
   void dispose() {
     _report?.cancel();
@@ -64,6 +67,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     super.dispose();
   }
 
+  /// The filter changed: redraws, and reports the search after a pause (two characters at least).
   void _changed(String value) {
     setState(() {});
     _report?.cancel();
@@ -102,6 +106,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: DtSpace.s3),
+            // Section tabs: ordonnances, certificates, calculators, pregnancy.
             child: DtPillTabs<LibrarySection>(
               semanticLabel: l10n.librarySections,
               selected: section,
@@ -124,6 +129,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(DtSpace.s4, 0, DtSpace.s4, DtSpace.s2),
+            // The filter field of the section.
             child: TextField(
               controller: _query,
               autofocus: widget.focusSearch,
@@ -156,6 +162,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   }
 }
 
+/// The ordonnances or certificates of the section, filtered, with locks and loading / error states.
 class _ReferenceList extends ConsumerWidget {
   const _ReferenceList({required this.section, required this.query});
 
@@ -198,6 +205,7 @@ class _ReferenceList extends ConsumerWidget {
   }
 }
 
+/// The calculators, filtered by name.
 class _CalculatorList extends ConsumerWidget {
   const _CalculatorList({required this.query});
 
@@ -239,6 +247,7 @@ class _CalculatorList extends ConsumerWidget {
   }
 }
 
+/// Loading, error (« Réessayer ») or empty state of a list, with pull-to-refresh.
 class _ListState extends StatelessWidget {
   const _ListState({
     required this.loading,
@@ -272,6 +281,7 @@ class _ListState extends StatelessWidget {
           children: [
             DtAlert(severity: DtAlertSeverity.neutral, body: commonErrorText(context, error!)),
             const SizedBox(height: DtSpace.s3),
+            // « Réessayer ».
             DtButton(label: l10n.commonRetry, variant: DtButtonVariant.secondary, onPressed: onRetry),
           ],
         ),

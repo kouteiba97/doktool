@@ -34,6 +34,7 @@ String moneyText(BuildContext context, num minor, String currency) {
   return format.format(minor / 100);
 }
 
+/// A plan duration as text: one month, one year, or N days.
 String durationText(AppLocalizations l10n, num days) => switch (days) {
   30 => l10n.plansDurationMonth,
   365 => l10n.plansDurationYear,

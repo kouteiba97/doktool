@@ -14,6 +14,7 @@ import 'engine/definition.dart';
 import 'engine/evaluate.dart';
 import 'engine/self_test.dart';
 
+/// Whether the calculator can be used: ready, locked, needing a newer app, or failed its self-test.
 enum RuntimeState { ready, locked, unsupported, selfTestFailed }
 
 /// A calculator ready for the device engine: the published version, parsed and self-tested.
@@ -86,13 +87,16 @@ class LastInputs {
 
   final AppDatabase _database;
 
+  /// Local setting key of a calculator's last inputs.
   static String _key(String slug) => 'calculator.inputs.$slug';
 
+  /// The last values typed in this calculator on this device (empty if none).
   Future<Map<String, InputValue?>> read(String slug) async {
     final raw = await _database.readSetting(_key(slug));
     return raw == null ? const {} : inputsFromJson(jsonDecode(raw));
   }
 
+  /// Saves the values typed in this calculator, on this device only.
   Future<void> write(String slug, Map<String, InputValue?> inputs) => _database.writeSetting(
     _key(slug),
     jsonEncode({

@@ -3,6 +3,7 @@ import 'definition.dart';
 /// The formula as mono text with the entered values substituted (ScreenCalculatorMobile), e.g.
 /// `(70 × (140 − 60)) ÷ (72 × 1.1)`. Inputs without a value keep their label.
 String formulaText(Expr node, {required Map<String, String> values, required String Function(String key) labelOf}) {
+  // Writes a child node.
   String text(Expr expr) => formulaText(expr, values: values, labelOf: labelOf);
   switch (node) {
     case NumExpr(:final value):
@@ -49,6 +50,7 @@ String formulaText(Expr node, {required Map<String, String> values, required Str
   }
 }
 
+/// A number without a useless ".0".
 String _number(double value) {
   final text = value.toString();
   return text.endsWith('.0') ? text.substring(0, text.length - 2) : text;

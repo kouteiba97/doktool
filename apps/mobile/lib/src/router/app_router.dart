@@ -76,6 +76,7 @@ abstract final class Routes {
   static const profileActivity = '/profile/activity';
   static const profileEdit = '/profile/edit';
 
+  /// Addresses with a parameter (focus=1 puts the cursor in the library filter).
   static String library(LibrarySection section, {bool focus = false}) =>
       '/library/${section.slug}${focus ? '?focus=1' : ''}';
   static String reference(String id) => '/reference/$id';
@@ -112,6 +113,7 @@ abstract final class Routes {
 
 /// Re-runs the redirect when the session or the account changes.
 class _RouterRefresh extends ChangeNotifier {
+  /// Re-checks the redirects whenever the session or the account changes.
   _RouterRefresh(Ref ref) {
     ref
       ..listen(sessionControllerProvider, (_, _) => notifyListeners())

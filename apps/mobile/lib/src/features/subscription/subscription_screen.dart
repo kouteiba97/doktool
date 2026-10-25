@@ -39,6 +39,7 @@ class SubscriptionScreen extends ConsumerWidget {
         error: (error, _) => [
           DtAlert(severity: DtAlertSeverity.neutral, body: commonErrorText(context, ApiError.from(error))),
           const SizedBox(height: DtSpace.s3),
+          // « Réessayer ».
           DtButton(
             label: l10n.commonRetry,
             variant: DtButtonVariant.secondary,
@@ -52,6 +53,7 @@ class SubscriptionScreen extends ConsumerWidget {
             _Current(subscription: data.subscription!),
           const SizedBox(height: DtSpace.s4),
           if (data.eligibility.state == CheckoutEligibility.open)
+            // « Voir les offres » / « Renouveler ».
             DtButton(
               label: data.subscription == null ? l10n.lockSeePlans : l10n.subscriptionRenew,
               onPressed: () => context.push(Routes.plans),
@@ -63,6 +65,7 @@ class SubscriptionScreen extends ConsumerWidget {
             ),
           if (data.subscription?.status == SubscriptionStatus.active) ...[
             const SizedBox(height: DtSpace.s2),
+            // « Arrêter le renouvellement ».
             DtButton(
               label: l10n.subscriptionStopRenewal,
               variant: DtButtonVariant.ghost,
@@ -82,6 +85,7 @@ class SubscriptionScreen extends ConsumerWidget {
     );
   }
 
+  /// « Arrêter le renouvellement »: asks to confirm; the access stays until the end date.
   Future<void> _stopRenewal(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
@@ -89,7 +93,9 @@ class SubscriptionScreen extends ConsumerWidget {
       builder: (dialog) => AlertDialog(
         content: Text(l10n.subscriptionStopRenewalConfirm),
         actions: [
+          // « Annuler ».
           TextButton(onPressed: () => Navigator.of(dialog).pop(false), child: Text(l10n.commonCancel)),
+          // Confirms stopping the renewal.
           TextButton(onPressed: () => Navigator.of(dialog).pop(true), child: Text(l10n.subscriptionStopRenewal)),
         ],
       ),
@@ -100,6 +106,7 @@ class SubscriptionScreen extends ConsumerWidget {
   }
 }
 
+/// The current subscription: plan, dates and renewal state.
 class _Current extends StatelessWidget {
   const _Current({required this.subscription});
 
@@ -164,6 +171,7 @@ class _Current extends StatelessWidget {
   }
 }
 
+/// One payment of the history: date, amount, method and status.
 class _TransactionRow extends StatelessWidget {
   const _TransactionRow({required this.transaction});
 

@@ -15,6 +15,7 @@ class AuthInterceptor extends Interceptor {
 
   static const _retried = 'doktool.auth.retried';
 
+  /// Before each request: attaches the current access token, renewing it first when it has expired.
   @override
   Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     try {
@@ -26,6 +27,7 @@ class AuthInterceptor extends Interceptor {
     handler.next(options);
   }
 
+  /// On a 401: renews the token once and replays the request; a second 401 ends the session.
   @override
   Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
     final options = err.requestOptions;

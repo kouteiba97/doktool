@@ -33,6 +33,7 @@ class PasswordField extends StatefulWidget {
   State<PasswordField> createState() => _PasswordFieldState();
 }
 
+/// Whether the password is shown in clear (eye button).
 class _PasswordFieldState extends State<PasswordField> {
   bool _visible = false;
 
@@ -62,6 +63,7 @@ class _PasswordFieldState extends State<PasswordField> {
       helper: helper,
       onChanged: widget.onChanged,
       onSubmitted: widget.onSubmitted,
+      // The eye: shows or hides the password.
       trailing: IconButton(
         tooltip: _visible ? l10n.commonHidePassword : l10n.commonShowPassword,
         icon: Icon(_visible ? LucideIcons.eyeOff : LucideIcons.eye, color: colors.inkMuted),

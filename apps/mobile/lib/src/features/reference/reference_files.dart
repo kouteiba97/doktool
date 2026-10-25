@@ -22,6 +22,7 @@ class ReferenceFiles {
   final DokToolApi _api;
   final Dio _download;
 
+  /// Gets a signed URL from the API, downloads the PDF bytes and checks their checksum.
   Future<ReferenceFile> download(String referenceId) async {
     final signed = await _api.referenceLibrary.referenceLibraryControllerFileUrl(id: referenceId);
     final Response<List<int>> response;

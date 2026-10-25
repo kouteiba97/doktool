@@ -10,6 +10,7 @@ final lastIdentifierProvider = FutureProvider<String?>(
   (ref) => ref.watch(appDatabaseProvider).readSetting(_lastIdentifierKey),
 );
 
+/// Remembers the e-mail or phone last used, to pre-fill sign-in.
 Future<void> rememberIdentifier(WidgetRef ref, String identifier) async {
   await ref.read(appDatabaseProvider).writeSetting(_lastIdentifierKey, identifier);
   ref.invalidate(lastIdentifierProvider);

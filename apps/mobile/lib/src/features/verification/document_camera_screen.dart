@@ -20,6 +20,7 @@ class DocumentCameraScreen extends StatefulWidget {
   /// The front camera, for the selfie of an account recovery (ADR-023).
   final bool selfie;
 
+  /// Opens the camera full screen and returns the photo's path (null when closed).
   static Future<String?> capture(BuildContext context, String title, {bool selfie = false}) => Navigator.of(context)
       .push<String>(
         MaterialPageRoute(
@@ -32,18 +33,21 @@ class DocumentCameraScreen extends StatefulWidget {
   State<DocumentCameraScreen> createState() => _DocumentCameraScreenState();
 }
 
+/// The camera, whether it is unavailable, and the photo taken.
 class _DocumentCameraScreenState extends State<DocumentCameraScreen> {
   CameraController? _camera;
   bool _unavailable = false;
   bool _capturing = false;
   XFile? _photo;
 
+  /// Opens the camera.
   @override
   void initState() {
     super.initState();
     _open();
   }
 
+  /// Opens the back camera (front for a selfie); without one, shows « caméra indisponible ».
   Future<void> _open() async {
     try {
       final cameras = await availableCameras();
@@ -70,12 +74,14 @@ class _DocumentCameraScreenState extends State<DocumentCameraScreen> {
     }
   }
 
+  /// Releases the camera.
   @override
   void dispose() {
     _camera?.dispose();
     super.dispose();
   }
 
+  /// Takes the photo and shows it for « Utiliser » or « Reprendre ».
   Future<void> _shoot() async {
     final camera = _camera;
     if (camera == null || _capturing) return;
@@ -90,6 +96,7 @@ class _DocumentCameraScreenState extends State<DocumentCameraScreen> {
     }
   }
 
+  /// « Reprendre »: deletes the photo and shows the camera again.
   Future<void> _retake() async {
     final photo = _photo;
     setState(() => _photo = null);
@@ -108,6 +115,7 @@ class _DocumentCameraScreenState extends State<DocumentCameraScreen> {
         backgroundColor: colors.navy,
         foregroundColor: colors.onNavy,
         title: Text(widget.title, style: DtType.heading.copyWith(color: colors.onNavy)),
+        // Closes the camera without a photo.
         leading: IconButton(
           tooltip: l10n.commonClose,
           icon: const Icon(LucideIcons.x),
@@ -157,11 +165,13 @@ class _DocumentCameraScreenState extends State<DocumentCameraScreen> {
                     child: photo != null
                         ? Column(
                             children: [
+                              // « Utiliser la photo ».
                               DtButton(
                                 label: l10n.verificationDocumentUsePhoto,
                                 onPressed: () => Navigator.of(context).pop(photo.path),
                               ),
                               const SizedBox(height: DtSpace.s2),
+                              // « Reprendre ».
                               DtButton(
                                 label: l10n.verificationDocumentRetake,
                                 variant: DtButtonVariant.secondary,
@@ -177,6 +187,7 @@ class _DocumentCameraScreenState extends State<DocumentCameraScreen> {
                                 style: DtType.body.copyWith(color: colors.onNavy),
                               ),
                               const SizedBox(height: DtSpace.s4),
+                              // The shutter button.
                               DtButton(
                                 label: l10n.verificationDocumentCapture,
                                 icon: LucideIcons.camera,
@@ -210,11 +221,13 @@ class _Guides extends StatelessWidget {
   }
 }
 
+/// Draws the four corners of the framing guide.
 class _CornerPainter extends CustomPainter {
   _CornerPainter(this.color);
 
   final Color color;
 
+  /// Draws the corner strokes.
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
@@ -235,6 +248,7 @@ class _CornerPainter extends CustomPainter {
     }
   }
 
+  /// Redraws only when the colour changes.
   @override
   bool shouldRepaint(_CornerPainter oldDelegate) => oldDelegate.color != color;
 }

@@ -13,6 +13,7 @@ class AcceptLanguageInterceptor extends Interceptor {
 
   final String Function() _language;
 
+  /// Adds the UI language to every request so the API answers in French or English.
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     options.headers['Accept-Language'] = _language();

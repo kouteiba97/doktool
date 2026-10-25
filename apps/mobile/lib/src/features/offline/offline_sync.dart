@@ -26,8 +26,10 @@ import '../calculators/engine/self_test.dart';
 import '../reference/reference_files.dart';
 import 'offline_store.dart';
 
+/// What to keep offline: everything the person may open, or only their favorites.
 enum OfflineScope { all, favorites }
 
+/// Where the sync is.
 enum SyncPhase { idle, syncing, failed }
 
 /// What the offline indicators show (OfflineBar, DataVersionChip, Données et hors ligne).
@@ -75,6 +77,7 @@ class OfflineStatus {
   /// Section 18: data older than 30 days shows a warning.
   bool get outdated => syncedAt != null && DateTime.now().difference(syncedAt!) > const Duration(days: 30);
 
+  /// A copy with some fields changed (clear… flags remove a value).
   OfflineStatus copyWith({
     SyncPhase? phase,
     double? progress,
@@ -117,6 +120,7 @@ class OfflineSyncController extends AsyncNotifier<OfflineStatus> {
   OfflineStore get _store => ref.read(offlineStoreProvider);
   Future<void>? _running;
 
+  /// Real accounts only: loads the status and starts a sync; a demo or sign-out forgets the offline data.
   @override
   Future<OfflineStatus> build() async {
     final session = ref.watch(sessionControllerProvider).value;
@@ -135,6 +139,7 @@ class OfflineSyncController extends AsyncNotifier<OfflineStatus> {
     }
   }
 
+  /// Reads the status from local settings: data version, last sync, scope, mobile data, space used.
   Future<OfflineStatus> _load({required bool enabled}) async {
     final syncedAt = await _database.readSetting(_syncedAtKey);
     return OfflineStatus(
@@ -164,6 +169,7 @@ class OfflineSyncController extends AsyncNotifier<OfflineStatus> {
     return _running ??= _sync().whenComplete(() => _running = null);
   }
 
+  /// Downloads the offline manifest, then each missing or changed PDF, calculator and profile; removes the rest.
   Future<void> _sync() async {
     if (!ref.read(isOnlineProvider)) return;
     state = AsyncData(state.value!.copyWith(phase: SyncPhase.syncing, progress: 0, clearFailure: true));
@@ -287,6 +293,7 @@ class OfflineSyncController extends AsyncNotifier<OfflineStatus> {
     }
   }
 
+  /// « Tout » or « Favoris seulement »: saves the choice and syncs again.
   Future<void> setScope(OfflineScope scope) async {
     await _database.writeSetting(_scopeKey, scope.name);
     state = AsyncData(await _load(enabled: true));
@@ -305,6 +312,7 @@ class OfflineSyncController extends AsyncNotifier<OfflineStatus> {
     }
   }
 
+  /// Allows or forbids syncing over mobile data.
   Future<void> setMobileData(bool allowed) async {
     await _database.writeSetting(_mobileDataKey, '$allowed');
     state = AsyncData(await _load(enabled: true));

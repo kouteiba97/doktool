@@ -48,6 +48,7 @@ class SessionVault {
 
   Session get session => _session;
 
+  /// Reads which session (account or demo) was saved on this device; signed out when none.
   Future<Session> restore() async {
     final userSessionId = await store.read(_userSessionId);
     if (userSessionId != null && await store.read(_userRefreshToken) != null) {
@@ -61,6 +62,7 @@ class SessionVault {
     return _session = const SignedOut();
   }
 
+  /// After sign-in: stores the refresh token in the secure store and keeps the access token in memory.
   Future<UserSession> saveUser(AuthTokensDto tokens) async {
     await _clearStored();
     await store.write(_userSessionId, tokens.sessionId);
@@ -71,6 +73,7 @@ class SessionVault {
     return session;
   }
 
+  /// After « Essayer la démo »: stores the demo's renewal token and context.
   Future<DemoSession> saveDemo(DemoSessionDto demo) async {
     await _clearStored();
     await store.write(_demoSessionId, demo.demoSessionId);
@@ -82,6 +85,7 @@ class SessionVault {
     return session;
   }
 
+  /// Forgets every token (sign-out).
   Future<void> clear() async {
     await _clearStored();
     _session = const SignedOut();
@@ -103,6 +107,7 @@ class SessionVault {
     return _inFlight ??= _renew().whenComplete(() => _inFlight = null);
   }
 
+  /// Gets a new access token with the refresh (or demo renewal) token; ends the session if refused.
   Future<String?> _renew() async {
     final session = _session;
     final deviceId = await store.installationId();
@@ -136,17 +141,20 @@ class SessionVault {
     }
   }
 
+  /// The session is over (revoked, expired): clears it and tells the app to show the welcome screen.
   Future<String?> _end() async {
     await clear();
     onSessionEnded?.call();
     return null;
   }
 
+  /// Keeps the access token and its expiry in memory only (never written to disk).
   void _remember(String token, DateTime expiresAt) {
     _accessToken = token;
     _accessExpiresAt = expiresAt;
   }
 
+  /// Deletes every stored token of both account and demo sessions.
   Future<void> _clearStored() async {
     _accessToken = null;
     _accessExpiresAt = null;

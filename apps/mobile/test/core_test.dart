@@ -57,6 +57,24 @@ void main() {
     });
   });
 
+  group('personal data on a shared phone', () {
+    test('is forgotten with the session, device settings are kept', () async {
+      final database = memoryDatabase();
+      addTearDown(database.close);
+      await database.writeSetting('activity.queue', '[{"kind":"SEARCH","queryText":"angine"}]');
+      await database.writeSetting('search.recent', '["angine"]');
+      await database.writeSetting('calculator.inputs.clairance', '{"age":{"value":71}}');
+      await database.writeSetting('account.summary', '{"userId":"u1","firstName":"Amina","lastName":"B"}');
+      await database.writeSetting('language', 'en');
+      await database.forgetPersonalSettings();
+      expect(await database.readSetting('account.summary'), isNull);
+      expect(await database.readSetting('calculator.inputs.clairance'), isNull);
+      expect(await database.readSetting('activity.queue'), isNull);
+      expect(await database.readSetting('search.recent'), isNull);
+      expect(await database.readSetting('language'), 'en');
+    });
+  });
+
   group('secure storage', () {
     test('creates the installation id once and keeps it', () async {
       FlutterSecureStorage.setMockInitialValues({});
@@ -64,6 +82,14 @@ void main() {
       final first = await store.installationId();
       expect(first, matches(RegExp(r'^[0-9a-f-]{36}$')));
       expect(await store.installationId(), first);
+    });
+
+    test('gives concurrent first calls one id', () async {
+      FlutterSecureStorage.setMockInitialValues({});
+      final store = SecureStore(const FlutterSecureStorage());
+      final ids = await Future.wait([store.installationId(), store.installationId(), store.installationId()]);
+      expect(ids.toSet(), hasLength(1));
+      expect(await SecureStore(const FlutterSecureStorage()).installationId(), ids.first);
     });
   });
 

@@ -15,6 +15,7 @@ import '../account/account_controller.dart';
 
 /// The full account (profile header, edit screen); null for a demo.
 class MeController extends AsyncNotifier<MeDto?> {
+  /// Loads /v1/me for a real account (null for a demo).
   @override
   Future<MeDto?> build() async {
     final session = ref.watch(sessionControllerProvider).value;
@@ -62,6 +63,7 @@ class MeController extends AsyncNotifier<MeDto?> {
     );
   }
 
+  /// Removes the profile photo.
   Future<void> removePhoto() async {
     state = AsyncData(await ref.read(apiProvider).account.usersControllerRemovePhoto());
   }

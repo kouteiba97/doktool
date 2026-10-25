@@ -21,11 +21,13 @@ abstract class DocumentChecker {
   Future<DocumentCheck> check(String imagePath, {required String firstName, required String lastName});
 }
 
+/// Checks on the phone (ML Kit text recognition) that a document is readable and bears the person's name.
 class MlKitDocumentChecker implements DocumentChecker {
   /// Below this many letters and digits, the photo is treated as unreadable.
   static const _minCharacters = 25;
   static const _minLines = 3;
 
+  /// Reads the photo text: too little text is unreadable; the name must appear in it.
   @override
   Future<DocumentCheck> check(String imagePath, {required String firstName, required String lastName}) async {
     final recognizer = TextRecognizer(script: TextRecognitionScript.latin);

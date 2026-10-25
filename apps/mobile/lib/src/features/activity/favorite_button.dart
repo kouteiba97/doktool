@@ -27,6 +27,7 @@ class FavoriteButton extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.colors;
     final starred = ref.watch(favoritesProvider).value?.contains(type, id) ?? false;
+    // The star: adds or removes the favorite.
     return IconButton(
       tooltip: starred ? l10n.favoritesRemove : l10n.favoritesAdd,
       isSelected: starred,
@@ -66,11 +67,13 @@ class _FilledStar extends StatelessWidget {
   }
 }
 
+/// Draws the filled star of a favorite.
 class _StarPainter extends CustomPainter {
   const _StarPainter(this.color);
 
   final Color color;
 
+  /// Draws the five-pointed star path.
   @override
   void paint(Canvas canvas, Size size) {
     // The Lucide star on its 24-unit grid: centre (12, 12.3), points at radius 9.6, inner 4.
@@ -85,6 +88,7 @@ class _StarPainter extends CustomPainter {
     canvas.drawPath(path..close(), Paint()..color = color);
   }
 
+  /// Redraws only when the colour changes.
   @override
   bool shouldRepaint(_StarPainter oldDelegate) => oldDelegate.color != color;
 }

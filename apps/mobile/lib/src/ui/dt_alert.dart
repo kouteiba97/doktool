@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../theme/doktool_tokens.dart';
 import 'tokens.dart';
 
+/// The kinds of alert, each with its colour and icon.
 enum DtAlertSeverity { critical, warning, info, success, offline, neutral }
 
 /// Alert · Banner: icon + optional title + body. Critical is for blocking validation and real

@@ -25,11 +25,13 @@ class DemoStartScreen extends ConsumerStatefulWidget {
   ConsumerState<DemoStartScreen> createState() => _DemoStartScreenState();
 }
 
+/// The demo context chosen (doctor, resident, student) and the start progress.
 class _DemoStartScreenState extends ConsumerState<DemoStartScreen> {
   DemoContext _context = DemoContext.doctor;
   bool _starting = false;
   ApiError? _error;
 
+  /// « Commencer la démo »: starts a demo session for the chosen context; errors are shown inline.
   Future<void> _start() async {
     setState(() {
       _starting = true;
@@ -61,6 +63,7 @@ class _DemoStartScreenState extends ConsumerState<DemoStartScreen> {
       intro: l10n.demoIntro,
       actions: [
         if (_error != null) DtAlert(severity: DtAlertSeverity.critical, body: commonErrorText(context, _error!)),
+        // « Commencer la démo ».
         DtButton(label: l10n.demoStart, loading: _starting, onPressed: _start),
       ],
       children: [
@@ -69,6 +72,7 @@ class _DemoStartScreenState extends ConsumerState<DemoStartScreen> {
           child: Text(l10n.demoYouAre, style: DtType.label.copyWith(color: colors.inkSecondary)),
         ),
         const SizedBox(height: DtSpace.s1),
+        // The demo context: doctor, resident or student.
         DtSegmentedControl<DemoContext>(
           semanticLabel: l10n.demoYouAre,
           selected: _context,

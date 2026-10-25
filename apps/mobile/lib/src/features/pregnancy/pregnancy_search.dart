@@ -30,6 +30,7 @@ import 'substance_screen.dart';
 /// The period a « Grossesse » search answers for; null = no period chosen.
 enum SearchPeriod { t1, t2, t3, peripartum, lactation }
 
+/// A hit's summary for the chosen period (trimester, peripartum or lactation).
 PeriodSummaryDto? summaryFor(PeriodSummariesDto? periods, SearchPeriod period) => switch (period) {
   SearchPeriod.t1 => periods?.t1,
   SearchPeriod.t2 => periods?.t2,
@@ -38,6 +39,7 @@ PeriodSummaryDto? summaryFor(PeriodSummariesDto? periods, SearchPeriod period) =
   SearchPeriod.lactation => periods?.lactation,
 };
 
+/// The name of a period filter.
 String searchPeriodLabel(AppLocalizations l10n, SearchPeriod period) => switch (period) {
   SearchPeriod.t1 => l10n.pregnancyT1,
   SearchPeriod.t2 => l10n.pregnancyT2,
@@ -81,18 +83,21 @@ class SubstanceSearch extends ConsumerStatefulWidget {
   ConsumerState<SubstanceSearch> createState() => _SubstanceSearchState();
 }
 
+/// The query after the pause, how many hits are shown, and the period filter.
 class _SubstanceSearchState extends ConsumerState<SubstanceSearch> {
   String _debounced = '';
   int _limit = _pageSize;
   SearchPeriod? _period;
   Timer? _timer;
 
+  /// Starts with the query already typed.
   @override
   void initState() {
     super.initState();
     _debounced = widget.query.trim();
   }
 
+  /// The query changed: searches again after a 300 ms pause.
   @override
   void didUpdateWidget(SubstanceSearch oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -108,6 +113,7 @@ class _SubstanceSearchState extends ConsumerState<SubstanceSearch> {
     });
   }
 
+  /// Stops the pause timer.
   @override
   void dispose() {
     _timer?.cancel();
@@ -123,6 +129,7 @@ class _SubstanceSearchState extends ConsumerState<SubstanceSearch> {
     final data = results.value;
     return Column(
       children: [
+        // Period filter: T1, T2, T3, peripartum, lactation.
         Padding(
           padding: const EdgeInsets.only(bottom: DtSpace.s2),
           child: DtPillTabs<SearchPeriod?>(
@@ -149,6 +156,7 @@ class _SubstanceSearchState extends ConsumerState<SubstanceSearch> {
                         body: commonErrorText(context, ApiError.from(results.error!)),
                       ),
                       const SizedBox(height: DtSpace.s3),
+                      // « Réessayer ».
                       DtButton(
                         label: l10n.commonRetry,
                         variant: DtButtonVariant.secondary,
@@ -204,6 +212,7 @@ class _SubstanceSearchState extends ConsumerState<SubstanceSearch> {
                       if (data.items.length < data.total)
                         Padding(
                           padding: const EdgeInsets.only(top: DtSpace.s3),
+                          // « Afficher N de plus ».
                           child: DtButton(
                             label: l10n.pregnancySearchMore('${data.total - data.items.length}'),
                             variant: DtButtonVariant.secondary,
@@ -219,6 +228,7 @@ class _SubstanceSearchState extends ConsumerState<SubstanceSearch> {
   }
 }
 
+/// One substance found: name with the matched letters highlighted, and its conduct for the chosen period.
 class _HitRow extends StatelessWidget {
   const _HitRow({required this.hit, required this.period, required this.query});
 

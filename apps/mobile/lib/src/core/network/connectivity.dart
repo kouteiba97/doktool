@@ -1,8 +1,10 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// How the phone is connected right now.
 enum NetworkKind { offline, wifi, mobile }
 
+/// Wi-Fi or Ethernet count as Wi-Fi; mobile or VPN as mobile data; anything else is offline.
 NetworkKind _kindOf(List<ConnectivityResult> results) {
   if (results.contains(ConnectivityResult.wifi) || results.contains(ConnectivityResult.ethernet)) {
     return NetworkKind.wifi;

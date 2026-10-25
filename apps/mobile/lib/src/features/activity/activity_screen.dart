@@ -25,6 +25,7 @@ import '../analytics/analytics_recorder.dart';
 import 'activity_data.dart';
 import 'favorites_controller.dart';
 
+/// The two tabs of the screen.
 enum _Segment { favorites, activity }
 
 /// ScreenFavoritesRecents (Profil › Activité et favoris): favorites grouped by type, and the
@@ -36,6 +37,7 @@ class ActivityScreen extends ConsumerStatefulWidget {
   ConsumerState<ActivityScreen> createState() => _ActivityScreenState();
 }
 
+/// Which tab is shown and which history filter is chosen.
 class _ActivityScreenState extends ConsumerState<ActivityScreen> {
   _Segment _segment = _Segment.favorites;
   ActivityKind? _filter;
@@ -51,6 +53,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(DtSpace.s4, 0, DtSpace.s4, DtSpace.s3),
+            // Switches between « Favoris » and « Activité ».
             child: DtSegmentedControl<_Segment>(
               semanticLabel: l10n.activitySections,
               selected: _segment,
@@ -72,6 +75,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
   }
 }
 
+/// Opens a favorite or history item: profile, calculator or reference model.
 void openContent(BuildContext context, ContentRef content) {
   if (content.isSubstance) {
     context.push(Routes.substance(content.id));
@@ -93,6 +97,7 @@ void openReference(BuildContext context, String id, ReferenceDocumentType type) 
   context.push(Routes.reference(id));
 }
 
+/// « Favoris » tab: favorites grouped by type, with an empty state.
 class _FavoritesList extends ConsumerWidget {
   const _FavoritesList();
 
@@ -160,6 +165,7 @@ class _FavoritesList extends ConsumerWidget {
                   ListTile(
                     leading: Icon(LucideIcons.fileX, color: colors.inkMuted),
                     title: Text(l10n.favoritesUnavailable, style: DtType.body.copyWith(color: colors.inkSecondary)),
+                    // « Retirer » this favorite.
                     trailing: TextButton(
                       onPressed: () => ref.read(favoritesProvider.notifier).toggle(entry.targetType, entry.targetId),
                       child: Text(l10n.favoritesRemoveAction, style: DtType.label.copyWith(color: colors.brand)),
@@ -174,12 +180,14 @@ class _FavoritesList extends ConsumerWidget {
   }
 }
 
+/// « Activité » tab: the person's history grouped by day, with filters and « Effacer ».
 class _History extends ConsumerWidget {
   const _History({required this.filter, required this.onFilter});
 
   final ActivityKind? filter;
   final ValueChanged<ActivityKind?> onFilter;
 
+  /// Day heading: « Aujourd'hui », « Hier » or the date.
   String _day(BuildContext context, AppLocalizations l10n, DateTime at) {
     final local = at.toLocal();
     final today = DateUtils.dateOnly(DateTime.now());
@@ -189,6 +197,7 @@ class _History extends ConsumerWidget {
     return DateFormat.yMMMMEEEEd(Localizations.localeOf(context).toLanguageTag()).format(local);
   }
 
+  /// « Effacer l'historique »: asks to confirm in a sheet, then deletes the history on the server.
   Future<void> _clear(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final confirmed = await showModalBottomSheet<bool>(
@@ -203,12 +212,14 @@ class _History extends ConsumerWidget {
           children: [
             Text(l10n.activityClearConfirm, style: DtType.body.copyWith(color: sheet.colors.ink)),
             const SizedBox(height: DtSpace.s4),
+            // Confirms clearing the history.
             DtButton(
               label: l10n.activityClear,
               variant: DtButtonVariant.danger,
               onPressed: () => Navigator.of(sheet).pop(true),
             ),
             const SizedBox(height: DtSpace.s2),
+            // « Annuler »: keeps the history.
             DtButton(
               label: l10n.commonCancel,
               variant: DtButtonVariant.secondary,
@@ -315,6 +326,7 @@ class _History extends ConsumerWidget {
                       if (entries.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.all(DtSpace.s4),
+                          // « Effacer l'historique ».
                           child: DtButton(
                             label: l10n.activityClear,
                             variant: DtButtonVariant.secondary,
@@ -330,6 +342,7 @@ class _History extends ConsumerWidget {
   }
 }
 
+/// A small heading above a group of rows.
 class _GroupTitle extends StatelessWidget {
   const _GroupTitle(this.label);
 

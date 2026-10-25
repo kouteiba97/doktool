@@ -22,6 +22,7 @@ String lockWord(AppLocalizations l10n, LockReason? reason) => switch (reason) {
   _ => l10n.lockWordUnavailable,
 };
 
+/// Why something is locked, in plain words.
 String lockExplanation(AppLocalizations l10n, LockReason? reason) => switch (reason) {
   LockReason.professionalOnly => l10n.lockProfessionalOnly,
   LockReason.demoLimit => l10n.lockDemoLimit,
@@ -97,6 +98,7 @@ Future<void> showLockSheet(BuildContext context, ItemAccessDto access, {required
           Text(lockExplanation(l10n, access.lockReason), style: DtType.body.copyWith(color: colors.inkSecondary)),
           const SizedBox(height: DtSpace.s5),
           if (action != null) ...[
+            // The unlock path the API gives (verify, see plans, create an account): closes the sheet and goes there.
             DtButton(
               label: action.$1,
               onPressed: () {
@@ -106,6 +108,7 @@ Future<void> showLockSheet(BuildContext context, ItemAccessDto access, {required
             ),
             const SizedBox(height: DtSpace.s2),
           ],
+          // « Continuer la démo » / « Fermer ».
           DtButton(
             label: demo ? l10n.lockContinueDemo : l10n.commonClose,
             variant: action == null ? DtButtonVariant.primary : DtButtonVariant.secondary,

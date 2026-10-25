@@ -24,6 +24,7 @@ class FavoriteKey {
   int get hashCode => Object.hash(type, id);
 }
 
+/// The favorites of this session: server entries and a quick lookup set.
 @immutable
 class Favorites {
   const Favorites({this.entries = const [], this.keys = const {}});
@@ -34,12 +35,14 @@ class Favorites {
   /// Everything starred, for the star buttons and « favoris d’abord » ordering.
   final Set<FavoriteKey> keys;
 
+  /// True when this item is a favorite.
   bool contains(FavoriteTargetType type, String id) => keys.contains(FavoriteKey(type, id));
 }
 
 /// Favorites: on the server for a real account; kept in memory only for a demo (session-local,
 /// nothing a demo does is written to user tables — section 27).
 class FavoritesController extends AsyncNotifier<Favorites> {
+  /// Loads the favorites from the server (real account) or starts empty (demo).
   @override
   Future<Favorites> build() async {
     final session = ref.watch(sessionControllerProvider).value;
@@ -51,6 +54,7 @@ class FavoritesController extends AsyncNotifier<Favorites> {
     );
   }
 
+  /// Adds or removes a favorite at once on screen, then on the server; undone if the server refuses.
   Future<void> toggle(FavoriteTargetType type, String id) async {
     final current = await future;
     final key = FavoriteKey(type, id);

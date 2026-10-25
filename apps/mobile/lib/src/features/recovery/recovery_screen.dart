@@ -34,8 +34,10 @@ import '../onboarding/resend_timer.dart';
 import '../onboarding/validators.dart';
 import '../verification/document_camera_screen.dart';
 
+/// The steps of recovery: the form, the code, the two photos, done.
 enum _Step { form, code, photos, done }
 
+/// Where each photo is.
 enum _PhotoState { empty, uploading, sent, failed }
 
 /// Signed PUTs of the two photos to private storage (outside the API client: no auth header).
@@ -61,6 +63,7 @@ class RecoveryScreen extends ConsumerStatefulWidget {
   ConsumerState<RecoveryScreen> createState() => _RecoveryScreenState();
 }
 
+/// Everything the recovery steps need: the texts typed, the request, the code challenge, the token and photos.
 class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
   final _lost = TextEditingController();
   final _firstName = TextEditingController();
@@ -81,6 +84,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     RecoveryPhotoSlot.selfie: _PhotoState.empty,
   };
 
+  /// Frees the text controllers.
   @override
   void dispose() {
     for (final controller in [_lost, _firstName, _lastName, _fresh, _code]) {
@@ -95,6 +99,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
       _firstName.text.trim().isNotEmpty &&
       _lastName.text.trim().isNotEmpty;
 
+  /// Runs one step with the busy flag and shows its error if it fails.
   Future<void> _run(Future<void> Function() action) async {
     setState(() {
       _busy = true;
@@ -109,6 +114,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     }
   }
 
+  /// Step 1: the lost contact, names and a new contact; a code is sent to the new contact.
   Future<void> _start() => _run(() async {
     final started = await ref
         .read(apiProvider)
@@ -129,6 +135,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     });
   });
 
+  /// Step 2: the code proves the new contact; the API gives a token for the photos.
   Future<void> _confirm() => _run(() async {
     final challenge = _challenge;
     if (challenge == null || _requestId == null) return;
@@ -149,6 +156,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     }
   });
 
+  /// « Renvoyer le code ».
   Future<void> _resend() async {
     final challenge = _challenge;
     if (challenge == null) return;
@@ -171,6 +179,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     }
   }
 
+  /// Step 3: takes the identity photo or the selfie and uploads it to private storage.
   Future<void> _takePhoto(RecoveryPhotoSlot slot, String title) async {
     final path = await DocumentCameraScreen.capture(context, title, selfie: slot == RecoveryPhotoSlot.selfie);
     if (path == null || _token == null) return;
@@ -219,6 +228,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     }
   }
 
+  /// « Envoyer la demande »: the team reviews it; once approved it applies after 24 hours.
   Future<void> _submit() => _run(() async {
     final submitted = await ref
         .read(apiProvider)
@@ -231,6 +241,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     });
   });
 
+  /// The message for each refusal of the recovery steps.
   String _errorText(AppLocalizations l10n, ApiError error) => switch (error.code) {
     'ACCOUNT_EXISTS' => l10n.recoveryAccountExists,
     'CHALLENGE_INVALID' => l10n.recoveryExpired,
@@ -255,6 +266,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
         intro: l10n.recoveryIntro,
         actions: [
           ?alert,
+          // « Envoyer le code »: needs the lost contact, the names and a new contact.
           DtButton(label: l10n.recoverySendCode, loading: _busy, onPressed: _formValid ? _start : null),
         ],
         children: [
@@ -299,6 +311,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
         onBack: () => setState(() => _step = _Step.form),
         actions: [
           ?alert,
+          // « Vérifier »: possible once the six digits are typed.
           DtButton(
             label: l10n.recoveryVerify,
             loading: _busy,
@@ -319,6 +332,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
         showBack: false,
         actions: [
           ?alert,
+          // « Envoyer la demande »: possible once both photos are sent.
           DtButton(
             label: l10n.recoverySubmit,
             loading: _busy,
@@ -346,6 +360,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
       _Step.done => DtPage(
         title: l10n.recoveryDoneTitle,
         showBack: false,
+        // « Retour à la connexion ».
         actions: [DtButton(label: l10n.recoveryBackToSignIn, onPressed: () => context.go(Routes.signIn))],
         children: [
           DtAlert(severity: DtAlertSeverity.success, body: l10n.recoveryDoneBody('$_answerHours', _fresh.text.trim())),
@@ -355,6 +370,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
   }
 }
 
+/// One photo slot: what to photograph, and its state (to take, sending, sent, failed).
 class _PhotoTile extends StatelessWidget {
   const _PhotoTile({
     required this.title,
@@ -403,6 +419,7 @@ class _PhotoTile extends StatelessWidget {
             LinearProgressIndicator(color: colors.brand, backgroundColor: colors.surfaceSunken),
           ] else ...[
             const SizedBox(height: DtSpace.s3),
+            // « Prendre la photo » / « Reprendre ».
             DtButton(
               label: sent ? l10n.recoveryRetake : l10n.recoveryTakePhoto,
               icon: LucideIcons.camera,

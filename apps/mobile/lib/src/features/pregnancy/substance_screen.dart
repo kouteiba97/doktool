@@ -54,6 +54,7 @@ final substanceProvider = FutureProvider.autoDispose.family<SubstanceProfileDto,
   }
 });
 
+/// The pregnancy periods, as tabs.
 enum _Period { t1, t2, t3, peripartum }
 
 /// « Grossesse · Allaitement » for one substance (ScreenPregnancyDesktop, ScreenLactationMobile,
@@ -68,12 +69,14 @@ class SubstanceScreen extends ConsumerStatefulWidget {
   ConsumerState<SubstanceScreen> createState() => _SubstanceScreenState();
 }
 
+/// The section shown (pregnancy or lactation) and what has already been recorded.
 class _SubstanceScreenState extends ConsumerState<SubstanceScreen> {
   PregnancySection _section = PregnancySection.pregnancy;
   final Set<PregnancySection> _recorded = {};
 
   bool _historyRecorded = false;
 
+  /// Records the visit once in the person's history and each section seen once for analytics.
   void _record(SubstanceProfileDto profile) {
     if (profile.access.state != AccessState.available) return;
     if (!_historyRecorded) {
@@ -138,6 +141,7 @@ class _SubstanceScreenState extends ConsumerState<SubstanceScreen> {
   }
 }
 
+/// Error state with « Réessayer » (or « introuvable » when the profile no longer exists).
 class _Failure extends StatelessWidget {
   const _Failure({required this.error, required this.onRetry});
 
@@ -164,6 +168,7 @@ class _Failure extends StatelessWidget {
           ),
           if (!gone) ...[
             const SizedBox(height: DtSpace.s3),
+            // « Réessayer ».
             DtButton(label: l10n.commonRetry, variant: DtButtonVariant.secondary, onPressed: onRetry),
           ],
         ],
@@ -172,6 +177,7 @@ class _Failure extends StatelessWidget {
   }
 }
 
+/// The whole profile: header, section switch, the chosen block, sources and « Signaler une erreur ».
 class _Profile extends StatelessWidget {
   const _Profile({required this.profile, required this.section, required this.onSection});
 
@@ -193,6 +199,7 @@ class _Profile extends StatelessWidget {
             body: lockExplanation(l10n, profile.access.lockReason),
           ),
           const SizedBox(height: DtSpace.s3),
+          // « Débloquer »: explains the lock and its path.
           DtButton(
             label: l10n.pregnancyUnlock,
             variant: DtButtonVariant.secondary,
@@ -209,6 +216,7 @@ class _Profile extends StatelessWidget {
           DtAlert(severity: DtAlertSeverity.info, body: l10n.pregnancyUnderReview),
           const SizedBox(height: DtSpace.s3),
         ],
+        // Switches between « Grossesse » and « Allaitement ».
         DtSegmentedControl<PregnancySection>(
           semanticLabel: l10n.typesPregnancy,
           selected: section,
@@ -328,6 +336,7 @@ class EvidenceMeter extends StatelessWidget {
   }
 }
 
+/// A label above a text (nothing when the text is empty).
 class _Labelled extends StatelessWidget {
   const _Labelled({required this.label, required this.text});
 
@@ -355,6 +364,7 @@ class _Labelled extends StatelessWidget {
   }
 }
 
+/// A card around a part of the profile.
 class _Section extends StatelessWidget {
   const _Section({required this.child});
 
@@ -377,6 +387,7 @@ class _Section extends StatelessWidget {
   }
 }
 
+/// The evidence footer: level, source and date, always under a block.
 class _EvidenceLine extends StatelessWidget {
   const _EvidenceLine({required this.evidence});
 
@@ -423,6 +434,7 @@ class _PeriodSources extends StatelessWidget {
           for (final source in sources)
             Semantics(
               link: source.url != null,
+              // A source with a link: opens it in the browser.
               child: InkWell(
                 onTap: source.url == null
                     ? null
@@ -454,6 +466,7 @@ class _PeriodSources extends StatelessWidget {
   }
 }
 
+/// « Alternatives »: other substances to consider, each opening its own profile.
 class _Alternatives extends StatelessWidget {
   const _Alternatives({required this.ids, required this.profile});
 
@@ -478,6 +491,7 @@ class _Alternatives extends StatelessWidget {
           runSpacing: DtSpace.s2,
           children: [
             for (final alternative in refs)
+              // An alternative substance: opens its profile.
               ActionChip(
                 label: Text(
                   localizedTitle(context, alternative.nameFr, alternative.nameEn),
@@ -530,6 +544,7 @@ class _NoData extends StatelessWidget {
   }
 }
 
+/// Shown when sources disagree: what the conflict is and which sources say what.
 class _ConflictAlert extends StatelessWidget {
   const _ConflictAlert({required this.conflict, required this.sources});
 
@@ -552,6 +567,7 @@ class _ConflictAlert extends StatelessWidget {
   }
 }
 
+/// The pregnancy block: one tab per period with its conduct and evidence.
 class _PregnancyBlock extends StatefulWidget {
   const _PregnancyBlock({required this.block, required this.profile});
 
@@ -562,9 +578,11 @@ class _PregnancyBlock extends StatefulWidget {
   State<_PregnancyBlock> createState() => _PregnancyBlockState();
 }
 
+/// The period tab chosen.
 class _PregnancyBlockState extends State<_PregnancyBlock> {
   _Period _period = _Period.t1;
 
+  /// The content of one period.
   PregnancyPeriodDto? _of(_Period period) => switch (period) {
     _Period.t1 => widget.block.periods.t1,
     _Period.t2 => widget.block.periods.t2,
@@ -572,6 +590,7 @@ class _PregnancyBlockState extends State<_PregnancyBlock> {
     _Period.peripartum => widget.block.periods.peripartum,
   };
 
+  /// The name of a period tab.
   String _label(AppLocalizations l10n, _Period period) => switch (period) {
     _Period.t1 => l10n.pregnancyT1,
     _Period.t2 => l10n.pregnancyT2,
@@ -589,6 +608,7 @@ class _PregnancyBlockState extends State<_PregnancyBlock> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _ConflictAlert(conflict: widget.block.conflict, sources: widget.profile.sources),
+        // Period tabs: T1, T2, T3, peripartum.
         DtPillTabs<_Period>(
           semanticLabel: l10n.pregnancyPeriods,
           selected: _period,
@@ -658,6 +678,7 @@ class _PregnancyBlockState extends State<_PregnancyBlock> {
   }
 }
 
+/// The lactation block: conduct, evidence and notes.
 class _LactationBlock extends StatelessWidget {
   const _LactationBlock({required this.block, required this.profile});
 
@@ -755,6 +776,7 @@ class _EvidenceFooter extends StatelessWidget {
           Text(l10n.pregnancyReviewed(dateText(context, profile.reviewedAt), profile.reviewerName), style: style),
           const SizedBox(height: DtSpace.s1),
           Text('v${profile.version}', style: DtType.mono.copyWith(color: colors.inkMuted)),
+          // « Signaler une erreur » in this section.
           TextButton.icon(
             style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, DtSize.touchMin)),
             onPressed: () => showReportSheet(context, profile: profile, section: section),

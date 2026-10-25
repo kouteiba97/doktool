@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../theme/doktool_tokens.dart';
 import 'tokens.dart';
 
+/// The looks of a button.
 enum DtButtonVariant { primary, secondary, ghost, danger, teal }
 
+/// The heights of a button.
 enum DtButtonSize { sm, md, lg }
 
 /// The single action control (component Button): one primary per screen region, labels in the

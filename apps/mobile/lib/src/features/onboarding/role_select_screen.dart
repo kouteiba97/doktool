@@ -28,11 +28,13 @@ class RoleSelectScreen extends ConsumerStatefulWidget {
   ConsumerState<RoleSelectScreen> createState() => _RoleSelectScreenState();
 }
 
+/// The role selected, progress and error.
 class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
   ProfessionalType? _selected;
   bool _saving = false;
   ApiError? _error;
 
+  /// Pre-selects a role chosen earlier in onboarding.
   @override
   void initState() {
     super.initState();
@@ -41,6 +43,7 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
 
   bool get _signedIn => ref.read(sessionControllerProvider).value is UserSession;
 
+  /// « Continuer »: before an account, remembers the role and opens sign-up; signed in, saves it on the account.
   Future<void> _continue() async {
     final role = _selected;
     if (role == null) return;
@@ -86,6 +89,7 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
       intro: l10n.roleIntro,
       actions: [
         if (_error != null) DtAlert(severity: DtAlertSeverity.critical, body: commonErrorText(context, _error!)),
+        // « Continuer »: possible once a role is chosen.
         DtButton(label: l10n.commonContinue, loading: _saving, onPressed: _selected == null ? null : _continue),
         Text(
           l10n.roleNote,
@@ -101,6 +105,7 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
             children: [
               for (final (index, option) in options.indexed) ...[
                 if (index > 0) const SizedBox(height: DtSpace.s2),
+                // A role row: selects it.
                 _RoleRow(
                   title: option.$2,
                   line: option.$3,
@@ -117,6 +122,7 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
   }
 }
 
+/// One selectable role: title, line, badge and check mark.
 class _RoleRow extends StatelessWidget {
   const _RoleRow({
     required this.title,

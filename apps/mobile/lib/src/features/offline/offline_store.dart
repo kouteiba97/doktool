@@ -26,6 +26,7 @@ import '../../core/database/app_database.dart';
 /// The per-period summary the search endpoint gives, rebuilt from a stored profile.
 PeriodSummariesDto? periodSummaries(ProfileContentDto? content) {
   if (content == null) return null;
+  // One period's summary, only when the profile has that period.
   PeriodSummaryDto? of(Conduct? conduct, num? level, bool present) =>
       present ? PeriodSummaryDto(conduct: conduct, evidenceLevel: level) : null;
   final periods = content.pregnancy?.periods;
@@ -45,12 +46,14 @@ const _available = ItemAccessDto(state: AccessState.available, lockReason: null,
 /// Everything here was entitled at the last sync; a lost entitlement purges it at the next online
 /// launch.
 class OfflineStore {
+  /// The folder is injectable for tests; on a phone it is the app's private support folder.
   OfflineStore(this._database, {Future<Directory> Function()? directory})
     : _directory = directory ?? getApplicationSupportDirectory;
 
   final AppDatabase _database;
   final Future<Directory> Function() _directory;
 
+  /// The private folder where offline PDFs are written (created if missing).
   Future<Directory> filesDirectory() async {
     final base = await _directory();
     final folder = Directory('${base.path}${Platform.pathSeparator}offline');
@@ -58,12 +61,14 @@ class OfflineStore {
     return folder;
   }
 
+  /// The reference models kept offline, optionally of one type.
   Future<List<OfflineDocument>> documents({ReferenceDocumentType? type}) {
     final query = _database.select(_database.offlineDocuments);
     if (type != null) query.where((row) => row.type.equals(type.toJson()));
     return query.get();
   }
 
+  /// One reference model kept offline, if any.
   Future<OfflineDocument?> document(String id) =>
       (_database.select(_database.offlineDocuments)..where((row) => row.id.equals(id))).getSingleOrNull();
 
@@ -75,11 +80,14 @@ class OfflineStore {
     return sha256.convert(bytes).toString() == document.sha256 ? bytes : null;
   }
 
+  /// The calculator versions kept offline.
   Future<List<OfflineCalculator>> calculators() => _database.select(_database.offlineCalculators).get();
 
+  /// One calculator kept offline, by its slug.
   Future<OfflineCalculator?> calculatorBySlug(String slug) =>
       (_database.select(_database.offlineCalculators)..where((row) => row.slug.equals(slug))).getSingleOrNull();
 
+  /// The pregnancy · lactation profiles kept offline.
   Future<List<OfflineSubstance>> substances() => _database.select(_database.offlineSubstances).get();
 
   /// A profile kept for offline reading, as the API gave it.
@@ -121,6 +129,7 @@ class OfflineStore {
         ),
   ]..sort((a, b) => a.nameFr.compareTo(b.nameFr));
 
+  /// Keeps a profile for offline reading (replacing an older copy).
   Future<void> saveSubstance(SubstanceProfileDto profile) => _database
       .into(_database.offlineSubstances)
       .insertOnConflictUpdate(
@@ -134,6 +143,7 @@ class OfflineStore {
         ),
       );
 
+  /// Removes a profile from offline storage.
   Future<void> deleteSubstance(String id) =>
       (_database.delete(_database.offlineSubstances)..where((row) => row.id.equals(id))).go();
 
@@ -153,6 +163,7 @@ class OfflineStore {
       ),
   ]..sort((a, b) => a.titleFr.compareTo(b.titleFr));
 
+  /// Calculator rows built from the store, for the library when offline.
   Future<List<CalculatorSummaryDto>> calculatorItems() async => [
     for (final calculator in await calculators())
       CalculatorSummaryDto(
@@ -199,20 +210,25 @@ class OfflineStore {
     }
   }
 
+  /// Space used by the offline PDFs, shown in « Données et hors ligne ».
   Future<int> storageBytes() async => (await documents()).fold<int>(0, (total, document) => total + document.sizeBytes);
 
+  /// Records a downloaded PDF.
   Future<void> saveDocument(OfflineDocumentsCompanion row) =>
       _database.into(_database.offlineDocuments).insertOnConflictUpdate(row);
 
+  /// Deletes a PDF file and its record.
   Future<void> deleteDocument(OfflineDocument document) async {
     final file = File(document.filePath);
     if (file.existsSync()) await file.delete();
     await (_database.delete(_database.offlineDocuments)..where((row) => row.id.equals(document.id))).go();
   }
 
+  /// Records a calculator version for offline use.
   Future<void> saveCalculator(OfflineCalculatorsCompanion row) =>
       _database.into(_database.offlineCalculators).insertOnConflictUpdate(row);
 
+  /// Removes a calculator version from offline storage.
   Future<void> deleteCalculator(String id) =>
       (_database.delete(_database.offlineCalculators)..where((row) => row.id.equals(id))).go();
 }

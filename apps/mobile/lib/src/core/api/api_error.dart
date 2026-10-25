@@ -25,6 +25,7 @@ class ApiError implements Exception {
   /// The session can no longer be used; the person must sign in again.
   bool get isSessionEnded => code == 'UNAUTHENTICATED' || code == 'SESSION_INVALID';
 
+  /// Turns any failure (network, timeout, HTTP error body) into one ApiError with a stable code.
   static ApiError from(Object error) {
     if (error is ApiError) return error;
     if (error is! DioException) return const ApiError(code: unknownCode);
@@ -60,6 +61,7 @@ class ApiError implements Exception {
     );
   }
 
+  /// Reads the per-field validation messages of a 400 answer.
   static Map<String, List<String>> _fields(Object? raw) {
     if (raw is! Map) return const {};
     return {
@@ -69,6 +71,7 @@ class ApiError implements Exception {
     };
   }
 
+  /// Short text for logs (never shown to the user).
   @override
   String toString() => 'ApiError($code, status: $statusCode)';
 }

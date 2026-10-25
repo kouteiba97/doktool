@@ -27,15 +27,18 @@ class OtpCodeInput extends StatefulWidget {
   State<OtpCodeInput> createState() => _OtpCodeInputState();
 }
 
+/// The six boxes redraw when the hidden field gains or loses focus.
 class _OtpCodeInputState extends State<OtpCodeInput> {
   final _focus = FocusNode();
 
+  /// Redraws the boxes on focus changes.
   @override
   void initState() {
     super.initState();
     _focus.addListener(() => setState(() {}));
   }
 
+  /// Frees the focus node.
   @override
   void dispose() {
     _focus.dispose();

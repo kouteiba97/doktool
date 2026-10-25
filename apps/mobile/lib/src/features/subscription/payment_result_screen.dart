@@ -30,12 +30,14 @@ class PaymentResultScreen extends ConsumerStatefulWidget {
   ConsumerState<PaymentResultScreen> createState() => _PaymentResultScreenState();
 }
 
+/// Checks the payment every 4 seconds and on return to the app, until it is no longer pending.
 class _PaymentResultScreenState extends ConsumerState<PaymentResultScreen> with WidgetsBindingObserver {
   static const _interval = Duration(seconds: 4);
   Timer? _timer;
   TransactionDto? _transaction;
   bool _checking = false;
 
+  /// Checks at once, then every 4 seconds.
   @override
   void initState() {
     super.initState();
@@ -44,6 +46,7 @@ class _PaymentResultScreenState extends ConsumerState<PaymentResultScreen> with 
     _timer = Timer.periodic(_interval, (_) => _check());
   }
 
+  /// Stops the checks.
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -51,11 +54,13 @@ class _PaymentResultScreenState extends ConsumerState<PaymentResultScreen> with 
     super.dispose();
   }
 
+  /// Back from the payment page: checks at once.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) _check();
   }
 
+  /// Asks the API for the payment's status; success refreshes the access profile.
   Future<void> _check() async {
     if (_checking || (_transaction != null && _transaction!.status != TransactionStatus.pending)) return;
     setState(() => _checking = true);
@@ -103,10 +108,13 @@ class _PaymentResultScreenState extends ConsumerState<PaymentResultScreen> with 
       onBack: () => context.go(Routes.home),
       actions: switch (status) {
         TransactionStatus.succeeded => [
+          // « Voir mon abonnement ».
           DtButton(label: l10n.paymentSeeSubscription, onPressed: () => context.go(Routes.subscription)),
         ],
         TransactionStatus.failed || TransactionStatus.canceled => [
+          // « Réessayer »: back to the plans.
           DtButton(label: l10n.paymentRetry, onPressed: () => context.pushReplacement(Routes.plans)),
+          // « Autre moyen de paiement »: back to the review of the same plan.
           DtButton(
             label: l10n.paymentOtherMethod,
             variant: DtButtonVariant.secondary,
@@ -116,8 +124,10 @@ class _PaymentResultScreenState extends ConsumerState<PaymentResultScreen> with 
           ),
         ],
         _ => [
+          // « Vérifier »: asks the payment status now.
           DtButton(label: l10n.paymentCheck, loading: _checking, onPressed: _check),
           if (pending != null)
+            // « Rouvrir la page de paiement ».
             DtButton(
               label: l10n.paymentReopen,
               variant: DtButtonVariant.secondary,

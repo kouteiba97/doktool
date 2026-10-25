@@ -27,10 +27,12 @@ class SummaryScreen extends ConsumerStatefulWidget {
   ConsumerState<SummaryScreen> createState() => _SummaryScreenState();
 }
 
+/// Progress and error of sending.
 class _SummaryScreenState extends ConsumerState<SummaryScreen> {
   bool _sending = false;
   ApiError? _error;
 
+  /// « Envoyer pour vérification »: submits each complete case; the status screen follows.
   Future<void> _send() async {
     setState(() {
       _sending = true;
@@ -64,6 +66,7 @@ class _SummaryScreenState extends ConsumerState<SummaryScreen> {
       intro: l10n.verificationSummaryIntro,
       actions: [
         if (_error != null) DtAlert(severity: DtAlertSeverity.critical, body: commonErrorText(context, _error!)),
+        // « Envoyer pour vérification »: possible once every case is complete.
         DtButton(label: l10n.verificationSummarySend, loading: _sending, onPressed: complete ? _send : null),
       ],
       children: [
@@ -81,6 +84,7 @@ class _SummaryScreenState extends ConsumerState<SummaryScreen> {
     );
   }
 
+  /// True when a case has its details and every required document.
   bool _complete(VerificationCaseDto draft) {
     final hasDetails = draft.type == VerificationType.identity
         ? draft.details.documentKind != null
@@ -89,6 +93,7 @@ class _SummaryScreenState extends ConsumerState<SummaryScreen> {
   }
 }
 
+/// One case in the summary: its documents, details and « Modifier ».
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({required this.draft, required this.complete, required this.onEdit});
 
@@ -150,6 +155,7 @@ class _SummaryCard extends StatelessWidget {
               ),
           Align(
             alignment: AlignmentDirectional.centerEnd,
+            // « Modifier » this case.
             child: DtButton(
               label: l10n.verificationSummaryEdit,
               variant: DtButtonVariant.ghost,

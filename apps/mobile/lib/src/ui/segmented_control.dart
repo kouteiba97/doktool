@@ -73,6 +73,7 @@ class DtSegmentedControl<T> extends StatelessWidget {
   }
 }
 
+/// One segment: its label and selected state.
 class _SegmentButton extends StatelessWidget {
   const _SegmentButton({required this.label, required this.selected, required this.inset, required this.onTap});
 

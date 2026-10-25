@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/search/recent_searches.dart';
 import '../../features/settings/app_settings.dart';
 import '../../features/settings/settings_controller.dart';
 import '../api/api_client.dart';
@@ -11,6 +13,7 @@ import '../api/generated/models/device_dto.dart';
 import '../api/generated/models/device_platform.dart';
 import '../api/generated/models/language.dart';
 import '../api/generated/models/start_demo_dto.dart';
+import '../database/app_database.dart';
 import '../storage/secure_store.dart';
 import 'session.dart';
 import 'session_vault.dart';
@@ -19,10 +22,14 @@ import 'session_vault.dart';
 class SessionController extends AsyncNotifier<Session> {
   SessionVault get _vault => ref.read(sessionVaultProvider);
 
+  /// Restores the saved session at launch, and listens for the vault ending it (revoked, expired).
   @override
   Future<Session> build() async {
     final vault = ref.watch(sessionVaultProvider);
-    vault.onSessionEnded = () => state = const AsyncData(SignedOut());
+    vault.onSessionEnded = () {
+      unawaited(_forgetPersonalData());
+      state = const AsyncData(SignedOut());
+    };
     return vault.restore();
   }
 
@@ -33,6 +40,7 @@ class SessionController extends AsyncNotifier<Session> {
   /// Switches the app to the stored session.
   void enter() => state = AsyncData(_vault.session);
 
+  /// « Essayer la démo »: asks the API for a short-lived demo token for this device, no sign-up.
   Future<void> startDemo(DemoContext context) async {
     final deviceId = await ref.read(secureStoreProvider).installationId();
     final demo = await ref
@@ -54,7 +62,14 @@ class SessionController extends AsyncNotifier<Session> {
       }
     }
     await _vault.clear();
+    await _forgetPersonalData();
     state = const AsyncData(SignedOut());
+  }
+
+  /// What the person leaves on the device goes with their session (shared phones).
+  Future<void> _forgetPersonalData() async {
+    await ref.read(appDatabaseProvider).forgetPersonalSettings();
+    ref.invalidate(recentSearchesProvider);
   }
 
   /// The device descriptor sent at sign-in and sign-up confirmation (sessions are device-bound).

@@ -20,6 +20,7 @@ enum LibrarySection {
 
   final String slug;
 
+  /// The section of a URL segment (ordonnances when unknown).
   static LibrarySection fromSlug(String? slug) =>
       values.where((section) => section.slug == slug).firstOrNull ?? LibrarySection.ordonnances;
 

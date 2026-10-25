@@ -62,10 +62,12 @@ class AnalyticsHost extends ConsumerStatefulWidget {
   ConsumerState<AnalyticsHost> createState() => _AnalyticsHostState();
 }
 
+/// Watches the route and the app lifecycle to record screen views and send events.
 class _AnalyticsHostState extends ConsumerState<AnalyticsHost> with WidgetsBindingObserver {
   late final GoRouter _router = ref.read(routerProvider);
   String? _location;
 
+  /// Starts listening to app lifecycle and route changes.
   @override
   void initState() {
     super.initState();
@@ -73,6 +75,7 @@ class _AnalyticsHostState extends ConsumerState<AnalyticsHost> with WidgetsBindi
     _router.routerDelegate.addListener(_routeChanged);
   }
 
+  /// Stops listening when the app widget goes away.
   @override
   void dispose() {
     _router.routerDelegate.removeListener(_routeChanged);
@@ -80,16 +83,19 @@ class _AnalyticsHostState extends ConsumerState<AnalyticsHost> with WidgetsBindi
     super.dispose();
   }
 
+  /// Sends what is waiting when the app comes back to the foreground or goes to the background.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed || state == AppLifecycleState.paused) _send();
   }
 
+  /// Sends the waiting analytics events and history entries.
   void _send() {
     unawaited(ref.read(analyticsRecorderProvider).flush());
     unawaited(ref.read(activityRecorderProvider).flush());
   }
 
+  /// A new screen is shown: records a screen view (and the subscription funnel steps).
   void _routeChanged() {
     final location = currentLocation(_router);
     if (location == null || location == _location) return;

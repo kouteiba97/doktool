@@ -21,6 +21,7 @@ import '../../ui/tokens.dart';
 
 /// The person's notifications (newest first). Demo sessions have none.
 class NotificationsController extends AsyncNotifier<NotificationPageDto?> {
+  /// Loads the notifications of a real account (none for a demo).
   @override
   Future<NotificationPageDto?> build() async {
     final session = ref.watch(sessionControllerProvider).value;
@@ -28,11 +29,13 @@ class NotificationsController extends AsyncNotifier<NotificationPageDto?> {
     return ref.read(apiProvider).notifications.notificationsControllerList();
   }
 
+  /// « Tout marquer comme lu ».
   Future<void> markAllRead() async {
     await ref.read(apiProvider).notifications.notificationsControllerMarkAllRead();
     ref.invalidateSelf();
   }
 
+  /// Marks one notification read.
   Future<void> markRead(String id) async {
     await ref.read(apiProvider).notifications.notificationsControllerMarkRead(id: id);
     ref.invalidateSelf();
@@ -93,7 +96,9 @@ class NotificationsScreen extends ConsumerStatefulWidget {
   ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
+/// Reloads the list each time the screen opens.
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+  /// Fetches the list again right after the screen opens.
   @override
   void initState() {
     super.initState();
@@ -112,6 +117,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         title: l10n.notificationsTitle,
         actions: [
           if ((page.value?.unreadCount ?? 0) > 0)
+            // « Tout marquer comme lu ».
             TextButton(
               onPressed: () => ref.read(notificationsProvider.notifier).markAllRead(),
               child: Text(l10n.notificationsMarkAllRead, style: DtType.label.copyWith(color: colors.onHero)),
@@ -130,6 +136,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     body: commonErrorText(context, ApiError.from(page.error!)),
                   ),
                   const SizedBox(height: DtSpace.s3),
+                  // « Réessayer ».
                   DtButton(
                     label: l10n.commonRetry,
                     variant: DtButtonVariant.secondary,
@@ -172,6 +179,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 }
 
+/// One notification: its text, date, unread dot; tapping marks it read and opens its link.
 class _NotificationTile extends ConsumerWidget {
   const _NotificationTile({required this.item, required this.text});
 
@@ -182,6 +190,7 @@ class _NotificationTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final unread = item.readAt == null;
+    // A notification: marks it read and opens its link.
     return ListTile(
       leading: Icon(unread ? LucideIcons.bellDot : LucideIcons.bell, color: unread ? colors.brand : colors.inkMuted),
       title: Text(text, style: (unread ? DtType.bodyStrong : DtType.body).copyWith(color: colors.ink)),

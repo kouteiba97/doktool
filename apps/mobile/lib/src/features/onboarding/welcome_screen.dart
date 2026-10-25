@@ -24,6 +24,7 @@ class WelcomeScreen extends ConsumerWidget {
     final colors = context.colors;
     final returning = ref.watch(lastIdentifierProvider).value != null;
     final choices = [
+      // « Créer un compte ».
       DtButton(
         label: l10n.welcomeCreateAccount,
         variant: returning ? DtButtonVariant.secondary : DtButtonVariant.primary,
@@ -33,12 +34,14 @@ class WelcomeScreen extends ConsumerWidget {
         },
       ),
       const SizedBox(height: DtSpace.s2),
+      // « Se connecter ».
       DtButton(
         label: l10n.welcomeSignIn,
         variant: returning ? DtButtonVariant.primary : DtButtonVariant.secondary,
         onPressed: () => context.push(Routes.signIn),
       ),
       const SizedBox(height: DtSpace.s2),
+      // « Essayer la démo »: no sign-up.
       DtButton(
         label: l10n.welcomeDemo,
         variant: DtButtonVariant.ghost,

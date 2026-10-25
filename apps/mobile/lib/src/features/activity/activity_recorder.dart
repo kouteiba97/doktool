@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/api/api_error.dart';
 import '../../core/api/generated/models/activity_entry_dto.dart';
 import '../../core/api/generated/models/activity_kind.dart';
 import '../../core/api/generated/models/record_activity_dto.dart';
@@ -25,14 +26,19 @@ class ActivityRecorder {
   static const _maxQueued = 500;
   Future<void>? _flushing;
 
+  /// Records a search (two characters at least) in the person's own history.
   Future<void> search(String query) => _add(ActivityKind.search, queryText: query.trim());
 
+  /// Records that a reference model was opened.
   Future<void> referenceViewed(String referenceId) => _add(ActivityKind.referenceView, targetId: referenceId);
 
+  /// Records that a calculator gave a result.
   Future<void> calculatorUsed(String calculatorId) => _add(ActivityKind.calculatorUse, targetId: calculatorId);
 
+  /// Records that a pregnancy · lactation profile was opened.
   Future<void> substanceViewed(String substanceId) => _add(ActivityKind.pregnancyView, targetId: substanceId);
 
+  /// Queues one history entry locally (real accounts only), then tries to send the queue.
   Future<void> _add(ActivityKind kind, {String? queryText, String? targetId}) async {
     if (_ref.read(sessionControllerProvider).value is! UserSession) return;
     if (kind == ActivityKind.search && (queryText == null || queryText.length < 2)) return;
@@ -51,6 +57,7 @@ class ActivityRecorder {
   /// Sends what is queued; kept for later when offline.
   Future<void> flush() => _flushing ??= _flush().whenComplete(() => _flushing = null);
 
+  /// Sends the queue in batches; keeps it on network or server errors, drops a batch the API refuses.
   Future<void> _flush() async {
     if (_ref.read(sessionControllerProvider).value is! UserSession) return;
     final database = _ref.read(appDatabaseProvider);
@@ -76,14 +83,19 @@ class ActivityRecorder {
                 ],
               ),
             );
-      } catch (_) {
-        return;
+      } catch (error) {
+        // Offline, signed out or a server hiccup: keep the entries for the next attempt. A batch
+        // the API refuses outright is dropped, so it cannot block the queue forever.
+        final status = ApiError.from(error).statusCode;
+        final retryable = status == null || status == 401 || status == 408 || status == 429 || status >= 500;
+        if (retryable) return;
       }
       queue = (await _read(database)).skip(batch.length).toList();
       await _write(database, queue);
     }
   }
 
+  /// Reads the waiting queue from the local database.
   Future<List<Map<String, Object?>>> _read(AppDatabase database) async {
     final raw = await database.readSetting(_queueKey);
     if (raw == null) return [];
@@ -91,6 +103,7 @@ class ActivityRecorder {
     return decoded is List ? [for (final item in decoded) (item as Map).cast<String, Object?>()] : [];
   }
 
+  /// Saves the waiting queue to the local database.
   Future<void> _write(AppDatabase database, List<Map<String, Object?>> queue) =>
       database.writeSetting(_queueKey, jsonEncode(queue));
 }

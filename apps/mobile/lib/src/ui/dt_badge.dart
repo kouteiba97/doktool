@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/doktool_tokens.dart';
 import 'tokens.dart';
 
+/// The colours a badge can have.
 enum DtBadgeVariant { neutral, brand, teal, success, warning, critical, info }
 
 /// Badge (22 px): always a word, the colour only reinforces it. `critical` is for a definitive

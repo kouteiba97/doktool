@@ -17,9 +17,11 @@ class ResendCodeButton extends StatefulWidget {
   State<ResendCodeButton> createState() => _ResendCodeButtonState();
 }
 
+/// Redraws every second so the countdown moves.
 class _ResendCodeButtonState extends State<ResendCodeButton> {
   Timer? _timer;
 
+  /// Starts the one-second tick.
   @override
   void initState() {
     super.initState();
@@ -28,6 +30,7 @@ class _ResendCodeButtonState extends State<ResendCodeButton> {
     });
   }
 
+  /// Stops the tick.
   @override
   void dispose() {
     _timer?.cancel();
@@ -39,6 +42,7 @@ class _ResendCodeButtonState extends State<ResendCodeButton> {
     final l10n = AppLocalizations.of(context);
     final remaining = widget.availableAt.difference(DateTime.now()).inSeconds;
     final waiting = remaining > 0;
+    // « Renvoyer le code », disabled with a countdown until it is allowed.
     return DtButton(
       label: waiting ? l10n.otpResendIn('$remaining') : l10n.otpResend,
       variant: DtButtonVariant.ghost,

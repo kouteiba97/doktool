@@ -60,6 +60,8 @@ final contentIndexProvider = FutureProvider<Map<String, ContentRef>>((ref) async
   final calculators = await ref.watch(calculatorListProvider.future);
   // Profiles are optional here: a failure to list them never hides models and calculators.
   final substances = await ref.watch(substanceListProvider.future).catchError((Object _) => <SubstanceItemDto>[]);
+
+  /// A reference model as a content row.
   ContentRef reference(ReferenceItemDto item) => ContentRef(
     id: item.id,
     titleFr: item.titleFr,
@@ -67,6 +69,8 @@ final contentIndexProvider = FutureProvider<Map<String, ContentRef>>((ref) async
     access: item.access,
     referenceType: item.type,
   );
+
+  /// A calculator as a content row.
   ContentRef calculator(CalculatorSummaryDto item) =>
       ContentRef(id: item.id, titleFr: item.nameFr, titleEn: item.nameEn, access: item.access, slug: item.slug);
   return {
