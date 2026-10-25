@@ -93,6 +93,13 @@ class HomeScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: DtSpace.s5),
                         _GlassSearchField(label: l10n.homeSearchHint, onTap: () => context.push(Routes.search)),
+                        const SizedBox(height: DtSpace.s3),
+                        // Fastest way to a drug in pregnancy or lactation: straight into typing (ADR-025).
+                        _GlassSearchField(
+                          label: l10n.homeSearchPregnancy,
+                          icon: LucideIcons.baby,
+                          onTap: () => context.go(Routes.library(LibrarySection.pregnancy, focus: true)),
+                        ),
                       ],
                     ),
                   ),
@@ -197,10 +204,11 @@ class _IdentityLine extends ConsumerWidget {
 }
 
 class _GlassSearchField extends StatelessWidget {
-  const _GlassSearchField({required this.label, required this.onTap});
+  const _GlassSearchField({required this.label, required this.onTap, this.icon = LucideIcons.search});
 
   final String label;
   final VoidCallback onTap;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -232,7 +240,7 @@ class _GlassSearchField extends StatelessWidget {
                   child: Row(
                     children: [
                       const SizedBox(width: DtSpace.s4),
-                      Icon(LucideIcons.search, color: colors.inkMuted),
+                      Icon(icon, color: colors.inkMuted),
                       const SizedBox(width: DtSpace.s2),
                       Expanded(
                         child: Text(label, style: DtType.body.copyWith(color: colors.inkSecondary)),

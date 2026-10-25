@@ -13,6 +13,7 @@ import {
   profileContentSchema,
   reviewProblems,
 } from './pregnancy.content.js';
+import { likeWords, searchTextOf } from './pregnancy.search.js';
 
 export interface SubstanceInput {
   nameFr: string;
@@ -53,6 +54,14 @@ export type AdminVersion = Prisma.SubstanceProfileVersionGetPayload<{
 }> & { problems: string[] };
 
 const OPEN_STATUSES = ['DRAFT', 'IN_REVIEW', 'CHANGES_REQUESTED'] as const;
+
+export interface SubstanceFilter {
+  q?: string;
+  state?: 'PUBLISHED' | 'DRAFT' | 'IN_REVIEW' | 'CHANGES_REQUESTED' | 'NONE';
+  archived?: 'active' | 'archived' | 'all';
+  period?: 'T1' | 'T2' | 'T3' | 'PERIPARTUM' | 'LACTATION';
+  conduct?: 'CONTRAINDICATED' | 'AVOID' | 'OCCASIONAL_USE' | 'NONE';
+}
 const EDITABLE_STATUSES = ['DRAFT', 'CHANGES_REQUESTED'] as const;
 
 /**
@@ -70,17 +79,60 @@ export class PregnancyAdminService {
 
   // ─────────────────────────────── substances ───────────────────────────────
 
-  async listSubstances() {
+  async listSubstances(filter: SubstanceFilter = {}) {
+    const byConduct = filter.period !== undefined && filter.conduct !== undefined;
     const rows = await this.prisma.substance.findMany({
+      where: {
+        ...(filter.archived === 'active' ? { enabled: true } : {}),
+        ...(filter.archived === 'archived' ? { enabled: false } : {}),
+        ...(filter.q
+          ? {
+              AND: likeWords(filter.q).map((word) => ({
+                searchText: { contains: word.replace(/\\(.)/g, '$1') },
+              })),
+            }
+          : {}),
+      },
       include: {
         versions: {
           where: { status: { in: ['PUBLISHED', ...OPEN_STATUSES] } },
-          select: { id: true, version: true, status: true, publishedAt: true, updatedAt: true },
+          select: {
+            id: true,
+            version: true,
+            status: true,
+            publishedAt: true,
+            updatedAt: true,
+            content: byConduct,
+          },
         },
         _count: { select: { reports: { where: { resolvedAt: null } } } },
       },
     });
     return rows
+      .filter((row) => {
+        const open = row.versions.find((version) => version.status !== 'PUBLISHED');
+        const published = row.versions.find((version) => version.status === 'PUBLISHED');
+        if (filter.state === 'NONE' && row.versions.length > 0) return false;
+        if (filter.state === 'PUBLISHED' && !published) return false;
+        if (
+          filter.state &&
+          !['NONE', 'PUBLISHED'].includes(filter.state) &&
+          open?.status !== filter.state
+        )
+          return false;
+        if (byConduct) {
+          const current = open ?? published;
+          if (!current) return false;
+          const content = profileContentSchema.parse(current.content);
+          const period =
+            filter.period === 'LACTATION'
+              ? content.lactation
+              : content.pregnancy?.periods[filter.period!];
+          if (!period) return false;
+          if ((period.conduct ?? 'NONE') !== filter.conduct) return false;
+        }
+        return true;
+      })
       .map((row) => ({
         ...row,
         published: row.versions.find((version) => version.status === 'PUBLISHED') ?? null,
@@ -107,12 +159,16 @@ export class PregnancyAdminService {
 
   async createSubstance(admin: AdminPrincipal, input: SubstanceInput, client: ClientInfo) {
     try {
+      const nameFr = input.nameFr.trim();
+      const nameEn = input.nameEn?.trim() || null;
+      const synonyms = cleanSynonyms(input.synonyms ?? []);
       const created = await this.prisma.substance.create({
         data: {
-          nameFr: input.nameFr.trim(),
-          nameEn: input.nameEn?.trim() || null,
+          nameFr,
+          nameEn,
           atcCode: input.atcCode?.trim().toUpperCase() || null,
-          synonyms: cleanSynonyms(input.synonyms ?? []),
+          synonyms,
+          searchText: searchTextOf(nameFr, nameEn, synonyms),
           createdById: admin.adminId,
           updatedById: admin.adminId,
         },
@@ -146,6 +202,13 @@ export class PregnancyAdminService {
     if (patch.synonyms !== undefined) data.synonyms = cleanSynonyms(patch.synonyms);
     if (patch.demoSample !== undefined) data.demoSample = patch.demoSample;
     if (patch.enabled !== undefined) data.enabled = patch.enabled;
+    if (patch.nameFr !== undefined || patch.nameEn !== undefined || patch.synonyms !== undefined) {
+      data.searchText = searchTextOf(
+        (data.nameFr as string | undefined) ?? before.nameFr,
+        data.nameEn !== undefined ? (data.nameEn as string | null) : before.nameEn,
+        (data.synonyms as string[] | undefined) ?? before.synonyms,
+      );
+    }
     try {
       const updated = await this.prisma.substance.update({ where: { id }, data });
       const pick = (row: typeof updated) => ({
@@ -493,6 +556,27 @@ export class PregnancyAdminService {
   }
 
   /** Open reports and versions waiting for a reviewer (Admin Web overview). */
+  /**
+   * Bulk submit / approve: each version goes through the single-version rules (author ≠ reviewer,
+   * review gate, sign-offs); one failure does not stop the others and is reported with its code.
+   */
+  async many(
+    ids: string[],
+    action: (id: string) => Promise<unknown>,
+  ): Promise<{ versionId: string; ok: boolean; code?: string }[]> {
+    const results: { versionId: string; ok: boolean; code?: string }[] = [];
+    for (const versionId of [...new Set(ids)]) {
+      try {
+        await action(versionId);
+        results.push({ versionId, ok: true });
+      } catch (error) {
+        if (!(error instanceof DomainError)) throw error;
+        results.push({ versionId, ok: false, code: error.code });
+      }
+    }
+    return results;
+  }
+
   async pending() {
     const [reports, inReview] = await Promise.all([
       this.prisma.contentReport.count({ where: { resolvedAt: null } }),

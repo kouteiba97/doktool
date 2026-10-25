@@ -9,14 +9,35 @@ import 'package:path_provider/path_provider.dart';
 import '../../core/api/generated/models/access_state.dart';
 import '../../core/api/generated/models/calculator_detail_dto.dart';
 import '../../core/api/generated/models/calculator_summary_dto.dart';
+import '../../core/api/generated/models/conduct.dart';
 import '../../core/api/generated/models/item_access_dto.dart';
+import '../../core/api/generated/models/period_summaries_dto.dart';
+import '../../core/api/generated/models/period_summary_dto.dart';
+import '../../core/api/generated/models/profile_content_dto.dart';
 import '../../core/api/generated/models/published_test_case_dto.dart';
 import '../../core/api/generated/models/published_version_dto.dart';
 import '../../core/api/generated/models/reference_document_type.dart';
 import '../../core/api/generated/models/reference_item_dto.dart';
+import '../../core/api/generated/models/substance_hit_dto.dart';
 import '../../core/api/generated/models/substance_item_dto.dart';
 import '../../core/api/generated/models/substance_profile_dto.dart';
 import '../../core/database/app_database.dart';
+
+/// The per-period summary the search endpoint gives, rebuilt from a stored profile.
+PeriodSummariesDto? periodSummaries(ProfileContentDto? content) {
+  if (content == null) return null;
+  PeriodSummaryDto? of(Conduct? conduct, num? level, bool present) =>
+      present ? PeriodSummaryDto(conduct: conduct, evidenceLevel: level) : null;
+  final periods = content.pregnancy?.periods;
+  final lactation = content.lactation;
+  return PeriodSummariesDto(
+    t1: of(periods?.t1?.conduct, periods?.t1?.evidence.level, periods?.t1 != null),
+    t2: of(periods?.t2?.conduct, periods?.t2?.evidence.level, periods?.t2 != null),
+    t3: of(periods?.t3?.conduct, periods?.t3?.evidence.level, periods?.t3 != null),
+    peripartum: of(periods?.peripartum?.conduct, periods?.peripartum?.evidence.level, periods?.peripartum != null),
+    lactation: of(lactation?.conduct, lactation?.evidence.level, lactation != null),
+  );
+}
 
 const _available = ItemAccessDto(state: AccessState.available, lockReason: null, unlockPath: null);
 
@@ -78,6 +99,22 @@ class OfflineStore {
           id: profile.id,
           nameEn: profile.nameEn,
           nameFr: profile.nameFr,
+          publishedAt: profile.publishedAt,
+          synonyms: profile.synonyms,
+          version: profile.version,
+        ),
+  ]..sort((a, b) => a.nameFr.compareTo(b.nameFr));
+
+  /// Profiles kept offline as search results, each with its periods (ADR-025 offline fallback).
+  Future<List<SubstanceHitDto>> substanceHits() async => [
+    for (final row in await substances())
+      if (await substance(row.id) case final profile?)
+        SubstanceHitDto(
+          access: _available,
+          id: profile.id,
+          nameEn: profile.nameEn,
+          nameFr: profile.nameFr,
+          periods: periodSummaries(profile.content),
           publishedAt: profile.publishedAt,
           synonyms: profile.synonyms,
           version: profile.version,

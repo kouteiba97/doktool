@@ -27,7 +27,13 @@ import {
 import { ItemAccessDto } from '../access/index.js';
 import type { AdminVersion } from './pregnancy-admin.service.js';
 import { CONDUCTS, type ProfileContent } from './pregnancy.content.js';
-import type { SourceView, SubstanceItem, SubstanceProfile } from './pregnancy.service.js';
+import type {
+  SourceView,
+  SubstanceHit,
+  SubstanceItem,
+  SubstanceProfile,
+  SummaryTarget,
+} from './pregnancy.service.js';
 
 const REASON_MIN = 3;
 const REASON_MAX = 500;
@@ -66,11 +72,15 @@ export class ProfileTextDto {
 
 export class ProfileEvidenceDto {
   @ApiProperty({
+    type: Number,
+    nullable: true,
     minimum: 0,
     maximum: 4,
-    description: '4 robustes · 3 modérées · 2 limitées · 1 très limitées · 0 absence de données',
+    description:
+      '4 robustes · 3 modérées · 2 limitées · 1 très limitées · 0 absence de données. ' +
+      'Null only in a draft (an import never invents it); a published profile always has one.',
   })
-  level!: number;
+  level!: number | null;
 
   @ApiPropertyOptional({ type: ProfileTextDto })
   population?: ProfileTextDto;
@@ -92,6 +102,28 @@ export class PregnancyPeriodDto {
   @ApiPropertyOptional({ type: ProfileTextDto }) riskContext?: ProfileTextDto;
   @ApiProperty({ type: ProfileEvidenceDto }) evidence!: ProfileEvidenceDto;
   @ApiPropertyOptional({ type: ProfileTextDto }) considerations?: ProfileTextDto;
+  @ApiPropertyOptional({
+    description: 'Status as the imported source wrote it, beside the conduct.',
+  })
+  reportedStatus?: string;
+  @ApiPropertyOptional({
+    type: [String],
+    format: 'uuid',
+    description: "This version's sources that support this period specifically.",
+  })
+  sourceIds?: string[];
+  @ApiPropertyOptional({
+    type: [String],
+    description:
+      'Draft only: alternative names not yet linked to a substance (review refuses them).',
+  })
+  unresolvedAlternatives?: string[];
+  @ApiPropertyOptional({
+    type: [String],
+    format: 'uuid',
+    description: "Alternatives for this period; the block's alternatives apply to every period.",
+  })
+  alternatives?: string[];
 }
 
 export class PregnancyPeriodsDto {
@@ -120,6 +152,22 @@ export class LactationBlockDto {
   @ApiPropertyOptional({ type: ProfileTextDto }) considerations?: ProfileTextDto;
   @ApiProperty({ type: [String], format: 'uuid' }) alternatives!: string[];
   @ApiPropertyOptional({ type: ProfileConflictDto }) conflict?: ProfileConflictDto;
+  @ApiPropertyOptional({
+    description: 'Status as the imported source wrote it, beside the conduct.',
+  })
+  reportedStatus?: string;
+  @ApiPropertyOptional({
+    type: [String],
+    format: 'uuid',
+    description: "This version's sources that support this period specifically.",
+  })
+  sourceIds?: string[];
+  @ApiPropertyOptional({
+    type: [String],
+    description:
+      'Draft only: alternative names not yet linked to a substance (review refuses them).',
+  })
+  unresolvedAlternatives?: string[];
 }
 
 export class ProfileContentDto {
@@ -149,6 +197,100 @@ export class SubstanceItemDto {
   static from(item: SubstanceItem): SubstanceItemDto {
     return { ...item, publishedAt: item.publishedAt.toISOString() };
   }
+}
+
+export class SubstanceSearchQuery {
+  @ApiPropertyOptional({ description: 'Words of the name or a synonym; partial words match.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  q?: string;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 50, default: 20 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit?: number;
+
+  @ApiPropertyOptional({ minimum: 0, default: 0 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  offset?: number;
+}
+
+export class PeriodSummaryDto {
+  @ApiProperty({ enum: CONDUCTS, enumName: 'Conduct', nullable: true })
+  conduct!: (typeof CONDUCTS)[number] | null;
+  @ApiProperty({ type: Number, nullable: true, minimum: 0, maximum: 4 }) evidenceLevel!:
+    number | null;
+}
+
+/** One entry per period; null when the published profile says nothing for it. */
+export class PeriodSummariesDto {
+  @ApiProperty({ type: PeriodSummaryDto, nullable: true }) T1!: PeriodSummaryDto | null;
+  @ApiProperty({ type: PeriodSummaryDto, nullable: true }) T2!: PeriodSummaryDto | null;
+  @ApiProperty({ type: PeriodSummaryDto, nullable: true }) T3!: PeriodSummaryDto | null;
+  @ApiProperty({ type: PeriodSummaryDto, nullable: true }) PERIPARTUM!: PeriodSummaryDto | null;
+  @ApiProperty({ type: PeriodSummaryDto, nullable: true }) LACTATION!: PeriodSummaryDto | null;
+}
+
+export class SubstanceHitDto extends SubstanceItemDto {
+  @ApiProperty({
+    type: PeriodSummariesDto,
+    nullable: true,
+    description: 'Null while the profile is locked for this viewer.',
+  })
+  periods!: PeriodSummariesDto | null;
+
+  static fromHit(hit: SubstanceHit): SubstanceHitDto {
+    return {
+      ...SubstanceItemDto.from(hit),
+      periods: hit.periods,
+    };
+  }
+}
+
+export class SubstanceSearchDto {
+  @ApiProperty({ type: [SubstanceHitDto] }) items!: SubstanceHitDto[];
+  @ApiProperty() total!: number;
+}
+
+export class AdminSubstancesQuery {
+  @ApiPropertyOptional({ description: 'Words of the name or a synonym.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  q?: string;
+
+  @ApiPropertyOptional({
+    enum: ['PUBLISHED', 'DRAFT', 'IN_REVIEW', 'CHANGES_REQUESTED', 'NONE'],
+    description: 'NONE = no profile yet.',
+  })
+  @IsOptional()
+  @IsIn(['PUBLISHED', 'DRAFT', 'IN_REVIEW', 'CHANGES_REQUESTED', 'NONE'])
+  state?: 'PUBLISHED' | 'DRAFT' | 'IN_REVIEW' | 'CHANGES_REQUESTED' | 'NONE';
+
+  @ApiPropertyOptional({ enum: ['active', 'archived', 'all'], default: 'all' })
+  @IsOptional()
+  @IsIn(['active', 'archived', 'all'])
+  archived?: 'active' | 'archived' | 'all';
+
+  @ApiPropertyOptional({ enum: ['T1', 'T2', 'T3', 'PERIPARTUM', 'LACTATION'] })
+  @IsOptional()
+  @IsIn(['T1', 'T2', 'T3', 'PERIPARTUM', 'LACTATION'])
+  period?: SummaryTarget;
+
+  @ApiPropertyOptional({
+    enum: [...CONDUCTS, 'NONE'],
+    description: 'Conduct in that period (open version, else published). Needs `period`.',
+  })
+  @IsOptional()
+  @IsIn([...CONDUCTS, 'NONE'])
+  conduct?: (typeof CONDUCTS)[number] | 'NONE';
 }
 
 export class ClinicalSourceDto {

@@ -18,11 +18,13 @@ import { Client, type ClientInfo } from '../../common/http/client-info.js';
 import { ADMIN_API_PREFIX } from '../../http/api-prefix.js';
 import { type AdminPrincipal, CurrentAdmin, RequireGrants } from '../admin-auth/index.js';
 import { PregnancyAdminService } from './pregnancy-admin.service.js';
+import { BulkResultDto, BulkVersionsDto } from './pregnancy-import.dto.js';
 import {
   AdminContentReportDto,
   AdminProfileVersionDto,
   AdminSubstanceDetailDto,
   AdminSubstanceDto,
+  AdminSubstancesQuery,
   ClinicalSourceDto,
   CreateSubstanceDto,
   PregnancyReasonDto,
@@ -54,8 +56,8 @@ export class PregnancyAdminController {
   @Get('substances')
   @RequireGrants('pregnancy.read')
   @ApiOkResponse({ type: [AdminSubstanceDto] })
-  async list(): Promise<AdminSubstanceDto[]> {
-    return (await this.pregnancy.listSubstances()).map((row) => AdminSubstanceDto.from(row));
+  async list(@Query() query: AdminSubstancesQuery): Promise<AdminSubstanceDto[]> {
+    return (await this.pregnancy.listSubstances(query)).map((row) => AdminSubstanceDto.from(row));
   }
 
   @Get('substances/:id')
@@ -121,6 +123,40 @@ export class PregnancyAdminController {
     return AdminProfileVersionDto.fromVersion(
       await this.pregnancy.createVersion(admin, id, body.reason, client),
     );
+  }
+
+  /** Submits several drafts for review (e.g. after an import); each is checked on its own. */
+  @Post('versions/submit-many')
+  @HttpCode(HttpStatus.OK)
+  @RequireGrants('pregnancy.draft')
+  @ApiOkResponse({ type: BulkResultDto })
+  async submitMany(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Body() body: BulkVersionsDto,
+    @Client() client: ClientInfo,
+  ): Promise<BulkResultDto> {
+    return {
+      results: await this.pregnancy.many(body.versionIds, (id) =>
+        this.pregnancy.submit(admin, id, body.text, client),
+      ),
+    };
+  }
+
+  /** Approves several versions in review; author ≠ reviewer and sign-offs apply to each. */
+  @Post('versions/approve-many')
+  @HttpCode(HttpStatus.OK)
+  @RequireGrants('pregnancy.review')
+  @ApiOkResponse({ type: BulkResultDto })
+  async approveMany(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Body() body: BulkVersionsDto,
+    @Client() client: ClientInfo,
+  ): Promise<BulkResultDto> {
+    return {
+      results: await this.pregnancy.many(body.versionIds, (id) =>
+        this.pregnancy.approve(admin, id, body.text, client),
+      ),
+    };
   }
 
   @Get('versions/:versionId')

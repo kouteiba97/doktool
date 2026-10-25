@@ -33,13 +33,22 @@ export const SCORE = {
 
 /** Lower case, no accents, apostrophes and hyphens as spaces, single spaces. */
 export function normalize(text: string): string {
-  return text
+  const known = normalized.get(text);
+  if (known !== undefined) return known;
+  const value = text
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
     .toLowerCase()
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim();
+  // Titles and synonyms come back on every search: remember their form (pure function, bounded).
+  if (normalized.size >= NORMALIZED_MAX) normalized.clear();
+  normalized.set(text, value);
+  return value;
 }
+
+const NORMALIZED_MAX = 50_000;
+const normalized = new Map<string, string>();
 
 export function words(text: string): string[] {
   const normalized = normalize(text);
@@ -58,26 +67,40 @@ export function allowedTypos(word: string): number {
  */
 export function editDistance(a: string, b: string, max: number): number {
   if (Math.abs(a.length - b.length) > max) return max + 1;
-  const rows = a.length + 1;
+  if (a === b) return 0;
+  // Three rolling rows (i - 2, i - 1, i): the transposition looks two rows back. Reused between
+  // calls; global search runs this for every word of every entry (ADR-025, measured).
   const cols = b.length + 1;
-  const d: number[][] = Array.from({ length: rows }, (_, i) =>
-    Array.from({ length: cols }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)),
-  );
-  for (let i = 1; i < rows; i++) {
+  if (rows.length < 3 || rows[0]!.length < cols) {
+    rows = [new Int32Array(cols * 2), new Int32Array(cols * 2), new Int32Array(cols * 2)];
+  }
+  let older = rows[0]!;
+  let previous = rows[1]!;
+  let current = rows[2]!;
+  for (let j = 0; j < cols; j++) previous[j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    current[0] = i;
+    // Over columns 1… only, as the original did (an empty `b` never matches).
     let rowMin = Number.POSITIVE_INFINITY;
     for (let j = 1; j < cols; j++) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      let value = Math.min(d[i - 1]![j]! + 1, d[i]![j - 1]! + 1, d[i - 1]![j - 1]! + cost);
+      let value = Math.min(previous[j]! + 1, current[j - 1]! + 1, previous[j - 1]! + cost);
       if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
-        value = Math.min(value, d[i - 2]![j - 2]! + 1);
+        value = Math.min(value, older[j - 2]! + 1);
       }
-      d[i]![j] = value;
-      rowMin = Math.min(rowMin, value);
+      current[j] = value;
+      if (value < rowMin) rowMin = value;
     }
     if (rowMin > max) return max + 1;
+    const recycled = older;
+    older = previous;
+    previous = current;
+    current = recycled;
   }
-  return d[a.length]![b.length]!;
+  return previous[b.length]!;
 }
+
+let rows: Int32Array[] = [];
 
 /** Distance of a query word to the closest word of `candidates` (also against their prefixes). */
 function closest(queryWord: string, candidates: string[]): number {

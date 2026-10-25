@@ -9,7 +9,41 @@ import type {
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 import type { Viewer } from '../../infrastructure/security/viewer-auth.guard.js';
 import { AccessService, type ItemAccess } from '../access/index.js';
-import { alternativeIds, type ProfileContent, profileContentSchema } from './pregnancy.content.js';
+import { Prisma } from '../../generated/prisma/client.js';
+import {
+  alternativeIds,
+  type Conduct,
+  type ProfileContent,
+  profileContentSchema,
+} from './pregnancy.content.js';
+import { likeWords } from './pregnancy.search.js';
+
+export const SUMMARY_TARGETS = ['T1', 'T2', 'T3', 'PERIPARTUM', 'LACTATION'] as const;
+export type SummaryTarget = (typeof SUMMARY_TARGETS)[number];
+
+/** What a search result shows for one period of a published profile. */
+export interface PeriodSummary {
+  conduct: Conduct | null;
+  evidenceLevel: number | null;
+}
+
+export interface SubstanceHit extends SubstanceItem {
+  /** Per period of the published profile; null while locked (no content for a locked item). */
+  periods: Record<SummaryTarget, PeriodSummary | null> | null;
+}
+
+function summaries(content: ProfileContent): Record<SummaryTarget, PeriodSummary | null> {
+  const of = (
+    period: { conduct: Conduct | null; evidence: { level: number | null } } | null | undefined,
+  ) => (period ? { conduct: period.conduct, evidenceLevel: period.evidence.level } : null);
+  return {
+    T1: of(content.pregnancy?.periods.T1),
+    T2: of(content.pregnancy?.periods.T2),
+    T3: of(content.pregnancy?.periods.T3),
+    PERIPARTUM: of(content.pregnancy?.periods.PERIPARTUM),
+    LACTATION: of(content.lactation),
+  };
+}
 
 /** A substance as the app lists it: published profiles only, each with the server's decision. */
 export interface SubstanceItem {
@@ -143,9 +177,74 @@ export class PregnancyService {
     });
   }
 
-  /** Every substance the viewer can see listed, for global search. */
+  /**
+   * Server-side search for the app (ADR-025): every word of the query must appear in the name or a
+   * synonym (accent- and case-insensitive, partial words), names starting with the first word
+   * first, then A–Z. Bounded pages; only published profiles of enabled substances.
+   */
+  async search(
+    viewer: Viewer,
+    input: { q: string; limit: number; offset: number },
+  ): Promise<{ items: SubstanceHit[]; total: number }> {
+    const words = likeWords(input.q);
+    const matching = words.length
+      ? Prisma.join(
+          words.map((word) => Prisma.sql`s."search_text" LIKE ${`%${word}%`}`),
+          ' AND ',
+        )
+      : Prisma.sql`TRUE`;
+    const where = Prisma.sql`s."enabled" AND ${matching} AND EXISTS (
+      SELECT 1 FROM "substance_profile_versions" v
+      WHERE v."substance_id" = s."id" AND v."status" = 'PUBLISHED')`;
+    const prefix = words[0] ? `${words[0]}%` : '%';
+    const [page, counted] = await Promise.all([
+      this.prisma.$queryRaw<{ id: string }[]>`
+        SELECT s."id" FROM "substances" s WHERE ${where}
+        ORDER BY (s."search_text" LIKE ${prefix}) DESC, lower(s."name_fr"), s."id"
+        LIMIT ${input.limit} OFFSET ${input.offset}`,
+      this.prisma.$queryRaw<{ total: bigint }[]>`
+        SELECT count(*) AS "total" FROM "substances" s WHERE ${where}`,
+    ]);
+    const ids = page.map((row) => row.id);
+    const rows = await this.prisma.substance.findMany({
+      where: { id: { in: ids } },
+      include: { versions: PUBLISHED },
+    });
+    const byId = new Map(rows.map((row) => [row.id, { ...row, published: row.versions[0]! }]));
+    const ordered = ids.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
+    const items = await this.withAccess(viewer, ordered);
+    return {
+      total: Number(counted[0]?.total ?? 0),
+      items: items.map((item, index) => ({
+        ...item,
+        periods:
+          item.access.state === 'AVAILABLE'
+            ? summaries(profileContentSchema.parse(ordered[index]!.published.content))
+            : null,
+      })),
+    };
+  }
+
+  /**
+   * Every substance the viewer can see listed, for global search. Names, synonyms and access only:
+   * profile content and sources are not loaded (ADR-025, measured on 5 000 substances).
+   */
   async searchable(viewer: Viewer): Promise<SubstanceItem[]> {
-    return this.withAccess(viewer, await this.published());
+    const rows = await this.prisma.substance.findMany({
+      where: { enabled: true, versions: { some: { status: 'PUBLISHED' } } },
+      select: {
+        id: true,
+        nameFr: true,
+        nameEn: true,
+        synonyms: true,
+        demoSample: true,
+        versions: { where: { status: 'PUBLISHED' }, select: { version: true, publishedAt: true } },
+      },
+    });
+    return this.withAccess(
+      viewer,
+      rows.map((row) => ({ ...row, published: row.versions[0]! })),
+    );
   }
 
   /** Account deletion: the person's reports stay for the clinical team, without their account. */

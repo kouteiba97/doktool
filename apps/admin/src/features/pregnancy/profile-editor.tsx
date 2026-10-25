@@ -44,9 +44,22 @@ function cleanText(text: Localized | undefined): Localized | undefined {
   return en ? { fr, en } : { fr };
 }
 
+/** Import traceability (ADR-025) is kept as is: status word, period sources and alternatives. */
+function keepImported<T extends Period | LactationBlock>(value: T) {
+  return {
+    ...(value.reportedStatus ? { reportedStatus: value.reportedStatus } : {}),
+    ...(value.sourceIds?.length ? { sourceIds: value.sourceIds } : {}),
+    ...(value.unresolvedAlternatives?.length
+      ? { unresolvedAlternatives: value.unresolvedAlternatives }
+      : {}),
+  };
+}
+
 function cleanPeriod(period: Period): Period {
   return {
     conduct: period.conduct,
+    ...keepImported(period),
+    ...(period.alternatives?.length ? { alternatives: period.alternatives } : {}),
     ...(period.conduct && cleanText(period.conductDetail)
       ? { conductDetail: cleanText(period.conductDetail) }
       : {}),
@@ -90,6 +103,7 @@ export function cleanContent(content: ProfileContent): ProfileContent {
     lactation: lactation
       ? {
           conduct: lactation.conduct,
+          ...keepImported(lactation),
           ...(cleanText(lactation.conductText)
             ? { conductText: cleanText(lactation.conductText) }
             : {}),
@@ -217,9 +231,17 @@ function EvidenceFields({
           <Select
             id={inputId}
             disabled={disabled}
-            value={String(value.level)}
-            onChange={(event) => onChange({ ...value, level: Number(event.target.value) })}
+            value={value.level === null ? '' : String(value.level)}
+            onChange={(event) =>
+              onChange({
+                ...value,
+                level: event.target.value === '' ? null : Number(event.target.value),
+              })
+            }
           >
+            {value.level === null ? (
+              <option value="">{t('admin.pregnancy.evidenceMissing')}</option>
+            ) : null}
             {[4, 3, 2, 1, 0].map((level) => (
               <option key={level} value={level}>
                 {level} · {t(EVIDENCE_LABELS[level]!)}

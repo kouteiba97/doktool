@@ -29,6 +29,7 @@ import {
   VERSION_STATUS_TONES,
   versionKey,
 } from './labels';
+import { describeProblem } from './problems';
 import { ProfileEditor } from './profile-editor';
 import { ReviewComment } from './profile-view';
 
@@ -226,9 +227,7 @@ export function SubstanceDetailPage({ id }: { id: string }) {
                 <Alert tone="warning" title={t('admin.pregnancy.missingTitle')}>
                   <ul className="list-disc ps-5">
                     {loaded.problems.map((problem) => (
-                      <li key={problem} className="dt-mono dt-cap">
-                        {problem}
-                      </li>
+                      <li key={problem}>{describeProblem(problem, t)}</li>
                     ))}
                   </ul>
                 </Alert>

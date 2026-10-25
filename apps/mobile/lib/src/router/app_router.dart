@@ -76,7 +76,8 @@ abstract final class Routes {
   static const profileActivity = '/profile/activity';
   static const profileEdit = '/profile/edit';
 
-  static String library(LibrarySection section) => '/library/${section.slug}';
+  static String library(LibrarySection section, {bool focus = false}) =>
+      '/library/${section.slug}${focus ? '?focus=1' : ''}';
   static String reference(String id) => '/reference/$id';
   static String calculator(String slug) => '/calculators/$slug';
   static String substance(String id) => '/pregnancy/$id';
@@ -228,8 +229,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/library/:section',
-                builder: (context, state) =>
-                    LibraryScreen(section: LibrarySection.fromSlug(state.pathParameters['section'])),
+                builder: (context, state) => LibraryScreen(
+                  section: LibrarySection.fromSlug(state.pathParameters['section']),
+                  focusSearch: state.uri.queryParameters['focus'] == '1',
+                ),
               ),
             ],
           ),

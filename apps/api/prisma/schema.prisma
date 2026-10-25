@@ -948,6 +948,9 @@ model Substance {
   atcCode     String?                   @map("atc_code")
   /// Other names people search with (brand names, spellings).
   synonyms    String[]                  @default([])
+  /// Names and synonyms, accent- and case-folded (normaliseForSearch), written by the API on every
+  /// change. Trigram-indexed (migration 20261024090000) for partial-name search.
+  searchText  String                    @default("") @map("search_text")
   demoSample  Boolean                   @default(false) @map("demo_sample")
   /// A disabled substance is gone from the app; its versions are kept.
   enabled     Boolean                   @default(true)
@@ -957,6 +960,7 @@ model Substance {
   updatedBy   AdminAccount              @relation("SubstanceUpdater", fields: [updatedById], references: [id], onDelete: Restrict)
   versions    SubstanceProfileVersion[]
   reports     ContentReport[]
+  importRows  PregnancyImportRow[]
   createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -1026,6 +1030,78 @@ model ProfileVersionSource {
 
   @@id([versionId, sourceId])
   @@map("profile_version_sources")
+}
+
+enum PregnancyImportStatus {
+  /// Parsed and checked; the admin maps, corrects and excludes rows. Nothing is in the library yet.
+  PREVIEW
+  /// Written to the library as drafts, in one transaction. Never re-run.
+  COMMITTED
+  DISCARDED
+
+  @@map("pregnancy_import_status")
+}
+
+/// One uploaded spreadsheet (ADR-025). The workbook itself is not kept: its checksum, headers and
+/// every row's original cells are, so the provenance never depends on the file.
+model PregnancyImportBatch {
+  id            String                @id @default(uuid(7)) @db.Uuid
+  fileName      String                @map("file_name")
+  fileSha256    String                @map("file_sha256") @db.Char(64)
+  fileBytes     Int                   @map("file_bytes")
+  sheetName     String                @map("sheet_name")
+  parserVersion String                @map("parser_version")
+  status        PregnancyImportStatus @default(PREVIEW)
+  /// Column headers as written in the sheet, in order.
+  headers       Json
+  /// Header index → field (detected, then confirmed or changed by the admin).
+  columns       Json
+  /// Normalised status word → conduct (or NONE), chosen by the admin; never a built-in default.
+  statusMapping Json                  @map("status_mapping")
+  /// Incremented on every edit; a commit names the revision the admin reviewed.
+  revision      Int                   @default(1)
+  /// Counts and created records, written by the commit.
+  summary       Json?
+  reason        String?
+  uploadedById  String                @map("uploaded_by_id") @db.Uuid
+  uploadedBy    AdminAccount          @relation("PregnancyImportUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+  committedById String?               @map("committed_by_id") @db.Uuid
+  committedBy   AdminAccount?         @relation("PregnancyImportCommitter", fields: [committedById], references: [id], onDelete: Restrict)
+  committedAt   DateTime?             @map("committed_at") @db.Timestamptz(3)
+  discardedAt   DateTime?             @map("discarded_at") @db.Timestamptz(3)
+  rows          PregnancyImportRow[]
+  createdAt     DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([fileSha256])
+  @@index([createdAt])
+  @@map("pregnancy_import_batches")
+}
+
+/// One data row of an import: the cells as read, the values after the admin's corrections, the
+/// last check, and the records it produced.
+model PregnancyImportRow {
+  id          String               @id @default(uuid(7)) @db.Uuid
+  batchId     String               @map("batch_id") @db.Uuid
+  batch       PregnancyImportBatch @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  /// Row number in the sheet (1-based, the header being row 1 or later).
+  rowNumber   Int                  @map("row_number")
+  /// Cells as read: text, hyperlink target, whether it held a formula (never evaluated).
+  original    Json
+  /// Editable fields: substance, context, period, status, alternative, sourceUrl, sourceTitle.
+  values      Json
+  edited      Boolean              @default(false)
+  excluded    Boolean              @default(false)
+  /// Issues of the last check: { field, severity: ERROR | WARNING | INFO, code }.
+  issues      Json                 @default("[]")
+  /// The admin's explicit choice when a row conflicts with the library: UPDATE or SKIP.
+  resolution  String?
+  substanceId String?              @map("substance_id") @db.Uuid
+  substance   Substance?           @relation(fields: [substanceId], references: [id], onDelete: Restrict)
+  versionId   String?              @map("version_id") @db.Uuid
+
+  @@unique([batchId, rowNumber])
+  @@map("pregnancy_import_rows")
 }
 
 /// « Signaler une erreur » on a profile block. The comment is optional and must hold no patient
@@ -1350,6 +1426,8 @@ model AdminAccount {
   reviewPoliciesUpdated      ClinicalReviewPolicy[]    @relation("ClinicalReviewPolicyUpdater")
   clinicalSourcesCreated     ClinicalSource[]          @relation("ClinicalSourceCreator")
   contentReportsResolved     ContentReport[]           @relation("ContentReportResolver")
+  pregnancyImportsUploaded   PregnancyImportBatch[]    @relation("PregnancyImportUploader")
+  pregnancyImportsCommitted  PregnancyImportBatch[]    @relation("PregnancyImportCommitter")
 
   @@map("admin_accounts")
 }

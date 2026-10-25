@@ -630,6 +630,10 @@
   "@homeSearchHint": {
     "description": "mobile.home.searchHint"
   },
+  "homeSearchPregnancy": "Drug: pregnancy · lactation",
+  "@homeSearchPregnancy": {
+    "description": "mobile.home.searchPregnancy"
+  },
   "homeStartCalculators": "Open a calculator",
   "@homeStartCalculators": {
     "description": "mobile.home.startCalculators"
@@ -1426,6 +1430,10 @@
   "@pregnancyPeriodMissing": {
     "description": "mobile.pregnancy.periodMissing"
   },
+  "pregnancyPeriodSources": "Sources for this period",
+  "@pregnancyPeriodSources": {
+    "description": "mobile.pregnancy.periodSources"
+  },
   "pregnancyPeriods": "Periods of pregnancy",
   "@pregnancyPeriods": {
     "description": "mobile.pregnancy.periods"
@@ -1501,6 +1509,40 @@
   "pregnancyRiskContext": "Risk context",
   "@pregnancyRiskContext": {
     "description": "mobile.pregnancy.riskContext"
+  },
+  "pregnancySearchAllPeriods": "All",
+  "@pregnancySearchAllPeriods": {
+    "description": "mobile.pregnancy.searchAllPeriods"
+  },
+  "pregnancySearchMore": "Show more ({count} left)",
+  "@pregnancySearchMore": {
+    "description": "mobile.pregnancy.searchMore",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "pregnancySearchNoBadge": "No specific instruction",
+  "@pregnancySearchNoBadge": {
+    "description": "mobile.pregnancy.searchNoBadge"
+  },
+  "pregnancySearchNoData": "{period}: no approved information",
+  "@pregnancySearchNoData": {
+    "description": "mobile.pregnancy.searchNoData",
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "pregnancySearchOffline": "Offline: search covers only the profiles kept on this device.",
+  "@pregnancySearchOffline": {
+    "description": "mobile.pregnancy.searchOffline"
+  },
+  "pregnancySearchPeriod": "Period searched",
+  "@pregnancySearchPeriod": {
+    "description": "mobile.pregnancy.searchPeriod"
   },
   "pregnancySectionLactation": "Lactation",
   "@pregnancySectionLactation": {
