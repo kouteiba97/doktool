@@ -54,6 +54,8 @@ Phase 18's exit criterion is this checklist, signed. **Engineering** items are d
 ## 4. Operations (operator)
 
 - [ ] PostgreSQL 18 (as in CI) in production with daily backups; run `npm run prisma:migrate:deploy -w @doktool/api`.
+- [ ] The production database allows `CREATE EXTENSION pg_trgm` (migration `20261024090000_pregnancy_import`, ADR-025); ask the host to enable it first if the migration role cannot.
+- [ ] `ADMIN_DEV_ACCEPT_ANY_TOTP` is absent from production configuration (development-only; the API refuses to start with it in production).
 - [ ] API environment (`apps/api/.env.example` lists every variable): `DATABASE_URL`, `NODE_ENV=production`, `TRUST_PROXY_HOPS`, `USER_JWT_SECRET`, `OTP_HMAC_SECRET`, `ANALYTICS_SUBJECT_SECRET` (set once — changing it splits analytics history), `ADMIN_TOTP_ENCRYPTION_KEY`, `ADMIN_WEB_ORIGIN`, `TERMS_VERSION`, `TERMS_URL`, `PRIVACY_URL`, `SMTP_URL`, `MAIL_FROM`, `STORAGE_DRIVER=r2` and the `R2_*` keys, `PAYMENT_GATEWAYS` and `CHARGILY_*`, `PUBLIC_API_URL`, `JOBS_ENABLED`.
 - [ ] Admin Web environment: `DOKTOOL_API_ORIGIN`, `DOKTOOL_STORAGE_ORIGINS` (the R2 endpoints), `NEXT_PUBLIC_DOKTOOL_ENVIRONMENT=production`.
 - [ ] Cloudflare R2: both buckets private, CORS for Admin Web — [`docs/operations/r2-setup.md`](operations/r2-setup.md).

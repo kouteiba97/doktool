@@ -22,7 +22,16 @@ All 18 build phases of `docs/ARCHITECTURE-AUDIT.md` §15.2 are done, plus:
 | Timestamps stored in UTC whatever the DB time zone | `5ad1c30` | Prisma sessions run `TimeZone=UTC` |
 | Favorite pregnancy profiles counted in analytics | `7b637d3` | |
 
-`npm run ci` was green at the last commit (536 API tests, admin, i18n). `flutter analyze` was clean and `flutter test` passed (158 tests).
+- **Work of 23–25 October 2026** (branch `feature/medicalcul-and-pregnancy-import`, not yet merged):
+
+| Item | Commit | Notes |
+|---|---|---|
+| Medicalcul calculation formats → calculator drafts | `a90abc9` | `npm run medicalcul:extract` / `medicalcul:import`, `docs/medicalcul-integration/`; reuse permission from the publisher not confirmed |
+| Pregnancy & lactation spreadsheet import, server search | `e3d2fa1` | ADR-025, `docs/operations/pregnancy-import.md`, migration `20261024090000` (needs `pg_trgm`) |
+| Calculator answers shown whole (choice rows) | `a111026` | ADR-026 |
+| Merging duplicate substances | `17d3d3a` | ADR-027, migration `20261025090000` |
+
+`npm run ci` was green at the last commit (604 API tests, 29 admin, 28 package tests, i18n, OpenAPI). `flutter analyze` was clean and `flutter test` passed (165 tests). The migration drift check of CI and the Admin Web production build pass.
 
 **The engineering backlog is empty.** Do not start new features unless the owner asks. When something is unspecified, ask (CLAUDE.md: do not redesign, do not invent).
 
@@ -46,6 +55,13 @@ All 18 build phases of `docs/ARCHITECTURE-AUDIT.md` §15.2 are done, plus:
   - VoiceOver on an iPhone;
   - the iOS build, which needs a Mac.
 - **Release:** the release checklist is `docs/RELEASE-CHECKLIST.md`.
+- **From the October work:**
+  - review and merge the branch `feature/medicalcul-and-pregnancy-import`;
+  - written permission from Medicalcul's author (philippe.mignard@free.fr) before any imported calculator is published;
+  - the 147 imported calculator drafts each need a primary source, test cases, limitations, English texts and band severities, then a second admin's review;
+  - a second admin account (Calculator editor preset) so imports can be reviewed by someone else;
+  - for each pregnancy spreadsheet: map the status words, then complete evidence levels and explanations before review.
+- **Decisions not yet taken:** calculator engine extensions (several results per calculator, `Math.round`-compatible rounding, value tables), which would unlock more of the 155 Medicalcul calculators kept out of the import (`docs/medicalcul-integration/integration.md`).
 
 ### Offered help, not yet requested
 
@@ -143,6 +159,10 @@ On the first machine the local database was a PostgreSQL 18 cluster on port 5543
   - Enum `ADD VALUE` goes in its own migration, before any migration that uses the value.
   - Each model lives under the `// ── [module] ──` section of the module that owns it; a unit test checks this.
 
+- **Prisma and raw SQL.** Indexes written in SQL (trigram, partial) are also declared in `schema.prisma`; otherwise `prisma migrate diff` proposes to drop them. Check a new migration with `npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code` on a freshly migrated database, as CI does.
+
+- **Dart formatting** uses 120 columns: `dart format --page-width 120 <files>`. The default (80) reflows whole files.
+
 - **Never format the generated tokens file.** Do not run `dart format` on `apps/mobile/lib/src/theme/doktool_tokens.dart`; restore it with `git checkout` if it happens.
 
 - **Riverpod retry.** The app uses `providerRetry` (`lib/src/core/api/provider_retry.dart`): no silent retries when offline.
@@ -156,5 +176,6 @@ On the first machine the local database was a PostgreSQL 18 cluster on port 5543
 ## Documents for the owner
 
 - Arabic guide to every feature, app and Admin Web: `docs/guide/guide-ar.html`. Export it to PDF with Chrome (print to PDF).
-- Decisions: `docs/adr/` (ADR-001 to ADR-024).
-- Operations: `docs/operations/` (Chargily, SATIM, SMS, R2, demo data).
+- Decisions: `docs/adr/` (ADR-001 to ADR-027).
+- Operations: `docs/operations/` (Chargily, SATIM, SMS, R2, demo data, pregnancy spreadsheet import).
+- Medicalcul extraction report and catalogue: `docs/medicalcul-integration/`.
