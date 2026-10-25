@@ -16,6 +16,7 @@ import { useI18n } from '@/i18n/i18n-provider';
 import { Button } from './button';
 import { EmptyState } from './feedback';
 
+/** One column of a DataTable: header, how to draw a cell, optional sort value. */
 export interface Column<T> {
   id: string;
   header: string;
@@ -27,6 +28,7 @@ export interface Column<T> {
   hideable?: boolean;
 }
 
+/** What a table shows and what a click on a row does. */
 interface DataTableProps<T> {
   label: string;
   columns: Column<T>[];
@@ -40,6 +42,7 @@ interface DataTableProps<T> {
   toolbar?: ReactNode;
 }
 
+/** TanStack Table features used: sorting and column visibility. */
 const features = tableFeatures({
   rowSortingFeature,
   columnVisibilityFeature,
@@ -47,6 +50,18 @@ const features = tableFeatures({
 });
 
 const LOADING_ROWS = 5;
+
+/**
+ * True when an event on a row started on a control inside it (a « Traiter » button, a link): the
+ * control acts alone and the row does not open.
+ */
+function fromControl(event: { target: EventTarget; currentTarget: EventTarget }): boolean {
+  return (
+    event.target instanceof Element &&
+    event.target !== event.currentTarget &&
+    event.target.closest('button, a, input, select, textarea, [role="menuitem"]') !== null
+  );
+}
 
 /**
  * The console's primary element (component DataTable): dense 36 px rows, sticky header, sort,
@@ -88,7 +103,10 @@ export function DataTable<T extends RowData>({
   const visibleCount = table.getVisibleLeafColumns().length;
   const models = table.getRowModel().rows;
 
+  // Keyboard on a row: Enter or Space opens it, ↑/↓ move to the next row (and follow with the open
+  // drawer).
   const onRowKey = (event: KeyboardEvent<HTMLTableRowElement>, index: number) => {
+    if (fromControl(event)) return;
     const target =
       event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1 : null;
     if (event.key === 'Enter' || event.key === ' ') {
@@ -113,6 +131,7 @@ export function DataTable<T extends RowData>({
           {hideable.length > 0 ? (
             <RadixMenu.Root>
               <RadixMenu.Trigger asChild>
+                {/* « Colonnes »: chooses which optional columns are shown. */}
                 <Button size="sm" variant="secondary">
                   <Columns3 size={14} aria-hidden />
                   {t('admin.table.columns')}
@@ -162,6 +181,7 @@ export function DataTable<T extends RowData>({
                       }
                     >
                       {header.column.getCanSort() ? (
+                        // Header button: sorts by this column (ascending, descending, none).
                         <button type="button" onClick={header.column.getToggleSortingHandler()}>
                           {column?.header}
                           {sorted === 'asc' ? (
@@ -196,7 +216,13 @@ export function DataTable<T extends RowData>({
                     tabIndex={onOpen ? 0 : undefined}
                     data-clickable={onOpen ? 'true' : undefined}
                     aria-selected={selectedId === row.id || undefined}
-                    onClick={onOpen ? () => onOpen(row.original) : undefined}
+                    onClick={
+                      onOpen
+                        ? (event) => {
+                            if (!fromControl(event)) onOpen(row.original);
+                          }
+                        : undefined
+                    }
                     onKeyDown={onOpen ? (event) => onRowKey(event, index) : undefined}
                   >
                     {row.getVisibleCells().map((cell) => (

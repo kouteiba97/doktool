@@ -47,6 +47,7 @@ export function CalculatorDetail({ id }: { id: string }) {
   const [editing, setEditing] = useState(false);
   const [branching, setBranching] = useState(false);
 
+  // The calculator with all its versions.
   const detail = useQuery({
     queryKey: calculatorKey(id),
     queryFn: () => call(api.GET('/admin/v1/calculators/{id}', { params: { path: { id } } })),
@@ -97,10 +98,15 @@ export function CalculatorDetail({ id }: { id: string }) {
         actions={
           canDraft ? (
             <>
+              {/* « Modifier »: names, purpose, category (and access with the publish grant). */}
               <Button onClick={() => setEditing(true)}>
                 <Pencil size={16} aria-hidden />
                 {t('admin.calculators.edit')}
               </Button>
+              {/*
+                « Nouvelle version »: a new draft copied from a version or pasted as JSON (only
+                one draft at a time).
+              */}
               <Button
                 variant="primary"
                 disabled={openDraft(calculator) !== undefined}
@@ -129,6 +135,7 @@ export function CalculatorDetail({ id }: { id: string }) {
             <ol className="dt-stack gap-1">
               {calculator.versions.map((item) => (
                 <li key={item.id}>
+                  {/* One version of the timeline: shows its tabs. */}
                   <button
                     type="button"
                     aria-current={item.id === version?.id ? 'true' : undefined}
@@ -200,6 +207,9 @@ export function CalculatorDetail({ id }: { id: string }) {
   );
 }
 
+/**
+ * The selected version: its checksum and the Définition · Sources · Tests · Revue · Aperçu tabs.
+ */
 function VersionView({
   calculator,
   version,
@@ -262,6 +272,10 @@ function VersionView({
   );
 }
 
+/**
+ * « Nouvelle version »: copy of an earlier version (with sources and tests) or a definition pasted
+ * as JSON.
+ */
 function NewVersionDialog({
   calculator,
   open,
@@ -280,6 +294,7 @@ function NewVersionDialog({
   const [json, setJson] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  // Creates the draft; pasted JSON that does not parse is reported before calling the API.
   const create = useMutation({
     mutationFn: async () => {
       let body: { copyFromVersion: number } | { definition: Record<string, unknown> };
@@ -319,9 +334,11 @@ function NewVersionDialog({
       onSubmit={() => create.mutate()}
       footer={
         <>
+          {/* « Annuler ». */}
           <Button onClick={() => onOpenChange(false)} disabled={create.isPending}>
             {t('admin.common.cancel')}
           </Button>
+          {/* « Créer le brouillon ». */}
           <Button
             type="submit"
             variant="primary"

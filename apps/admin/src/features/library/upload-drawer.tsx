@@ -18,6 +18,7 @@ import { type DocumentType, libraryKey, TYPE_LABELS } from './labels';
 import { PdfDrop } from './pdf-drop';
 import { putSigned, sha256Hex, suggestTitle, UploadFailed } from './upload';
 
+/** Rules of the « Ajouter un modèle » form. */
 const schema = z.object({
   titleFr: z.string().trim().min(1).max(200),
   titleEn: z.string().trim().max(200),
@@ -27,6 +28,7 @@ const schema = z.object({
 });
 type Values = z.infer<typeof schema>;
 
+/** Where the upload is: computing the checksum, sending the file, creating the model. */
 type Stage = 'idle' | 'hashing' | 'uploading' | 'saving';
 
 /**
@@ -55,6 +57,7 @@ export function UploadDrawer({
     defaultValues: { titleFr: '', titleEn: '', demoSample: false, enable: true, reason: '' },
   });
 
+  // A PDF was chosen: the French title is pre-filled from its file name if still empty.
   const onFile = (picked: File | null) => {
     setFile(picked);
     if (picked && !form.getValues('titleFr')) {
@@ -62,6 +65,7 @@ export function UploadDrawer({
     }
   };
 
+  // Checksum → signed upload → PUT the bytes → create the model; the drawer of the new model opens.
   const submit = form.handleSubmit(async (values) => {
     if (!file) return;
     try {
@@ -115,10 +119,12 @@ export function UploadDrawer({
       caption={t(TYPE_LABELS[type])}
       footer={
         <>
+          {/* « Annuler ». */}
           <Button onClick={onClose} disabled={busy}>
             {t('admin.common.cancel')}
           </Button>
           <div className="end">
+            {/* « Ajouter »: its label follows the stage (checksum, sending, saving). */}
             <Button variant="primary" busy={busy} disabled={!file} onClick={() => void submit()}>
               {stage === 'hashing'
                 ? t('admin.library.stageHashing')

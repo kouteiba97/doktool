@@ -56,11 +56,13 @@ export function ImportsPage() {
   const errorText = useErrorText();
   const toast = useToast();
   const input = useRef<HTMLInputElement>(null);
+  // The last 100 imports.
   const list = useQuery({
     queryKey: importsKey,
     queryFn: () =>
       call(api.GET('/admin/v1/pregnancy/imports', { params: { query: { limit: 100 } } })),
   });
+  // Sends the chosen .xlsx; the preview page opens with what the server read.
   const upload = useMutation({
     mutationFn: (file: File) => {
       const form = new FormData();
@@ -136,6 +138,7 @@ export function ImportsPage() {
                   if (file) upload.mutate(file);
                 }}
               />
+              {/* « Choisir un fichier .xlsx ». */}
               <Button
                 variant="primary"
                 disabled={upload.isPending}
@@ -184,6 +187,7 @@ export function ImportPreviewPage({ id }: { id: string }) {
   const errorText = useErrorText();
   const [filter, setFilter] = useState<RowFilter>('ALL');
   const [offset, setOffset] = useState(0);
+  // The import with the current page of rows and filter.
   const preview = useQuery({
     queryKey: [...importKey(id), filter, offset],
     // Changing the filter or the page keeps the screen in place while the rows load.
@@ -253,6 +257,7 @@ export function ImportPreviewPage({ id }: { id: string }) {
             })}
           </span>
           <span className="dt-row-flex">
+            {/* « Précédent »: the previous page of rows. */}
             <Button
               variant="secondary"
               disabled={offset === 0}
@@ -260,6 +265,7 @@ export function ImportPreviewPage({ id }: { id: string }) {
             >
               {t('admin.pregnancyImport.previous')}
             </Button>
+            {/* « Suivant »: the next page of rows. */}
             <Button
               variant="secondary"
               disabled={offset + PAGE >= data.rowsTotal}
@@ -275,11 +281,13 @@ export function ImportPreviewPage({ id }: { id: string }) {
   );
 }
 
+/** Reloads the import after a change. */
 function useRefresh(id: string) {
   const queryClient = useQueryClient();
   return () => queryClient.invalidateQueries({ queryKey: importKey(id) });
 }
 
+/** Counts at the top: rows, valid, errors, new substances. */
 function Summary({ data }: { data: ImportPreview }) {
   const { t } = useI18n();
   const s = data.summary;
@@ -306,12 +314,14 @@ function Summary({ data }: { data: ImportPreview }) {
   );
 }
 
+/** Which field each column of the sheet holds. */
 function ColumnMapping({ data }: { data: ImportPreview }) {
   const { t } = useI18n();
   const errorText = useErrorText();
   const toast = useToast();
   const refresh = useRefresh(data.id);
   const [columns, setColumns] = useState<Record<string, string>>(data.columns);
+  // Saves the column mapping; every row is checked again.
   const save = useMutation({
     mutationFn: () =>
       call(
@@ -363,6 +373,7 @@ function ColumnMapping({ data }: { data: ImportPreview }) {
         ))}
       </div>
       <div>
+        {/* « Appliquer »: saves the mapping. */}
         <Button
           variant="secondary"
           disabled={!changed || save.isPending}
@@ -375,11 +386,13 @@ function ColumnMapping({ data }: { data: ImportPreview }) {
   );
 }
 
+/** What each status word of the sheet means (contre-indiqué, à éviter, possible, rien). */
 function StatusMapping({ data, editable }: { data: ImportPreview; editable: boolean }) {
   const { t } = useI18n();
   const errorText = useErrorText();
   const toast = useToast();
   const refresh = useRefresh(data.id);
+  // Saves what the status words mean; every row is checked again.
   const save = useMutation({
     mutationFn: (statuses: Record<string, StatusTarget>) =>
       call(
@@ -463,6 +476,7 @@ function IssueList({ issues, all = false }: { issues: ImportIssue[]; all?: boole
   );
 }
 
+/** The rows with their issues; a row opens its correction dialog. */
 function RowsTable({ data, editable }: { data: ImportPreview; editable: boolean }) {
   const { t } = useI18n();
   const [editing, setEditing] = useState<ImportRow | null>(null);
@@ -557,6 +571,7 @@ function FieldMark({ row, field }: { row: ImportRow; field: ImportField }) {
   return <Badge tone={SEVERITY_TONES[worst]!}>{t(SEVERITY_LABELS[worst]!)}</Badge>;
 }
 
+/** One cell: the corrected value, with the original shown when it was changed. */
 function Value({ row, field }: { row: ImportRow; field: ImportField }) {
   const value = row.values[field];
   return (
@@ -567,6 +582,7 @@ function Value({ row, field }: { row: ImportRow; field: ImportField }) {
   );
 }
 
+/** Corrects one row: values, exclusion, and what to do when it conflicts with existing content. */
 function RowDialog({
   data,
   row,
@@ -586,6 +602,7 @@ function RowDialog({
   const [excluded, setExcluded] = useState(row.excluded);
   const [resolution, setResolution] = useState(row.resolution);
   const conflict = row.issues.some((issue) => issue.code.startsWith('CONFLICT_'));
+  // The value as read from the sheet.
   const originalOf = (field: ImportField) => {
     const index = Object.entries(data.columns).find(([, f]) => f === field)?.[0];
     const cell = index === undefined ? undefined : row.original[Number(index)];
@@ -596,6 +613,7 @@ function RowDialog({
         .join(' → ') || null
     );
   };
+  // Saves the row's correction; the row is checked again.
   const save = useMutation({
     mutationFn: () => {
       const changed = Object.fromEntries(
@@ -630,10 +648,12 @@ function RowDialog({
       onSubmit={editable ? () => save.mutate() : undefined}
       footer={
         <>
+          {/* « Annuler ». */}
           <Button variant="ghost" onClick={onClose}>
             {t('admin.common.cancel')}
           </Button>
           {editable ? (
+            // « Enregistrer la ligne ».
             <Button variant="primary" type="submit" disabled={save.isPending}>
               {t('admin.pregnancyImport.recheck')}
             </Button>
@@ -696,6 +716,7 @@ function RowDialog({
   );
 }
 
+/** The bottom bar: discard, or add the valid rows as drafts (refused while errors remain). */
 function Confirm({ data }: { data: ImportPreview }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -720,9 +741,11 @@ function Confirm({ data }: { data: ImportPreview }) {
             })}
       </span>
       <span className="dt-row-flex">
+        {/* « Abandonner l'import ». */}
         <Button variant="ghost" onClick={() => setDiscarding(true)}>
           {t('admin.pregnancyImport.discard')}
         </Button>
+        {/* « Ajouter à la bibliothèque »: writes the valid rows into draft profiles. */}
         <Button variant="primary" disabled={blocked} onClick={() => setConfirming(true)}>
           {t('admin.pregnancyImport.add')}
         </Button>
@@ -769,6 +792,7 @@ function Confirm({ data }: { data: ImportPreview }) {
   );
 }
 
+/** After a commit: what was created, and sending every new draft to review. */
 function Committed({ data }: { data: ImportPreview }) {
   const { t, locale } = useI18n();
   const { has } = useGrants();
@@ -797,6 +821,7 @@ function Committed({ data }: { data: ImportPreview }) {
           {t('admin.pregnancyImport.openLibrary')}
         </Link>
         {has('pregnancy.draft') && result.versionIds.length > 0 ? (
+          // « Soumettre tout à relecture ».
           <Button variant="primary" onClick={() => setSubmitting(true)}>
             <Send size={16} aria-hidden />
             {t('admin.pregnancyImport.submitAll')}

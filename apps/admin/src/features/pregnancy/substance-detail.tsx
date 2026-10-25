@@ -34,6 +34,7 @@ import { describeProblem } from './problems';
 import { ProfileEditor } from './profile-editor';
 import { ReviewComment } from './profile-view';
 
+/** Which dialog is open. */
 type Action = 'newVersion' | 'submit' | 'discard' | 'approve' | 'changes' | null;
 
 /** One substance: versions on the left, the selected version (editor, review) on the right. */
@@ -53,15 +54,18 @@ export function SubstanceDetailPage({ id }: { id: string }) {
   const [merging, setMerging] = useState(false);
   const [unmerging, setUnmerging] = useState(false);
 
+  // The substance with its versions.
   const detail = useQuery({
     queryKey: substanceKey(id),
     queryFn: () =>
       call(api.GET('/admin/v1/pregnancy/substances/{id}', { params: { path: { id } } })),
   });
+  // Every substance (alternatives picker and merge target list).
   const substances = useQuery({
     queryKey: substancesKey,
     queryFn: () => call(api.GET('/admin/v1/pregnancy/substances')),
   });
+  // The sources registry (the editor's source picker).
   const registry = useQuery({
     queryKey: sourcesKey,
     queryFn: () => call(api.GET('/admin/v1/pregnancy/sources')),
@@ -71,6 +75,7 @@ export function SubstanceDetailPage({ id }: { id: string }) {
     substance?.versions.find((item) => item.id === selected) ??
     substance?.versions.find((item) => isOpenStatus(item.status)) ??
     substance?.versions[0];
+  // The selected version with its content and review problems.
   const version = useQuery({
     queryKey: versionKey(current?.id ?? ''),
     enabled: current !== undefined,
@@ -82,6 +87,7 @@ export function SubstanceDetailPage({ id }: { id: string }) {
       ),
   });
 
+  // After a change: reload the substance (and a version), and the list.
   const refresh = async (versionId?: string) => {
     await queryClient.invalidateQueries({ queryKey: substanceKey(id) });
     if (versionId) await queryClient.invalidateQueries({ queryKey: versionKey(versionId) });
@@ -129,10 +135,15 @@ export function SubstanceDetailPage({ id }: { id: string }) {
         actions={
           has('pregnancy.draft') ? (
             <>
+              {/* « Modifier la substance »: names, ATC code, synonyms. */}
               <Button onClick={() => setEditing(true)}>
                 <Pencil size={16} aria-hidden />
                 {t('admin.pregnancy.editSubstance')}
               </Button>
+              {/*
+                « Nouvelle version »: a new draft profile (one open version at a time, never on
+                a merged substance).
+              */}
               <Button
                 variant="primary"
                 disabled={open !== undefined || substance.mergedInto !== null}
@@ -153,6 +164,7 @@ export function SubstanceDetailPage({ id }: { id: string }) {
           title={t('admin.pregnancyMerge.mergedTitle')}
           action={
             has('pregnancy.review') ? (
+              // « Annuler la fusion ».
               <Button onClick={() => setUnmerging(true)}>{t('admin.pregnancyMerge.undo')}</Button>
             ) : null
           }
@@ -170,18 +182,21 @@ export function SubstanceDetailPage({ id }: { id: string }) {
           aria-label={t('admin.pregnancy.visibility')}
         >
           <b>{t('admin.pregnancy.visibility')}</b>
+          {/* Visibility switch: shows or hides the substance in the app. */}
           <Switch
             checked={substance.enabled}
             disabled={substance.mergedInto !== null}
             onChange={(enabled) => setVisibility({ enabled })}
             label={t('admin.pregnancy.enabledToggle')}
           />
+          {/* Demo sample switch: the demo and unpaid accounts may open this profile. */}
           <Switch
             checked={substance.demoSample}
             onChange={(demoSample) => setVisibility({ demoSample })}
             label={t('admin.pregnancy.demoToggle')}
           />
           {substance.mergedInto ? null : (
+            // « Fusionner avec… »: this substance is a duplicate of another one.
             <Button className="ms-auto" onClick={() => setMerging(true)}>
               <Merge size={16} aria-hidden />
               {t('admin.pregnancyMerge.open')}
@@ -228,6 +243,7 @@ export function SubstanceDetailPage({ id }: { id: string }) {
             <ol className="dt-stack gap-1">
               {substance.versions.map((item) => (
                 <li key={item.id}>
+                  {/* One version of the timeline: shows it below. */}
                   <button
                     type="button"
                     aria-current={item.id === current?.id ? 'true' : undefined}
@@ -291,6 +307,7 @@ export function SubstanceDetailPage({ id }: { id: string }) {
               <div className="dt-row-flex">
                 {canEdit ? (
                   <>
+                    {/* « Soumettre à relecture »: possible once nothing blocks the review. */}
                     <Button
                       variant="primary"
                       disabled={loaded.problems.length > 0}
@@ -299,6 +316,7 @@ export function SubstanceDetailPage({ id }: { id: string }) {
                       <Send size={16} aria-hidden />
                       {t('admin.pregnancy.submit')}
                     </Button>
+                    {/* « Supprimer le brouillon ». */}
                     <Button variant="ghost" onClick={() => setAction('discard')}>
                       <Trash2 size={16} aria-hidden />
                       {t('admin.pregnancy.discard')}
@@ -307,9 +325,11 @@ export function SubstanceDetailPage({ id }: { id: string }) {
                 ) : null}
                 {canReview ? (
                   <>
+                    {/* « Approuver et publier » (or first / second sign-off). */}
                     <Button variant="primary" onClick={() => setAction('approve')}>
                       {t(step?.label ?? 'admin.pregnancy.approve')}
                     </Button>
+                    {/* « Demander des modifications »: back to the author with a comment. */}
                     <Button onClick={() => setAction('changes')}>
                       {t('admin.pregnancy.requestChanges')}
                     </Button>

@@ -15,18 +15,23 @@ import { useErrorText } from '@/ui/errors';
 import { Alert } from '@/ui/feedback';
 import { Field, TextInput } from '@/ui/field';
 
+/** What the password step returns: enrol or verify the authenticator code. */
 type Step = Schemas['AdminSignInStepDto'];
 
+/** Rules of the first step's fields. */
 const credentialsSchema = z.object({
   email: z.email().max(254),
   password: z.string().min(1).max(128),
 });
+/** A 6-digit code. */
 const codeSchema = z.object({ code: z.string().regex(/^\d{6}$/) });
 
 /** Admin sign-in: e-mail + password, then the mandatory TOTP code (ADR-009). */
 export function SignInForm() {
   const { t } = useI18n();
   const [step, setStep] = useState<Step | null>(null);
+  // The code step ended (expired or too many wrong codes): say why the form starts over.
+  const [restarted, setRestarted] = useState(false);
   return (
     <div className="dt-card w-full max-w-dialog gap-5 p-8 shadow-md">
       <div className="flex flex-col items-center gap-2">
@@ -36,22 +41,39 @@ export function SignInForm() {
         <p className="dt-cap text-center">{t('admin.signIn.subtitle')}</p>
       </div>
       {step ? (
-        <TotpStep step={step} onRestart={() => setStep(null)} />
+        <TotpStep
+          step={step}
+          onRestart={(expired) => {
+            setRestarted(expired);
+            setStep(null);
+          }}
+        />
       ) : (
-        <CredentialsStep onNext={setStep} />
+        <>
+          {restarted ? <Alert tone="info">{t('admin.errors.challengeInvalid')}</Alert> : null}
+          <CredentialsStep
+            onNext={(next) => {
+              setRestarted(false);
+              setStep(next);
+            }}
+          />
+        </>
       )}
     </div>
   );
 }
 
+/** Step 1: e-mail and password. */
 function CredentialsStep({ onNext }: { onNext: (step: Step) => void }) {
   const { t } = useI18n();
   const errorText = useErrorText();
+  // The e-mail and password form.
   const form = useForm({
     resolver: zodResolver(credentialsSchema),
     defaultValues: { email: '', password: '' },
   });
   const { errors, isSubmitting } = form.formState;
+  // Sends e-mail and password; on success moves to the code step, otherwise shows why.
   const submit = form.handleSubmit(async (values) => {
     try {
       onNext(await call(api.POST('/admin/v1/auth/sign-in', { body: values })));
@@ -94,6 +116,7 @@ function CredentialsStep({ onNext }: { onNext: (step: Step) => void }) {
         )}
       </Field>
       {errors.root?.message ? <Alert tone="critical">{errors.root.message}</Alert> : null}
+      {/* « Continuer »: sends e-mail and password. */}
       <Button type="submit" variant="primary" busy={isSubmitting}>
         {t('admin.signIn.continue')}
       </Button>
@@ -101,7 +124,14 @@ function CredentialsStep({ onNext }: { onNext: (step: Step) => void }) {
   );
 }
 
-function TotpStep({ step, onRestart }: { step: Step; onRestart: () => void }) {
+function TotpStep({
+  step,
+  onRestart,
+}: {
+  step: Step;
+  /** Back to the first step; `expired` when the server ended the code step. */
+  onRestart: (expired: boolean) => void;
+}) {
   const { t } = useI18n();
   const errorText = useErrorText();
   const router = useRouter();
@@ -110,6 +140,7 @@ function TotpStep({ step, onRestart }: { step: Step; onRestart: () => void }) {
   const [qr, setQr] = useState<string | null>(null);
   const enrollment = step.next === 'TOTP_ENROLL' ? step.enrollment : null;
 
+  // First sign-in: draws the authenticator QR code from the otpauth link.
   useEffect(() => {
     if (!enrollment) return;
     let cancelled = false;
@@ -123,6 +154,8 @@ function TotpStep({ step, onRestart }: { step: Step; onRestart: () => void }) {
 
   const form = useForm({ resolver: zodResolver(codeSchema), defaultValues: { code: '' } });
   const { errors, isSubmitting } = form.formState;
+  // Sends the code; on success the session cookie is set and the console opens where the admin
+  // wanted to go.
   const submit = form.handleSubmit(async ({ code }) => {
     try {
       const me = await call(
@@ -132,7 +165,7 @@ function TotpStep({ step, onRestart }: { step: Step; onRestart: () => void }) {
       router.replace(next);
     } catch (error) {
       if (error instanceof ApiFailure && error.code === 'CHALLENGE_INVALID') {
-        onRestart();
+        onRestart(true);
         return;
       }
       form.setError('root', { message: errorText(error) });
@@ -177,10 +210,12 @@ function TotpStep({ step, onRestart }: { step: Step; onRestart: () => void }) {
         )}
       </Field>
       {errors.root?.message ? <Alert tone="critical">{errors.root.message}</Alert> : null}
+      {/* « Vérifier » (or « Activer » the first time): sends the 6-digit code. */}
       <Button type="submit" variant="primary" busy={isSubmitting}>
         {enrollment ? t('admin.signIn.enrollConfirm') : t('admin.signIn.verify')}
       </Button>
-      <Button variant="ghost" onClick={onRestart} disabled={isSubmitting}>
+      {/* « Recommencer »: back to e-mail and password. */}
+      <Button variant="ghost" onClick={() => onRestart(false)} disabled={isSubmitting}>
         {t('admin.signIn.restart')}
       </Button>
     </form>

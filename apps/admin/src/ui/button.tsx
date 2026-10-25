@@ -1,8 +1,10 @@
 import { LoaderCircle } from 'lucide-react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
+/** Visual styles of a button (primary, secondary, ghost, danger, teal). */
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'teal';
 
+/** A button: style, size, icon-only, and a busy spinner that also disables it. */
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: 'md' | 'sm';
@@ -12,6 +14,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
 }
 
+/** The console's button; disabled while busy so a click is never sent twice. */
 export function Button({
   variant = 'secondary',
   size = 'md',

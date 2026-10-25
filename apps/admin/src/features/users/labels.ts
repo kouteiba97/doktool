@@ -1,10 +1,12 @@
 import type { Schemas } from '@/api/client';
 import type { MessageKey, Translate } from '@/i18n/messages';
 
+/** Access tiers, as the API names them. */
 export type EntitlementTier = Schemas['EntitlementTier'];
 export type FeatureKey = Schemas['FeatureKey'];
 export type LockReason = Schemas['LockReason'];
 
+/** Catalogue key of each tier's name. */
 export const TIER_LABELS: Record<EntitlementTier, MessageKey> = {
   DEMO: 'admin.users.tierDemo',
   STUDENT: 'admin.users.tierStudent',
@@ -13,6 +15,7 @@ export const TIER_LABELS: Record<EntitlementTier, MessageKey> = {
   RESTRICTED: 'admin.users.tierRestricted',
 };
 
+/** Catalogue key of each feature's name. */
 export const FEATURE_LABELS: Record<FeatureKey, MessageKey> = {
   search: 'admin.users.featureSearch',
   'reference.view': 'admin.users.featureReferenceView',
@@ -25,6 +28,7 @@ export const FEATURE_LABELS: Record<FeatureKey, MessageKey> = {
   'profile.edit': 'admin.users.featureProfileEdit',
 };
 
+/** Catalogue key of each lock reason. */
 export const LOCK_REASON_LABELS: Record<LockReason, MessageKey> = {
   DEMO_LIMIT: 'admin.users.lockDemoLimit',
   PROFESSIONAL_ONLY: 'admin.users.lockProfessionalOnly',
@@ -36,6 +40,7 @@ export const LOCK_REASON_LABELS: Record<LockReason, MessageKey> = {
   NO_LONGER_AVAILABLE: 'admin.users.lockNoLongerAvailable',
 };
 
+/** Catalogue key of each kind of history entry. */
 export const ACTIVITY_KIND_LABELS: Record<Schemas['ActivityKind'], MessageKey> = {
   SEARCH: 'admin.users.activitySearch',
   REFERENCE_VIEW: 'admin.users.activityReferenceView',
@@ -43,12 +48,14 @@ export const ACTIVITY_KIND_LABELS: Record<Schemas['ActivityKind'], MessageKey> =
   PREGNANCY_VIEW: 'admin.users.activityPregnancyView',
 };
 
+/** Catalogue key of each kind of favorite. */
 export const FAVORITE_TYPE_LABELS: Record<Schemas['FavoriteTargetType'], MessageKey> = {
   REFERENCE_DOCUMENT: 'admin.users.favoriteModels',
   CALCULATOR: 'admin.users.favoriteCalculators',
   SUBSTANCE: 'admin.users.favoriteSubstances',
 };
 
+/** Cache key of the user list (invalidated after an action). */
 export const usersKey = ['admin', 'users'] as const;
 
 /**

@@ -34,6 +34,7 @@ import {
 } from './labels';
 import { ProfileView } from './profile-view';
 
+/** A disagreement between two sources. */
 type Conflict = NonNullable<PregnancyBlock['conflict']>;
 
 /** Drops empty texts so the server receives only what the author wrote. */
@@ -55,6 +56,7 @@ function keepImported<T extends Period | LactationBlock>(value: T) {
   };
 }
 
+/** A period without its empty optional parts (sent to the API). */
 function cleanPeriod(period: Period): Period {
   return {
     conduct: period.conduct,
@@ -76,6 +78,7 @@ function cleanPeriod(period: Period): Period {
   };
 }
 
+/** A conflict without empty parts, or nothing when unset. */
 function cleanConflict(conflict: Conflict | undefined): Conflict | undefined {
   const synthesis = cleanText(conflict?.synthesis);
   if (!conflict || !synthesis || conflict.sourceIds.length !== 2) return undefined;
@@ -182,6 +185,7 @@ function LocalizedField({
   );
 }
 
+/** The conduct picker of a period. */
 function ConductSelect({
   value,
   onChange,
@@ -214,6 +218,7 @@ function ConductSelect({
   );
 }
 
+/** Evidence level and its note. */
 function EvidenceFields({
   value,
   onChange,
@@ -277,6 +282,7 @@ function AlternativesField({
   disabled: boolean;
 }) {
   const { t, locale } = useI18n();
+  // A substance's name in the UI language.
   const name = (id: string) => {
     const found = substances.find((item) => item.id === id);
     return found ? (locale === 'en' && found.nameEn ? found.nameEn : found.nameFr) : id;
@@ -291,6 +297,7 @@ function AlternativesField({
               <span key={id} className="dt-chip">
                 {name(id)}
                 {disabled ? null : (
+                  // Removes this alternative.
                   <button
                     type="button"
                     aria-label={t('admin.pregnancy.removeAlternative', { name: name(id) })}
@@ -339,6 +346,7 @@ function ConflictFields({
 }) {
   const { t } = useI18n();
   const ids = value?.sourceIds ?? ['', ''];
+  // Sets one of the two sources of the conflict.
   const set = (index: number, id: string) => {
     const next = [...ids];
     next[index] = id;
@@ -391,6 +399,7 @@ function ConflictFields({
   );
 }
 
+/** The fields of one pregnancy period. */
 function PeriodFields({
   periodKey,
   value,
@@ -460,6 +469,7 @@ function PeriodFields({
   );
 }
 
+/** The pregnancy block: four periods and its alternatives. */
 function PregnancyFields({
   value,
   onChange,
@@ -516,6 +526,7 @@ function PregnancyFields({
   );
 }
 
+/** The lactation block. */
 function LactationFields({
   value,
   onChange,
@@ -655,16 +666,19 @@ export function ProfileEditor({
   const [content, setContent] = useState<ProfileContent>(version.content);
   const [sourceIds, setSourceIds] = useState<string[]>(version.sources.map((source) => source.id));
   const [dirty, setDirty] = useState(false);
+  // The registry sources ticked for this version.
   const selected = useMemo(
     () => registry.filter((source) => sourceIds.includes(source.id)),
     [registry, sourceIds],
   );
 
+  // Records an edit (the draft is now unsaved).
   const update = (next: ProfileContent) => {
     setContent(next);
     setDirty(true);
   };
 
+  // Saves the draft: content without empty parts, and the sources ticked.
   const save = useMutation({
     mutationFn: () =>
       call(
@@ -680,6 +694,7 @@ export function ProfileEditor({
     },
   });
 
+  // A substance's name in the UI language.
   const nameOf = (id: string) => {
     const found = substances.find((item) => item.id === id);
     return found ? (locale === 'en' && found.nameEn ? found.nameEn : found.nameFr) : id;
@@ -692,6 +707,7 @@ export function ProfileEditor({
           <span className="dt-cap">
             {dirty ? t('admin.pregnancy.unsaved') : t('admin.pregnancy.upToDate')}
           </span>
+          {/* « Enregistrer le brouillon ». */}
           <Button
             variant="primary"
             busy={save.isPending}
@@ -761,6 +777,7 @@ export function ProfileEditor({
             ))}
             {editable ? (
               <div>
+                {/* « Ajouter une source » to the registry, without leaving the editor. */}
                 <Button size="sm" onClick={onAddSource}>
                   <Plus size={14} aria-hidden />
                   {t('admin.pregnancy.addSource')}

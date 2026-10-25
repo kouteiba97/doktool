@@ -2,6 +2,7 @@ import type { Schemas } from '@/api/client';
 import type { BadgeTone } from '@/ui/badge';
 import type { MessageKey } from '@/i18n/messages';
 
+/** API enums used by the verification pages. */
 export type VerificationStatus = Schemas['VerificationStatus'];
 export type VerificationType = Schemas['VerificationType'];
 export type RejectionReason = Schemas['VerificationRejectionReason'];
@@ -11,12 +12,14 @@ export type ProfessionalType = Schemas['ProfessionalType'];
 /** Verification service level: a case waiting longer is flagged (Admin Web preview « SLA 24 h »). */
 export const VERIFICATION_SLA_HOURS = 24;
 
+/** Catalogue key of each case type. */
 export const TYPE_LABELS: Record<VerificationType, MessageKey> = {
   IDENTITY: 'admin.verification.typeIdentity',
   PROFESSIONAL_STATUS: 'admin.verification.typeProfessional',
   STUDENT_STATUS: 'admin.verification.typeStudent',
 };
 
+/** Catalogue key of each case status. */
 export const STATUS_LABELS: Record<VerificationStatus, MessageKey> = {
   NOT_STARTED: 'admin.verification.statusNotStarted',
   SUBMITTED: 'admin.verification.statusSubmitted',
@@ -27,6 +30,7 @@ export const STATUS_LABELS: Record<VerificationStatus, MessageKey> = {
   APPEALED: 'admin.verification.statusAppealed',
 };
 
+/** Badge colour of each case status. */
 export const STATUS_TONES: Record<VerificationStatus, BadgeTone> = {
   NOT_STARTED: 'neutral',
   SUBMITTED: 'info',
@@ -37,6 +41,7 @@ export const STATUS_TONES: Record<VerificationStatus, BadgeTone> = {
   APPEALED: 'warning',
 };
 
+/** Catalogue key of each rejection reason. */
 export const REJECTION_LABELS: Record<RejectionReason, MessageKey> = {
   ILLEGIBLE: 'admin.verification.rejectIllegible',
   DOCUMENT_EXPIRED: 'admin.verification.rejectDocumentExpired',
@@ -46,8 +51,10 @@ export const REJECTION_LABELS: Record<RejectionReason, MessageKey> = {
   OTHER: 'admin.verification.rejectOther',
 };
 
+/** The rejection reasons, in the order the picker lists them. */
 export const REJECTION_REASONS = Object.keys(REJECTION_LABELS) as RejectionReason[];
 
+/** Catalogue key of each document step. */
 export const STEP_LABELS: Record<StepType, MessageKey> = {
   IDENTITY_FRONT: 'admin.verification.stepIdentityFront',
   IDENTITY_BACK: 'admin.verification.stepIdentityBack',
@@ -56,12 +63,14 @@ export const STEP_LABELS: Record<StepType, MessageKey> = {
   STUDENT_PROOF: 'admin.verification.stepStudentProof',
 };
 
+/** Catalogue key of each profession. */
 export const PROFESSIONAL_TYPE_LABELS: Record<ProfessionalType, MessageKey> = {
   DOCTOR: 'admin.common.typeDoctor',
   RESIDENT: 'admin.common.typeResident',
   STUDENT: 'admin.common.typeStudent',
 };
 
+/** Catalogue key of each identity document kind. */
 export const DOCUMENT_KIND_LABELS: Record<
   NonNullable<Schemas['VerificationDeclaredDetailsDto']['documentKind']>,
   MessageKey
@@ -75,6 +84,7 @@ export const DOCUMENT_KIND_LABELS: Record<
 export const QUEUE_TABS = ['PENDING', 'VERIFIED', 'REJECTED', 'EXPIRED', 'APPEALED'] as const;
 export type QueueTab = (typeof QUEUE_TABS)[number];
 
+/** Catalogue key of each tab. */
 export const QUEUE_TAB_LABELS: Record<QueueTab, MessageKey> = {
   PENDING: 'admin.verification.tabPending',
   VERIFIED: 'admin.verification.tabVerified',
@@ -83,10 +93,12 @@ export const QUEUE_TAB_LABELS: Record<QueueTab, MessageKey> = {
   APPEALED: 'admin.verification.tabAppealed',
 };
 
+/** The status a tab asks the API for (none: the default waiting list). */
 export function queueStatus(tab: QueueTab): VerificationStatus | undefined {
   return tab === 'PENDING' ? undefined : tab;
 }
 
+/** A person's full name. */
 export function personName(person: { firstName: string; lastName: string }): string {
   return `${person.firstName} ${person.lastName}`.trim();
 }

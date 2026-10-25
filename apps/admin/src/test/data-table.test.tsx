@@ -60,6 +60,38 @@ describe('DataTable', () => {
     expect(onOpen).toHaveBeenLastCalledWith(rows[1]);
   });
 
+  it('lets a button inside a row act alone, without opening the row', () => {
+    const onOpen = vi.fn();
+    const onAction = vi.fn();
+    render(
+      <I18nProvider initialLocale="fr">
+        <DataTable
+          label="Personnes"
+          columns={[
+            ...columns,
+            {
+              id: 'action',
+              header: 'Action',
+              cell: (row) => (
+                <button type="button" onClick={() => onAction(row.id)}>
+                  Traiter {row.name}
+                </button>
+              ),
+            },
+          ]}
+          rows={rows}
+          rowId={(row) => row.id}
+          onOpen={onOpen}
+        />
+      </I18nProvider>,
+    );
+    const button = screen.getByRole('button', { name: 'Traiter Karim' });
+    fireEvent.click(button);
+    fireEvent.keyDown(button, { key: 'Enter' });
+    expect(onAction).toHaveBeenCalledWith('a');
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
   it('shows the empty state without rows', () => {
     render(
       <I18nProvider initialLocale="en">

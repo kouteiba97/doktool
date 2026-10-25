@@ -55,6 +55,7 @@ export function PlanDrawer({
     }
   });
 
+  // One text field of the plan form.
   const text = (
     name: 'nameFr' | 'nameEn' | 'price' | 'durationDays',
     label: string,
@@ -78,6 +79,7 @@ export function PlanDrawer({
       )}
     </Field>
   );
+  // One "includes / not included" list (one item per line).
   const list = (name: 'includesFr' | 'includesEn' | 'excludesFr' | 'excludesEn', label: string) => (
     <Field
       label={label}
@@ -111,10 +113,12 @@ export function PlanDrawer({
       caption={base ? t('admin.plans.newVersionCaption', { version: base.version + 1 }) : null}
       footer={
         <>
+          {/* « Annuler ». */}
           <Button onClick={onClose} disabled={isSubmitting}>
             {t('admin.common.cancel')}
           </Button>
           <div className="end">
+            {/* « Publier »: a new plan or version; earlier versions of the code stop being sold. */}
             <Button variant="primary" busy={isSubmitting} onClick={() => void submit()}>
               {t('admin.plans.publish')}
             </Button>

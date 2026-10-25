@@ -15,10 +15,13 @@ import { Tab, TabList, TabPanel, Tabs } from '@/ui/tabs';
 import { useToast } from '@/ui/toast';
 import { ReviewPolicies } from './review-policies';
 
+/** Picker entries as the API returns them. */
 type Specialty = Schemas['SpecialtyDto'];
 type Place = Schemas['PlaceDto'];
+/** The two kinds of place list. */
 type PlaceKind = 'institutions' | 'universities';
 
+/** Cache key of one list. */
 const referenceKey = (kind: string) => ['admin', 'reference-data', kind] as const;
 
 /** Wilaya codes as the API accepts them. */
@@ -59,6 +62,7 @@ export function ReferenceDataPage() {
   );
 }
 
+/** The specialties list and its form. */
 function Specialties() {
   const { t, locale } = useI18n();
   const errorText = useErrorText();
@@ -68,6 +72,7 @@ function Specialties() {
   const [code, setCode] = useState('');
   const [nameFr, setNameFr] = useState('');
   const [nameEn, setNameEn] = useState('');
+  // Every specialty.
   const list = useQuery({
     queryKey: referenceKey('specialties'),
     queryFn: () => call(api.GET('/admin/v1/reference-data/specialties')),
@@ -113,6 +118,7 @@ function Specialties() {
         rowId={(row) => row.id}
         loading={list.isPending}
         toolbar={
+          // « Ajouter une spécialité »: opens an empty form.
           <Button
             size="sm"
             onClick={() => {
@@ -180,6 +186,7 @@ function Specialties() {
   );
 }
 
+/** Institutions or universities, and their form. */
 function Places({ kind }: { kind: PlaceKind }) {
   const { t, locale } = useI18n();
   const errorText = useErrorText();
@@ -192,6 +199,7 @@ function Places({ kind }: { kind: PlaceKind }) {
     kind === 'institutions'
       ? '/admin/v1/reference-data/institutions'
       : '/admin/v1/reference-data/universities';
+  // Every institution or university.
   const list = useQuery({ queryKey: referenceKey(kind), queryFn: () => call(api.GET(path)) });
   const columns = useMemo<Column<Place>[]>(
     () => [
@@ -238,6 +246,7 @@ function Places({ kind }: { kind: PlaceKind }) {
         rowId={(row) => row.id}
         loading={list.isPending}
         toolbar={
+          // « Ajouter »: opens an empty institution or university form.
           <Button
             size="sm"
             onClick={() => {

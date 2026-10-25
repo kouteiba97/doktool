@@ -4,6 +4,7 @@ import { use } from 'react';
 import { SubstanceDetailPage } from '@/features/pregnancy/substance-detail';
 import { RequireGrant } from '@/shell/require-grant';
 
+/** /admin/pregnancy/:id: one substance. */
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   return (

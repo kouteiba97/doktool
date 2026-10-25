@@ -3,9 +3,11 @@
 import * as RadixTabs from '@radix-ui/react-tabs';
 import type { ReactNode } from 'react';
 
+/** Tabs (Radix): keyboard arrows move between tabs. */
 export const Tabs = RadixTabs.Root;
 export const TabPanel = RadixTabs.Content;
 
+/** The row of tabs, with an accessible name. */
 export function TabList({ label, children }: { label: string; children: ReactNode }) {
   return (
     <RadixTabs.List className="dt-tabs" aria-label={label}>
@@ -14,6 +16,7 @@ export function TabList({ label, children }: { label: string; children: ReactNod
   );
 }
 
+/** One tab. */
 export function Tab({
   value,
   children,

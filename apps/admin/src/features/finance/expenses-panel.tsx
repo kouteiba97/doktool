@@ -22,6 +22,7 @@ import { parsePrice } from '../subscriptions/plan-form';
 import { type PaymentProvider, PROVIDER_LABELS } from '../subscriptions/labels';
 import { PaymentMethodsCard } from './payment-methods-card';
 
+/** API types used by the expenses tab. */
 type Expense = Schemas['ExpenseDto'];
 type Category = Schemas['ExpenseCategory'];
 
@@ -70,14 +71,17 @@ export function ExpensesPanel({ period }: { period: Period }) {
   const [settling, setSettling] = useState(false);
   const [rateFor, setRateFor] = useState<PaymentProvider | null>(null);
 
+  // Expenses of the period.
   const expenses = useQuery({
     queryKey: ['admin', 'finance', 'expenses', period],
     queryFn: () => call(api.GET('/admin/v1/finance/expenses', { params: { query: period } })),
   });
+  // Fee rate of each payment channel.
   const rates = useQuery({
     queryKey: ['admin', 'finance', 'fee-rates'],
     queryFn: () => call(api.GET('/admin/v1/finance/fee-rates')),
   });
+  // After a change: reload expenses, rates and the overview, then confirm with a toast.
   const refresh = async (message: string) => {
     await queryClient.invalidateQueries({ queryKey: ['admin', 'finance'] });
     toast(message);
@@ -136,6 +140,7 @@ export function ExpensesPanel({ period }: { period: Period }) {
             actions={[
               {
                 label: t('admin.finance.void'),
+                // « Annuler la dépense » (voided, never deleted).
                 onSelect: () => setVoiding(row),
                 hidden: !canWrite || row.voidedAt !== null,
                 danger: true,
@@ -154,6 +159,7 @@ export function ExpensesPanel({ period }: { period: Period }) {
         <div className="flex items-center gap-2">
           <h2 className="dt-heading">{t('admin.finance.tabExpenses')}</h2>
           {canWrite ? (
+            // « Ajouter une dépense ».
             <Button size="sm" variant="primary" className="ms-auto" onClick={() => setAdding(true)}>
               <Plus size={14} aria-hidden />
               {t('admin.finance.addExpense')}
@@ -182,6 +188,7 @@ export function ExpensesPanel({ period }: { period: Period }) {
         <div className="flex items-center gap-2">
           <h2 className="dt-heading">{t('admin.finance.feeRates')}</h2>
           {canWrite ? (
+            // « Régler les frais »: replaces estimated fees with the provider's statement.
             <Button size="sm" className="ms-auto" onClick={() => setSettling(true)}>
               {t('admin.finance.settleFees')}
             </Button>
@@ -207,6 +214,7 @@ export function ExpensesPanel({ period }: { period: Period }) {
                 )}
               </span>
               {canWrite ? (
+                // « Modifier » the fee rate of this channel.
                 <Button size="sm" variant="ghost" onClick={() => setRateFor(rate.provider)}>
                   {t('admin.common.edit')}
                 </Button>
@@ -260,6 +268,7 @@ export function ExpensesPanel({ period }: { period: Period }) {
   );
 }
 
+/** The new-expense form: category, label, amount, date and reason. */
 function ExpenseDialog({ onClose, onDone }: { onClose: () => void; onDone: () => Promise<void> }) {
   const { t } = useI18n();
   const [category, setCategory] = useState<Category>('INFRASTRUCTURE');
@@ -338,6 +347,7 @@ function ExpenseDialog({ onClose, onDone }: { onClose: () => void; onDone: () =>
   );
 }
 
+/** The fee rate of one channel: percentage and fixed part. */
 function RateDialog({
   provider,
   current,
@@ -412,6 +422,7 @@ function RateDialog({
   );
 }
 
+/** Paste the provider's fees (transaction id and fee per line) to settle them. */
 function SettlementDialog({
   onClose,
   onDone,

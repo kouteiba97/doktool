@@ -3,6 +3,7 @@ import type { MessageKey } from '@/i18n/messages';
 import type { BadgeTone } from '@/ui/badge';
 import type { DefinitionView, StoredTestRun } from './definition';
 
+/** API types used by the calculator pages. */
 export type Calculator = Schemas['AdminCalculatorDto'];
 export type Version = Schemas['AdminVersionDto'];
 export type VersionStatus = Schemas['CalculatorVersionStatus'];
@@ -16,9 +17,12 @@ export const NAME_MAX_LENGTH = 120;
 export const PURPOSE_MAX_LENGTH = 160;
 export const CATEGORY_MAX_LENGTH = 60;
 
+/** Cache key of the list. */
 export const calculatorsKey = ['admin', 'calculators'] as const;
+/** Cache key of one calculator. */
 export const calculatorKey = (id: string) => ['admin', 'calculators', id] as const;
 
+/** Catalogue key of each version status. */
 export const VERSION_STATUS_LABELS: Record<VersionStatus, MessageKey> = {
   DRAFT: 'admin.calculators.versionDraft',
   IN_REVIEW: 'admin.calculators.versionInReview',
@@ -26,6 +30,7 @@ export const VERSION_STATUS_LABELS: Record<VersionStatus, MessageKey> = {
   RETIRED: 'admin.calculators.versionRetired',
 };
 
+/** Badge colour of each version status. */
 export const VERSION_STATUS_TONES: Record<VersionStatus, BadgeTone> = {
   DRAFT: 'neutral',
   IN_REVIEW: 'warning',
@@ -33,22 +38,26 @@ export const VERSION_STATUS_TONES: Record<VersionStatus, BadgeTone> = {
   RETIRED: 'outline',
 };
 
+/** Catalogue key of each calculator status. */
 export const CALCULATOR_STATUS_LABELS: Record<Schemas['CalculatorStatus'], MessageKey> = {
   ACTIVE: 'admin.calculators.statusActive',
   RETIRED: 'admin.calculators.statusRetired',
 };
 
+/** Catalogue key of each access tier. */
 export const ACCESS_LABELS: Record<AccessTier, MessageKey> = {
   STUDENT: 'admin.calculators.accessStudent',
   PROFESSIONAL: 'admin.calculators.accessProfessional',
 };
 
+/** Catalogue key of each source role. */
 export const ROLE_LABELS: Record<SourceRole, MessageKey> = {
   PRIMARY: 'admin.calculators.rolePrimary',
   VALIDATION: 'admin.calculators.roleValidation',
   UNIT_CONVERSION: 'admin.calculators.roleUnitConversion',
 };
 
+/** Catalogue key of each outcome. */
 export const OUTCOME_LABELS: Record<TestOutcome, MessageKey> = {
   RESULT: 'admin.calculators.outcomeResult',
   INVALID: 'admin.calculators.outcomeInvalid',
@@ -60,12 +69,14 @@ export function publishedVersion(calculator: Calculator): Version | undefined {
   return calculator.versions.find((version) => version.id === calculator.currentVersionId);
 }
 
+/** The version still being written or reviewed, if any. */
 export function openDraft(calculator: Calculator): Version | undefined {
   return calculator.versions.find(
     (version) => version.status === 'DRAFT' || version.status === 'IN_REVIEW',
   );
 }
 
+/** One condition of the publication gate, met or not. */
 export interface Gate {
   label: MessageKey;
   ok: boolean;

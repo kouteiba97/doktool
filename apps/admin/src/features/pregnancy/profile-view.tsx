@@ -68,6 +68,7 @@ export function EvidenceMeter({
   );
 }
 
+/** A labelled text in the UI language (nothing when empty). */
 function Labelled({ label, text }: { label: string; text: Localized | undefined }) {
   const { locale } = useI18n();
   if (!text) return null;
@@ -140,6 +141,7 @@ function PeriodTrace({
   );
 }
 
+/** The alternatives of a period or block. */
 function Alternatives({ names }: { names: string[] }) {
   const { t } = useI18n();
   if (names.length === 0) return null;
@@ -157,6 +159,7 @@ function Alternatives({ names }: { names: string[] }) {
   );
 }
 
+/** Two sources that disagree, and the synthesis written. */
 function Conflict({
   conflict,
   sources,
@@ -205,6 +208,7 @@ export function EvidenceFooter({
   );
 }
 
+/** The pregnancy block: one card per period. */
 function PregnancyView({
   block,
   alternatives,
@@ -303,6 +307,7 @@ function PregnancyView({
   );
 }
 
+/** The lactation block. */
 function LactationView({
   block,
   alternatives,

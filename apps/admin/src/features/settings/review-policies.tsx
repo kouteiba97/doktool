@@ -13,6 +13,7 @@ import { Switch } from '@/ui/field';
 import { ReasonDialog } from '@/ui/reason-dialog';
 import { useToast } from '@/ui/toast';
 
+/** A sign-off policy as the API returns it. */
 type Policy = Schemas['ReviewPolicyDto'];
 type Content = Policy['content'];
 
@@ -31,6 +32,7 @@ const CONTENT_LABELS: Record<Content, MessageKey> = {
 export function ReviewPolicies() {
   const { t } = useI18n();
   const errorText = useErrorText();
+  // Both policies (calculators, pregnancy profiles).
   const policies = useQuery({
     queryKey: policiesKey,
     queryFn: () => call(api.GET('/admin/v1/clinical-review/policies')),
@@ -53,6 +55,7 @@ export function ReviewPolicies() {
   );
 }
 
+/** One policy: one or two sign-offs, how many admins may approve, who last changed it. */
 function PolicyCard({ policy }: { policy: Policy }) {
   const { t, locale } = useI18n();
   const toast = useToast();

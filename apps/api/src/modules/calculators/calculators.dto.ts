@@ -9,6 +9,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  IsUrl,
   Matches,
   Max,
   MaxLength,
@@ -249,6 +250,8 @@ export class AddSourceDto {
   @trimmed
   @IsString()
   @MaxLength(500)
+  // Shown as a link to reviewers and in the app: web addresses only (never javascript: or data:).
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   url?: string | null;
   @ApiPropertyOptional({ type: String, nullable: true })
   @IsOptional()

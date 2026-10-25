@@ -12,6 +12,7 @@ import { Alert } from '@/ui/feedback';
 import { Field, Select, Switch, TextArea, TextInput } from '@/ui/field';
 import type { Substance } from './labels';
 
+/** Catalogue key of each reason a merge is refused. */
 const BLOCKER_LABELS: Record<string, MessageKey> = {
   SAME_SUBSTANCE: 'admin.pregnancyMerge.blocker.same',
   SOURCE_ALREADY_MERGED: 'admin.pregnancyMerge.blocker.sourceMerged',
@@ -45,6 +46,8 @@ export function MergeDialog({
   const [into, setInto] = useState('');
   const [acknowledged, setAcknowledged] = useState(false);
   const [reason, setReason] = useState('');
+  // Substances the duplicate can be merged into (others, visible, not merged), filtered by the
+  // words typed.
   const candidates = useMemo(() => {
     const words = filter.trim().toLocaleLowerCase('fr').split(/\s+/).filter(Boolean);
     return substances
@@ -58,6 +61,7 @@ export function MergeDialog({
       )
       .slice(0, 50);
   }, [filter, substances, substance.id]);
+  // What the merge would change, and what blocks it.
   const preview = useQuery({
     queryKey: ['admin', 'pregnancy', 'merge-preview', substance.id, into],
     enabled: open && into !== '',
@@ -68,6 +72,7 @@ export function MergeDialog({
         }),
       ),
   });
+  // Performs the merge.
   const merge = useMutation({
     mutationFn: () =>
       call(
@@ -82,6 +87,8 @@ export function MergeDialog({
     },
   });
   const data = preview.data;
+  // The merge can be confirmed: nothing blocks it, a hidden published profile is acknowledged, and
+  // a reason is given.
   const ready =
     data !== undefined &&
     data.blockers.length === 0 &&
@@ -98,9 +105,11 @@ export function MergeDialog({
       onSubmit={() => (ready ? merge.mutate() : undefined)}
       footer={
         <>
+          {/* « Annuler ». */}
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t('admin.common.cancel')}
           </Button>
+          {/* « Fusionner ». */}
           <Button variant="danger" type="submit" disabled={!ready || merge.isPending}>
             {t('admin.pregnancyMerge.confirm')}
           </Button>

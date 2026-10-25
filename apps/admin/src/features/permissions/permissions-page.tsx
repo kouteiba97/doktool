@@ -18,6 +18,7 @@ import { useToast } from '@/ui/toast';
 import { AdminDrawer } from './admin-drawer';
 import { adminsKey, type Preset, PRESET_LABELS } from './grants';
 
+/** One admin account. */
 type Admin = Schemas['AdminAccountDto'];
 
 /** « Permissions » (ScreenPermissions): admins, their presets and grants (section 03). */
@@ -27,6 +28,7 @@ export function PermissionsPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
+  // Every admin with their grants.
   const admins = useQuery({
     queryKey: adminsKey,
     queryFn: () => call(api.GET('/admin/v1/admins')),
@@ -115,6 +117,7 @@ export function PermissionsPage() {
         title={t('admin.permissions.title')}
         caption={t('admin.permissions.caption')}
         actions={
+          // « Nouvel administrateur ».
           <Button variant="primary" onClick={() => setCreating(true)}>
             <Plus size={16} aria-hidden />
             {t('admin.permissions.add')}
@@ -159,6 +162,7 @@ export function PermissionsPage() {
 
 const PRESETS = Object.keys(PRESET_LABELS) as Preset[];
 
+/** New admin: e-mail, name and preset; the one-time password is then shown once. */
 function CreateAdminDialog({
   onClose,
   onCreated,
@@ -253,6 +257,7 @@ function PasswordDialog({
       title={t('admin.permissions.passwordTitle')}
       description={t('admin.permissions.passwordBody', { email })}
       footer={
+        // « J'ai transmis le mot de passe »: closes; the password is never shown again.
         <Button variant="primary" onClick={onClose}>
           {t('admin.permissions.passwordDone')}
         </Button>
@@ -260,6 +265,7 @@ function PasswordDialog({
     >
       <div className="flex items-center gap-2">
         <code className="dt-code flex-1 select-all">{password}</code>
+        {/* Copies the one-time password to the clipboard. */}
         <Button
           icon
           aria-label={t('admin.permissions.copy')}

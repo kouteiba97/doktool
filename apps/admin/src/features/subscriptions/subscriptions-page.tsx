@@ -33,7 +33,9 @@ export function SubscriptionsPage() {
   const [drawer, setDrawer] = useState<{ base: Plan | null } | null>(null);
   const [sale, setSale] = useState<Plan | null>(null);
 
+  // Every version of every plan.
   const plans = useQuery({ queryKey: plansKey, queryFn: () => call(api.GET('/admin/v1/plans')) });
+  // The latest version number of each plan code (only it can be the base of a new version).
   const latestByCode = useMemo(() => {
     const latest = new Map<string, number>();
     for (const plan of plans.data ?? [])
@@ -103,11 +105,13 @@ export function SubscriptionsPage() {
             actions={[
               {
                 label: t('admin.plans.newVersion'),
+                // « Nouvelle version » of this plan (a price change is a new version).
                 onSelect: () => setDrawer({ base: row }),
                 hidden: !canWrite || latestByCode.get(row.code) !== row.version,
               },
               {
                 label: row.isPurchasable ? t('admin.plans.stopSale') : t('admin.plans.startSale'),
+                // « Mettre en vente » / « Retirer de la vente ».
                 onSelect: () => setSale(row),
                 hidden: !canWrite,
               },
@@ -119,6 +123,7 @@ export function SubscriptionsPage() {
     [t, locale, canWrite, latestByCode],
   );
 
+  // After publishing: refresh the plans and confirm with a toast.
   const published = (plan: Plan, message: string) => {
     void queryClient.invalidateQueries({ queryKey: plansKey });
     toast(message);
@@ -132,6 +137,7 @@ export function SubscriptionsPage() {
         caption={t('admin.plans.caption')}
         actions={
           canWrite ? (
+            // « Nouveau forfait ».
             <Button variant="primary" onClick={() => setDrawer({ base: null })}>
               <Plus size={16} aria-hidden />
               {t('admin.plans.add')}

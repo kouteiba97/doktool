@@ -13,6 +13,7 @@ import { TextInput } from '@/ui/field';
 import { ReasonDialog } from '@/ui/reason-dialog';
 import { useToast } from '@/ui/toast';
 
+/** What the synonyms belong to. */
 type EntityType = Schemas['SearchEntityType'];
 
 export const MAX_SYNONYMS = 30;
@@ -45,6 +46,7 @@ export function SynonymsEditor({
   const { has } = useGrants();
   const canEdit = has(entityType === 'CALCULATOR' ? 'calculators.draft' : 'library.write');
   const key = ['admin', 'synonyms', entityType, entityId] as const;
+  // The synonyms saved now.
   const saved = useQuery({
     queryKey: key,
     queryFn: () =>
@@ -60,6 +62,7 @@ export function SynonymsEditor({
   const [confirming, setConfirming] = useState(false);
   const terms = edited ?? saved.data?.terms ?? [];
 
+  // Replaces the synonyms (with a reason).
   const save = useMutation({
     mutationFn: (reason: string) =>
       call(
@@ -79,6 +82,7 @@ export function SynonymsEditor({
   if (saved.isError) return <p className="dt-help error">{errorText(saved.error)}</p>;
 
   const changed = edited !== null && JSON.stringify(edited) !== JSON.stringify(saved.data.terms);
+  // Adds the typed word to the list (not saved yet).
   const add = () => {
     setEdited(addTerm(terms, draft));
     setDraft('');
@@ -93,6 +97,7 @@ export function SynonymsEditor({
           <li key={term} className="dt-chip">
             {term}
             {canEdit ? (
+              // Removes this synonym from the list (not saved yet).
               <button
                 type="button"
                 aria-label={t('admin.synonyms.remove', { term })}
@@ -121,11 +126,13 @@ export function SynonymsEditor({
                 }
               }}
             />
+            {/* « Ajouter » the typed synonym. */}
             <Button onClick={add} disabled={!draft.trim() || terms.length >= MAX_SYNONYMS}>
               {t('admin.synonyms.add')}
             </Button>
           </div>
           <div className="flex gap-2">
+            {/* « Enregistrer »: asks for a reason, then saves the list. */}
             <Button
               variant="primary"
               size="sm"
@@ -135,6 +142,7 @@ export function SynonymsEditor({
               {t('admin.synonyms.save')}
             </Button>
             {changed ? (
+              // « Annuler »: back to the saved list.
               <Button size="sm" variant="ghost" onClick={() => setEdited(null)}>
                 {t('admin.common.undo')}
               </Button>

@@ -15,6 +15,7 @@ export function proxy(request: NextRequest) {
   return NextResponse.redirect(url);
 }
 
+/** Which URLs the proxy runs on: every console page, never the API. */
 export const config = {
   // `/admin/v1/*` is the proxied API, never a page.
   matcher: ['/admin', '/admin/((?!v1(?:/|$)).*)'],

@@ -19,8 +19,10 @@ import {
   type SubstanceDetail,
 } from './labels';
 
+/** Shape of an ATC code (A, A01, A01B, A01BC, A01BC01). */
 const ATC = /^[A-Z]([0-9]{2}([A-Z]([A-Z]([0-9]{2})?)?)?)?$/;
 
+/** Rules of the substance form. */
 const substanceSchema = z.object({
   nameFr: z.string().trim().min(1).max(120),
   nameEn: z.string().trim().max(120),
@@ -32,6 +34,7 @@ const substanceSchema = z.object({
   synonyms: z.string().max(2400),
   reason: z.string().trim().min(3).max(500),
 });
+/** The substance form's values. */
 type SubstanceForm = z.infer<typeof substanceSchema>;
 
 /** « Nouvelle substance » or its names: DCI, English name, ATC code, synonyms. */
@@ -58,6 +61,7 @@ export function SubstanceDialog({
       reason: '',
     },
   });
+  // Creates the substance, or saves its names, ATC code and synonyms.
   const save = useMutation({
     mutationFn: (values: SubstanceForm) => {
       const body = {
@@ -94,9 +98,11 @@ export function SubstanceDialog({
       onSubmit={form.handleSubmit((values) => save.mutate(values))}
       footer={
         <>
+          {/* « Annuler ». */}
           <Button onClick={() => onOpenChange(false)} disabled={save.isPending}>
             {t('admin.common.cancel')}
           </Button>
+          {/* « Enregistrer ». */}
           <Button type="submit" variant="primary" busy={save.isPending}>
             {t('admin.common.save')}
           </Button>
@@ -164,6 +170,7 @@ export function SubstanceDialog({
   );
 }
 
+/** Rules of the source form. */
 const sourceSchema = z.object({
   title: z.string().trim().min(1).max(200),
   publisher: z.string().trim().max(120),
@@ -181,6 +188,7 @@ const sourceSchema = z.object({
     .trim()
     .refine((value) => value === '' || /^https?:\/\/\S+$/.test(value)),
 });
+/** The source form's values. */
 type SourceForm = z.infer<typeof sourceSchema>;
 
 /** A source of the registry: CRAT, LactMed, RCP ANSM, Briggs… (section 25 Appendix B). */
@@ -208,6 +216,7 @@ export function SourceDialog({
       url: source?.url ?? '',
     },
   });
+  // Adds the source to the registry, or saves its changes.
   const save = useMutation({
     mutationFn: (values: SourceForm) => {
       const body = {
@@ -242,9 +251,11 @@ export function SourceDialog({
       onSubmit={form.handleSubmit((values) => save.mutate(values))}
       footer={
         <>
+          {/* « Annuler ». */}
           <Button onClick={() => onOpenChange(false)} disabled={save.isPending}>
             {t('admin.common.cancel')}
           </Button>
+          {/* « Enregistrer la source ». */}
           <Button type="submit" variant="primary" busy={save.isPending}>
             {t('admin.common.save')}
           </Button>

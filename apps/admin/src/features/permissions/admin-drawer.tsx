@@ -16,7 +16,9 @@ import { ReasonDialog } from '@/ui/reason-dialog';
 import { useToast } from '@/ui/toast';
 import { adminsKey, GRANT_GROUPS, GRANT_LABELS, PRESET_LABELS, separationProblems } from './grants';
 
+/** One admin account. */
 type Admin = Schemas['AdminAccountDto'];
+/** Which dialog is open. */
 type Action = 'save' | 'temporary' | 'suspend' | 'reinstate' | 'resetTotp' | null;
 
 const TEMPORARY_HOURS = [1, 2, 4, 8] as const;
@@ -26,12 +28,14 @@ export function AdminDrawer({ admin, onClose }: { admin: Admin | null; onClose: 
   return admin ? <AdminDrawerBody key={admin.id} admin={admin} onClose={onClose} /> : null;
 }
 
+/** The drawer's content: the grants by area, with the separation-of-duties rules checked live. */
 function AdminDrawerBody({ admin, onClose }: { admin: Admin; onClose: () => void }) {
   const { t, locale } = useI18n();
   const toast = useToast();
   const queryClient = useQueryClient();
   const { me } = useGrants();
   const self = me?.id === admin.id;
+  // The admin's permanent grants (temporary ones expire on their own).
   const permanent = useMemo(
     () =>
       admin.grants.filter((grant) => grant.expiresAt === null).map((grant) => grant.grant as Grant),
@@ -44,10 +48,12 @@ function AdminDrawerBody({ admin, onClose }: { admin: Admin; onClose: () => void
   const dirty = JSON.stringify([...grants].sort()) !== JSON.stringify([...permanent].sort());
   const problems = separationProblems(grants);
 
+  // After an action: reload the admins and confirm with a toast.
   const done = async (message: string) => {
     await queryClient.invalidateQueries({ queryKey: adminsKey });
     toast(message);
   };
+  // Ticks or unticks one grant (not saved yet).
   const toggle = (grant: Grant, on: boolean) =>
     setGrants((current) =>
       on ? [...new Set([...current, grant])] : current.filter((item) => item !== grant),
@@ -73,22 +79,27 @@ function AdminDrawerBody({ admin, onClose }: { admin: Admin; onClose: () => void
             <OverflowMenu
               label={t('admin.common.moreActions')}
               actions={[
+                // « Accès temporaire »: a grant that ends after a few hours.
                 { label: t('admin.permissions.temporary'), onSelect: () => setAction('temporary') },
+                // « Réinitialiser l'authentificateur »: lost phone; enrols again at next sign-in.
                 { label: t('admin.permissions.resetTotp'), onSelect: () => setAction('resetTotp') },
                 {
                   label: t('admin.permissions.suspend'),
+                  // « Suspendre »: blocks sign-in and ends sessions.
                   onSelect: () => setAction('suspend'),
                   hidden: admin.status !== 'ACTIVE',
                   danger: true,
                 },
                 {
                   label: t('admin.permissions.reinstate'),
+                  // « Réactiver ».
                   onSelect: () => setAction('reinstate'),
                   hidden: admin.status !== 'SUSPENDED',
                 },
               ]}
             />
             <div className="end">
+              {/* « Enregistrer les permissions »: needs a change that breaks no separation rule. */}
               <Button
                 variant="primary"
                 disabled={!dirty || problems.length > 0}

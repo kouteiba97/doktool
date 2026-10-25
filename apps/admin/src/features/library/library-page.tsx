@@ -28,6 +28,7 @@ import {
 } from './labels';
 import { UploadDrawer } from './upload-drawer';
 
+/** The two library types, in tab order. */
 const TYPES: DocumentType[] = ['ORDONNANCE', 'CERTIFICATE'];
 
 /** « Bibliothèque de référence » (ScreenReferenceLibraryAdmin): one surface, type switch on top. */
@@ -40,11 +41,13 @@ export function LibraryPage({ type }: { type: DocumentType }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
+  // Every model of this type (archived ones included; the status chips filter them).
   const list = useQuery({
     queryKey: libraryKey(type),
     queryFn: () => call(api.GET('/admin/v1/reference-documents', { params: { query: { type } } })),
   });
 
+  // The rows shown: filtered by status chip and by the search text, in the browser.
   const rows = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase(locale);
     return (list.data ?? []).filter(
@@ -56,6 +59,7 @@ export function LibraryPage({ type }: { type: DocumentType }) {
     );
   }, [list.data, status, search, locale]);
 
+  // How many models each status chip has.
   const counts = useMemo(() => {
     const byStatus = new Map<DocumentStatus | null, number>([[null, list.data?.length ?? 0]]);
     for (const row of list.data ?? [])
@@ -63,6 +67,7 @@ export function LibraryPage({ type }: { type: DocumentType }) {
     return byStatus;
   }, [list.data]);
 
+  // The table's columns.
   const columns = useMemo<Column<ReferenceDocument>[]>(
     () => [
       {
@@ -120,6 +125,7 @@ export function LibraryPage({ type }: { type: DocumentType }) {
         caption={t('admin.library.caption')}
         actions={
           has('library.write') ? (
+            // « Ajouter un modèle »: opens the upload drawer.
             <Button variant="primary" onClick={() => setAdding(true)}>
               <Plus size={16} aria-hidden />
               {t('admin.library.add')}
@@ -129,6 +135,7 @@ export function LibraryPage({ type }: { type: DocumentType }) {
       />
       <div className="dt-tabs" role="tablist" aria-label={t('admin.library.title')}>
         {TYPES.map((value) => (
+          // Type tab: Ordonnances or Certificats (each has its own address).
           <Link
             key={value}
             href={`/admin/library/${SEGMENT_OF[value]}`}
@@ -155,6 +162,7 @@ export function LibraryPage({ type }: { type: DocumentType }) {
           toolbar={
             <>
               {STATUS_FILTERS.map((value) => (
+                // Status chip with its count: filters the table.
                 <button
                   key={value ?? 'all'}
                   type="button"

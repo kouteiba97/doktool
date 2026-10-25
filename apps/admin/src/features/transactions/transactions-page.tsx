@@ -2,7 +2,7 @@
 
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { CircleAlert, Search } from 'lucide-react';
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { api, call, type Schemas } from '@/api/client';
 import { formatDateTime, formatMoney } from '@/i18n/format';
 import { useI18n } from '@/i18n/i18n-provider';
@@ -12,6 +12,7 @@ import { type Column, DataTable } from '@/ui/data-table';
 import { useErrorText } from '@/ui/errors';
 import { EmptyState, PageHeader } from '@/ui/feedback';
 import { Select, TextInput } from '@/ui/field';
+import { useDebounced } from '@/ui/use-debounced';
 import {
   type PaymentProvider,
   PROVIDER_LABELS,
@@ -22,6 +23,7 @@ import {
 import { personName } from '../users/labels';
 import { TransactionDrawer } from './transaction-drawer';
 
+/** One payment row. */
 type Transaction = Schemas['AdminTransactionDto'];
 
 const PAGE_SIZE = 50;
@@ -36,9 +38,10 @@ export function TransactionsPage() {
   const [status, setStatus] = useState<TransactionStatus | ''>('');
   const [provider, setProvider] = useState<PaymentProvider | ''>('');
   const [search, setSearch] = useState('');
-  const deferredSearch = useDeferredValue(search.trim());
+  const deferredSearch = useDebounced(search.trim());
   const [openId, setOpenId] = useState<string | null>(null);
 
+  // Pages of payments for the filters and search.
   const ledger = useInfiniteQuery({
     queryKey: [...transactionsKey, status, provider, deferredSearch],
     initialPageParam: undefined as string | undefined,
@@ -206,6 +209,7 @@ export function TransactionsPage() {
       )}
       {ledger.hasNextPage ? (
         <div>
+          {/* « Charger plus ». */}
           <Button
             size="sm"
             busy={ledger.isFetchingNextPage}

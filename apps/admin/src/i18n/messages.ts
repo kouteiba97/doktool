@@ -2,6 +2,7 @@ import { IntlMessageFormat } from 'intl-messageformat';
 import en from '@doktool/i18n/messages.en.json';
 import fr from '@doktool/i18n/messages.fr.json';
 
+/** The two UI languages. */
 export const LOCALES = ['fr', 'en'] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = 'fr';
@@ -15,6 +16,7 @@ export type Translate = (key: MessageKey, values?: MessageValues) => string;
 
 const catalogues: Record<Locale, Record<string, string>> = { fr, en };
 
+/** True for "fr" or "en". */
 export function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (LOCALES as readonly string[]).includes(value);
 }

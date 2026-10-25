@@ -23,6 +23,7 @@ import {
   SLUG_PATTERN,
 } from './labels';
 
+/** Rules of the calculator form (same limits as the API). */
 const schema = z.object({
   slug: z.string().trim().max(80).regex(SLUG_PATTERN),
   nameFr: z.string().trim().min(1).max(NAME_MAX_LENGTH),
@@ -36,8 +37,10 @@ const schema = z.object({
 });
 type Values = z.infer<typeof schema>;
 
+/** Access tiers a calculator can have. */
 const TIERS: AccessTier[] = ['STUDENT', 'PROFESSIONAL'];
 
+/** The form's starting values: the calculator's, or empty for a new one. */
 const valuesOf = (calculator: Calculator | null): Values => ({
   slug: calculator?.slug ?? '',
   nameFr: calculator?.nameFr ?? '',
@@ -50,6 +53,7 @@ const valuesOf = (calculator: Calculator | null): Values => ({
   reason: '',
 });
 
+/** An empty text becomes null (cleared). */
 const orNull = (value: string) => value.trim() || null;
 
 /** New calculator, or its catalogue fields (names, purpose, category, access, demo sample). */
@@ -79,6 +83,8 @@ export function CalculatorFormDialog({
   }, [open, calculator, form]);
   const { errors, isSubmitting } = form.formState;
 
+  // Sends the form: PATCH for an edit (access only with the publish grant), POST for a new
+  // calculator.
   const submit = form.handleSubmit(async (values) => {
     try {
       const common = {
@@ -147,9 +153,11 @@ export function CalculatorFormDialog({
       onSubmit={() => void submit()}
       footer={
         <>
+          {/* « Annuler ». */}
           <Button onClick={() => onOpenChange(false)} disabled={isSubmitting}>
             {t('admin.common.cancel')}
           </Button>
+          {/* « Enregistrer ». */}
           <Button type="submit" variant="primary" busy={isSubmitting}>
             {calculator ? t('admin.common.save') : t('admin.calculators.create')}
           </Button>

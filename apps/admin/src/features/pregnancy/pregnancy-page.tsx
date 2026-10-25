@@ -19,6 +19,7 @@ import { Select, TextInput } from '@/ui/field';
 import { ReasonDialog } from '@/ui/reason-dialog';
 import { Tab, TabList, TabPanel, Tabs } from '@/ui/tabs';
 import { useToast } from '@/ui/toast';
+import { useDebounced } from '@/ui/use-debounced';
 import { SourceDialog, SubstanceDialog } from './dialogs';
 import {
   type ClinicalSource,
@@ -49,6 +50,7 @@ export function PregnancyPage() {
         caption={t('admin.pregnancy.caption')}
         actions={
           <>
+            {/* « Importer un fichier » (or the import history without the draft grant). */}
             <Link href="/admin/pregnancy/import" className="dt-btn secondary">
               <FileSpreadsheet size={16} aria-hidden />
               {has('pregnancy.draft')
@@ -56,6 +58,7 @@ export function PregnancyPage() {
                 : t('admin.pregnancyImport.history')}
             </Link>
             {has('pregnancy.draft') ? (
+              // « Ajouter une substance ».
               <Button variant="primary" onClick={() => setCreating(true)}>
                 <Plus size={16} aria-hidden />
                 {t('admin.pregnancy.addSubstance')}
@@ -96,11 +99,14 @@ export function PregnancyPage() {
   );
 }
 
+/** Filters of the substances table, as the API names them. */
 type SubstanceQuery = NonNullable<
   paths['/admin/v1/pregnancy/substances']['get']['parameters']['query']
 >;
 
+/** Profile states offered by the state filter. */
 const STATES = ['PUBLISHED', 'DRAFT', 'IN_REVIEW', 'CHANGES_REQUESTED', 'NONE'] as const;
+/** Periods offered by the period filter. */
 const TARGETS = ['T1', 'T2', 'T3', 'PERIPARTUM', 'LACTATION'] as const;
 const TARGET_LABELS = {
   T1: 'admin.pregnancy.periodT1',
@@ -110,6 +116,7 @@ const TARGET_LABELS = {
   LACTATION: 'admin.pregnancy.sectionLactation',
 } as const;
 
+/** « Substances » tab: search and filters, and approving every version shown in review at once. */
 function SubstancesTable() {
   const { t, locale } = useI18n();
   const errorText = useErrorText();
@@ -119,10 +126,15 @@ function SubstancesTable() {
   const queryClient = useQueryClient();
   const [query, setQuery] = useState<SubstanceQuery>({});
   const [approving, setApproving] = useState(false);
+  // Typing in the search box asks the server once the text settles, not at every key.
+  const requested = useDebounced(query);
   const list = useQuery({
-    queryKey: [...substancesKey, query],
-    queryFn: () => call(api.GET('/admin/v1/pregnancy/substances', { params: { query } })),
+    queryKey: [...substancesKey, requested],
+    queryFn: () =>
+      call(api.GET('/admin/v1/pregnancy/substances', { params: { query: requested } })),
+    placeholderData: (previous) => previous,
   });
+  // Changes one filter; empty values are dropped, and the conduct filter needs a period.
   const set = (patch: Partial<SubstanceQuery>) => {
     const next = { ...query, ...patch };
     for (const key of Object.keys(next) as (keyof SubstanceQuery)[]) {
@@ -131,6 +143,7 @@ function SubstancesTable() {
     if (!next.period) delete next.conduct;
     setQuery(next);
   };
+  // Versions currently shown that wait for review (bulk approval).
   const inReview = (list.data ?? []).filter((row) => row.open?.status === 'IN_REVIEW');
   const columns = useMemo<Column<Substance>[]>(
     () => [
@@ -202,6 +215,7 @@ function SubstancesTable() {
       </EmptyState>
     );
   }
+  // Search box, filters and the bulk-approve button above the table.
   const toolbar = (
     <div className="dt-row-flex flex-wrap gap-2">
       <TextInput
@@ -265,6 +279,7 @@ function SubstancesTable() {
         </Select>
       ) : null}
       {has('pregnancy.review') && query.state === 'IN_REVIEW' && inReview.length > 0 ? (
+        // « Approuver les N affichées »: approves every version in review shown, with one reason.
         <Button variant="primary" onClick={() => setApproving(true)}>
           {t('admin.pregnancy.approveShown', { count: inReview.length })}
         </Button>
@@ -312,6 +327,7 @@ function SubstancesTable() {
   );
 }
 
+/** « Registre des sources » tab: the sources profiles cite. */
 function SourcesTable() {
   const { t } = useI18n();
   const errorText = useErrorText();
@@ -347,6 +363,7 @@ function SourcesTable() {
         align: 'end',
         cell: (row) =>
           has('pregnancy.draft') ? (
+            // « Modifier » this source.
             <Button size="sm" variant="ghost" onClick={() => setEditing(row)}>
               <Pencil size={14} aria-hidden />
               {t('admin.common.edit')}
@@ -373,6 +390,7 @@ function SourcesTable() {
         loading={list.isPending}
         toolbar={
           has('pregnancy.draft') ? (
+            // « Ajouter une source ».
             <Button size="sm" onClick={() => setEditing('new')}>
               <Plus size={14} aria-hidden />
               {t('admin.pregnancy.addSource')}
@@ -395,6 +413,7 @@ function SourcesTable() {
   );
 }
 
+/** « Signalements » tab: errors reported by users, open ones first. */
 function ReportsTable() {
   const { t, locale } = useI18n();
   const errorText = useErrorText();
@@ -442,6 +461,8 @@ function ReportsTable() {
         align: 'end',
         cell: (row) =>
           has('pregnancy.draft') ? (
+            // « Traiter »: closes the report with what was done (the row itself opens the
+            // substance).
             <Button size="sm" onClick={() => setResolving(row)}>
               {t('admin.pregnancy.resolve')}
             </Button>

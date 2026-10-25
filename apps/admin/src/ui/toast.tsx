@@ -2,6 +2,7 @@
 
 import { createContext, type ReactNode, useCallback, useContext, useRef, useState } from 'react';
 
+/** One short message at the bottom of the screen. */
 interface Toast {
   id: number;
   text: string;
@@ -41,6 +42,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** Shows a toast: `toast('Dossier approuvé')`. */
 export function useToast() {
   const show = useContext(ToastContext);
   if (!show) throw new Error('useToast outside ToastProvider');

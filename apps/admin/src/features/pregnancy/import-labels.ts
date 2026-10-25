@@ -2,6 +2,7 @@ import type { Schemas } from '@/api/client';
 import type { MessageKey } from '@/i18n/messages';
 import type { BadgeTone } from '@/ui/badge';
 
+/** API types used by the import pages. */
 export type ImportPreview = Schemas['ImportPreviewDto'];
 export type ImportRow = Schemas['ImportRowDto'];
 export type ImportIssue = Schemas['ImportIssueDto'];
@@ -9,9 +10,11 @@ export type ImportListItem = Schemas['ImportListItemDto'];
 export type RowFilter = Schemas['ImportRowFilter'];
 export type StatusTarget = 'CONTRAINDICATED' | 'AVOID' | 'OCCASIONAL_USE' | 'NONE';
 
+/** Cache keys of the import pages. */
 export const importsKey = ['admin', 'pregnancy', 'imports'] as const;
 export const importKey = (id: string) => ['admin', 'pregnancy', 'imports', id] as const;
 
+/** The fields a column can be mapped to. */
 export const FIELDS = [
   'substance',
   'context',
@@ -23,6 +26,7 @@ export const FIELDS = [
 ] as const;
 export type Field = (typeof FIELDS)[number];
 
+/** Catalogue key of each field. */
 export const FIELD_LABELS: Record<Field | 'ignore' | 'row', MessageKey> = {
   substance: 'admin.pregnancyImport.field.substance',
   context: 'admin.pregnancyImport.field.context',
@@ -35,12 +39,14 @@ export const FIELD_LABELS: Record<Field | 'ignore' | 'row', MessageKey> = {
   row: 'admin.pregnancyImport.field.row',
 };
 
+/** What a status word of the sheet can mean. */
 export const STATUS_TARGETS: StatusTarget[] = [
   'CONTRAINDICATED',
   'AVOID',
   'OCCASIONAL_USE',
   'NONE',
 ];
+/** Catalogue key of each meaning. */
 export const STATUS_TARGET_LABELS: Record<StatusTarget, MessageKey> = {
   CONTRAINDICATED: 'admin.pregnancy.conductContraindicated',
   AVOID: 'admin.pregnancy.conductAvoid',
@@ -48,6 +54,7 @@ export const STATUS_TARGET_LABELS: Record<StatusTarget, MessageKey> = {
   NONE: 'admin.pregnancyImport.noBadge',
 };
 
+/** Row filters of the preview. */
 export const FILTERS: RowFilter[] = [
   'ALL',
   'ERROR',
@@ -57,6 +64,7 @@ export const FILTERS: RowFilter[] = [
   'CONFLICT',
   'EXCLUDED',
 ];
+/** Catalogue key of each filter. */
 export const FILTER_LABELS: Record<RowFilter, MessageKey> = {
   ALL: 'admin.pregnancyImport.filter.all',
   ERROR: 'admin.pregnancyImport.filter.error',
@@ -67,11 +75,13 @@ export const FILTER_LABELS: Record<RowFilter, MessageKey> = {
   EXCLUDED: 'admin.pregnancyImport.filter.excluded',
 };
 
+/** Catalogue key of each import status. */
 export const STATUS_LABELS: Record<Schemas['ImportStatus'], MessageKey> = {
   PREVIEW: 'admin.pregnancyImport.status.preview',
   COMMITTED: 'admin.pregnancyImport.status.committed',
   DISCARDED: 'admin.pregnancyImport.status.discarded',
 };
+/** Badge colour of each import status. */
 export const STATUS_TONES: Record<Schemas['ImportStatus'], BadgeTone> = {
   PREVIEW: 'info',
   COMMITTED: 'success',
@@ -126,11 +136,13 @@ export function rowState(row: ImportRow): { tone: BadgeTone; key: MessageKey } {
   return { tone: 'success', key: 'admin.pregnancyImport.state.valid' };
 }
 
+/** Badge colour of each issue severity. */
 export const SEVERITY_TONES: Record<string, BadgeTone> = {
   ERROR: 'critical',
   WARNING: 'warning',
   INFO: 'neutral',
 };
+/** Catalogue key of each issue severity. */
 export const SEVERITY_LABELS: Record<string, MessageKey> = {
   ERROR: 'admin.pregnancyImport.severity.error',
   WARNING: 'admin.pregnancyImport.severity.warning',

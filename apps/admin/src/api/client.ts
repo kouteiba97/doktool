@@ -1,6 +1,7 @@
 import createClient from 'openapi-fetch';
 import type { components, paths } from './schema';
 
+/** Shapes of every API request and response, generated from the OpenAPI contract. */
 export type Schemas = components['schemas'];
 export type ErrorCode = Schemas['ErrorBody']['code'];
 export type ErrorDetails = Schemas['ErrorDetailsBody'];
@@ -26,12 +27,14 @@ export class ApiFailure extends Error {
 /** Same-origin client: `/admin/v1/*` is proxied to the API (next.config.ts). */
 export const api = createClient<paths>({ baseUrl: '', credentials: 'same-origin' });
 
+/** What an openapi-fetch call resolves to. */
 interface ApiResult<T> {
   data?: T;
   error?: unknown;
   response: Response;
 }
 
+/** True when a body has the API's `{ error: … }` shape. */
 function isErrorResponse(value: unknown): value is Schemas['ErrorResponse'] {
   return (
     typeof value === 'object' &&

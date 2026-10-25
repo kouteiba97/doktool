@@ -35,11 +35,14 @@ export function CalculatorsPage() {
   const queryClient = useQueryClient();
   const { has } = useGrants();
   const [creating, setCreating] = useState(false);
+  // Every calculator with its versions.
   const list = useQuery({
     queryKey: calculatorsKey,
     queryFn: () => call(api.GET('/admin/v1/calculators')),
   });
 
+  // The table's columns: name, category, access, published and open version, primary source, review
+  // date, status.
   const columns = useMemo<Column<Calculator>[]>(
     () => [
       {
@@ -129,6 +132,7 @@ export function CalculatorsPage() {
         caption={t('admin.calculators.caption')}
         actions={
           has('calculators.draft') ? (
+            // « Nouveau calculateur »: opens the creation dialog.
             <Button variant="primary" onClick={() => setCreating(true)}>
               <Plus size={16} aria-hidden />
               {t('admin.calculators.add')}

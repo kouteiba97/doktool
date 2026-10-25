@@ -55,9 +55,14 @@ export function FinancePage() {
   );
 }
 
+/**
+ * « Vue d'ensemble » tab: the ledger (gross → fees → net), profit, subscriptions, revenue by plan
+ * and the charts.
+ */
 function FinanceOverview({ period }: { period: Period }) {
   const { t, locale } = useI18n();
   const errorText = useErrorText();
+  // Every figure of the period and the one before.
   const overview = useQuery({
     queryKey: ['admin', 'finance', 'overview', period],
     queryFn: () => call(api.GET('/admin/v1/finance/overview', { params: { query: period } })),
@@ -71,8 +76,10 @@ function FinanceOverview({ period }: { period: Period }) {
     );
   }
   const data = overview.data;
+  // An amount in DZD in the UI language.
   const money = (minor: number) => formatMoney(locale, minor, data.currency);
   const { ledger, previousLedger, subscriptions } = data;
+  // Label of a chart bar: a day, or a month for long periods.
   const bucketLabel = (iso: string) =>
     data.bucket === 'MONTH'
       ? new Intl.DateTimeFormat(locale, { month: 'short', year: 'numeric' }).format(new Date(iso))
@@ -290,6 +297,7 @@ function Reports({ period }: { period: Period }) {
       <Alert tone="info">{t('admin.access.deniedBody', { grant: 'finance.reports.export' })}</Alert>
     );
   }
+  // Downloads one CSV report through the API (the export is audited).
   const download = async (kind: (typeof REPORTS)[number]['kind']) => {
     setBusy(kind);
     try {
@@ -311,6 +319,7 @@ function Reports({ period }: { period: Period }) {
           <h3 className="dt-heading">{t(report.title)}</h3>
           <p className="dt-cap">{t(report.body)}</p>
           <div>
+            {/* « Télécharger le CSV » of this report. */}
             <Button busy={busy === report.kind} onClick={() => void download(report.kind)}>
               <Download size={16} aria-hidden />
               {t('admin.finance.downloadCsv')}

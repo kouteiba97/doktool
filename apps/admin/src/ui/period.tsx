@@ -7,6 +7,7 @@ import { TextInput } from './field';
 
 /** Periods of section 15: today, 7 d, 30 d, 3 months, 12 months, custom. */
 export const PRESETS = ['today', '7d', '30d', '3m', '12m', 'custom'] as const;
+/** One of the period presets. */
 export type PeriodPreset = (typeof PRESETS)[number];
 
 const LABELS: Record<PeriodPreset, MessageKey> = {
@@ -18,6 +19,7 @@ const LABELS: Record<PeriodPreset, MessageKey> = {
   custom: 'admin.period.custom',
 };
 
+/** A period sent to the API: from (inclusive) and to (exclusive), ISO dates. */
 export interface Period {
   from: string;
   to: string;
@@ -40,6 +42,7 @@ export function customPeriod(fromDay: string, toDay: string): Period | null {
   return { from: from.toISOString(), to: to.toISOString() };
 }
 
+/** State of a period picker: preset or custom days, and the resulting period. */
 export function usePeriod(initial: Exclude<PeriodPreset, 'custom'> = '30d') {
   const [preset, setPreset] = useState<PeriodPreset>(initial);
   const [fromDay, setFromDay] = useState('');
@@ -51,12 +54,14 @@ export function usePeriod(initial: Exclude<PeriodPreset, 'custom'> = '30d') {
   return { preset, setPreset, fromDay, setFromDay, toDay, setToDay, period };
 }
 
+/** The period buttons (today, 7 d, 30 d…) and, for « Personnalisée », two date inputs. */
 export function PeriodPicker({ state }: { state: ReturnType<typeof usePeriod> }) {
   const { t } = useI18n();
   return (
     <div className="dt-row-flex">
       <div className="dt-seg" role="group" aria-label={t('admin.period.label')}>
         {PRESETS.map((preset) => (
+          // One preset button; aria-pressed marks the one selected.
           <button
             key={preset}
             type="button"

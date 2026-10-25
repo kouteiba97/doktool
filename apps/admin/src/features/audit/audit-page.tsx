@@ -18,10 +18,12 @@ import { useToast } from '@/ui/toast';
 import { ACTION_GROUPS, actionLabel, hasActionLabel, isSensitiveAction } from './audit-labels';
 import { downloadFile } from '@/api/download';
 
+/** One audit entry. */
 type Entry = Schemas['AuditEntryDto'];
 
 const PAGE_SIZE = 50;
 
+/** Filters of the audit log. */
 interface Filters {
   action: string;
   entityType: string;
@@ -56,8 +58,10 @@ export function AuditPage() {
   const [filters, setFilters] = useState<Filters>(EMPTY);
   const [open, setOpen] = useState<Entry | null>(null);
   const [exporting, setExporting] = useState(false);
+  // The filters as the API's query.
   const query = useMemo(() => auditQuery(filters), [filters]);
 
+  // Pages of the log, newest first.
   const log = useInfiniteQuery({
     queryKey: ['admin', 'audit', query],
     initialPageParam: undefined as string | undefined,
@@ -130,8 +134,10 @@ export function AuditPage() {
     [t, locale],
   );
 
+  // Changes some filters.
   const set = (patch: Partial<Filters>) => setFilters((current) => ({ ...current, ...patch }));
 
+  // Downloads the filtered log as CSV (needs audit.export; the export itself is audited).
   const exportCsv = async () => {
     setExporting(true);
     try {
@@ -154,6 +160,7 @@ export function AuditPage() {
         caption={t('admin.audit.caption')}
         actions={
           has('audit.export') ? (
+            // « Exporter en CSV ».
             <Button busy={exporting} onClick={() => void exportCsv()}>
               <Download size={16} aria-hidden />
               {t('admin.audit.export')}
@@ -221,6 +228,7 @@ export function AuditPage() {
       )}
       {log.hasNextPage ? (
         <div>
+          {/* « Charger plus ». */}
           <Button size="sm" busy={log.isFetchingNextPage} onClick={() => void log.fetchNextPage()}>
             {t('admin.table.loadMore')}
           </Button>

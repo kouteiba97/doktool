@@ -18,7 +18,9 @@ import { type Period, PeriodPicker, usePeriod } from '@/ui/period';
 import { Tab, TabList, TabPanel, Tabs } from '@/ui/tabs';
 import { PROFESSIONAL_TYPE_LABELS } from '../verification/labels';
 
+/** A profession, as a segment filter. */
 type ProfessionalType = Schemas['ProfessionalType'];
+/** Period and segment of the dashboards. */
 interface Filter extends Period {
   professionalType?: ProfessionalType;
   specialtyCode?: string;
@@ -45,6 +47,7 @@ export function AnalyticsPage() {
   const period = usePeriod('30d');
   const [professionalType, setProfessionalType] = useState<ProfessionalType | ''>('');
   const [specialty, setSpecialty] = useState('');
+  // When the latest event arrived.
   const freshness = useQuery({
     queryKey: ['admin', 'analytics', 'freshness'],
     queryFn: () => call(api.GET('/admin/v1/analytics/freshness')),
@@ -130,6 +133,7 @@ export function AnalyticsPage() {
   );
 }
 
+/** A dashboard's loading, error or ready state. */
 function Loading({
   query,
   children,
@@ -150,9 +154,11 @@ function Loading({
   return <>{children()}</>;
 }
 
+/** « Usage »: active people by profession and per day, against the previous period. */
 function Usage({ filter }: { filter: Filter }) {
   const { t, locale } = useI18n();
   const cell = useCellText();
+  // The usage figures.
   const query = useQuery({
     queryKey: ['admin', 'analytics', 'usage', filter],
     queryFn: () => call(api.GET('/admin/v1/analytics/usage', { params: { query: filter } })),
@@ -204,9 +210,11 @@ function Usage({ filter }: { filter: Filter }) {
   );
 }
 
+/** « Bibliothèque »: searches and use of each reference model. */
 function Library({ filter }: { filter: Filter }) {
   const { t, locale } = useI18n();
   const cell = useCellText();
+  // The library figures.
   const query = useQuery({
     queryKey: ['admin', 'analytics', 'library', filter],
     queryFn: () => call(api.GET('/admin/v1/analytics/library', { params: { query: filter } })),
@@ -271,9 +279,11 @@ function Library({ filter }: { filter: Filter }) {
   );
 }
 
+/** « Calculateurs »: starts and completions per calculator version. */
 function Calculators({ filter }: { filter: Filter }) {
   const { t, locale } = useI18n();
   const cell = useCellText();
+  // The calculator figures.
   const query = useQuery({
     queryKey: ['admin', 'analytics', 'calculators', filter],
     queryFn: () => call(api.GET('/admin/v1/analytics/calculators', { params: { query: filter } })),
@@ -345,9 +355,11 @@ function Calculators({ filter }: { filter: Filter }) {
   );
 }
 
+/** « Utilisateurs »: sign-ups and the verification funnel. */
 function Onboarding({ filter }: { filter: Filter }) {
   const { t } = useI18n();
   const cell = useCellText();
+  // The onboarding figures.
   const query = useQuery({
     queryKey: ['admin', 'analytics', 'users', filter],
     queryFn: () => call(api.GET('/admin/v1/analytics/users', { params: { query: filter } })),
@@ -372,9 +384,11 @@ function Onboarding({ filter }: { filter: Filter }) {
   );
 }
 
+/** « Abonnements »: plan views, starts and renewals. */
 function Subscriptions({ filter }: { filter: Filter }) {
   const { t } = useI18n();
   const cell = useCellText();
+  // The subscription figures.
   const query = useQuery({
     queryKey: ['admin', 'analytics', 'subscriptions', filter],
     queryFn: () =>
@@ -421,9 +435,11 @@ function Subscriptions({ filter }: { filter: Filter }) {
   );
 }
 
+/** « Démo »: demos started, modules seen, limits met, accounts created. */
 function Demo({ filter }: { filter: Filter }) {
   const { t } = useI18n();
   const cell = useCellText();
+  // The demo figures.
   const query = useQuery({
     queryKey: ['admin', 'analytics', 'demo', filter],
     queryFn: () => call(api.GET('/admin/v1/analytics/demo', { params: { query: filter } })),

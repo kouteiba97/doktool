@@ -7,6 +7,10 @@ import { I18nProvider } from '@/i18n/i18n-provider';
 import type { Locale } from '@/i18n/messages';
 import { ToastProvider } from '@/ui/toast';
 
+/**
+ * Any API call answering "session ended" reloads the sign-in page (remembering where the admin
+ * was).
+ */
 function onSessionEnded(error: unknown) {
   if (!(error instanceof ApiFailure) || !error.sessionEnded) return;
   const { pathname, search } = window.location;
@@ -16,11 +20,13 @@ function onSessionEnded(error: unknown) {
   window.location.assign(`/sign-in?next=${encodeURIComponent(pathname + search)}`);
 }
 
+/** Retries network and server errors twice, never a refusal (4xx). */
 function retry(failureCount: number, error: unknown): boolean {
   if (error instanceof ApiFailure && error.status > 0 && error.status < 500) return false;
   return failureCount < 2;
 }
 
+/** Wraps every page with the language, the API cache and the toasts. */
 export function Providers({ locale, children }: { locale: Locale; children: ReactNode }) {
   const [client] = useState(
     () =>

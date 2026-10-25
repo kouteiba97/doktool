@@ -14,6 +14,7 @@ import { useErrorText } from '@/ui/errors';
 import { EmptyState, Skeleton } from '@/ui/feedback';
 import { isActive, visibleNavigation } from './nav';
 
+/** Label of each environment shown in the top bar. */
 const ENVIRONMENTS: Record<string, MessageKey> = {
   production: 'admin.shell.envProduction',
   staging: 'admin.shell.envStaging',
@@ -23,6 +24,10 @@ const ENVIRONMENTS: Record<string, MessageKey> = {
 /** Environment label of the console bar, set at build time (NEXT_PUBLIC_DOKTOOL_ENVIRONMENT). */
 const environment = ENVIRONMENTS[process.env.NEXT_PUBLIC_DOKTOOL_ENVIRONMENT ?? 'development'];
 
+/**
+ * The console frame: top bar (environment, language, account menu) and the navigation the admin's
+ * grants allow.
+ */
 export function ConsoleShell({ children }: { children: ReactNode }) {
   const { t, locale, setLocale } = useI18n();
   const errorText = useErrorText();
@@ -30,6 +35,8 @@ export function ConsoleShell({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const me = useMe();
 
+  // « Se déconnecter »: ends the session on the server, forgets every cached answer and reloads the
+  // sign-in page.
   const signOut = async () => {
     try {
       await call(api.POST('/admin/v1/auth/sign-out'));
@@ -51,6 +58,7 @@ export function ConsoleShell({ children }: { children: ReactNode }) {
         </span>
         {environment ? <span className="env">{t(environment)}</span> : null}
         <div className="ms-auto flex items-center gap-2">
+          {/* Language button: switches the console between French and English. */}
           <button
             type="button"
             onClick={() => setLocale(locale === 'fr' ? 'en' : 'fr')}
