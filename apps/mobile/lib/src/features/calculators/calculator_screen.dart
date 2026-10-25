@@ -20,6 +20,7 @@ import '../../ui/dt_button.dart';
 import '../../ui/error_text.dart';
 import '../../ui/hero.dart';
 import '../../ui/locks.dart';
+import '../../ui/choice_list.dart';
 import '../../ui/segmented_control.dart';
 import '../../ui/skeleton.dart';
 import '../../ui/tokens.dart';
@@ -721,35 +722,31 @@ class _InputField extends StatelessWidget {
           },
         );
       case InputKind.choice:
-        if (input.choices.length <= 4) {
-          control = DtSegmentedControl<Object?>(
-            semanticLabel: label,
-            selected: field.choice,
-            segments: [
-              for (final choice in input.choices) DtSegment(value: choice.value, label: choice.label.of(language)),
-            ],
-            onChanged: (value) {
-              field.choice = value;
-              onCommit();
-            },
-          );
-        } else {
-          control = DropdownButtonFormField<String>(
-            initialValue: field.choice as String?,
-            isExpanded: true,
-            items: [
-              for (final choice in input.choices)
-                DropdownMenuItem(
-                  value: choice.value,
-                  child: Text(choice.label.of(language), overflow: TextOverflow.ellipsis),
-                ),
-            ],
-            onChanged: (value) {
-              field.choice = value;
-              onCommit();
-            },
-          );
+        final segments = [
+          for (final choice in input.choices) DtSegment<Object?>(value: choice.value, label: choice.label.of(language)),
+        ];
+        void choose(Object? value) {
+          field.choice = value;
+          onCommit();
         }
+        // Short answers (up to four) stay a segmented control; long ones, or more than four, become a
+        // list of full rows so no answer is ever cut (ADR-026).
+        control = LayoutBuilder(
+          builder: (context, constraints) =>
+              segmentsFit(context, [for (final segment in segments) segment.label], constraints.maxWidth)
+              ? DtSegmentedControl<Object?>(
+                  semanticLabel: label,
+                  selected: field.choice,
+                  segments: segments,
+                  onChanged: choose,
+                )
+              : DtChoiceList<Object?>(
+                  semanticLabel: label,
+                  selected: field.choice,
+                  segments: segments,
+                  onChanged: choose,
+                ),
+        );
     }
 
     return Column(
