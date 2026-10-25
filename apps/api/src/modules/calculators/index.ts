@@ -7,3 +7,15 @@ export {
   type PublishedVersion,
 } from './calculators.service.js';
 export { PublishedTestCaseDto, PublishedVersionDto } from './calculators.dto.js';
+// For the Medicalcul extraction and import scripts (src/scripts/medicalcul).
+export { CalculatorsAdminService } from './calculators-admin.service.js';
+export { SLUG_PATTERN } from './calculators.policy.js';
+export {
+  calculatorDefinition,
+  canonicalJson,
+  checkDefinition,
+  type CalculatorDefinition,
+  type CalculatorInput,
+  type Expr,
+  type InterpretationBand,
+} from './engine/index.js';

@@ -1,0 +1,29 @@
+{
+  "app": "mss.micromega.pmignard.medicalcul",
+  "apk": {
+    "url": "http://medicalcul.free.fr/medicalcul.apk",
+    "sha256": "838eb94e7a10f23d1fb481091ee748152915b6d6afadd390a3bf43c102ae9e9e",
+    "bytes": 2495012
+  },
+  "servers": [
+    "http://medicalcul.free.fr/",
+    "https://medicalcul.pages-perso.free.fr/",
+    "https://medicalcul.mgdsoft.fr/",
+    "http://imhotepix.net/medicalcul/",
+    "http://imhotepix.net:81/mirrors/medicalcul/"
+  ],
+  "descriptor": {
+    "path": "_update.cvf",
+    "header": "#medicalcul#v3#",
+    "dataVersion": "2026093014",
+    "archive": "medicalcul.zip",
+    "startPage": "index_android.html"
+  },
+  "archive": {
+    "sha256": "2909f20a80aadf4b1179f08e34515d804a93d5ce098b80c30326c908da268ac7",
+    "bytes": 9390345,
+    "identicalOn": ["http://medicalcul.free.fr/", "https://medicalcul.mgdsoft.fr/"],
+    "unavailableOn": ["https://medicalcul.pages-perso.free.fr/", "http://imhotepix.net/medicalcul/"]
+  },
+  "retrievedAt": "2026-10-23"
+}
