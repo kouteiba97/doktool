@@ -1603,6 +1603,16 @@
             "format": "uuid",
             "type": "string"
           },
+          "mergedInto": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubstanceRefDto"
+              }
+            ],
+            "description": "Merged as a duplicate into this substance (ADR-027).",
+            "nullable": true,
+            "type": "object"
+          },
           "nameEn": {
             "nullable": true,
             "type": "string"
@@ -1661,6 +1671,7 @@
           "open",
           "openReports",
           "updatedAt",
+          "mergedInto",
           "versions"
         ],
         "type": "object"
@@ -1680,6 +1691,16 @@
           "id": {
             "format": "uuid",
             "type": "string"
+          },
+          "mergedInto": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubstanceRefDto"
+              }
+            ],
+            "description": "Merged as a duplicate into this substance (ADR-027).",
+            "nullable": true,
+            "type": "object"
           },
           "nameEn": {
             "nullable": true,
@@ -1732,7 +1753,8 @@
           "published",
           "open",
           "openReports",
-          "updatedAt"
+          "updatedAt",
+          "mergedInto"
         ],
         "type": "object"
       },
@@ -6106,6 +6128,76 @@
           "professionalProfile",
           "preferences",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "MergePreviewDto": {
+        "properties": {
+          "blockers": {
+            "items": {
+              "enum": [
+                "SAME_SUBSTANCE",
+                "SOURCE_ALREADY_MERGED",
+                "TARGET_MERGED",
+                "TARGET_ARCHIVED",
+                "SOURCE_HAS_MERGED",
+                "SOURCE_OPEN_VERSION",
+                "TOO_MANY_SYNONYMS"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "namesToAdd": {
+            "description": "Names of the duplicate added to the target's synonyms.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SubstanceRefDto"
+          },
+          "sourcePublishedVersion": {
+            "description": "Published version of the duplicate that will no longer be shown (never copied).",
+            "nullable": true,
+            "type": "number"
+          },
+          "target": {
+            "$ref": "#/components/schemas/SubstanceRefDto"
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "namesToAdd",
+          "sourcePublishedVersion",
+          "blockers"
+        ],
+        "type": "object"
+      },
+      "MergeSubstanceDto": {
+        "properties": {
+          "acknowledgeHiddenProfile": {
+            "description": "Required when the duplicate has a published profile.",
+            "type": "boolean"
+          },
+          "into": {
+            "description": "The substance to keep.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Audit log.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "into",
+          "acknowledgeHiddenProfile"
         ],
         "type": "object"
       },
@@ -14707,6 +14799,171 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/UpdateSubstanceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSubstanceDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/substances/{id}/merge": {
+      "post": {
+        "operationId": "PregnancyAdminController_merge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MergeSubstanceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSubstanceDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/substances/{id}/merge-preview": {
+      "get": {
+        "operationId": "PregnancyAdminController_mergePreview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The substance to keep.",
+            "in": "query",
+            "name": "into",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MergePreviewDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/substances/{id}/unmerge": {
+      "post": {
+        "operationId": "PregnancyAdminController_unmerge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PregnancyReasonDto"
               }
             }
           },

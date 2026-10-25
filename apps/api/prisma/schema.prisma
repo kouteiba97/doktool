@@ -951,6 +951,15 @@ model Substance {
   /// Names and synonyms, accent- and case-folded (normaliseForSearch), written by the API on every
   /// change. Trigram-indexed (migration 20261024090000) for partial-name search.
   searchText  String                    @default("") @map("search_text")
+  /// Merged as a duplicate into another substance (ADR-027): disabled, its names added to the
+  /// target's synonyms (`mergedNames`, removed again if the merge is undone), its versions kept.
+  mergedIntoId String?                  @map("merged_into_id") @db.Uuid
+  mergedInto   Substance?               @relation("SubstanceMerge", fields: [mergedIntoId], references: [id], onDelete: Restrict)
+  merged       Substance[]              @relation("SubstanceMerge")
+  mergedNames  String[]                 @default([]) @map("merged_names")
+  mergedAt     DateTime?                @map("merged_at") @db.Timestamptz(3)
+  mergedById   String?                  @map("merged_by_id") @db.Uuid
+  mergedBy     AdminAccount?            @relation("SubstanceMerger", fields: [mergedById], references: [id], onDelete: Restrict)
   demoSample  Boolean                   @default(false) @map("demo_sample")
   /// A disabled substance is gone from the app; its versions are kept.
   enabled     Boolean                   @default(true)
@@ -964,6 +973,8 @@ model Substance {
   createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
+  @@index([mergedIntoId], map: "substances_merged_into_id_idx")
+  @@index([searchText(ops: raw("gin_trgm_ops"))], type: Gin, map: "substances_search_text_trgm_idx")
   @@map("substances")
 }
 
@@ -1420,6 +1431,7 @@ model AdminAccount {
   calculatorVersionsSigned   CalculatorVersion[]       @relation("CalculatorVersionFirstSignOff")
   substancesCreated          Substance[]               @relation("SubstanceCreator")
   substancesUpdated          Substance[]               @relation("SubstanceUpdater")
+  substancesMerged           Substance[]               @relation("SubstanceMerger")
   profileVersionsAuthored    SubstanceProfileVersion[] @relation("ProfileVersionAuthor")
   profileVersionsReviewed    SubstanceProfileVersion[] @relation("ProfileVersionReviewer")
   profileVersionsSigned      SubstanceProfileVersion[] @relation("ProfileVersionFirstSignOff")

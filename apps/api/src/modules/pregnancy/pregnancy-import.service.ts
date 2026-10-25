@@ -785,7 +785,9 @@ function toInput(row: {
 async function loadLibrary(
   db: Prisma.TransactionClient | PrismaService,
 ): Promise<LibrarySubstance[]> {
+  // A merged duplicate is represented by the substance it was merged into (ADR-027).
   const substances = await db.substance.findMany({
+    where: { mergedIntoId: null },
     select: {
       id: true,
       nameFr: true,

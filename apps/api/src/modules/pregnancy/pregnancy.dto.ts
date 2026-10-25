@@ -523,6 +523,12 @@ export class AdminSubstanceDto {
   open!: ProfileVersionStateDto | null;
   @ApiProperty() openReports!: number;
   @ApiProperty({ format: 'date-time' }) updatedAt!: string;
+  @ApiProperty({
+    type: SubstanceRefDto,
+    nullable: true,
+    description: 'Merged as a duplicate into this substance (ADR-027).',
+  })
+  mergedInto!: SubstanceRefDto | null;
 
   static from(row: {
     id: string;
@@ -536,6 +542,7 @@ export class AdminSubstanceDto {
     open: ProfileVersionStateDto | null;
     openReports: number;
     updatedAt: Date;
+    mergedInto?: { id: string; nameFr: string; nameEn: string | null } | null;
   }): AdminSubstanceDto {
     const state = (version: ProfileVersionStateDto | null) =>
       version ? { id: version.id, version: version.version, status: version.status } : null;
@@ -551,6 +558,7 @@ export class AdminSubstanceDto {
       open: state(row.open),
       openReports: row.openReports,
       updatedAt: row.updatedAt.toISOString(),
+      mergedInto: row.mergedInto ?? null,
     };
   }
 }
@@ -702,4 +710,51 @@ export class ResolveReportDto {
   @MinLength(REASON_MIN)
   @MaxLength(REASON_MAX)
   resolution!: string;
+}
+
+// ──────────────────────────────── merge (ADR-027) ────────────────────────────────
+
+export class MergePreviewQuery {
+  @ApiProperty({ format: 'uuid', description: 'The substance to keep.' })
+  @IsUUID()
+  into!: string;
+}
+
+export class MergePreviewDto {
+  @ApiProperty({ type: SubstanceRefDto }) source!: SubstanceRefDto;
+  @ApiProperty({ type: SubstanceRefDto }) target!: SubstanceRefDto;
+  @ApiProperty({
+    type: [String],
+    description: "Names of the duplicate added to the target's synonyms.",
+  })
+  namesToAdd!: string[];
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'Published version of the duplicate that will no longer be shown (never copied).',
+  })
+  sourcePublishedVersion!: number | null;
+  @ApiProperty({
+    type: [String],
+    enum: [
+      'SAME_SUBSTANCE',
+      'SOURCE_ALREADY_MERGED',
+      'TARGET_MERGED',
+      'TARGET_ARCHIVED',
+      'SOURCE_HAS_MERGED',
+      'SOURCE_OPEN_VERSION',
+      'TOO_MANY_SYNONYMS',
+    ],
+  })
+  blockers!: string[];
+}
+
+export class MergeSubstanceDto extends ReasonField {
+  @ApiProperty({ format: 'uuid', description: 'The substance to keep.' })
+  @IsUUID()
+  into!: string;
+
+  @ApiProperty({ description: 'Required when the duplicate has a published profile.' })
+  @IsBoolean()
+  acknowledgeHiddenProfile!: boolean;
 }

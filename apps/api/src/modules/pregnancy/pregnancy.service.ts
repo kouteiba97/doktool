@@ -120,6 +120,9 @@ export class PregnancyService {
       },
     });
     if (!row) throw new DomainError('NOT_FOUND', 'Substance not found.');
+    // A duplicate merged into another substance opens that one (favorites, links, history keep
+    // working). Merges never chain (ADR-027), so this is one step.
+    if (row.mergedIntoId) return this.get(viewer, row.mergedIntoId);
     const published = row.versions[0];
     if (!row.enabled || !published) {
       throw new DomainError('CONTENT_UNAVAILABLE', 'This profile is no longer available.', {
@@ -130,7 +133,7 @@ export class PregnancyService {
     const [item] = await this.withAccess(viewer, [{ ...row, published }]);
     const open = item!.access.state === 'AVAILABLE';
     const content = open ? profileContentSchema.parse(published.content) : null;
-    const alternatives = content ? await this.names(alternativeIds(content)) : [];
+    const alternatives = content ? await this.names(alternativeIds(content), row.id) : [];
     return {
       ...item!,
       content,
@@ -286,15 +289,32 @@ export class PregnancyService {
     }));
   }
 
-  /** Names of the alternatives that are still enabled; a disabled one is left out. */
-  private async names(ids: string[]) {
+  /**
+   * Names of the alternatives that are still enabled; a disabled one is left out. An alternative
+   * merged into another substance is shown as that one (ADR-027), never as the profile itself.
+   */
+  private async names(ids: string[], selfId: string) {
     if (ids.length === 0) return [];
+    const merged = await this.prisma.substance.findMany({
+      where: { id: { in: ids }, mergedIntoId: { not: null } },
+      select: { id: true, mergedIntoId: true },
+    });
+    const target = new Map(merged.map((row) => [row.id, row.mergedIntoId!]));
     const rows = await this.prisma.substance.findMany({
-      where: { id: { in: ids }, enabled: true },
+      where: { id: { in: ids.map((id) => target.get(id) ?? id) }, enabled: true },
       select: { id: true, nameFr: true, nameEn: true },
     });
     const byId = new Map(rows.map((row) => [row.id, row]));
-    return ids.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
+    // The content keeps the original id (the app matches it, and opening it redirects); the name
+    // shown is the substance it now stands for.
+    const seen = new Set<string>();
+    return ids.flatMap((id) => {
+      const resolved = target.get(id) ?? id;
+      const row = byId.get(resolved);
+      if (!row || resolved === selfId || seen.has(resolved)) return [];
+      seen.add(resolved);
+      return [{ id, nameFr: row.nameFr, nameEn: row.nameEn }];
+    });
   }
 }
 

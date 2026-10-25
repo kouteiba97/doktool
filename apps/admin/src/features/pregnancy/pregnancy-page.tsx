@@ -164,9 +164,15 @@ function SubstancesTable() {
         header: t('admin.pregnancy.colVisibility'),
         cell: (row) => (
           <span className="dt-row-flex">
-            <Badge tone={row.enabled ? 'success' : 'outline'}>
-              {row.enabled ? t('admin.pregnancy.enabled') : t('admin.pregnancy.disabled')}
-            </Badge>
+            {row.mergedInto ? (
+              <Badge tone="outline">
+                {t('admin.pregnancyMerge.badge', { name: row.mergedInto.nameFr })}
+              </Badge>
+            ) : (
+              <Badge tone={row.enabled ? 'success' : 'outline'}>
+                {row.enabled ? t('admin.pregnancy.enabled') : t('admin.pregnancy.disabled')}
+              </Badge>
+            )}
             {row.demoSample ? <Badge tone="teal">{t('admin.library.demo')}</Badge> : null}
           </span>
         ),

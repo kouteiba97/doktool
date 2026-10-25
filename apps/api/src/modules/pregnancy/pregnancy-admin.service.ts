@@ -106,6 +106,7 @@ export class PregnancyAdminService {
           },
         },
         _count: { select: { reports: { where: { resolvedAt: null } } } },
+        mergedInto: { select: { id: true, nameFr: true, nameEn: true } },
       },
     });
     return rows
@@ -151,6 +152,7 @@ export class PregnancyAdminService {
           include: { authoredBy: PERSON, reviewedBy: PERSON, firstSignOffBy: PERSON },
         },
         _count: { select: { reports: { where: { resolvedAt: null } } } },
+        mergedInto: { select: { id: true, nameFr: true, nameEn: true } },
       },
     });
     if (!row) throw new DomainError('NOT_FOUND', 'Substance not found.');
@@ -191,6 +193,9 @@ export class PregnancyAdminService {
     client: ClientInfo,
   ) {
     const before = await this.substance(id);
+    if (before.mergedIntoId && patch.enabled === true) {
+      throw new DomainError('INVALID_STATE', 'Undo the merge before showing this substance again.');
+    }
     const visibility = patch.demoSample !== undefined || patch.enabled !== undefined;
     if (visibility && !admin.grants.includes('pregnancy.review')) {
       throw new DomainError('FORBIDDEN', 'Changing who sees a profile needs pregnancy.review.');
@@ -230,6 +235,183 @@ export class PregnancyAdminService {
     return this.substance(id);
   }
 
+  // ──────────────────────────────── merge (ADR-027) ────────────────────────────────
+
+  /**
+   * What merging `sourceId` into `targetId` would do, and what prevents it. The source's names
+   * become synonyms of the target; its profile versions stay on it as history; nothing clinical is
+   * copied. Blockers are codes Admin Web translates.
+   */
+  async mergePreview(sourceId: string, targetId: string) {
+    const [source, target] = await Promise.all([this.mergeRow(sourceId), this.mergeRow(targetId)]);
+    const blockers: string[] = [];
+    if (source.id === target.id) blockers.push('SAME_SUBSTANCE');
+    if (source.mergedIntoId) blockers.push('SOURCE_ALREADY_MERGED');
+    if (target.mergedIntoId) blockers.push('TARGET_MERGED');
+    if (!target.enabled) blockers.push('TARGET_ARCHIVED');
+    if (source._count.merged > 0) blockers.push('SOURCE_HAS_MERGED');
+    if (source.versions.some((version) => isOpen(version.status)))
+      blockers.push('SOURCE_OPEN_VERSION');
+    const known = new Set(
+      [target.nameFr, target.nameEn ?? '', ...target.synonyms].map((name) =>
+        name.trim().toLowerCase(),
+      ),
+    );
+    const namesToAdd = cleanSynonyms([
+      source.nameFr,
+      source.nameEn ?? '',
+      ...source.synonyms,
+    ]).filter((name) => !known.has(name.toLowerCase()));
+    if (target.synonyms.length + namesToAdd.length > 30) blockers.push('TOO_MANY_SYNONYMS');
+    const published = source.versions.find((version) => version.status === 'PUBLISHED') ?? null;
+    return {
+      source: { id: source.id, nameFr: source.nameFr, nameEn: source.nameEn },
+      target: { id: target.id, nameFr: target.nameFr, nameEn: target.nameEn },
+      namesToAdd,
+      sourcePublishedVersion: published?.version ?? null,
+      blockers,
+    };
+  }
+
+  /** Merges a duplicate: one transaction, audited on both substances. */
+  async merge(
+    admin: AdminPrincipal,
+    sourceId: string,
+    input: { into: string; reason: string; acknowledgeHiddenProfile: boolean },
+    client: ClientInfo,
+  ) {
+    const preview = await this.mergePreview(sourceId, input.into);
+    if (preview.blockers.length > 0) {
+      throw new DomainError('INVALID_STATE', 'This merge is not possible.', {
+        fields: { merge: preview.blockers },
+      });
+    }
+    if (preview.sourcePublishedVersion !== null && !input.acknowledgeHiddenProfile) {
+      throw new DomainError(
+        'VALIDATION_FAILED',
+        'Confirm that the published profile will no longer be shown.',
+        {
+          fields: { acknowledgeHiddenProfile: ['required'] },
+        },
+      );
+    }
+    const [source, target] = await Promise.all([
+      this.mergeRow(sourceId),
+      this.mergeRow(input.into),
+    ]);
+    const synonyms = [...target.synonyms, ...preview.namesToAdd];
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      // Guarded: only a substance still unmerged is merged (two reviewers at once).
+      const { count } = await tx.substance.updateMany({
+        where: { id: sourceId, mergedIntoId: null },
+        data: {
+          enabled: false,
+          mergedIntoId: target.id,
+          mergedNames: preview.namesToAdd,
+          mergedAt: now,
+          mergedById: admin.adminId,
+          updatedById: admin.adminId,
+        },
+      });
+      if (count !== 1)
+        throw new DomainError('VERSION_CONFLICT', 'This substance was merged meanwhile.');
+      await tx.substance.update({
+        where: { id: target.id },
+        data: {
+          synonyms,
+          searchText: searchTextOf(target.nameFr, target.nameEn, synonyms),
+          updatedBy: { connect: { id: admin.adminId } },
+        },
+      });
+    });
+    await this.record(admin, client, 'pregnancy.substance.merged', 'Substance', sourceId, {
+      before: { enabled: source.enabled, mergedIntoId: null },
+      after: {
+        enabled: false,
+        mergedIntoId: target.id,
+        hiddenPublishedVersion: preview.sourcePublishedVersion,
+      },
+      reason: input.reason,
+    });
+    await this.record(
+      admin,
+      client,
+      'pregnancy.substance.synonyms_merged',
+      'Substance',
+      target.id,
+      {
+        before: { synonyms: target.synonyms },
+        after: { synonyms, from: sourceId },
+        reason: input.reason,
+      },
+    );
+    return this.substance(sourceId);
+  }
+
+  /**
+   * Undoes a merge: the names it added leave the target, the duplicate stands alone again. It stays
+   * archived: showing it again is a separate visibility decision.
+   */
+  async unmerge(admin: AdminPrincipal, sourceId: string, reason: string, client: ClientInfo) {
+    const source = await this.mergeRow(sourceId);
+    if (!source.mergedIntoId)
+      throw new DomainError('INVALID_STATE', 'This substance is not merged.');
+    const target = await this.mergeRow(source.mergedIntoId);
+    const added = new Set(source.mergedNames.map((name) => name.toLowerCase()));
+    const synonyms = target.synonyms.filter((name) => !added.has(name.toLowerCase()));
+    await this.prisma.$transaction([
+      this.prisma.substance.update({
+        where: { id: target.id },
+        data: {
+          synonyms,
+          searchText: searchTextOf(target.nameFr, target.nameEn, synonyms),
+          updatedBy: { connect: { id: admin.adminId } },
+        },
+      }),
+      this.prisma.substance.update({
+        where: { id: sourceId },
+        data: {
+          mergedIntoId: null,
+          mergedNames: [],
+          mergedAt: null,
+          mergedById: null,
+          updatedById: admin.adminId,
+        },
+      }),
+    ]);
+    await this.record(admin, client, 'pregnancy.substance.unmerged', 'Substance', sourceId, {
+      before: { mergedIntoId: target.id, mergedNames: source.mergedNames },
+      after: { mergedIntoId: null, enabled: false },
+      reason,
+    });
+    await this.record(
+      admin,
+      client,
+      'pregnancy.substance.synonyms_unmerged',
+      'Substance',
+      target.id,
+      {
+        before: { synonyms: target.synonyms },
+        after: { synonyms, from: sourceId },
+        reason,
+      },
+    );
+    return this.substance(sourceId);
+  }
+
+  private async mergeRow(id: string) {
+    const row = await this.prisma.substance.findUnique({
+      where: { id },
+      include: {
+        versions: { select: { version: true, status: true } },
+        _count: { select: { merged: true } },
+      },
+    });
+    if (!row) throw new DomainError('NOT_FOUND', 'Substance not found.');
+    return row;
+  }
+
   // ──────────────────────────────── versions ────────────────────────────────
 
   /** « Nouvelle version »: starts from the published profile, or empty for a first profile. */
@@ -240,6 +422,12 @@ export class PregnancyAdminService {
     client: ClientInfo,
   ) {
     const substance = await this.substance(substanceId);
+    if (substance.mergedIntoId) {
+      throw new DomainError(
+        'INVALID_STATE',
+        'A merged duplicate gets no new version; edit the substance kept.',
+      );
+    }
     if (substance.versions.some((version) => isOpen(version.status))) {
       throw new DomainError('INVALID_STATE', 'This substance already has a version in progress.');
     }

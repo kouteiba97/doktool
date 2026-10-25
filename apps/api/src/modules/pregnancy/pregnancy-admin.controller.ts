@@ -25,6 +25,9 @@ import {
   AdminSubstanceDetailDto,
   AdminSubstanceDto,
   AdminSubstancesQuery,
+  MergePreviewDto,
+  MergePreviewQuery,
+  MergeSubstanceDto,
   ClinicalSourceDto,
   CreateSubstanceDto,
   PregnancyReasonDto,
@@ -123,6 +126,47 @@ export class PregnancyAdminController {
     return AdminProfileVersionDto.fromVersion(
       await this.pregnancy.createVersion(admin, id, body.reason, client),
     );
+  }
+
+  /** What merging this duplicate into another substance would change, and what prevents it. */
+  @Get('substances/:id/merge-preview')
+  @RequireGrants('pregnancy.review')
+  @ApiOkResponse({ type: MergePreviewDto })
+  async mergePreview(
+    @Param('id', uuid) id: string,
+    @Query() query: MergePreviewQuery,
+  ): Promise<MergePreviewDto> {
+    return this.pregnancy.mergePreview(id, query.into);
+  }
+
+  /** Merges a duplicate into the substance to keep (ADR-027). */
+  @Post('substances/:id/merge')
+  @HttpCode(HttpStatus.OK)
+  @RequireGrants('pregnancy.review')
+  @ApiOkResponse({ type: AdminSubstanceDetailDto })
+  async merge(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Param('id', uuid) id: string,
+    @Body() body: MergeSubstanceDto,
+    @Client() client: ClientInfo,
+  ): Promise<AdminSubstanceDetailDto> {
+    await this.pregnancy.merge(admin, id, body, client);
+    return this.detailDto(id);
+  }
+
+  /** Undoes a merge; the duplicate stays archived until a reviewer shows it again. */
+  @Post('substances/:id/unmerge')
+  @HttpCode(HttpStatus.OK)
+  @RequireGrants('pregnancy.review')
+  @ApiOkResponse({ type: AdminSubstanceDetailDto })
+  async unmerge(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Param('id', uuid) id: string,
+    @Body() body: PregnancyReasonDto,
+    @Client() client: ClientInfo,
+  ): Promise<AdminSubstanceDetailDto> {
+    await this.pregnancy.unmerge(admin, id, body.reason, client);
+    return this.detailDto(id);
   }
 
   /** Submits several drafts for review (e.g. after an import); each is checked on its own. */

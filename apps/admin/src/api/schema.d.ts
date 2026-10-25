@@ -1040,6 +1040,54 @@ export type paths = {
         patch: operations["PregnancyAdminController_update"];
         trace?: never;
     };
+    "/admin/v1/pregnancy/substances/{id}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PregnancyAdminController_merge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/v1/pregnancy/substances/{id}/merge-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PregnancyAdminController_mergePreview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/v1/pregnancy/substances/{id}/unmerge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PregnancyAdminController_unmerge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/v1/pregnancy/substances/{id}/versions": {
         parameters: {
             query?: never;
@@ -3139,6 +3187,8 @@ export type components = {
             enabled: boolean;
             /** Format: uuid */
             id: string;
+            /** @description Merged as a duplicate into this substance (ADR-027). */
+            mergedInto: components["schemas"]["SubstanceRefDto"] | null;
             nameEn: string | null;
             nameFr: string;
             /** @description Draft or review. */
@@ -3156,6 +3206,8 @@ export type components = {
             enabled: boolean;
             /** Format: uuid */
             id: string;
+            /** @description Merged as a duplicate into this substance (ADR-027). */
+            mergedInto: components["schemas"]["SubstanceRefDto"] | null;
             nameEn: string | null;
             nameFr: string;
             /** @description Draft or review. */
@@ -4321,6 +4373,26 @@ export type components = {
             preferences: components["schemas"]["PreferencesDto"];
             professionalProfile: components["schemas"]["ProfessionalProfileDto"] | null;
             wilaya: components["schemas"]["WilayaDto"];
+        };
+        MergePreviewDto: {
+            blockers: ("SAME_SUBSTANCE" | "SOURCE_ALREADY_MERGED" | "TARGET_MERGED" | "TARGET_ARCHIVED" | "SOURCE_HAS_MERGED" | "SOURCE_OPEN_VERSION" | "TOO_MANY_SYNONYMS")[];
+            /** @description Names of the duplicate added to the target's synonyms. */
+            namesToAdd: string[];
+            source: components["schemas"]["SubstanceRefDto"];
+            /** @description Published version of the duplicate that will no longer be shown (never copied). */
+            sourcePublishedVersion: number | null;
+            target: components["schemas"]["SubstanceRefDto"];
+        };
+        MergeSubstanceDto: {
+            /** @description Required when the duplicate has a published profile. */
+            acknowledgeHiddenProfile: boolean;
+            /**
+             * Format: uuid
+             * @description The substance to keep.
+             */
+            into: string;
+            /** @description Audit log. */
+            reason: string;
         };
         /** @enum {string} */
         MessageChannel: "EMAIL" | "SMS";
@@ -7979,6 +8051,107 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["UpdateSubstanceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSubstanceDetailDto"];
+                };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PregnancyAdminController_merge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeSubstanceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSubstanceDetailDto"];
+                };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PregnancyAdminController_mergePreview: {
+        parameters: {
+            query: {
+                /** @description The substance to keep. */
+                into: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MergePreviewDto"];
+                };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PregnancyAdminController_unmerge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PregnancyReasonDto"];
             };
         };
         responses: {

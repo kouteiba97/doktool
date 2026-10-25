@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CircleAlert, GitBranchPlus, Pencil, Send, Trash2 } from 'lucide-react';
+import { ArrowLeft, CircleAlert, GitBranchPlus, Merge, Pencil, Send, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { api, call } from '@/api/client';
@@ -29,6 +29,7 @@ import {
   VERSION_STATUS_TONES,
   versionKey,
 } from './labels';
+import { MergeDialog } from './merge-dialog';
 import { describeProblem } from './problems';
 import { ProfileEditor } from './profile-editor';
 import { ReviewComment } from './profile-view';
@@ -49,6 +50,8 @@ export function SubstanceDetailPage({ id }: { id: string }) {
   const [visibility, setVisibility] = useState<{ demoSample?: boolean; enabled?: boolean } | null>(
     null,
   );
+  const [merging, setMerging] = useState(false);
+  const [unmerging, setUnmerging] = useState(false);
 
   const detail = useQuery({
     queryKey: substanceKey(id),
@@ -132,7 +135,7 @@ export function SubstanceDetailPage({ id }: { id: string }) {
               </Button>
               <Button
                 variant="primary"
-                disabled={open !== undefined}
+                disabled={open !== undefined || substance.mergedInto !== null}
                 title={open ? t('admin.pregnancy.versionOpen') : undefined}
                 onClick={() => setAction('newVersion')}
               >
@@ -144,6 +147,23 @@ export function SubstanceDetailPage({ id }: { id: string }) {
         }
       />
 
+      {substance.mergedInto ? (
+        <Alert
+          tone="info"
+          title={t('admin.pregnancyMerge.mergedTitle')}
+          action={
+            has('pregnancy.review') ? (
+              <Button onClick={() => setUnmerging(true)}>{t('admin.pregnancyMerge.undo')}</Button>
+            ) : null
+          }
+        >
+          {t('admin.pregnancyMerge.mergedInto')}{' '}
+          <Link href={`/admin/pregnancy/${substance.mergedInto.id}`}>
+            {substance.mergedInto.nameFr}
+          </Link>
+        </Alert>
+      ) : null}
+
       {has('pregnancy.review') ? (
         <section
           className="dt-card dt-row-flex gap-6 p-4"
@@ -152,6 +172,7 @@ export function SubstanceDetailPage({ id }: { id: string }) {
           <b>{t('admin.pregnancy.visibility')}</b>
           <Switch
             checked={substance.enabled}
+            disabled={substance.mergedInto !== null}
             onChange={(enabled) => setVisibility({ enabled })}
             label={t('admin.pregnancy.enabledToggle')}
           />
@@ -160,8 +181,43 @@ export function SubstanceDetailPage({ id }: { id: string }) {
             onChange={(demoSample) => setVisibility({ demoSample })}
             label={t('admin.pregnancy.demoToggle')}
           />
+          {substance.mergedInto ? null : (
+            <Button className="ms-auto" onClick={() => setMerging(true)}>
+              <Merge size={16} aria-hidden />
+              {t('admin.pregnancyMerge.open')}
+            </Button>
+          )}
         </section>
       ) : null}
+      {merging ? (
+        <MergeDialog
+          substance={substance}
+          substances={substances.data ?? []}
+          open
+          onOpenChange={setMerging}
+          onMerged={() => {
+            toast(t('admin.pregnancyMerge.done'));
+            void refresh();
+          }}
+        />
+      ) : null}
+      <ReasonDialog
+        open={unmerging}
+        onOpenChange={setUnmerging}
+        title={t('admin.pregnancyMerge.undoTitle')}
+        description={t('admin.pregnancyMerge.undoHelp')}
+        confirmLabel={t('admin.pregnancyMerge.undo')}
+        onConfirm={async (reason) => {
+          await call(
+            api.POST('/admin/v1/pregnancy/substances/{id}/unmerge', {
+              params: { path: { id } },
+              body: { reason },
+            }),
+          );
+          toast(t('admin.pregnancyMerge.undone'));
+          await refresh();
+        }}
+      />
 
       <div className="grid grid-cols-[var(--size-sidebar)_minmax(0,1fr)] gap-4">
         <nav aria-label={t('admin.pregnancy.versions')} className="dt-stack">
