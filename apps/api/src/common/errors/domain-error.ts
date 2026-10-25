@@ -36,6 +36,7 @@ export const ErrorCode = {
 
 export type ErrorCode = keyof typeof ErrorCode;
 
+/** Extra information the client may use to explain an error. */
 export interface ErrorDetails {
   /** When the client may retry (lockouts, rate limits, resend timers). */
   retryAt?: string;

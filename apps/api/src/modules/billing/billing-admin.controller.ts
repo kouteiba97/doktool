@@ -66,6 +66,7 @@ export class BillingAdminController {
     return PlanDto.from(await this.plans.publish(admin, body, client));
   }
 
+  /** POST /admin/v1/plans/:id/sale: starts or stops selling one version. */
   @Post(':id/sale')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('subscriptions.plans.write')
@@ -91,6 +92,7 @@ export class BillingAdminController {
 export class PaymentMethodsAdminController {
   constructor(private readonly gateways: PaymentGateways) {}
 
+  /** GET /admin/v1/payment-methods: methods with their gateway and switch. */
   @Get()
   @RequireGrants('finance.read')
   @ApiOkResponse({ type: [PaymentMethodRouteDto] })
@@ -103,6 +105,7 @@ export class PaymentMethodsAdminController {
     );
   }
 
+  /** PUT /admin/v1/payment-methods/:method: switches a method on or off. */
   @Put(':method')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants('subscriptions.plans.write')

@@ -7,19 +7,26 @@ import {
   type Range,
 } from './definition.js';
 
+/** One problem found in a definition, with where it is. */
 export interface DefinitionProblem {
   path: string;
   message: string;
 }
 
+/** Either the parsed definition, or the problems. */
 export type CheckResult =
   { ok: true; definition: CalculatorDefinition } | { ok: false; problems: DefinitionProblem[] };
 
+/** The types a formula node can have. */
 type ValueType = 'number' | 'boolean' | 'string';
 
 const MAX_NODES = 2000;
 const MAX_DEPTH = 64;
 
+/**
+ * Validates a definition beyond its schema: unique keys, units, nested ranges, scored choices,
+ * formula types, rules and ordered, non-overlapping bands.
+ */
 export function checkDefinition(raw: unknown): CheckResult {
   const parsed = calculatorDefinition.safeParse(raw);
   if (!parsed.success) {
@@ -118,6 +125,7 @@ function within(inner: Range | undefined, outer: Range | undefined): boolean {
   return minOk && maxOk;
 }
 
+/** Infers the type of every formula node and reports type errors. */
 class Typer {
   nodes = 0;
 
@@ -240,6 +248,7 @@ class Typer {
     }
   }
 
+  /** The type an input produces in a formula (CHOICE gives its value as text). */
   private inputType(inputKey: string, path: string): ValueType | null {
     const input = this.inputs.get(inputKey);
     if (!input) {

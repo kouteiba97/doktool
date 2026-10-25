@@ -19,6 +19,7 @@ export class AccessService {
     private readonly subscriptions: SubscriptionStatusService,
   ) {}
 
+  /** The access profile of the caller (user or demo), computed fresh on every call. */
   async profileFor(viewer: Viewer): Promise<AccessProfile> {
     return evaluateAccess(await this.inputsFor(viewer));
   }
@@ -38,13 +39,17 @@ export class AccessService {
     return { profile, decisions: items.map((item) => decideItem(profile, item)) };
   }
 
+  /**
+   * Collects the account facts, verification cases and subscription in parallel; a deleted account
+   * is treated as signed out.
+   */
   private async inputsFor(viewer: Viewer): Promise<AccessInputs> {
     if (viewer.accessContext === 'DEMO') {
       return { accessContext: 'DEMO', demoContext: viewer.demoContext };
     }
     const [account, verification, subscription] = await Promise.all([
       this.users.getAccessFacts(viewer.userId),
-      this.verification.snapshot(viewer.userId),
+      this.verification.accessSnapshot(viewer.userId),
       this.subscriptions.current(viewer.userId),
     ]);
     if (!account || account.status === 'DELETED') {

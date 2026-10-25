@@ -58,6 +58,7 @@ export class AdminAuthController {
     return AdminMeDto.from(principal);
   }
 
+  /** POST /admin/v1/auth/sign-out: ends the session and deletes the cookie. */
   @Post('auth/sign-out')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants()

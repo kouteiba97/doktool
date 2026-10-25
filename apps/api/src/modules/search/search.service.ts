@@ -22,6 +22,7 @@ import {
   withoutIntent,
 } from './ranking.js';
 
+/** One result of the global search. */
 export interface SearchHit {
   type: SearchType;
   id: string;
@@ -36,12 +37,14 @@ export interface SearchHit {
   terms?: string[];
 }
 
+/** Results of one type (ordonnances, certificates, calculators, pregnancy). */
 export interface SearchGroup {
   type: SearchType;
   total: number;
   hits: SearchHit[];
 }
 
+/** The grouped results and, when nothing matched, suggestions. */
 export interface SearchResult {
   groups: SearchGroup[];
   /** « Vouliez-vous dire » titles, only when nothing matched. */
@@ -73,6 +76,10 @@ export class SearchService {
     private readonly audit: AuditService,
   ) {}
 
+  /**
+   * Global search: rate limit, detect the category asked for, score every candidate, group by type
+   * (best group first), suggest titles when nothing matched.
+   */
   async search(viewer: Viewer, query: string, type?: SearchType): Promise<SearchResult> {
     await this.limiter.hit(
       SEARCH_RATE,
@@ -134,6 +141,7 @@ export class SearchService {
     return this.synonymsOf(entityType, entityId);
   }
 
+  /** The synonyms of one model or calculator, A–Z. */
   private async synonymsOf(entityType: SearchEntityType, entityId: string): Promise<string[]> {
     const rows = await this.prisma.searchSynonym.findMany({
       where: { entityType, entityId },
@@ -199,6 +207,9 @@ export class SearchService {
 
   // ───────────────────────────────── helpers ─────────────────────────────────
 
+  /**
+   * Everything the viewer could find: reference models, calculators and substances, with access.
+   */
   private async candidates(viewer: Viewer, type?: SearchType): Promise<SearchHit[]> {
     const hits: SearchHit[] = [];
     for (const referenceType of ['ORDONNANCE', 'CERTIFICATE'] as const) {
@@ -248,6 +259,7 @@ export class SearchService {
     return hits;
   }
 
+  /** The texts a candidate is matched on. */
   private entryOf(hit: SearchHit, synonyms: Map<string, string[]>): SearchEntry {
     const entityType: SearchEntityType =
       hit.type === 'CALCULATOR' ? 'CALCULATOR' : 'REFERENCE_DOCUMENT';
@@ -259,6 +271,7 @@ export class SearchService {
     };
   }
 
+  /** Every admin-entered synonym, cached for a minute. */
   private async synonyms(): Promise<Map<string, string[]>> {
     if (this.synonymCache && Date.now() - this.synonymCache.at < SYNONYM_CACHE_MS) {
       return this.synonymCache.byEntity;

@@ -34,6 +34,7 @@ const id = new ParseUUIDPipe();
 export class VerificationAdminController {
   constructor(private readonly review: VerificationReviewService) {}
 
+  /** GET /admin/v1/verification/cases: the review queue. */
   @Get('cases')
   @RequireGrants('verification.queue.read')
   @ApiOkResponse({ type: [AdminVerificationQueueItemDto] })
@@ -41,6 +42,7 @@ export class VerificationAdminController {
     return (await this.review.queue(query)).map((item) => AdminVerificationQueueItemDto.from(item));
   }
 
+  /** One case in the review drawer. */
   @Get('cases/:id')
   @RequireGrants('verification.queue.read')
   @ApiOkResponse({ type: AdminVerificationCaseDto })
@@ -48,6 +50,7 @@ export class VerificationAdminController {
     return AdminVerificationCaseDto.from(await this.review.detail(caseId));
   }
 
+  /** Takes the case for review. */
   @Post('cases/:id/claim')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('verification.review')
@@ -60,6 +63,7 @@ export class VerificationAdminController {
     return AdminVerificationCaseDto.from(await this.review.claim(admin, caseId, client));
   }
 
+  /** Gives the case back to the queue. */
   @Post('cases/:id/release')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('verification.review')
@@ -75,6 +79,7 @@ export class VerificationAdminController {
     );
   }
 
+  /** Approves the case. */
   @Post('cases/:id/approve')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('verification.review')
@@ -95,6 +100,7 @@ export class VerificationAdminController {
     );
   }
 
+  /** Rejects the case with a reason. */
   @Post('cases/:id/reject')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('verification.review')

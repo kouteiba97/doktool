@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 const MAX_TEXT = 2000;
 
+/** A text in French and English (both required). */
 export const localizedText = z
   .object({
     fr: z.string().trim().min(1).max(MAX_TEXT),
@@ -11,10 +12,12 @@ export const localizedText = z
   .strict();
 export type LocalizedText = z.infer<typeof localizedText>;
 
+/** Identifier of an input or rule: camelCase, 1–40 characters. */
 const key = z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/, 'keys are camelCase, 1–40 characters');
 const unitCode = z.string().trim().min(1).max(20);
 const finite = z.number().finite();
 
+/** A numeric interval; either bound may be open. */
 export const range = z
   .object({ min: finite.optional(), max: finite.optional() })
   .strict()
@@ -55,6 +58,7 @@ export type BinaryOp = (typeof BINARY_OPS)[number];
 export type UnaryOp = (typeof UNARY_OPS)[number];
 export type VariadicOp = (typeof VARIADIC_OPS)[number];
 
+/** Validation schema of the formula tree (recursive). */
 export const expr: z.ZodType<Expr> = z.lazy(() =>
   z.union([
     z.object({ num: finite }).strict(),
@@ -97,6 +101,7 @@ const unitConversion = z
   })
   .strict();
 
+/** One answer of a CHOICE input, with its optional points. */
 const choice = z
   .object({
     value: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/),
@@ -105,6 +110,7 @@ const choice = z
   })
   .strict();
 
+/** Fields every input has. */
 const baseInput = {
   key,
   label: localizedText,
@@ -112,6 +118,7 @@ const baseInput = {
   help: localizedText.optional(),
 };
 
+/** Fields of NUMBER and INTEGER inputs: what is measured, units and the three ranges. */
 const numericInput = {
   ...baseInput,
   /** What is measured, e.g. BODY_WEIGHT (free code, used for display and analytics). */
@@ -126,6 +133,7 @@ const numericInput = {
   plausibleRange: range.optional(),
 };
 
+/** One input of a calculator: NUMBER, INTEGER, CHOICE or BOOLEAN. */
 export const calculatorInput = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('NUMBER'), ...numericInput }).strict(),
   z.object({ kind: z.literal('INTEGER'), ...numericInput }).strict(),
@@ -137,6 +145,7 @@ export const calculatorInput = z.discriminatedUnion('kind', [
 export type CalculatorInput = z.infer<typeof calculatorInput>;
 export type NumericInput = Extract<CalculatorInput, { kind: 'NUMBER' | 'INTEGER' }>;
 
+/** A rule between several inputs (e.g. "diastolic below systolic"). */
 export const crossFieldRule = z
   .object({
     id: key,
@@ -147,6 +156,7 @@ export const crossFieldRule = z
   })
   .strict();
 
+/** A result band: from ≤ value < to, with a severity and a label. */
 export const interpretationBand = z
   .object({
     code: z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/),
@@ -158,6 +168,7 @@ export const interpretationBand = z
   .strict();
 export type InterpretationBand = z.infer<typeof interpretationBand>;
 
+/** A complete calculator definition (schema version 1). */
 export const calculatorDefinition = z
   .object({
     schemaVersion: z.literal(1),

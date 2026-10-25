@@ -15,6 +15,7 @@ import {
 } from './pregnancy.content.js';
 import { likeWords, searchTextOf } from './pregnancy.search.js';
 
+/** A new substance as Admin Web sends it. */
 export interface SubstanceInput {
   nameFr: string;
   nameEn?: string | null;
@@ -23,6 +24,7 @@ export interface SubstanceInput {
   reason: string;
 }
 
+/** Changes to a substance. */
 export interface SubstancePatch extends Partial<Omit<SubstanceInput, 'reason'>> {
   /** Visibility: set only through the reviewer's endpoint. */
   demoSample?: boolean;
@@ -30,6 +32,7 @@ export interface SubstancePatch extends Partial<Omit<SubstanceInput, 'reason'>> 
   reason: string;
 }
 
+/** A source of the clinical sources registry. */
 export interface SourceInput {
   title: string;
   publisher?: string | null;
@@ -49,12 +52,14 @@ const VERSION_INCLUDE = {
   substance: { select: { id: true, nameFr: true, nameEn: true } },
 } satisfies Prisma.SubstanceProfileVersionInclude;
 
+/** A profile version with its people, sources, substance and review problems. */
 export type AdminVersion = Prisma.SubstanceProfileVersionGetPayload<{
   include: typeof VERSION_INCLUDE;
 }> & { problems: string[] };
 
 const OPEN_STATUSES = ['DRAFT', 'IN_REVIEW', 'CHANGES_REQUESTED'] as const;
 
+/** Filters of the substances page. */
 export interface SubstanceFilter {
   q?: string;
   state?: 'PUBLISHED' | 'DRAFT' | 'IN_REVIEW' | 'CHANGES_REQUESTED' | 'NONE';
@@ -79,6 +84,7 @@ export class PregnancyAdminService {
 
   // ─────────────────────────────── substances ───────────────────────────────
 
+  /** The substances page: search, archive filter, profile state and conduct filters. */
   async listSubstances(filter: SubstanceFilter = {}) {
     const byConduct = filter.period !== undefined && filter.conduct !== undefined;
     const rows = await this.prisma.substance.findMany({
@@ -143,6 +149,7 @@ export class PregnancyAdminService {
       .sort((a, b) => compareFrench(a.nameFr, b.nameFr));
   }
 
+  /** One substance with its versions and open reports. */
   async substance(id: string) {
     const row = await this.prisma.substance.findUnique({
       where: { id },
@@ -159,6 +166,7 @@ export class PregnancyAdminService {
     return { ...row, openReports: row._count.reports };
   }
 
+  /** Creates a substance (no profile yet); a name already used is refused. */
   async createSubstance(admin: AdminPrincipal, input: SubstanceInput, client: ClientInfo) {
     try {
       const nameFr = input.nameFr.trim();
@@ -400,6 +408,7 @@ export class PregnancyAdminService {
     return this.substance(sourceId);
   }
 
+  /** What a merge needs to know about a substance. */
   private async mergeRow(id: string) {
     const row = await this.prisma.substance.findUnique({
       where: { id },
@@ -460,6 +469,7 @@ export class PregnancyAdminService {
     return this.version(created.id);
   }
 
+  /** One profile version with the problems that would block its review. */
   async version(versionId: string): Promise<AdminVersion> {
     const row = await this.prisma.substanceProfileVersion.findUnique({
       where: { id: versionId },
@@ -524,6 +534,7 @@ export class PregnancyAdminService {
     return this.version(versionId);
   }
 
+  /** The author sends a draft for review; it must have no blocking problem. */
   async submit(admin: AdminPrincipal, versionId: string, reason: string, client: ClientInfo) {
     const current = await this.version(versionId);
     this.assertAuthor(admin, current);
@@ -631,6 +642,7 @@ export class PregnancyAdminService {
     return this.version(versionId);
   }
 
+  /** The reviewer sends a version back to its author with a comment. */
   async requestChanges(
     admin: AdminPrincipal,
     versionId: string,
@@ -685,10 +697,12 @@ export class PregnancyAdminService {
 
   // ───────────────────────────────── sources ─────────────────────────────────
 
+  /** The sources registry. */
   listSources() {
     return this.prisma.clinicalSource.findMany({ orderBy: [{ title: 'asc' }, { year: 'desc' }] });
   }
 
+  /** Adds a source to the registry. */
   async createSource(admin: AdminPrincipal, input: SourceInput, client: ClientInfo) {
     const created = await this.prisma.clinicalSource.create({
       data: { ...normaliseSource(input), createdById: admin.adminId },
@@ -716,6 +730,7 @@ export class PregnancyAdminService {
 
   // ───────────────────────────────── reports ─────────────────────────────────
 
+  /** User reports (« Signaler une erreur »), open ones or all. */
   listReports(filter: { open: boolean; substanceId?: string }) {
     return this.prisma.contentReport.findMany({
       where: {
@@ -732,6 +747,7 @@ export class PregnancyAdminService {
     });
   }
 
+  /** Closes a user report with what was done. */
   async resolveReport(admin: AdminPrincipal, id: string, resolution: string, client: ClientInfo) {
     const { count } = await this.prisma.contentReport.updateMany({
       where: { id, resolvedAt: null },
@@ -765,6 +781,7 @@ export class PregnancyAdminService {
     return results;
   }
 
+  /** Counts for the overview: open reports and versions in review. */
   async pending() {
     const [reports, inReview] = await Promise.all([
       this.prisma.contentReport.count({ where: { resolvedAt: null } }),
@@ -775,6 +792,7 @@ export class PregnancyAdminService {
 
   // ───────────────────────────────── helpers ─────────────────────────────────
 
+  /** Review problems of a version (missing sources, alternatives that do not exist…). */
   private async problemsOf(row: {
     substanceId: string;
     content: Prisma.JsonValue;
@@ -791,22 +809,26 @@ export class PregnancyAdminService {
     });
   }
 
+  /** Only the author edits, submits or discards a draft. */
   private assertAuthor(admin: AdminPrincipal, version: { authoredById: string }) {
     if (version.authoredById !== admin.adminId) {
       throw new DomainError('FORBIDDEN', 'Only the author edits, submits or discards a draft.');
     }
   }
 
+  /** A version is never reviewed by its author. */
   private assertReviewer(admin: AdminPrincipal, version: { authoredById: string }) {
     if (version.authoredById === admin.adminId) {
       throw new DomainError('FORBIDDEN', 'A version is never reviewed by its author.');
     }
   }
 
+  /** Refuses an action in the wrong status. */
   private assertStatus(status: string, allowed: readonly string[], message: string) {
     if (!allowed.includes(status)) throw new DomainError('INVALID_STATE', message);
   }
 
+  /** Audit entry of a pregnancy change. */
   private record(
     admin: AdminPrincipal,
     client: ClientInfo,
@@ -830,10 +852,12 @@ export class PregnancyAdminService {
   }
 }
 
+/** True for a version not yet decided. */
 function isOpen(status: string): boolean {
   return (OPEN_STATUSES as readonly string[]).includes(status);
 }
 
+/** Trims synonyms and drops empty ones and repeats. */
 function cleanSynonyms(values: string[]): string[] {
   const seen = new Set<string>();
   const result: string[] = [];
@@ -848,6 +872,7 @@ function cleanSynonyms(values: string[]): string[] {
   return result;
 }
 
+/** Trims the fields of a source. */
 function normaliseSource(input: SourceInput) {
   return {
     title: input.title.trim(),
@@ -859,6 +884,7 @@ function normaliseSource(input: SourceInput) {
   };
 }
 
+/** Turns a duplicate-name database error into a field error. */
 function nameTaken(error: unknown): unknown {
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
     return new DomainError('VALIDATION_FAILED', 'A substance already has this name.', {

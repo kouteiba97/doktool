@@ -30,6 +30,7 @@ const errors = ApiResponse({
 export class SearchController {
   constructor(private readonly search: SearchService) {}
 
+  /** GET /v1/search: the global search of the app. */
   @Get('search')
   @UseGuards(ViewerAuthGuard)
   @ApiBearerAuth('user')
@@ -53,6 +54,7 @@ export class SearchController {
 export class SearchAdminController {
   constructor(private readonly search: SearchService) {}
 
+  /** GET /admin/v1/search/synonyms: the synonyms of one model or calculator. */
   @Get(':entityId')
   @RequireGrants()
   @ApiOkResponse({ type: SynonymsDto })
@@ -65,6 +67,7 @@ export class SearchAdminController {
     return { terms: await this.search.synonymsFor(admin, query.entityType, entityId) };
   }
 
+  /** PUT /admin/v1/search/synonyms: replaces them. */
   @Put(':entityId')
   @RequireGrants()
   @ApiOkResponse({ type: SynonymsDto })

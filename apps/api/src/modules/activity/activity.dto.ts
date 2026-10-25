@@ -16,6 +16,7 @@ import { ActivityKind, FavoriteTargetType } from '../../generated/prisma/enums.j
 import { ItemAccessDto } from '../access/index.js';
 import type { ActivityRecord, FavoriteView } from './activity.service.js';
 
+/** URL parameters naming a favorite: its type and id. */
 export class FavoriteTargetParams {
   @ApiProperty({ enum: FavoriteTargetType, enumName: 'FavoriteTargetType' })
   @IsEnum(FavoriteTargetType)
@@ -26,6 +27,7 @@ export class FavoriteTargetParams {
   targetId!: string;
 }
 
+/** The item a favorite points at, with the caller's access to it. */
 export class FavoriteItemDto {
   @ApiProperty({ enum: ['ORDONNANCE', 'CERTIFICATE', 'CALCULATOR', 'SUBSTANCE'] })
   kind!: 'ORDONNANCE' | 'CERTIFICATE' | 'CALCULATOR' | 'SUBSTANCE';
@@ -43,6 +45,7 @@ export class FavoriteItemDto {
   access!: ItemAccessDto;
 }
 
+/** One favorite in GET /v1/me/favorites. */
 export class FavoriteDto {
   @ApiProperty({ enum: FavoriteTargetType, enumName: 'FavoriteTargetType' })
   targetType!: FavoriteTargetType;
@@ -65,6 +68,7 @@ export class FavoriteDto {
   }
 }
 
+/** One history entry sent by the app. */
 export class ActivityEntryDto {
   @ApiProperty({ enum: ActivityKind, enumName: 'ActivityKind' })
   @IsEnum(ActivityKind)
@@ -91,6 +95,7 @@ export class ActivityEntryDto {
   occurredAt!: string;
 }
 
+/** Body of POST /v1/me/activity: a batch of entries from one device. */
 export class RecordActivityDto {
   @ApiProperty({ description: 'Installation id of the device that recorded the entries.' })
   @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
@@ -107,6 +112,7 @@ export class RecordActivityDto {
   entries!: ActivityEntryDto[];
 }
 
+/** Filters of GET /v1/me/activity. */
 export class ActivityQuery {
   @ApiPropertyOptional({ enum: ActivityKind, enumName: 'ActivityKind' })
   @IsOptional()
@@ -122,6 +128,7 @@ export class ActivityQuery {
   before?: string;
 }
 
+/** Filter of DELETE /v1/me/activity. */
 export class ClearActivityQuery {
   @ApiPropertyOptional({
     enum: ActivityKind,
@@ -133,6 +140,7 @@ export class ClearActivityQuery {
   kind?: ActivityKind;
 }
 
+/** One history entry returned to the app. */
 export class ActivityDto {
   @ApiProperty({ format: 'uuid' })
   id!: string;

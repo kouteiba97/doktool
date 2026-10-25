@@ -6,6 +6,7 @@ import type { Language } from '../../generated/prisma/client.js';
 import { PasswordHasher } from '../../infrastructure/crypto/password-hasher.js';
 import { MessageDelivery } from '../../infrastructure/messaging/message-delivery.js';
 import { RateLimiter } from '../../infrastructure/rate-limit/rate-limiter.js';
+import { DemoService } from '../demo/index.js';
 import { type Identifier, parseIdentifier, UsersService } from '../users/index.js';
 import { RATE_LIMITS } from './auth.policy.js';
 import { AccountRecoveryService } from './account-recovery.service.js';
@@ -13,6 +14,7 @@ import { type OtpChallengeView, OtpService } from './otp.service.js';
 import { SecurityNoticesService } from './security-notices.service.js';
 import { type AuthTokens, type DeviceInput, SessionsService } from './sessions.service.js';
 
+/** What the sign-up form sends. */
 export interface SignUpInput {
   identifier: string;
   password: string;
@@ -25,6 +27,7 @@ export interface SignUpInput {
 
 const clientKey = (client: ClientInfo) => client.ip ?? 'unknown';
 
+/** Parses an e-mail or Algerian mobile number; refuses anything else with a field error. */
 function requireIdentifier(raw: string): Identifier {
   const identifier = parseIdentifier(raw);
   if (!identifier) {
@@ -35,6 +38,7 @@ function requireIdentifier(raw: string): Identifier {
   return identifier;
 }
 
+/** Refuses a password equal to the e-mail or phone it protects. */
 function assertPasswordAllowed(password: string, identifier: Identifier): void {
   if (password.trim().toLowerCase() === identifier.value.toLowerCase()) {
     throw new DomainError('VALIDATION_FAILED', 'The password cannot be the identifier.', {
@@ -56,8 +60,12 @@ export class AuthService {
     private readonly delivery: MessageDelivery,
     private readonly recovery: AccountRecoveryService,
     private readonly notices: SecurityNoticesService,
+    private readonly demo: DemoService,
   ) {}
 
+  /**
+   * Creates (or restarts) an unconfirmed account and sends a 6-digit code to the e-mail or phone.
+   */
   async signUp(input: SignUpInput, client: ClientInfo): Promise<OtpChallengeView> {
     await this.limiter.hit(RATE_LIMITS.signUpPerIp, clientKey(client));
     const identifier = requireIdentifier(input.identifier);
@@ -89,6 +97,10 @@ export class AuthService {
     return this.otp.issue('SIGN_UP', identifier, userId, input.language);
   }
 
+  /**
+   * Checks the sign-up code, marks the contact confirmed and signs the new account in on this
+   * device.
+   */
   async confirmSignUp(
     challengeId: string,
     code: string,
@@ -99,13 +111,20 @@ export class AuthService {
     const { userId, channel } = await this.otp.consume(challengeId, 'SIGN_UP', code);
     await this.users.markIdentifierConfirmed(userId, channel);
     await this.users.clearSignInFailures(userId);
+    // A demo tried on this device became an account (analytics « Démo » funnel).
+    await this.demo.markConverted(device.id, userId);
     return this.sessions.open(userId, device, client);
   }
 
+  /** Sends a new code for the same challenge (cooldown and limits apply). */
   resendCode(challengeId: string, language: Language): Promise<OtpChallengeView> {
     return this.otp.resend(challengeId, language);
   }
 
+  /**
+   * Password sign-in: rate limit, lockout after repeated failures, suspended and unconfirmed
+   * accounts refused. A successful sign-in cancels any recovery someone else requested.
+   */
   async signIn(
     rawIdentifier: string,
     password: string,
@@ -148,12 +167,14 @@ export class AuthService {
     return this.sessions.open(candidate.id, device, client);
   }
 
+  /** Rotates the refresh token and returns new tokens. */
   refresh(refreshToken: string, deviceId: string, client: ClientInfo): Promise<AuthTokens> {
     return this.limiter
       .hit(RATE_LIMITS.refreshPerIp, clientKey(client))
       .then(() => this.sessions.refresh(refreshToken, deviceId, client));
   }
 
+  /** Ends the current device session. */
   signOut(userId: string, sessionId: string): Promise<void> {
     return this.sessions.revoke(userId, sessionId, 'SIGN_OUT');
   }
@@ -177,6 +198,9 @@ export class AuthService {
     return this.otp.issue('PASSWORD_RESET', identifier, userId, language);
   }
 
+  /**
+   * Checks the reset code, stores the new password, signs every device out and tells the person.
+   */
   async confirmPasswordReset(
     challengeId: string,
     code: string,

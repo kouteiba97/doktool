@@ -10,8 +10,13 @@ import { RateLimitModule } from './infrastructure/rate-limit/rate-limit.module.j
 import { SecurityModule } from './infrastructure/security/security.module.js';
 import { DOMAIN_MODULES } from './modules/index.js';
 
+/**
+ * Root module: the infrastructure modules (config, database, jobs, crypto, rate limits, messaging,
+ * security, health) plus every domain module listed in modules/index.ts.
+ */
 @Module({})
 export class AppModule {
+  /** Builds the root module for one validated environment (the tests pass their own). */
   static forRoot(env: Env): DynamicModule {
     return {
       module: AppModule,

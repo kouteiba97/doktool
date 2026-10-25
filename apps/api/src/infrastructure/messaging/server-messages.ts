@@ -3,6 +3,7 @@ import en from '@doktool/i18n/messages.en.json' with { type: 'json' };
 import fr from '@doktool/i18n/messages.fr.json' with { type: 'json' };
 import { IntlMessageFormat } from 'intl-messageformat';
 
+/** Languages of server texts (the account's language). */
 export type MessageLocale = 'FR' | 'EN';
 
 const CATALOGUES: Record<MessageLocale, Record<string, string>> = { FR: fr, EN: en };
@@ -13,6 +14,10 @@ const LOCALE_TAGS: Record<MessageLocale, string> = { FR: 'fr', EN: 'en' };
 export class ServerMessages {
   private readonly cache = new Map<string, IntlMessageFormat>();
 
+  /**
+   * Formats one ICU message of the shared catalogue (e.g. a code e-mail) with its values;
+   * formatters are cached per locale and key.
+   */
   format(locale: MessageLocale, key: string, values: Record<string, string | number> = {}): string {
     const cacheKey = `${locale}:${key}`;
     let formatter = this.cache.get(cacheKey);

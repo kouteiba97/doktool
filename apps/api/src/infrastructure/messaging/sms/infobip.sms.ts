@@ -8,6 +8,7 @@ import {
   type SmsSent,
 } from './sms-gateway.js';
 
+/** The part of Infobip's answer we read. */
 interface InfobipMessage {
   messageId?: string;
   status?: { groupName?: string; name?: string };
@@ -26,6 +27,10 @@ export class InfobipSms extends SmsGateway {
     super();
   }
 
+  /**
+   * Posts one SMS to Infobip; network errors and 5xx are retryable on the next provider, a
+   * rejected number is not.
+   */
   async send(to: string, text: string): Promise<SmsSent> {
     let response: Response;
     try {

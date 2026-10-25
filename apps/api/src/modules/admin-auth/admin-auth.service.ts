@@ -23,6 +23,10 @@ import {
 import type { Grant } from './grants.js';
 import { matchTotpStep, newTotpEnrollment, type TotpEnrollment } from './totp.js';
 
+/**
+ * What the password step answers: the next step (enrol or verify TOTP) and a short-lived challenge
+ * token.
+ */
 export interface AdminSignInStep {
   next: AdminChallengeKind;
   challengeToken: string;
@@ -31,6 +35,7 @@ export interface AdminSignInStep {
   enrollment: TotpEnrollment | null;
 }
 
+/** The signed-in admin, with the grants in force now. */
 export interface AdminPrincipal {
   adminId: string;
   sessionId: string;
@@ -39,6 +44,7 @@ export interface AdminPrincipal {
   grants: Grant[];
 }
 
+/** Rate-limit key: the caller's IP. */
 const clientKey = (client: ClientInfo) => client.ip ?? 'unknown';
 
 /**
@@ -60,6 +66,10 @@ export class AdminAuthService {
     this.secretBox = new SecretBox(env.ADMIN_TOTP_ENCRYPTION_KEY);
   }
 
+  /**
+   * Step 1: checks the password (with lockout after repeated failures) and opens a 5-minute TOTP
+   * challenge. An unknown e-mail costs the same time as a wrong password.
+   */
   async signIn(rawEmail: string, password: string, client: ClientInfo): Promise<AdminSignInStep> {
     await this.limiter.hit(ADMIN_RATE_LIMITS.signInPerIp, clientKey(client));
     const email = rawEmail.trim().toLowerCase();
@@ -266,6 +276,7 @@ export class AdminAuthService {
     };
   }
 
+  /** Revokes the current admin session. */
   async signOut(principal: AdminPrincipal, client: ClientInfo): Promise<void> {
     await this.prisma.adminSession.updateMany({
       where: { id: principal.sessionId, revokedAt: null },
@@ -291,6 +302,10 @@ export class AdminAuthService {
     });
   }
 
+  /**
+   * Counts a wrong password in one atomic update; the fifth in a row locks the account for 15
+   * minutes. Returns the lock end when this failure locked it.
+   */
   private async registerFailedSignIn(adminId: string): Promise<Date | null> {
     const [row] = await this.prisma.$queryRaw<{ locked_until: Date | null; locked_now: boolean }[]>`
       UPDATE admin_accounts SET

@@ -42,6 +42,7 @@ const uuid = new ParseUUIDPipe();
 export class PregnancyController {
   constructor(private readonly pregnancy: PregnancyService) {}
 
+  /** GET /v1/pregnancy/substances: the A–Z list (optional filter). */
   @Get()
   @ApiOkResponse({ type: [SubstanceItemDto] })
   @errors

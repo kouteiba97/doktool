@@ -19,6 +19,7 @@ export const ACKNOWLEDGEMENT_VERSION = 'pro-no-refund-v1';
 
 export const DAY_MS = 24 * 3600 * 1000;
 
+/** The moment `days` after `date`. */
 export function addDays(date: Date, days: number): Date {
   return new Date(date.getTime() + days * DAY_MS);
 }

@@ -26,6 +26,10 @@ export class VerificationFilesService {
     return documents.length;
   }
 
+  /**
+   * Deletes one document: the stored object first, then its row (so a failure leaves the row to
+   * retry).
+   */
   async deleteDocument(document: { id: string; storageKey: string }): Promise<void> {
     await this.storage.delete('PRIVATE', document.storageKey);
     await this.prisma.verificationDocument.deleteMany({ where: { id: document.id } });

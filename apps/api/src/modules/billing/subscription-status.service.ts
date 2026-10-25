@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { SubscriptionStatus } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 
+/** The subscription facts the access policy looks at. */
 export interface SubscriptionSnapshot {
   status: SubscriptionStatus;
   currentPeriodEnd: Date | null;

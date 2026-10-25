@@ -25,6 +25,10 @@ export class FeatureGuard implements CanActivate {
     private readonly reflector: Reflector,
   ) {}
 
+  /**
+   * Reads the feature named by @RequireFeature on the route, computes the caller's profile and
+   * refuses with FEATURE_LOCKED (and the unlock path) when that feature is locked.
+   */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const key = this.reflector.getAllAndOverride<FeatureKey | undefined>(REQUIRED_FEATURE, [
       context.getHandler(),

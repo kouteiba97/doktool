@@ -4,6 +4,7 @@ import { AdminChallengeKind } from '../../generated/prisma/enums.js';
 import type { AdminPrincipal, AdminSignInStep } from './admin-auth.service.js';
 import { GRANTS } from './grants.js';
 
+/** Body of the password step. */
 export class AdminSignInDto {
   @ApiProperty({ format: 'email' })
   @IsEmail()
@@ -17,6 +18,7 @@ export class AdminSignInDto {
   password!: string;
 }
 
+/** Body of the TOTP step. */
 export class AdminTotpDto {
   @ApiProperty()
   @IsString()
@@ -29,6 +31,7 @@ export class AdminTotpDto {
   code!: string;
 }
 
+/** First sign-in only: the secret to add to an authenticator app. */
 export class TotpEnrollmentDto {
   @ApiProperty({ description: 'Base32 secret, for manual entry in an authenticator app.' })
   secretBase32!: string;
@@ -37,6 +40,7 @@ export class TotpEnrollmentDto {
   otpauthUri!: string;
 }
 
+/** Answer of the password step. */
 export class AdminSignInStepDto {
   @ApiProperty({ enum: AdminChallengeKind, enumName: 'AdminChallengeKind' })
   next!: AdminChallengeKind;
@@ -60,6 +64,7 @@ export class AdminSignInStepDto {
   }
 }
 
+/** The signed-in admin, as Admin Web receives it. */
 export class AdminMeDto {
   @ApiProperty({ format: 'uuid' })
   id!: string;

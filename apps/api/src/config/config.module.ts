@@ -5,6 +5,7 @@ import { ENV, type Env } from './env.js';
 @Global()
 @Module({})
 export class ConfigModule {
+  /** Registers one frozen copy of the parsed environment, so nothing can change it at runtime. */
   static forRoot(env: Env): DynamicModule {
     return {
       module: ConfigModule,

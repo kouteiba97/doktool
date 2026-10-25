@@ -49,12 +49,14 @@ const IMPORT_RATE_LIMIT = { name: 'pregnancy-import:admin', limit: 30, windowSec
 const OPEN = ['DRAFT', 'CHANGES_REQUESTED', 'IN_REVIEW'] as const;
 const EDITABLE = ['DRAFT', 'CHANGES_REQUESTED'];
 
+/** The header row found in the sheet. */
 interface HeaderInfo {
   names: (string | null)[];
   headerRow: number;
   otherSheets: string[];
 }
 
+/** A status word of the sheet, how often it appears and what it is mapped to. */
 export interface StatusWord {
   key: string;
   /** The word as written the first time it appears. */
@@ -63,6 +65,7 @@ export interface StatusWord {
   mappedTo: StatusMapping[string] | null;
 }
 
+/** What a commit created or updated. */
 export interface CommitResult {
   substancesCreated: number;
   versionsCreated: number;
@@ -73,6 +76,7 @@ export interface CommitResult {
   versionIds: string[];
 }
 
+/** A batch with its uploader, as read for the preview. */
 type BatchRow = Prisma.PregnancyImportBatchGetPayload<{
   include: {
     uploadedBy: { select: { id: true; fullName: true } };
@@ -80,6 +84,7 @@ type BatchRow = Prisma.PregnancyImportBatchGetPayload<{
   };
 }>;
 
+/** One import as the preview page shows it. */
 export interface BatchView {
   batch: BatchRow;
   headers: HeaderInfo;
@@ -94,6 +99,7 @@ export interface BatchView {
   };
 }
 
+/** An audit entry prepared during a commit, written after it succeeds. */
 interface AuditItem {
   action: string;
   entityType: string;
@@ -101,7 +107,9 @@ interface AuditItem {
   after: unknown;
 }
 
+/** SHA-256 of the uploaded file (to spot the same file uploaded twice). */
 const hash = (buffer: Buffer) => createHash('sha256').update(buffer).digest('hex');
+/** Typed cast for JSON columns. */
 const json = (value: unknown) => value as Prisma.InputJsonValue;
 
 /**
@@ -118,6 +126,10 @@ export class PregnancyImportService {
 
   // ─────────────────────────────── upload ───────────────────────────────
 
+  /**
+   * Reads an uploaded workbook, finds its header row, maps its columns and stores it as a preview
+   * batch (nothing is written to the library yet).
+   */
   async upload(
     admin: AdminPrincipal,
     file: { originalname: string; buffer: Buffer },
@@ -193,6 +205,7 @@ export class PregnancyImportService {
 
   // ─────────────────────────────── reading ───────────────────────────────
 
+  /** Past imports, newest first. */
   async list(limit: number, offset: number) {
     const [items, total] = await Promise.all([
       this.prisma.pregnancyImportBatch.findMany({
@@ -210,6 +223,7 @@ export class PregnancyImportService {
     return { items, total };
   }
 
+  /** One import with its rows (filtered and paged); rows are re-checked against today's library. */
   async view(id: string, filter: RowFilter, limit: number, offset: number): Promise<BatchView> {
     const current = await this.prisma.pregnancyImportBatch.findUnique({
       where: { id },
@@ -347,6 +361,7 @@ export class PregnancyImportService {
     });
   }
 
+  /** Correction of one row by the admin (values, exclusion, conflict choice). */
   async updateRow(
     admin: AdminPrincipal,
     id: string,
@@ -398,6 +413,7 @@ export class PregnancyImportService {
     });
   }
 
+  /** Abandons an import; nothing is written to the library. */
   async discard(
     admin: AdminPrincipal,
     id: string,
@@ -688,6 +704,7 @@ export class PregnancyImportService {
 
   // ─────────────────────────────── internals ───────────────────────────────
 
+  /** An import still in preview, at the revision the admin saw (refuses stale edits). */
   private async editable(id: string, revision: number) {
     const batch = await this.prisma.pregnancyImportBatch.findUnique({ where: { id } });
     if (!batch) throw new DomainError('NOT_FOUND', 'Import not found.');
@@ -700,6 +717,7 @@ export class PregnancyImportService {
     return batch;
   }
 
+  /** Saves a change to the batch and moves its revision forward. */
   private async bump(
     tx: Prisma.TransactionClient,
     id: string,
@@ -742,6 +760,7 @@ export class PregnancyImportService {
     }
   }
 
+  /** Audit entry of an import action. */
   private async record(
     admin: AdminPrincipal,
     client: ClientInfo,
@@ -764,6 +783,7 @@ export class PregnancyImportService {
   }
 }
 
+/** A stored row in the shape the checker expects. */
 function toInput(row: {
   id: string;
   rowNumber: number;
@@ -782,6 +802,10 @@ function toInput(row: {
   };
 }
 
+/**
+ * Every substance with its names and contents, for matching rows (a merged duplicate stands for
+ * the substance kept).
+ */
 async function loadLibrary(
   db: Prisma.TransactionClient | PrismaService,
 ): Promise<LibrarySubstance[]> {

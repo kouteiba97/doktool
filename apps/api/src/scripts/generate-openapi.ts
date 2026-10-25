@@ -9,6 +9,7 @@ import { AppModule } from '../app.module.js';
 import { loadEnv } from '../config/env.js';
 import { buildOpenApiDocument } from '../openapi/document.js';
 
+// Where the published contract lives (packages/api-contract).
 const contractPath = fileURLToPath(
   new URL('../../../../packages/api-contract/openapi.json', import.meta.url),
 );

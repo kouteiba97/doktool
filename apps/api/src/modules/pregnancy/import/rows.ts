@@ -32,6 +32,7 @@ export type Target = (typeof TARGETS)[number];
 export type RowValues = Record<Field, string | null>;
 
 export type Severity = 'ERROR' | 'WARNING' | 'INFO';
+/** One problem or note about a row, shown in the preview. */
 export interface Issue {
   field: Field | 'row';
   severity: Severity;
@@ -89,6 +90,7 @@ export function findHeaderRow(rows: Cell[][]): number {
   return -1;
 }
 
+/** Guesses which column holds which field from the header names. */
 export function detectColumns(headers: (string | null)[]): ColumnMapping {
   const mapping: ColumnMapping = {};
   const taken = new Set<Field>();
@@ -100,6 +102,7 @@ export function detectColumns(headers: (string | null)[]): ColumnMapping {
   return mapping;
 }
 
+/** The required fields (substance, period, status) no column is mapped to. */
 export function missingColumns(mapping: ColumnMapping): Field[] {
   const mapped = new Set(Object.values(mapping));
   return (['substance', 'period', 'status'] as const).filter((field) => !mapped.has(field));
@@ -158,6 +161,7 @@ export function parsePeriod(raw: string | null): PeriodResult {
 }
 
 export type ContextValue = 'PREGNANCY' | 'LACTATION';
+/** Reads a "pregnancy / lactation" column (null when empty, UNKNOWN when unreadable). */
 export function parseContext(raw: string | null): ContextValue | null | 'UNKNOWN' {
   const text = normaliseForSearch(raw ?? '');
   if (!text) return null;
@@ -169,6 +173,7 @@ export function parseContext(raw: string | null): ContextValue | null | 'UNKNOWN
 /** The form a status word is mapped under: « Non valide », « non  valide » → « non valide ». */
 export const statusKey = (raw: string | null) => normaliseForSearch(raw ?? '');
 
+/** Reads a source URL: only http(s) with a host; anything else is an error for the row. */
 export function parseUrl(
   raw: string | null,
 ): { url: string; host: string } | { error: string } | null {
@@ -195,6 +200,7 @@ export const splitAlternatives = (raw: string | null) =>
 
 // ─────────────────────────────── validation ───────────────────────────────
 
+/** A substance as the import sees it: its names and its open and published content. */
 export interface LibrarySubstance {
   id: string;
   nameFr: string;
@@ -204,11 +210,13 @@ export interface LibrarySubstance {
   published: ProfileContent | null;
 }
 
+/** Substances indexed by every normalised name and synonym. */
 export interface Library {
   /** Normalised name or synonym → substances bearing it. */
   byName: Map<string, LibrarySubstance[]>;
 }
 
+/** Builds the name index of the existing substances. */
 export function libraryOf(substances: LibrarySubstance[]): Library {
   const byName = new Map<string, LibrarySubstance[]>();
   for (const substance of substances) {
@@ -221,6 +229,7 @@ export function libraryOf(substances: LibrarySubstance[]): Library {
   return { byName };
 }
 
+/** One stored row of the batch: its values, original cells, and the admin's choices. */
 export interface RowInput {
   id: string;
   rowNumber: number;
@@ -230,12 +239,14 @@ export interface RowInput {
   resolution: 'UPDATE' | 'SKIP' | null;
 }
 
+/** The source a row cites. */
 export interface PlanSource {
   url: string;
   host: string;
   title: string | null;
 }
 
+/** The result of checking a row: its issues and, without errors, what it would write. */
 export interface CheckedRow {
   id: string;
   issues: Issue[];
@@ -253,8 +264,10 @@ export interface CheckedRow {
   } | null;
 }
 
+/** True when one of the issues is an error. */
 const blocking = (issues: Issue[]) => issues.some((issue) => issue.severity === 'ERROR');
 
+/** The period (or lactation block) already in a profile, if any. */
 function existingPeriod(content: ProfileContent | null, target: Target) {
   if (!content) return null;
   if (target === 'LACTATION') return content.lactation;
@@ -461,6 +474,7 @@ export function checkRows(
   return checked;
 }
 
+/** Counts shown at the top of the preview. */
 export interface Summary {
   total: number;
   excluded: number;
@@ -472,6 +486,7 @@ export interface Summary {
   newSubstances: number;
 }
 
+/** Counts rows by state for the preview header. */
 export function summarise(rows: RowInput[], checked: Pick<CheckedRow, 'issues'>[]): Summary {
   const live = rows.flatMap((row, index) =>
     row.excluded ? [] : [{ row, issues: checked[index]!.issues }],

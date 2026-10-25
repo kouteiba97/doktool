@@ -15,6 +15,7 @@ import { ClinicalReviewService } from './clinical-review.service.js';
 export class ClinicalReviewController {
   constructor(private readonly review: ClinicalReviewService) {}
 
+  /** GET /admin/v1/clinical-review/policies. */
   @Get()
   @RequireGrants('system.settings.write')
   @ApiOkResponse({ type: [ReviewPolicyDto] })
@@ -22,6 +23,7 @@ export class ClinicalReviewController {
     return (await this.review.policies()).map((policy) => ReviewPolicyDto.from(policy));
   }
 
+  /** PUT /admin/v1/clinical-review/policies/:content: one or two sign-offs. */
   @Put(':content')
   @RequireGrants('system.settings.write')
   @ApiParam({ name: 'content', enum: ClinicalContentKind, enumName: 'ClinicalContentKind' })

@@ -10,6 +10,7 @@ export const DEMO_AUDIENCE = 'doktool-demo';
 /** Demo access-token lifetime (ADR-010: 1 hour, renewed with the renewal token). */
 export const DEMO_TOKEN_TTL_SECONDS = 60 * 60;
 
+/** Who a demo token stands for: a demo session (no user account) and the profession it previews. */
 export interface DemoPrincipal {
   demoSessionId: string;
   demoContext: DemoContext;
@@ -29,6 +30,7 @@ export class DemoTokens {
     this.key = new TextEncoder().encode(env.USER_JWT_SECRET);
   }
 
+  /** Signs a one-hour demo access token for a demo session. */
   async issue(principal: DemoPrincipal): Promise<{ token: string; expiresAt: Date }> {
     const issuedAt = Math.floor(Date.now() / 1000);
     const expiresAt = new Date((issuedAt + DEMO_TOKEN_TTL_SECONDS) * 1000);
@@ -44,6 +46,10 @@ export class DemoTokens {
     return { token, expiresAt };
   }
 
+  /**
+   * Checks the signature, issuer, audience and expiry of a demo token and returns its session;
+   * throws UNAUTHENTICATED otherwise.
+   */
   async verify(token: string): Promise<DemoPrincipal> {
     try {
       const { payload } = await jwtVerify(token, this.key, {

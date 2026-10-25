@@ -59,6 +59,7 @@ const uuid = new ParseUUIDPipe();
 export class PregnancyImportController {
   constructor(private readonly imports: PregnancyImportService) {}
 
+  /** POST /admin/v1/pregnancy/imports: uploads a spreadsheet and returns its preview. */
   @Post()
   @HttpCode(HttpStatus.OK)
   @RequireGrants('pregnancy.draft')
@@ -89,6 +90,7 @@ export class PregnancyImportController {
     return ImportPreviewDto.from(await this.imports.view(id, 'ALL', 50, 0));
   }
 
+  /** GET /admin/v1/pregnancy/imports: past imports. */
   @Get()
   @RequireGrants('pregnancy.read')
   @ApiOkResponse({ type: ImportListDto })
@@ -117,6 +119,7 @@ export class PregnancyImportController {
     };
   }
 
+  /** GET /admin/v1/pregnancy/imports/:id: the preview with its rows. */
   @Get(':id')
   @RequireGrants('pregnancy.read')
   @ApiOkResponse({ type: ImportPreviewDto })
@@ -129,6 +132,7 @@ export class PregnancyImportController {
     );
   }
 
+  /** PUT …/imports/:id/mapping: columns and status words. */
   @Put(':id/mapping')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants('pregnancy.draft')
@@ -151,6 +155,7 @@ export class PregnancyImportController {
     );
   }
 
+  /** PATCH …/imports/:id/rows/:rowId: corrects one row. */
   @Patch(':id/rows/:rowId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants('pregnancy.draft')
@@ -165,6 +170,7 @@ export class PregnancyImportController {
     await this.imports.updateRow(admin, id, rowId, body, client);
   }
 
+  /** POST …/imports/:id/commit: writes the valid rows into drafts. */
   @Post(':id/commit')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('pregnancy.draft')
@@ -178,6 +184,7 @@ export class PregnancyImportController {
     return CommitResultDto.from(await this.imports.commit(admin, id, body, client));
   }
 
+  /** POST …/imports/:id/discard: abandons the import. */
   @Post(':id/discard')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants('pregnancy.draft')

@@ -14,6 +14,7 @@ const MAX_TOTAL_BYTES = 60 * 1024 * 1024;
 const MAX_COLUMNS = 40;
 const MAX_CELL_CHARS = 2000;
 
+/** One cell as read: its text, its hyperlink and whether it was a formula. */
 export interface Cell {
   text: string | null;
   /** External hyperlink target on the cell, or the URL of a HYPERLINK() formula. */
@@ -22,6 +23,7 @@ export interface Cell {
   formula: boolean;
 }
 
+/** The first sheet of a workbook, as rows of cells. */
 export interface Workbook {
   sheetName: string;
   /** Other sheets of the file, not read. */
@@ -30,6 +32,7 @@ export interface Workbook {
   rows: Cell[][];
 }
 
+/** An UPLOAD_INVALID error shown on the file field. */
 const invalid = (message: string) =>
   new DomainError('UPLOAD_INVALID', message, { fields: { file: [message] } });
 
@@ -73,8 +76,10 @@ function inflate(buffer: Buffer, wanted: (name: string) => boolean): Map<string,
 }
 
 const decoder = new TextDecoder('utf-8', { fatal: false });
+/** A zip part decoded as text. */
 const xml = (part: Uint8Array | undefined) => (part ? decoder.decode(part) : '');
 
+/** Turns XML entities back into characters. */
 const unescapeXml = (text: string) =>
   text
     .replace(/&lt;/g, '<')
@@ -83,6 +88,7 @@ const unescapeXml = (text: string) =>
     .replace(/&apos;/g, "'")
     .replace(/&amp;/g, '&');
 
+/** The attributes of one XML tag. */
 function attributes(tag: string): Map<string, string> {
   const found = new Map<string, string>();
   for (const match of tag.matchAll(/([\w:]+)="([^"]*)"/g))
@@ -99,6 +105,7 @@ export function cellAddress(ref: string): { row: number; column: number } | null
   return { row: Number(match[2]) - 1, column: column - 1 };
 }
 
+/** A cell value as trimmed, bounded text (dates as YYYY-MM-DD). */
 function cellText(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   let text: string;
@@ -110,6 +117,10 @@ function cellText(value: unknown): string | null {
   return text ? text.slice(0, MAX_CELL_CHARS) : null;
 }
 
+/**
+ * Reads an uploaded .xlsx safely: size and signature checks, bounded inflation, first sheet only,
+ * formulas never evaluated, hyperlinks kept.
+ */
 export async function readWorkbook(buffer: Buffer): Promise<Workbook> {
   if (buffer.length === 0) throw invalid('The file is empty.');
   if (buffer.length > MAX_FILE_BYTES) throw invalid('The file is larger than 5 MB.');

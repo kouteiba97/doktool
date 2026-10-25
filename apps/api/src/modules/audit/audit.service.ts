@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import type { AuditActorType, AuditLogEntry, Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 
+/**
+ * One line of the audit log: who did what to which record, with before/after values and a reason.
+ */
 export interface AuditEntry {
   actorType: AuditActorType;
   actorId: string | null;
@@ -16,6 +19,7 @@ export interface AuditEntry {
   userAgent?: string | null;
 }
 
+/** Filters of the audit log page and its CSV export. */
 export interface AuditFilter {
   actorType?: AuditActorType;
   actorId?: string;
@@ -38,6 +42,7 @@ export const AUDIT_EXPORT_MAX = 10_000;
 export class AuditService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Appends one entry. Called inside or right after every admin change. */
   async record(entry: AuditEntry): Promise<void> {
     await this.prisma.auditLogEntry.create({
       data: {

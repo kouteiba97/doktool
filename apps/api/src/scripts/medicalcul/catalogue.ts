@@ -110,6 +110,7 @@ export const catalogueSchema = z
   .strict();
 export type Catalogue = z.infer<typeof catalogueSchema>;
 
+/** SHA-256 in hex. */
 const hash = (data: string | Buffer) => createHash('sha256').update(data).digest('hex');
 
 /** DokTool slug from the page file name: abcd2.html → abcd2, aclf_grades.html → aclf-grades. */
@@ -120,6 +121,10 @@ export const slugFor = (id: string) =>
     .replace(/^-+|-+$/g, '')
     .slice(0, 80);
 
+/**
+ * Turns one downloaded Medicalcul page into a catalogue entry: title, specialty, provenance and,
+ * when the translator succeeds, a DokTool draft definition.
+ */
 export function buildEntry(file: string, bytes: Buffer, indexed: boolean): CatalogueEntry {
   const id = file.replace(/\.html$/, '');
   const base = {
@@ -218,6 +223,7 @@ export function buildEntry(file: string, bytes: Buffer, indexed: boolean): Catal
   };
 }
 
+/** Builds the whole catalogue from every page, in a stable order. */
 export function buildCatalogue(
   source: CatalogueSource,
   pages: { file: string; bytes: Buffer }[],
@@ -253,6 +259,7 @@ export function buildCatalogue(
   });
 }
 
+/** One cell of coverage.csv. */
 const csvCell = (value: string | number | boolean | null | undefined | string[]) => {
   const text = Array.isArray(value)
     ? value.join(' | ')
@@ -313,5 +320,6 @@ export function coverageCsv(catalogue: Catalogue): string {
   return [header, ...rows].map((row) => row.map(csvCell).join(',')).join('\n') + '\n';
 }
 
+/** JSON Schema of catalogue.json, written next to it. */
 export const catalogueJsonSchema = () =>
   z.toJSONSchema(catalogueSchema, { target: 'draft-2020-12' });

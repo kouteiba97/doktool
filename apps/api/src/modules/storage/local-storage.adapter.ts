@@ -25,6 +25,7 @@ export interface LocalGrant {
   contentLength?: number;
 }
 
+/** What is kept next to each local object. */
 interface Metadata {
   contentType: string;
   sizeBytes: number;
@@ -52,6 +53,7 @@ export class LocalStorageAdapter extends StorageService {
     );
   }
 
+  /** Writes the file (never over an existing one) and its metadata. */
   async upload(input: UploadInput): Promise<StoredObject> {
     const { file, meta } = this.paths(input.bucket, input.key);
     await mkdir(path.dirname(file), { recursive: true });
@@ -74,12 +76,14 @@ export class LocalStorageAdapter extends StorageService {
     return { bucket: input.bucket, key: input.key, ...metadata };
   }
 
+  /** Deletes the file and its metadata. */
   async delete(bucket: BucketId, key: string): Promise<void> {
     const { file, meta } = this.paths(bucket, key);
     await rm(file, { force: true });
     await rm(meta, { force: true });
   }
 
+  /** Size, type and checksum of a local object, or null. */
   async head(bucket: BucketId, key: string): Promise<StoredObject | null> {
     const { file, meta } = this.paths(bucket, key);
     try {
@@ -98,11 +102,13 @@ export class LocalStorageAdapter extends StorageService {
     }
   }
 
+  /** The bytes of a local object (or a range of them). */
   async download(bucket: BucketId, key: string, range?: ByteRange): Promise<Uint8Array> {
     const bytes = await readFile(this.paths(bucket, key).file);
     return new Uint8Array(range ? bytes.subarray(range.start, range.end + 1) : bytes);
   }
 
+  /** A signed, expiring GET URL served by LocalStorageController. */
   getSignedReadUrl(
     bucket: BucketId,
     key: string,
@@ -113,6 +119,7 @@ export class LocalStorageAdapter extends StorageService {
     );
   }
 
+  /** A signed, expiring PUT URL fixing type and size. */
   getSignedUploadUrl(
     bucket: BucketId,
     key: string,
@@ -144,16 +151,19 @@ export class LocalStorageAdapter extends StorageService {
     return grant;
   }
 
+  /** Encodes and signs a grant into a URL. */
   private sign(grant: LocalGrant): string {
     const payload = Buffer.from(JSON.stringify(grant)).toString('base64url');
     const signature = createHmac('sha256', this.signingKey).update(payload).digest('base64url');
     return `${this.baseUrl}${LOCAL_OBJECTS_PATH}?token=${payload}.${signature}`;
   }
 
+  /** Unix time `ttlSeconds` from now. */
   private expiry(ttlSeconds: number): number {
     return Math.floor(Date.now() / 1000) + ttlSeconds;
   }
 
+  /** The file and metadata paths of a key, refusing anything outside the bucket folder. */
   private paths(bucket: BucketId, key: string): { file: string; meta: string } {
     if (!BUCKETS.includes(bucket) || !isValidStorageKey(key)) {
       throw new DomainError('UPLOAD_INVALID', 'Invalid storage key.');

@@ -23,12 +23,17 @@ const STATUS_CODES: Partial<Record<number, string>> = {
 export class ErrorFilter implements ExceptionFilter {
   private readonly logger = new Logger(ErrorFilter.name);
 
+  /** Called by Nest for any exception thrown while handling a request; writes the JSON error. */
   catch(exception: unknown, host: ArgumentsHost): void {
     const response = host.switchToHttp().getResponse<Response>();
     const [status, body] = this.toBody(exception);
     response.status(status).json(body);
   }
 
+  /**
+   * Maps an exception to [HTTP status, body]: DomainError as is, validation errors as
+   * VALIDATION_FAILED, other HTTP errors by status, anything else as a logged 500.
+   */
   private toBody(exception: unknown): [number, ErrorResponse] {
     if (exception instanceof DomainError) {
       return [

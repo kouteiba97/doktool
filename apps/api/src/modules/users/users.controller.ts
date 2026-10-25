@@ -70,6 +70,7 @@ export class UsersController {
     return this.users.listWilayas();
   }
 
+  /** GET /v1/me: the signed-in account, with a signed URL of its photo. */
   @Get('me')
   @UseGuards(UserAuthGuard)
   @ApiBearerAuth('user')
@@ -92,6 +93,7 @@ export class UsersController {
     return this.present(await this.users.updateProfile(user.userId, body));
   }
 
+  /** PATCH /v1/me/preferences. */
   @Patch('me/preferences')
   @UseGuards(UserAuthGuard)
   @ApiBearerAuth('user')
@@ -147,6 +149,7 @@ export class UsersController {
     return this.present(await this.users.getMe(user.userId));
   }
 
+  /** DELETE /v1/me/photo. */
   @Delete('me/photo')
   @UseGuards(UserAuthGuard)
   @ApiBearerAuth('user')
@@ -157,6 +160,7 @@ export class UsersController {
     return this.present(await this.users.getMe(user.userId));
   }
 
+  /** Turns an account record into the response (photo key → signed URL). */
   private async present(record: MeRecord): Promise<MeDto> {
     return MeDto.from(record, await this.photos.urlOf(record.avatarStorageKey));
   }

@@ -15,6 +15,7 @@ export type Viewer =
   | ({ accessContext: 'AUTHENTICATED' } & UserPrincipal)
   | ({ accessContext: 'DEMO' } & DemoPrincipal);
 
+/** An Express request after ViewerAuthGuard ran. */
 type ViewerRequest = Request & { viewer?: Viewer };
 
 /**
@@ -28,6 +29,7 @@ export class ViewerAuthGuard implements CanActivate {
     private readonly demoTokens: DemoTokens,
   ) {}
 
+  /** Accepts either a user token or a demo token and stores the resulting viewer on the request. */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<ViewerRequest>();
     const match = /^Bearer ([A-Za-z0-9._~+/=-]+)$/.exec(request.get('authorization') ?? '');
@@ -51,6 +53,7 @@ function isDemoToken(token: string): boolean {
   }
 }
 
+/** Route parameter decorator returning the viewer set by ViewerAuthGuard. */
 export const CurrentViewer = createParamDecorator((_: unknown, context: ExecutionContext) => {
   const viewer = context.switchToHttp().getRequest<ViewerRequest>().viewer;
   if (!viewer) throw new DomainError('UNAUTHENTICATED', 'Route is not guarded by ViewerAuthGuard.');

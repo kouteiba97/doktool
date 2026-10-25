@@ -86,6 +86,7 @@ export class AuthController {
     );
   }
 
+  /** POST /v1/auth/sign-in: password sign-in on a device. */
   @Post('sign-in')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: AuthTokensDto })
@@ -105,6 +106,7 @@ export class AuthController {
     return AuthTokensDto.from(await this.auth.refresh(body.refreshToken, body.deviceId, client));
   }
 
+  /** POST /v1/auth/sign-out: ends this device's session. */
   @Post('sign-out')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(UserAuthGuard)
@@ -149,6 +151,7 @@ export class AuthController {
 export class SessionsController {
   constructor(private readonly sessions: SessionsService) {}
 
+  /** GET /v1/me/sessions: the devices signed in. */
   @Get()
   @ApiOkResponse({ type: [SessionDto] })
   async list(@CurrentUser() user: UserPrincipal): Promise<SessionDto[]> {
@@ -156,6 +159,7 @@ export class SessionsController {
     return sessions.map((session) => SessionDto.from(session, user.sessionId));
   }
 
+  /** DELETE /v1/me/sessions/:id: signs one device out. */
   @Delete(':sessionId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
@@ -176,6 +180,7 @@ export class SessionsController {
 export class AccountDeletionController {
   constructor(private readonly deletion: AccountDeletionService) {}
 
+  /** POST /v1/me/account/deletion: deletes the account (password required). */
   @Post('deletion')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()

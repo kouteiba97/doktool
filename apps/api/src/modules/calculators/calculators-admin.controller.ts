@@ -46,6 +46,7 @@ const uuid = new ParseUUIDPipe();
 export class CalculatorsAdminController {
   constructor(private readonly calculators: CalculatorsAdminService) {}
 
+  /** GET /admin/v1/calculators. */
   @Get()
   @RequireGrants('calculators.read')
   @ApiOkResponse({ type: [AdminCalculatorDto] })
@@ -54,6 +55,7 @@ export class CalculatorsAdminController {
     return (await this.calculators.list()).map((record) => AdminCalculatorDto.from(record));
   }
 
+  /** GET /admin/v1/calculators/:id. */
   @Get(':id')
   @RequireGrants('calculators.read')
   @ApiOkResponse({ type: AdminCalculatorDto })
@@ -62,6 +64,7 @@ export class CalculatorsAdminController {
     return AdminCalculatorDto.from(await this.calculators.detail(id));
   }
 
+  /** POST /admin/v1/calculators. */
   @Post()
   @HttpCode(HttpStatus.OK)
   @RequireGrants('calculators.draft')
@@ -106,6 +109,7 @@ export class CalculatorsAdminController {
     return AdminVersionDto.from(await this.calculators.createVersion(admin, id, body, client));
   }
 
+  /** GET /admin/v1/calculators/versions/:versionId. */
   @Get('versions/:versionId')
   @RequireGrants('calculators.read')
   @ApiOkResponse({ type: AdminVersionDto })
@@ -114,6 +118,7 @@ export class CalculatorsAdminController {
     return AdminVersionDto.from(await this.calculators.version(versionId));
   }
 
+  /** PUT …/versions/:versionId/definition: saves the draft's definition. */
   @Put('versions/:versionId/definition')
   @RequireGrants('calculators.draft')
   @ApiOkResponse({ type: AdminVersionDto })
@@ -129,6 +134,7 @@ export class CalculatorsAdminController {
     );
   }
 
+  /** POST …/versions/:versionId/sources. */
   @Post('versions/:versionId/sources')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('calculators.draft')
@@ -143,6 +149,7 @@ export class CalculatorsAdminController {
     return AdminVersionDto.from(await this.calculators.addSource(admin, versionId, body, client));
   }
 
+  /** DELETE …/versions/:versionId/sources/:sourceId. */
   @Delete('versions/:versionId/sources/:sourceId')
   @RequireGrants('calculators.draft')
   @ApiOkResponse({ type: AdminVersionDto })
@@ -158,6 +165,7 @@ export class CalculatorsAdminController {
     );
   }
 
+  /** POST …/versions/:versionId/test-cases. */
   @Post('versions/:versionId/test-cases')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('calculators.draft')
@@ -179,6 +187,7 @@ export class CalculatorsAdminController {
     );
   }
 
+  /** DELETE …/versions/:versionId/test-cases/:testCaseId. */
   @Delete('versions/:versionId/test-cases/:testCaseId')
   @RequireGrants('calculators.draft')
   @ApiOkResponse({ type: AdminVersionDto })
@@ -275,6 +284,7 @@ export class CalculatorsAdminController {
     );
   }
 
+  /** DELETE …/versions/:versionId: deletes a draft. */
   @Delete('versions/:versionId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants('calculators.draft')

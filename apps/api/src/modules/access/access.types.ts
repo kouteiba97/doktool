@@ -40,8 +40,10 @@ export const UNLOCK_PATHS = [
 ] as const;
 export type UnlockPath = (typeof UNLOCK_PATHS)[number];
 
+/** The five tiers, as stored in the database enum. */
 export type Tier = EntitlementTier;
 
+/** The decision about one feature. */
 export interface FeatureDecision {
   key: FeatureKey;
   state: 'AVAILABLE' | 'LOCKED';
@@ -54,6 +56,7 @@ export interface FeatureDecision {
 /** Which items of a content type open: all, student-tier (+ demo samples), demo samples, none. */
 export type ContentScope = 'ALL' | 'STUDENT_TIER' | 'DEMO_SAMPLE' | 'NONE';
 
+/** Content rule of one content type. */
 export interface ContentRule {
   scope: ContentScope;
   /** Reason shown on items outside the scope. */
@@ -63,6 +66,7 @@ export interface ContentRule {
 
 export type ContentType = 'calculators' | 'referenceDocuments' | 'pregnancyProfiles';
 
+/** Everything the app needs to show or lock: computed by evaluateAccess, never stored. */
 export interface AccessProfile {
   accessContext: 'AUTHENTICATED' | 'DEMO';
   tier: Tier;
@@ -90,6 +94,7 @@ export interface AccessibleItem {
   demoSample: boolean;
 }
 
+/** The decision about one item (a calculator, a reference model, a pregnancy profile). */
 export interface ItemAccess {
   state: 'AVAILABLE' | 'LOCKED';
   lockReason: LockReason | null;

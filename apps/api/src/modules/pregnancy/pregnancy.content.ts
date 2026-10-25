@@ -131,6 +131,7 @@ export function reviewProblems(
 ): string[] {
   const problems: string[] = [];
   if (context.sourceIds.length === 0) problems.push('sources: at least one source is required');
+  /** Reports alternatives that are the substance itself or not an existing substance. */
   const checkAlternatives = (where: string, ids: readonly string[]) => {
     for (const id of ids) {
       if (id === context.substanceId)
@@ -139,6 +140,10 @@ export function reviewProblems(
         problems.push(`${where}.alternatives: unknown substance ${id}`);
     }
   };
+  /**
+   * Reports a period without its evidence level, citing a source not attached to this version, or
+   * with alternatives not yet linked to a substance.
+   */
   const checkPeriod = (
     where: string,
     value: {
@@ -155,6 +160,7 @@ export function reviewProblems(
         `${where}.unresolvedAlternatives: link « ${name} » to a substance or remove it`,
       );
   };
+  /** Reports a conflict between sources that cites sources not attached to this version. */
   const checkConflict = (where: string, value: { sourceIds: string[] } | undefined) => {
     if (value && value.sourceIds.some((id) => !context.sourceIds.includes(id))) {
       problems.push(`${where}.conflict: cite two of this version's sources`);

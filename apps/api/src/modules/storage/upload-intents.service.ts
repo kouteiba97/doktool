@@ -12,11 +12,13 @@ import {
 } from './storage.policy.js';
 import { StorageService, type StoredObject } from './storage.service.js';
 
+/** Who asked for an upload (only they can confirm it). */
 export interface UploadRequester {
   type: UploaderType;
   id: string;
 }
 
+/** An upload a module wants to allow. */
 export interface NewUploadIntent {
   purpose: UploadPurpose;
   /** Allocated by the owning module with StorageKeys. */
@@ -27,6 +29,7 @@ export interface NewUploadIntent {
   requestedBy: UploadRequester;
 }
 
+/** What the client needs to upload: the signed URL and the headers to send. */
 export interface UploadTicket {
   intentId: string;
   key: string;
@@ -48,6 +51,10 @@ export class UploadIntentsService {
     private readonly storage: StorageService,
   ) {}
 
+  /**
+   * Checks type, size and checksum format, records the intent and signs a PUT URL valid 15
+   * minutes.
+   */
   async create(input: NewUploadIntent): Promise<UploadTicket> {
     const rule = UPLOAD_RULES[input.purpose];
     const fields: Record<string, string[]> = {};

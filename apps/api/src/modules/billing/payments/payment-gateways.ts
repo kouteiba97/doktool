@@ -17,6 +17,7 @@ import { SatimGateway } from './satim.gateway.js';
 /** Card networks in the order the app lists them. */
 export const PAYMENT_METHODS: readonly PaymentMethod[] = Object.values(PaymentMethods);
 
+/** One payment method, the gateway that takes it and whether it is switched on. */
 export interface MethodRoute {
   method: PaymentMethod;
   /** The configured gateway that takes this method, or null when none accepts it. */
@@ -58,6 +59,7 @@ export class PaymentGateways {
     return this.active.find((gateway) => Object.values(gateway.channels).includes(channel)) ?? null;
   }
 
+  /** A configured gateway by id (null when not configured). */
   byId(id: string): PaymentGateway | null {
     return this.active.find((gateway) => gateway.id === id) ?? null;
   }
@@ -115,6 +117,7 @@ const CHANNEL_METHODS: Record<PaymentProvider, PaymentMethod> = {
   CHARGILY_EDAHABIA: 'EDAHABIA',
 };
 
+/** The card network of a recorded channel. */
 export function methodOfChannel(channel: PaymentProvider): PaymentMethod {
   return CHANNEL_METHODS[channel];
 }

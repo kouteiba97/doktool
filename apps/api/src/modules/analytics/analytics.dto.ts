@@ -18,6 +18,7 @@ import { CLIENT_EVENT_TYPES, type ClientEventType, MAX_BATCH } from './analytics
 
 // ─────────────────────────────── ingestion ───────────────────────────────
 
+/** One event in an upload. */
 export class AnalyticsEventDto {
   @ApiProperty({ enum: CLIENT_EVENT_TYPES, enumName: 'ClientAnalyticsEventType' })
   @IsIn(CLIENT_EVENT_TYPES)
@@ -45,6 +46,7 @@ export class AnalyticsEventDto {
   properties!: Record<string, unknown>;
 }
 
+/** Body of POST /v1/analytics/events. */
 export class AnalyticsBatchDto {
   @ApiProperty({ enum: ['IOS', 'ANDROID'] })
   @IsIn(['IOS', 'ANDROID'])
@@ -76,6 +78,7 @@ export class IngestRejectionsDto {
   @ApiPropertyOptional() CONTEXT?: number;
 }
 
+/** Answer of an upload. */
 export class IngestResultDto {
   @ApiProperty() accepted!: number;
   @ApiProperty({
@@ -87,6 +90,7 @@ export class IngestResultDto {
 
 // ─────────────────────────────── dashboards ───────────────────────────────
 
+/** Period (from inclusive, to exclusive) and optional segment of a dashboard. */
 export class DashboardQuery {
   @ApiProperty({ format: 'date-time' })
   @Type(() => Date)

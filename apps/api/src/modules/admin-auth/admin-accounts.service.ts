@@ -21,6 +21,7 @@ export const TEMPORARY_GRANTS = ['verification.documents.view'] as const;
 export type TemporaryGrant = (typeof TEMPORARY_GRANTS)[number];
 export const TEMPORARY_GRANT_HOURS = { default: 2, max: 8 } as const;
 
+/** What is needed to create an admin account. */
 export interface NewAdminAccount {
   email: string;
   fullName: string;
@@ -39,6 +40,10 @@ export class AdminAccountsService {
     private readonly audit: AuditService,
   ) {}
 
+  /**
+   * Creates an admin with the grants of a preset; refuses presets that break the separation of
+   * duties, and duplicate e-mails.
+   */
   async create(input: NewAdminAccount): Promise<{ id: string }> {
     const grants: readonly Grant[] = PRESETS[input.preset];
     const violations = separationOfDutiesViolations(grants, input.preset === 'SUPER_ADMIN');
@@ -247,6 +252,7 @@ export class AdminAccountsService {
     await this.record(actor, client, 'admin.totp.reset', adminId, { reason });
   }
 
+  /** Refuses changes to one's own account, and unknown admins. */
   private async assertOther(actor: AdminPrincipal, adminId: string): Promise<void> {
     if (actor.adminId === adminId) {
       throw new DomainError('FORBIDDEN', 'Another Super Admin changes your own access.');
@@ -255,6 +261,7 @@ export class AdminAccountsService {
     if (exists === 0) throw new DomainError('NOT_FOUND', 'Admin not found.');
   }
 
+  /** Revokes every open session of an admin. */
   private async endSessions(adminId: string): Promise<void> {
     await this.prisma.adminSession.updateMany({
       where: { adminId, revokedAt: null },
@@ -262,6 +269,7 @@ export class AdminAccountsService {
     });
   }
 
+  /** Writes the audit entry of a change to an admin account. */
   private record(
     actor: AdminPrincipal,
     client: ClientInfo,

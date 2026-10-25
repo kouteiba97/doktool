@@ -2,6 +2,7 @@
 // queries are, stored in `substances.search_text` (trigram index) on every change.
 import { normaliseForSearch } from '../../common/text/search-text.js';
 
+/** The normalised text searched by the app: names and synonyms, accents removed, lower case. */
 export function searchTextOf(
   nameFr: string,
   nameEn: string | null,

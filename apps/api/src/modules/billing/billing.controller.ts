@@ -66,6 +66,7 @@ export class BillingController {
     private readonly gateways: PaymentGateways,
   ) {}
 
+  /** GET /v1/subscription: the subscription screen. */
   @Get()
   @UseGuards(UserAuthGuard)
   @ApiBearerAuth('user')
@@ -203,6 +204,7 @@ export class BillingController {
     );
   }
 
+  /** Development only: the fake page's buttons choose the outcome and send the person back. */
   @Post('checkout/fake-page')
   @ApiExcludeEndpoint()
   fakeSettle(
@@ -215,6 +217,7 @@ export class BillingController {
     response.redirect(303, returnUrl);
   }
 
+  /** The fake gateway, only when it is configured. */
   private fake(): FakeGateway {
     const fake = this.gateways.byId('fake');
     if (!(fake instanceof FakeGateway)) throw new NotFoundException();
@@ -222,10 +225,12 @@ export class BillingController {
   }
 }
 
+/** Escapes text placed in the small HTML pages. */
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
 }
 
+/** A minimal HTML page (payment return and fake page). */
 function page(title: string, body: string): string {
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DokTool</title></head><body style="font-family:system-ui,sans-serif;max-width:32rem;margin:3rem auto;padding:0 1rem;line-height:1.5"><h1 style="font-size:1.25rem">${title}</h1><p>${body}</p></body></html>`;
 }

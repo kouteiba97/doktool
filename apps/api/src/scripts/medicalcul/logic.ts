@@ -54,11 +54,13 @@ function treeSize(e: Expr): number {
   return size;
 }
 
+/** Refuses formulas that grow beyond the size DokTool accepts. */
 function bounded(e: Expr): Expr {
   if (treeSize(e) > MAX_NODES) throw new Unsupported(`formula larger than ${MAX_NODES} nodes`);
   return e;
 }
 
+/** What a JavaScript value of the page becomes during translation. */
 type Val =
   | { t: 'num'; e: Expr; int: boolean }
   /** `x.toFixed(n)`: a display string in JS, accepted only as a result written to a field. */
@@ -72,24 +74,32 @@ type Val =
   /** Different kinds on two branches: an error only if something reads it afterwards. */
   | { t: 'conflict'; what: string };
 
+/** Variables (or output fields) and their translated values. */
 type Env = Map<string, Val>;
+/** Variables and outputs at one point of the page's script. */
 interface State {
   vars: Env;
   outputs: Env;
 }
 
+/** A translated calculator and the points a reviewer must check. */
 export interface Translation {
   definition: CalculatorDefinition;
   /** Points a reviewer must look at: values the source does not state and DokTool requires. */
   reviewNotes: string[];
 }
 
+/** One form field of the page (radios of one name, a select, a checkbox or a number box). */
 interface Field {
   kind: PageControl['kind'];
   key: string;
   controls: PageControl[];
 }
 
+/**
+ * Translates a page's f_Calculer() into a DokTool definition, or throws Unsupported with the
+ * reason.
+ */
 export function translate(page: ParsedPage): Translation {
   const fn = findCalculer(page.scripts);
   const fields = indexFields(page.controls);
@@ -99,6 +109,7 @@ export function translate(page: ParsedPage): Translation {
   return context.build(state);
 }
 
+/** Finds the f_Calculer function among the page's scripts. */
 function findCalculer(scripts: string[]): FunctionDeclaration {
   for (const script of scripts) {
     let program;
@@ -130,6 +141,7 @@ export function keyFor(name: string, taken: Set<string>): string {
   return unique;
 }
 
+/** Groups the page controls into fields with stable camelCase keys. */
 function indexFields(controls: PageControl[]): Map<string, Field> {
   const fields = new Map<string, Field>();
   const taken = new Set<string>();
@@ -152,6 +164,7 @@ function indexFields(controls: PageControl[]): Map<string, Field> {
   return fields;
 }
 
+/** Value of the n-th answer of a CHOICE input: o1, o2… */
 const choiceValue = (index: number) => `o${index + 1}`;
 
 /** Numeric value of a radio or option, exactly as JS `value * 1` reads it. */
@@ -167,6 +180,7 @@ function pointsOf(raw: string | null, where: string): number {
 const num = (e: Expr, int: boolean): Val => ({ t: 'num', e, int });
 const isConst = (e: Expr): e is { num: number } => 'num' in e;
 
+/** Walks the JavaScript syntax tree of f_Calculer and builds the equivalent DokTool expressions. */
 class Context {
   private readonly used = new Set<string>();
 
@@ -186,10 +200,12 @@ class Context {
     throw new Unsupported(`field "${x}" is not on the page`);
   }
 
+  /** Translates a list of statements in order. */
   block(statements: readonly Statement[], state: State): void {
     for (const statement of statements) this.statement(statement, state);
   }
 
+  /** Translates one statement (declaration, assignment, if, for, call). */
   private statement(node: Statement, state: State): void {
     switch (node.type) {
       case 'EmptyStatement':
@@ -211,6 +227,7 @@ class Context {
     }
   }
 
+  /** var x = … */
   private declare(node: VariableDeclaration, state: State): void {
     for (const declarator of node.declarations) {
       if (declarator.id.type !== 'Identifier') throw new Unsupported('destructuring');
@@ -221,6 +238,7 @@ class Context {
     }
   }
 
+  /** An expression used as a statement (assignment, field write, call). */
   private expressionStatement(expression: Expression, state: State): void {
     if (expression.type === 'AssignmentExpression') return this.assign(expression, state);
     if (expression.type === 'CallExpression' && isAndroidBridge(expression)) return;
@@ -239,6 +257,7 @@ class Context {
     throw new Unsupported(`statement ${describe(expression)} at line ${line(expression)}`);
   }
 
+  /** x = …, x += …, or a write to an output field. */
   private assign(node: AssignmentExpression, state: State): void {
     const right = this.value(node.right, state);
     if (node.left.type === 'Identifier') {
@@ -263,6 +282,7 @@ class Context {
     throw new Unsupported(`assignment at line ${line(node)}`);
   }
 
+  /** if/else: both branches are translated, then merged with if() expressions. */
   private ifStatement(node: IfStatement, state: State): void {
     const condition = this.boolean(this.value(node.test, state), node.test);
     const consequent = clone(state);
@@ -273,6 +293,7 @@ class Context {
     state.outputs = merge(condition, consequent.outputs, alternate.outputs);
   }
 
+  /** Simple counted loops over a fixed list of fields (unrolled). */
   private forStatement(node: ForStatement, state: State): void {
     const init = node.init;
     if (
@@ -325,6 +346,7 @@ class Context {
 
   // ─────────────────────────────── expressions ───────────────────────────────
 
+  /** The current value of a variable. */
   private read(name: string, state: State): Val {
     const value = state.vars.get(name);
     if (!value) throw new Unsupported(`unknown variable "${name}"`);
@@ -332,6 +354,7 @@ class Context {
     return value;
   }
 
+  /** Translates one expression. */
   value(node: Expression | JsNode, state: State): Val {
     switch (node.type) {
       case 'Literal': {
@@ -405,6 +428,7 @@ class Context {
     }
   }
 
+  /** form.field.value, Math.PI and similar member reads. */
   private member(node: MemberExpression, state: State): Val {
     const constant = mathConstant(node);
     if (constant !== null) return num({ num: constant }, false);
@@ -441,6 +465,7 @@ class Context {
     return { t: 'raw', field: name };
   }
 
+  /** Function calls: Math.*, parseFloat, the page's helper functions, toFixed. */
   private call(node: CallExpression, state: State): Val {
     const callee = node.callee;
     const args = node.arguments.map((argument) => {
@@ -526,6 +551,7 @@ class Context {
     throw new Unsupported(`call ${describe(callee)}() at line ${line(node)}`);
   }
 
+  /** The points of the selected answer of a radio group or select. */
   private choicePoints(name: string, field: Field): Val {
     const values = field.controls.map((control) => pointsOf(control.value, `"${name}"`));
     this.used.add(name);
@@ -574,6 +600,7 @@ class Context {
     throw new Unsupported(`condition on a ${value.t} value at line ${line(node)}`);
   }
 
+  /** Translates a binary operator (text concatenation, arithmetic, comparison). */
   binary(operator: string, left: Val, right: Val, node: JsNode | Expression): Val {
     if (operator === '+') {
       const texts = [left, right].some(
@@ -650,6 +677,7 @@ class Context {
     return { op: 'eq', args: [{ input: known.key }, { str: choiceValue(index) }] };
   }
 
+  /** +, −, ×, ÷ on numbers, folding constants. */
   private arithmetic(
     op: 'add' | 'sub' | 'mul' | 'div',
     left: Val,
@@ -680,6 +708,7 @@ class Context {
 
   // ─────────────────────────────── definition ───────────────────────────────
 
+  /** Assembles the definition from the translated result and the inputs. */
   build(state: State): Translation {
     const notes: string[] = [];
     const results = [...state.outputs.entries()].filter(
@@ -752,6 +781,7 @@ class Context {
     return { definition: checked.definition, reviewNotes: notes };
   }
 
+  /** The DokTool inputs of the fields the formula actually uses. */
   private inputs(notes: string[]): CalculatorInput[] {
     const inputs: CalculatorInput[] = [];
     const fr = (text: string) => ({ fr: text, en: text });
@@ -836,6 +866,7 @@ class Context {
   }
 }
 
+/** A quantity code from an input key: bodyWeight → BODY_WEIGHT. */
 const quantityFor = (key: string) =>
   key
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
@@ -846,10 +877,12 @@ const quantityFor = (key: string) =>
 
 // ──────────────────────────────── merging ────────────────────────────────
 
+/** A copy of the state, for translating one branch of an if. */
 function clone(state: State): State {
   return { vars: new Map(state.vars), outputs: new Map(state.outputs) };
 }
 
+/** Joins the two branches of an if into one state. */
 function merge(condition: Expr, whenTrue: Env, whenFalse: Env): Env {
   const merged: Env = new Map();
   for (const name of new Set([...whenTrue.keys(), ...whenFalse.keys()])) {
@@ -867,12 +900,14 @@ function merge(condition: Expr, whenTrue: Env, whenFalse: Env): Env {
   return merged;
 }
 
+/** True when two translated values are identical. */
 const same = (a: Val, b: Val) => {
   if ('e' in a) bounded(a.e);
   if ('e' in b) bounded(b.e);
   return canonicalJson(a) === canonicalJson(b);
 };
 
+/** Joins one variable of both branches into a single if() value. */
 function mergeValue(condition: Expr, a: Val, b: Val, what: string): Val {
   const asText = (v: Val): Expr | null =>
     v.t === 'str' ? v.e : v.t === 'undef' ? { str: UNDEFINED_TEXT } : null;
@@ -897,6 +932,7 @@ function mergeValue(condition: Expr, a: Val, b: Val, what: string): Val {
 
 // ─────────────────────────────── bands ───────────────────────────────
 
+/** A stretch of the result axis where the interpretation text is constant. */
 interface Region {
   lo: number;
   hi: number;
@@ -912,6 +948,7 @@ interface Region {
  */
 export type ImportedBand = Omit<InterpretationBand, 'label'> & { label: string };
 
+/** Turns the page's if-chains on the result into ordered interpretation bands. */
 export function bands(
   formula: Expr,
   integer: boolean,
@@ -920,6 +957,7 @@ export function bands(
   if (texts.length === 0) return [];
   const target = canonicalJson(formula);
   const constants = new Set<number>();
+  /** Gathers the thresholds the conditions compare the result with. */
   const collect = (e: Expr) => {
     if ('op' in e) {
       if (['lt', 'le', 'gt', 'ge', 'eq', 'ne'].includes(e.op)) {
@@ -949,6 +987,7 @@ export function bands(
   }
   regions.push({ lo: previous, hi: Infinity, point: false });
 
+  /** A value inside a region, to evaluate the conditions there. */
   const sample = (region: Region) =>
     region.point
       ? region.lo
@@ -959,6 +998,7 @@ export function bands(
           : Number.isFinite(region.hi)
             ? region.hi - 1
             : 0;
+  /** Evaluates a condition for a given result value. */
   const condition = (e: Expr, x: number): boolean => {
     if ('bool' in e) return e.bool;
     if (!('op' in e)) throw new Unsupported('condition form');
@@ -987,6 +1027,7 @@ export function bands(
         throw new Unsupported(`condition operator ${e.op}`);
     }
   };
+  /** The interpretation text shown for a given result value. */
   const text = (e: Expr, x: number): string => {
     if ('str' in e) return e.str;
     if ('op' in e && e.op === 'if') {
@@ -1096,6 +1137,7 @@ function formProperty(node: MemberExpression): { field: string; property: string
   return null;
 }
 
+/** Math.PI, Math.E… as numbers. */
 function mathConstant(node: MemberExpression): number | null {
   if (node.computed || node.object.type !== 'Identifier' || node.object.name !== 'Math')
     return null;
@@ -1109,6 +1151,7 @@ function mathConstant(node: MemberExpression): number | null {
   return constants[node.property.name] ?? null;
 }
 
+/** Calls into the Android app's bridge, which do not affect the result. */
 function isAndroidBridge(node: CallExpression): boolean {
   return (
     node.callee.type === 'MemberExpression' &&
@@ -1117,10 +1160,12 @@ function isAndroidBridge(node: CallExpression): boolean {
   );
 }
 
+/** A numeric literal, or null. */
 function literalNumber(node: Expression): number | null {
   return node.type === 'Literal' && typeof node.value === 'number' ? node.value : null;
 }
 
+/** += → +, -= → -… */
 function compoundOperator(operator: string): string {
   const map: Record<string, string> = { '+=': '+', '-=': '-', '*=': '*', '/=': '/' };
   const binary = map[operator];
@@ -1128,6 +1173,7 @@ function compoundOperator(operator: string): string {
   return binary;
 }
 
+/** A short text naming a syntax node, for error messages. */
 function describe(node: JsNode | Expression): string {
   if (node.type === 'Identifier') return (node as { name: string }).name;
   if (node.type === 'MemberExpression') {
@@ -1139,6 +1185,7 @@ function describe(node: JsNode | Expression): string {
   return node.type;
 }
 
+/** The source line of a syntax node. */
 function line(node: JsNode | Expression): number {
   return (node as { loc?: { start: { line: number } } }).loc?.start.line ?? 0;
 }

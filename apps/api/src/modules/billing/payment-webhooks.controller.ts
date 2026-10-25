@@ -33,6 +33,10 @@ export class PaymentWebhooksController {
     private readonly checkout: CheckoutService,
   ) {}
 
+  /**
+   * POST /v1/payments/webhooks/:gateway: checks the signature, then confirms the named order with
+   * the gateway.
+   */
   @Post(':gateway')
   @HttpCode(HttpStatus.OK)
   async receive(@Param('gateway') gatewayId: string, @Req() request: Request): Promise<void> {

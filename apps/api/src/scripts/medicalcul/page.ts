@@ -2,11 +2,13 @@
 // result fields, references and the inline scripts as text. Nothing on the page is executed.
 import { type DefaultTreeAdapterMap, parse } from 'parse5';
 
+/** parse5 node types. */
 type Node = DefaultTreeAdapterMap['node'];
 type Element = DefaultTreeAdapterMap['element'];
 
 export type ControlKind = 'radio' | 'checkbox' | 'number' | 'select' | 'output';
 
+/** One form control of a calculator page. */
 export interface PageControl {
   kind: ControlKind;
   /** The form field name the page script reads (`document.Form.<name>`). */
@@ -23,6 +25,7 @@ export interface PageControl {
   options: { value: string; label: string }[];
 }
 
+/** What is read from a calculator page. */
 export interface ParsedPage {
   title: string;
   /** From the specialty icon `zzimgspe_<code>.png`. */
@@ -37,9 +40,12 @@ export interface ParsedPage {
   references: string[];
 }
 
+/** True for an HTML element node. */
 const isElement = (node: Node): node is Element => 'tagName' in node;
+/** One attribute of an element. */
 const attr = (element: Element, name: string) =>
   element.attrs.find((candidate) => candidate.name === name)?.value ?? null;
+/** True when an element has a CSS class. */
 const hasClass = (element: Element, name: string) =>
   (attr(element, 'class') ?? '').split(/\s+/).includes(name);
 
@@ -48,6 +54,7 @@ export function textOf(node: Node): string {
   return collapse(rawText(node));
 }
 
+/** The text inside a node, scripts and styles excluded. */
 function rawText(node: Node): string {
   if (node.nodeName === '#text') return (node as DefaultTreeAdapterMap['textNode']).value;
   if (!('childNodes' in node)) return '';
@@ -67,6 +74,7 @@ function* walk(node: Node): Generator<Node> {
   }
 }
 
+/** Every element of a tag name under a node. */
 function elements(root: Node, tagName: string): Element[] {
   const found: Element[] = [];
   for (const node of walk(root)) if (isElement(node) && node.tagName === tagName) found.push(node);
@@ -109,6 +117,10 @@ function leadingText(node: Element): string {
   return collapse(text).replace(/\s*:$/, '');
 }
 
+/**
+ * Reads a calculator page: title, specialty, controls with their labels, scripts, interpretation
+ * and references.
+ */
 export function parsePage(html: string): ParsedPage {
   const document = parse(html);
   const labels = new Map<string, string>();
@@ -241,12 +253,14 @@ export function parsePage(html: string): ParsedPage {
   };
 }
 
+/** A heading without numbering and trailing colon. */
 const cleanHeading = (text: string) =>
   text
     .replace(/^[•\s]+/, '')
     .replace(/\s*:$/, '')
     .trim();
 
+/** True when an element contains a form field. */
 function hasField(element: Element): boolean {
   for (const node of walk(element)) {
     if (isElement(node) && ['input', 'select', 'label', 'textarea'].includes(node.tagName))
@@ -274,6 +288,7 @@ function rowLabel(element: Element): string | null {
   return null;
 }
 
+/** True when an element sits inside a <label>. */
 function insideLabel(element: Element): boolean {
   for (let node = element.parentNode; node; node = 'parentNode' in node ? node.parentNode : null) {
     if (isElement(node) && node.tagName === 'label') return true;

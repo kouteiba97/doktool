@@ -3,8 +3,9 @@
 import { randomInt, randomUUID } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { AnalyticsService } from '../../src/modules/analytics/analytics.service.js';
+import { TEST_TERMS_VERSION } from '../support/env.js';
 import { type AdminActor, adminActor, demoActor, userActor } from './actors.js';
-import { useTestApp } from './app.js';
+import { uniqueEmail, useTestApp } from './app.js';
 
 const app = useTestApp();
 let analyst: AdminActor;
@@ -111,6 +112,43 @@ describe('ingestion', () => {
       .expect(200)
       .expect(({ body }) => expect(body.accepted).toBe(1));
     await app.http().post('/v1/analytics/events').send({ platform: 'IOS', events: [] }).expect(401);
+  });
+
+  it('counts a demo that became an account on the same device', async () => {
+    const deviceId = `device-${randomUUID()}`;
+    const demo = await app
+      .http()
+      .post('/v1/demo/sessions')
+      .send({ demoContext: 'RESIDENT', deviceId })
+      .expect(201);
+    const identifier = uniqueEmail('converted');
+    const signUp = await app
+      .http()
+      .post('/v1/auth/sign-up')
+      .send({
+        identifier,
+        password: 'user password for tests',
+        firstName: 'Test',
+        lastName: 'Demo',
+        wilayaCode: 16,
+        acceptTerms: true,
+        termsVersion: TEST_TERMS_VERSION,
+      })
+      .expect(202);
+    await app
+      .http()
+      .post('/v1/auth/sign-up/confirm')
+      .send({
+        challengeId: signUp.body.challengeId,
+        code: app.lastCode(identifier),
+        device: { id: deviceId, platform: 'IOS' },
+      })
+      .expect(200);
+    const session = await app
+      .prisma()
+      .demoSession.findUniqueOrThrow({ where: { id: demo.body.demoSessionId } });
+    const user = await app.prisma().user.findUniqueOrThrow({ where: { email: identifier } });
+    expect(session).toMatchObject({ status: 'CONVERTED', convertedUserId: user.id });
   });
 
   it('records subscriptions published by billing as server events', async () => {

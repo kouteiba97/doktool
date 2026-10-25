@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ErrorCode } from './domain-error.js';
 
+/** Optional details attached to an error (OpenAPI shape of ErrorDetails). */
 export class ErrorDetailsBody {
   @ApiPropertyOptional({ format: 'date-time' })
   retryAt?: string;
@@ -21,6 +22,7 @@ export class ErrorDetailsBody {
   unlockPath?: string | null;
 }
 
+/** The `error` object: a stable code clients translate, a developer message and details. */
 export class ErrorBody {
   @ApiProperty({ enum: Object.keys(ErrorCode) })
   code!: string;

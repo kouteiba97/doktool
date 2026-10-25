@@ -93,6 +93,7 @@ describe('merging a duplicate', () => {
     referrer = await substance(`Céfalexine ${tag}`);
     await publish(referrer, [duplicate]);
 
+    await app.http().put(`/v1/me/favorites/SUBSTANCE/${duplicate}`).set(professional).expect(204);
     await author
       .get(`/admin/v1/pregnancy/substances/${duplicate}/merge-preview?into=${keep}`)
       .expect(403);
@@ -145,6 +146,15 @@ describe('merging a duplicate', () => {
     expect(third.body.alternatives).toEqual([
       { id: duplicate, nameFr: `Amoxicilline ${tag}`, nameEn: null },
     ]);
+
+    // A favorite of the duplicate shows the kept substance (it opens it too).
+    const favorites = await app.http().get('/v1/me/favorites').set(professional).expect(200);
+    expect(favorites.body).toContainEqual(
+      expect.objectContaining({
+        targetId: duplicate,
+        item: expect.objectContaining({ kind: 'SUBSTANCE', titleFr: `Amoxicilline ${tag}` }),
+      }),
+    );
 
     // A merged duplicate gets no new version.
     await author

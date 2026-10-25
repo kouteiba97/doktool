@@ -39,6 +39,7 @@ const index = readFileSync(path.join(raw, '_indexalpha.html'), 'utf8');
 const indexed = new Set(
   [...index.matchAll(/href="([A-Za-z0-9_.-]+\.html)"/g)].map((match) => match[1]!),
 );
+// Translate every page and write the deliverables.
 const catalogue = buildCatalogue(
   source,
   files.map((file) => ({ file, bytes: readFileSync(path.join(raw, file)) })),

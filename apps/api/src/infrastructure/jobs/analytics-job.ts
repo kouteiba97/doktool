@@ -3,6 +3,7 @@
 
 export const ANALYTICS_SERVER_EVENT_JOB = 'analytics.server-event';
 
+/** An analytics event produced by the server itself (not by the app), queued as a job. */
 export interface ServerAnalyticsEvent extends Record<string, unknown> {
   type: 'SUBSCRIPTION_STARTED' | 'SUBSCRIPTION_RENEWED';
   userId: string;

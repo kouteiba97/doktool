@@ -24,11 +24,13 @@ const idList = <const T extends readonly [string, ...string[]]>(
     .pipe(z.array(z.enum(ids)))
     .refine((list) => new Set(list).size === list.length, `a ${label} is listed twice`);
 
+/** A "true"/"false" environment value (default true) turned into a boolean. */
 const booleanFlag = z
   .enum(['true', 'false'])
   .default('true')
   .transform((value) => value === 'true');
 
+/** A secret of at least 32 characters; shorter values are refused at boot. */
 const secret = (name: string) =>
   z.string().min(32, `${name} must be at least 32 characters (use a random 256-bit value)`);
 
@@ -293,11 +295,13 @@ const envSchema = z
     }
   });
 
+/** The typed, validated configuration every service receives through the ENV token. */
 export type Env = z.infer<typeof envSchema>;
 
 /** Injection token for the parsed {@link Env}. */
 export const ENV = Symbol('ENV');
 
+/** Thrown at boot with one line per invalid or missing variable. */
 export class InvalidEnvironmentError extends Error {
   constructor(readonly issues: string[]) {
     super(`Invalid environment:\n  - ${issues.join('\n  - ')}`);
@@ -305,6 +309,10 @@ export class InvalidEnvironmentError extends Error {
   }
 }
 
+/**
+ * Parses process.env (or a test object) against the schema; throws InvalidEnvironmentError listing
+ * every problem at once.
+ */
 export function loadEnv(source: Record<string, string | undefined>): Env {
   const result = envSchema.safeParse(source);
   if (!result.success) {

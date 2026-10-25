@@ -50,6 +50,7 @@ const REPORTS: ReportKind[] = ['revenue-by-plan', 'subscriptions', 'provider-fee
 export class FinanceController {
   constructor(private readonly finance: FinanceService) {}
 
+  /** GET /admin/v1/finance/overview. */
   @Get('overview')
   @RequireGrants('finance.read')
   @ApiOkResponse({ type: FinanceOverviewDto })
@@ -57,6 +58,7 @@ export class FinanceController {
     return FinanceOverviewDto.from(await this.finance.overview(query));
   }
 
+  /** GET /admin/v1/finance/fee-rates. */
   @Get('fee-rates')
   @RequireGrants('finance.read')
   @ApiOkResponse({ type: [FeeRateDto] })
@@ -70,6 +72,7 @@ export class FinanceController {
     }));
   }
 
+  /** PUT /admin/v1/finance/fee-rates/:provider. */
   @Put('fee-rates/:provider')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants('finance.expenses.write')
@@ -90,6 +93,7 @@ export class FinanceController {
     );
   }
 
+  /** GET /admin/v1/finance/expenses. */
   @Get('expenses')
   @RequireGrants('finance.read')
   @ApiOkResponse({ type: [ExpenseDto] })
@@ -98,6 +102,7 @@ export class FinanceController {
     return (await this.finance.expenses(query)).map((row) => ExpenseDto.from(row));
   }
 
+  /** POST /admin/v1/finance/expenses. */
   @Post('expenses')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('finance.expenses.write')
@@ -110,6 +115,7 @@ export class FinanceController {
     return ExpenseDto.from(await this.finance.addExpense(admin, body, client));
   }
 
+  /** POST /admin/v1/finance/expenses/:id/void. */
   @Post('expenses/:id/void')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('finance.expenses.write')

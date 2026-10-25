@@ -8,6 +8,7 @@ import type { Request } from 'express';
 import { DomainError } from '../../common/errors/domain-error.js';
 import { type UserPrincipal, UserTokens } from './user-tokens.js';
 
+/** An Express request after UserAuthGuard ran. */
 type AuthenticatedRequest = Request & { user?: UserPrincipal };
 
 /** Requires a valid user access token (`Authorization: Bearer …`). Admin cookies are ignored. */
@@ -15,6 +16,10 @@ type AuthenticatedRequest = Request & { user?: UserPrincipal };
 export class UserAuthGuard implements CanActivate {
   constructor(private readonly tokens: UserTokens) {}
 
+  /**
+   * Runs before the route: extracts the bearer token, verifies it (including that its session is
+   * still live) and stores the principal on the request.
+   */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const header = request.get('authorization') ?? '';

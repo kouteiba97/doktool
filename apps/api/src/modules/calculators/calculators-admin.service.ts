@@ -24,6 +24,7 @@ import {
   type TestRun,
 } from './engine/index.js';
 
+/** A new calculator as Admin Web creates it. */
 export interface NewCalculator {
   slug: string;
   nameFr: string;
@@ -36,6 +37,7 @@ export interface NewCalculator {
   reason: string;
 }
 
+/** Changes to a calculator's names, category or access. */
 export interface CalculatorPatch {
   nameFr?: string;
   nameEn?: string;
@@ -47,6 +49,7 @@ export interface CalculatorPatch {
   reason: string;
 }
 
+/** A cited source of a version. */
 export interface NewSource {
   role: CalculatorSourceRole;
   authors: string;
@@ -60,6 +63,7 @@ export interface NewSource {
   accessedAt: Date;
 }
 
+/** A test case written by the author from a cited example. */
 export interface NewTestCase {
   inputs: EvaluationInputs;
   expectedOutcome: CalculatorTestOutcome;
@@ -72,6 +76,7 @@ export interface NewTestCase {
 /** A stored test run also records which definition it ran against. */
 type StoredTestRun = TestRun & { definitionSha256: string };
 
+/** Relations loaded with a version in Admin Web. */
 const VERSION_INCLUDE = {
   sources: { orderBy: { createdAt: 'asc' } },
   testCases: { orderBy: { createdAt: 'asc' } },
@@ -97,6 +102,7 @@ export class CalculatorsAdminService {
 
   // ─────────────────────────── calculators ───────────────────────────
 
+  /** Every calculator with all its versions. */
   async list(): Promise<CalculatorRecord[]> {
     const calculators = await this.prisma.calculator.findMany({ orderBy: { nameFr: 'asc' } });
     return Promise.all(
@@ -107,12 +113,14 @@ export class CalculatorsAdminService {
     );
   }
 
+  /** One calculator with all its versions. */
   async detail(calculatorId: string): Promise<CalculatorRecord> {
     const calculator = await this.prisma.calculator.findUnique({ where: { id: calculatorId } });
     if (!calculator) throw new DomainError('NOT_FOUND', 'Calculator not found.');
     return { ...calculator, versions: await this.versionsOf(calculatorId) };
   }
 
+  /** Creates a calculator (no version yet); a used slug is refused. */
   async createCalculator(
     admin: AdminPrincipal,
     input: NewCalculator,
@@ -262,6 +270,9 @@ export class CalculatorsAdminService {
     return this.version(created.id);
   }
 
+  /**
+   * Replaces the definition of a draft (validated first); the previous test run no longer counts.
+   */
   async saveDefinition(
     admin: AdminPrincipal,
     versionId: string,
@@ -293,6 +304,7 @@ export class CalculatorsAdminService {
     return this.version(versionId);
   }
 
+  /** Adds a source to a draft. */
   async addSource(
     admin: AdminPrincipal,
     versionId: string,
@@ -316,6 +328,7 @@ export class CalculatorsAdminService {
     return this.version(versionId);
   }
 
+  /** Removes a source from a draft. */
   async removeSource(
     admin: AdminPrincipal,
     versionId: string,
@@ -338,6 +351,7 @@ export class CalculatorsAdminService {
     return this.version(versionId);
   }
 
+  /** Adds a test case to a draft; a RESULT case needs a value and a tolerance. */
   async addTestCase(
     admin: AdminPrincipal,
     versionId: string,
@@ -392,6 +406,7 @@ export class CalculatorsAdminService {
     return this.version(versionId);
   }
 
+  /** Removes a test case from a draft. */
   async removeTestCase(
     admin: AdminPrincipal,
     versionId: string,
@@ -663,6 +678,7 @@ export class CalculatorsAdminService {
     return evaluate(this.definitionOf(await this.version(versionId)), inputs);
   }
 
+  /** One version with its sources, tests and people, and the sign-offs it currently needs. */
   async version(versionId: string): Promise<VersionRecord> {
     const version = await this.prisma.calculatorVersion.findUnique({
       where: { id: versionId },
@@ -675,6 +691,7 @@ export class CalculatorsAdminService {
 
   // ─────────────────────────── rules ───────────────────────────
 
+  /** All versions of a calculator, newest first. */
   private versionsOf(calculatorId: string): Promise<VersionRecord[]> {
     return this.prisma.calculatorVersion.findMany({
       where: { calculatorId },
@@ -683,6 +700,7 @@ export class CalculatorsAdminService {
     });
   }
 
+  /** Loads a version and refuses the action if it is not in one of the allowed statuses. */
   private async requireStatus(
     versionId: string,
     statuses: VersionRecord['status'][],
@@ -697,6 +715,7 @@ export class CalculatorsAdminService {
     return version;
   }
 
+  /** Checks a definition and turns its problems into field errors. */
   private requireValid(raw: unknown): CalculatorDefinition {
     const checked = checkDefinition(raw);
     if (!checked.ok) {
@@ -707,10 +726,12 @@ export class CalculatorsAdminService {
     return checked.definition;
   }
 
+  /** The parsed definition of a stored version. */
   private definitionOf(version: VersionRecord): CalculatorDefinition {
     return this.requireValid(version.definition);
   }
 
+  /** Runs a version's tests now and tags the run with the definition it ran on. */
   private testRunFor(version: VersionRecord): StoredTestRun {
     const run = runTestCases(
       this.definitionOf(version),
@@ -726,6 +747,7 @@ export class CalculatorsAdminService {
     return { ...run, definitionSha256: version.definitionSha256 };
   }
 
+  /** The stored test run, only if it ran on the current definition. */
   private storedRun(version: VersionRecord): StoredTestRun | null {
     const run = version.testRun as unknown as StoredTestRun | null;
     return run && run.definitionSha256 === version.definitionSha256 ? run : null;
@@ -774,6 +796,7 @@ export class CalculatorsAdminService {
     }
   }
 
+  /** Audit entry of a calculator change. */
   private record(
     admin: AdminPrincipal,
     client: ClientInfo,

@@ -33,6 +33,7 @@ export class StorageModule implements OnModuleInit {
     private readonly intents: UploadIntentsService,
   ) {}
 
+  /** Schedules the hourly clean-up of uploads never confirmed. */
   onModuleInit(): void {
     this.jobs.register('storage.purge-expired-uploads', '29 * * * *', async () => {
       await this.intents.purgeExpired();

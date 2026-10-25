@@ -43,21 +43,28 @@ const SLOT_FOLDERS: Record<RecoverySlot, 'identity' | 'selfie'> = {
   SELFIE: 'selfie',
 };
 const EXTENSIONS: Record<string, 'jpg' | 'png'> = { 'image/jpeg': 'jpg', 'image/png': 'png' };
+/** Statuses of a recovery that can still change the account. */
 const OPEN: RecoveryStatus[] = ['SUBMITTED', 'APPROVED'];
 
 const clientKey = (client: ClientInfo) => client.ip ?? 'unknown';
+/** The moment `hours` after `now`. */
 const hoursFromNow = (hours: number, now = new Date()) =>
   new Date(now.getTime() + hours * 3_600_000);
 
+/**
+ * Answer of the first recovery step: the request and the code challenge sent to the new contact.
+ */
 export interface RecoveryStarted {
   requestId: string;
   challenge: OtpChallengeView;
 }
 
+/** Filter of the recovery queue. */
 export interface RecoveryAdminFilter {
   status?: RecoveryStatus;
 }
 
+/** Parses an e-mail or phone, with the error on the given form field. */
 function requireIdentifier(raw: string, field: string): Identifier {
   const identifier = parseIdentifier(raw);
   if (!identifier) {
@@ -68,6 +75,7 @@ function requireIdentifier(raw: string, field: string): Identifier {
   return identifier;
 }
 
+/** The new contact of a request, as a message destination. */
 const destinationOf = (request: Pick<AccountRecoveryRequest, 'newChannel' | 'newDestination'>) =>
   ({ channel: request.newChannel, to: request.newDestination }) satisfies Destination;
 
@@ -104,6 +112,10 @@ export class AccountRecoveryService {
 
   // ─────────────────────────────── the person ───────────────────────────────
 
+  /**
+   * Step 1: records the lost contact, the name and the new contact, and sends a code to the new
+   * contact.
+   */
   async start(
     input: {
       lostIdentifier: string;
@@ -312,6 +324,7 @@ export class AccountRecoveryService {
 
   // ─────────────────────────────── Admin Web ───────────────────────────────
 
+  /** Admin queue: submitted and decided requests, oldest first. */
   async list(filter: RecoveryAdminFilter) {
     const rows = await this.prisma.accountRecoveryRequest.findMany({
       where: filter.status ? { status: filter.status } : { status: { not: 'AWAITING_DOCUMENTS' } },
@@ -321,6 +334,7 @@ export class AccountRecoveryService {
     return rows;
   }
 
+  /** One request with the matching account and its verification state, for the reviewer. */
   async detail(id: string) {
     const request = await this.find(id);
     const account = request.userId ? await this.users.reviewSummary(request.userId) : null;
@@ -354,6 +368,10 @@ export class AccountRecoveryService {
     };
   }
 
+  /**
+   * Approves a submitted request: it applies after the 24-hour hold unless the owner signs in
+   * meanwhile. Both the new contact and the account are told.
+   */
   async approve(admin: AdminPrincipal, id: string, note: string, client: ClientInfo) {
     const request = await this.find(id);
     if (request.status !== 'SUBMITTED')
@@ -398,6 +416,7 @@ export class AccountRecoveryService {
     return this.detail(id);
   }
 
+  /** Rejects a submitted or approved request with a reason; the new contact is told why. */
   async reject(
     admin: AdminPrincipal,
     id: string,
@@ -515,7 +534,18 @@ export class AccountRecoveryService {
 
   // ─────────────────────────────── helpers ───────────────────────────────
 
+  /**
+   * Applies an approved request whose hold is over: the new contact replaces the old ones, the
+   * password becomes unusable and every device signs out.
+   */
   private async apply(request: AccountRecoveryRequest, now: Date): Promise<void> {
+    // Claim the request before touching the account: the owner signing in meanwhile cancels it
+    // (cancelForOwner), and a cancelled request must never change the account.
+    const { count } = await this.prisma.accountRecoveryRequest.updateMany({
+      where: { id: request.id, status: 'APPROVED' },
+      data: { status: 'APPLIED', appliedAt: now, documentsPurgeAfter: this.purgeDate(now) },
+    });
+    if (count !== 1) return;
     const identifier = { channel: request.newChannel, value: request.newDestination };
     let replaced: { email: string | null; phone: string | null };
     try {
@@ -529,7 +559,7 @@ export class AccountRecoveryService {
         // The new contact was taken by another account during the wait: stop, explain.
         await this.prisma.accountRecoveryRequest.update({
           where: { id: request.id },
-          data: { status: 'CANCELED', documentsPurgeAfter: this.purgeDate(now) },
+          data: { status: 'CANCELED', appliedAt: null, documentsPurgeAfter: this.purgeDate(now) },
         });
         await this.notices.toRecoveryContact(
           destinationOf(request),
@@ -538,13 +568,13 @@ export class AccountRecoveryService {
         );
         return;
       }
+      // Anything else: give the request back to the next run, unchanged.
+      await this.prisma.accountRecoveryRequest.update({
+        where: { id: request.id },
+        data: { status: 'APPROVED', appliedAt: null, documentsPurgeAfter: null },
+      });
       throw error;
     }
-    const { count } = await this.prisma.accountRecoveryRequest.updateMany({
-      where: { id: request.id, status: 'APPROVED' },
-      data: { status: 'APPLIED', appliedAt: now, documentsPurgeAfter: this.purgeDate(now) },
-    });
-    if (count !== 1) return;
     await this.sessions.revokeAll(request.userId!, 'ACCOUNT_RECOVERED');
     await this.audit.record({
       actorType: 'SYSTEM',
@@ -573,6 +603,7 @@ export class AccountRecoveryService {
     );
   }
 
+  /** A request still waiting for its code and photos, within the time allowed. */
   private async awaiting(id: string): Promise<AccountRecoveryRequest> {
     const request = await this.prisma.accountRecoveryRequest.findUnique({ where: { id } });
     if (
@@ -585,6 +616,7 @@ export class AccountRecoveryService {
     return request;
   }
 
+  /** The request a recovery token opens, while photos may still be sent. */
   private async byToken(recoveryToken: string): Promise<AccountRecoveryRequest> {
     const request = await this.prisma.accountRecoveryRequest.findUnique({
       where: { tokenHash: sha256Hex(recoveryToken) },
@@ -599,6 +631,7 @@ export class AccountRecoveryService {
     return request;
   }
 
+  /** A request visible to admins (past the code step). */
   private async find(id: string): Promise<AccountRecoveryRequest> {
     const request = await this.prisma.accountRecoveryRequest.findUnique({ where: { id } });
     if (!request || request.status === 'AWAITING_DOCUMENTS') {
@@ -607,14 +640,17 @@ export class AccountRecoveryService {
     return request;
   }
 
+  /** When the code and photos stop being accepted. */
   private documentsDeadline(request: Pick<AccountRecoveryRequest, 'createdAt'>): Date {
     return new Date(request.createdAt.getTime() + RECOVERY_DOCUMENTS_TTL_MINUTES * 60_000);
   }
 
+  /** When a request's photos are deleted. */
   private purgeDate(now = new Date()): Date {
     return new Date(now.getTime() + RECOVERY_DOCUMENT_RETENTION_DAYS * DAY_MS);
   }
 
+  /** Deletes a photo; a failure is logged and retried by the next maintenance run. */
   private async deleteObject(key: string): Promise<void> {
     try {
       await this.storage.delete('PRIVATE', key);
@@ -623,6 +659,7 @@ export class AccountRecoveryService {
     }
   }
 
+  /** Audit entry of an admin decision on a request. */
   private async record(
     admin: AdminPrincipal,
     client: ClientInfo,

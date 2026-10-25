@@ -20,6 +20,7 @@ export class NotificationsModule implements OnModuleInit {
     private readonly notifications: NotificationsService,
   ) {}
 
+  /** Schedules the daily deletion of notifications older than the retention period. */
   onModuleInit(): void {
     this.jobs.register('notifications.purge-old', '41 3 * * *', async () => {
       await this.notifications.purgeOld();

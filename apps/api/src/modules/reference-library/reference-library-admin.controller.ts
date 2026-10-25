@@ -46,6 +46,7 @@ const id = new ParseUUIDPipe();
 export class ReferenceLibraryAdminController {
   constructor(private readonly documents: ReferenceDocumentsAdminService) {}
 
+  /** GET /admin/v1/reference-documents. */
   @Get()
   @RequireGrants('library.read')
   @ApiOkResponse({ type: [AdminReferenceDocumentDto] })
@@ -56,6 +57,7 @@ export class ReferenceLibraryAdminController {
     );
   }
 
+  /** GET /admin/v1/reference-documents/:id. */
   @Get(':id')
   @RequireGrants('library.read')
   @ApiOkResponse({ type: AdminReferenceDocumentDto })
@@ -153,6 +155,7 @@ export class ReferenceLibraryAdminController {
     );
   }
 
+  /** Enables a disabled model. */
   @Post(':id/enable')
   @RequireGrants('library.disable')
   @ApiOkResponse({ type: AdminReferenceDocumentDto })
@@ -167,6 +170,7 @@ export class ReferenceLibraryAdminController {
     return this.lifecycle(a, d, 'enable', b, c);
   }
 
+  /** Hides a model from users. */
   @Post(':id/disable')
   @RequireGrants('library.disable')
   @ApiOkResponse({ type: AdminReferenceDocumentDto })
@@ -211,6 +215,7 @@ export class ReferenceLibraryAdminController {
     return this.lifecycle(a, d, 'restore', b, c);
   }
 
+  /** Shared handler of enable, disable, archive and restore. */
   private async lifecycle(
     admin: AdminPrincipal,
     documentId: string,

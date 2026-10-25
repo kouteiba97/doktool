@@ -57,6 +57,10 @@ export class BillingModule implements OnModuleInit {
     private readonly lifecycle: SubscriptionLifecycleService,
   ) {}
 
+  /**
+   * Schedules the daily subscription advance and reminders, and the 10-minute reconciliation of
+   * pending checkouts.
+   */
   onModuleInit(): void {
     this.jobs.register('billing.advance-subscriptions', '30 2 * * *', async () => {
       await this.lifecycle.advance();

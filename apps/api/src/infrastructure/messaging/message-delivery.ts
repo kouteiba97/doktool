@@ -9,6 +9,7 @@ import { TwilioSms } from './sms/twilio.sms.js';
 
 export type DeliveryChannel = 'EMAIL' | 'SMS';
 
+/** One e-mail or SMS to send. */
 export interface OutgoingMessage {
   channel: DeliveryChannel;
   /** E-mail address or E.164 phone number. */
@@ -50,6 +51,10 @@ export class MessageDelivery {
     this.smsGateways = env.SMS_GATEWAYS.map((id) => all[id]);
   }
 
+  /**
+   * Whether this channel is configured. Outside production it is always "available" (messages go
+   * to the log or to `sent`).
+   */
   isAvailable(channel: DeliveryChannel): boolean {
     if (this.env.NODE_ENV !== 'production') return true;
     return channel === 'EMAIL' ? this.transport !== null : this.smsGateways.length > 0;
@@ -61,6 +66,10 @@ export class MessageDelivery {
     return channel === 'EMAIL' || this.smsCountryAllowed(to);
   }
 
+  /**
+   * Sends an e-mail through SMTP or an SMS through the providers; without a provider (development,
+   * tests) the message is kept in `sent` and logged.
+   */
   async send(message: OutgoingMessage): Promise<void> {
     if (!this.isAvailable(message.channel)) {
       throw new DomainError(
@@ -95,10 +104,15 @@ export class MessageDelivery {
     }
   }
 
+  /** True when the number starts with one of the allowed calling codes. */
   private smsCountryAllowed(phone: string): boolean {
     return this.env.SMS_ALLOWED_COUNTRY_CODES.some((code) => phone.startsWith(`+${code}`));
   }
 
+  /**
+   * Applies the per-number and per-server daily limits, then tries each SMS provider in order
+   * until one accepts.
+   */
   private async sendSms(to: string, text: string): Promise<void> {
     // Cost guards first: a burst against one number, or across the server, stops here.
     await this.limiter.hit(

@@ -28,6 +28,7 @@ import { PaymentGateways } from './payments/payment-gateways.js';
 import { type OrderOutcome, PaymentProviderError } from './payments/payment-provider.js';
 import { PlansService } from './plans.service.js';
 
+/** Whether the person may pay now, and if not, why (shown on the plans screen). */
 export type Eligibility =
   | { state: 'OPEN'; renewal: boolean }
   | { state: 'ACCOUNT_REQUIRED' }
@@ -38,11 +39,13 @@ export type Eligibility =
   | { state: 'ACCOUNT_SUSPENDED' }
   | { state: 'ACTIVE'; renewableFrom: Date };
 
+/** Answer of « Payer »: our transaction and the payment page to open. */
 export interface CheckoutStarted {
   transactionId: string;
   redirectUrl: string;
 }
 
+/** Subscription statuses that can still give access. */
 const LIVE = ['ACTIVE', 'GRACE', 'CANCELED'] as const;
 
 /**
@@ -65,13 +68,22 @@ export class CheckoutService {
     @Inject(ENV) private readonly env: Env,
   ) {}
 
+  /**
+   * Who may pay: an active, verified doctor or resident; students never pay; an active
+   * subscription may renew only in its last 14 days.
+   */
   async eligibility(userId: string, now = new Date()): Promise<Eligibility> {
     const facts = await this.users.getAccessFacts(userId);
     if (!facts || facts.status !== 'ACTIVE') return { state: 'ACCOUNT_SUSPENDED' };
     if (facts.professionalType === null) return { state: 'ROLE_REQUIRED' };
     if (facts.professionalType === 'STUDENT') return { state: 'STUDENT_FREE' };
-    const status = (await this.verification.snapshot(userId)).PROFESSIONAL_STATUS.status;
-    if (status === 'SUBMITTED' || status === 'IN_REVIEW' || status === 'APPEALED') {
+    // A renewal under review keeps a still-valid verification counting (section 27).
+    const { status, renewalPending } = (await this.verification.accessSnapshot(userId, now))
+      .PROFESSIONAL_STATUS;
+    if (
+      status !== 'VERIFIED' &&
+      (renewalPending || status === 'SUBMITTED' || status === 'IN_REVIEW' || status === 'APPEALED')
+    ) {
       return { state: 'VERIFICATION_PENDING' };
     }
     if (status !== 'VERIFIED') return { state: 'VERIFICATION_REQUIRED' };
@@ -82,6 +94,11 @@ export class CheckoutService {
     return { state: 'OPEN', renewal: true };
   }
 
+  /**
+   * « Payer »: checks eligibility, plan and method, reuses a payment already in progress, creates
+   * the transaction and registers the order with the gateway. A gateway refusal marks the
+   * transaction FAILED.
+   */
   async start(
     userId: string,
     input: { planId: string; method: PaymentMethod; language: 'FR' | 'EN' },
@@ -277,6 +294,9 @@ export class CheckoutService {
     return { subscription, transactions };
   }
 
+  /**
+   * The subscription giving access now (active, in grace, or stopped but not yet ended), if any.
+   */
   async liveSubscription(userId: string, now = new Date()): Promise<Subscription | null> {
     const candidates = await this.prisma.subscription.findMany({
       where: { userId, status: { in: [...LIVE] } },
@@ -293,10 +313,15 @@ export class CheckoutService {
 
   // ───────────────────────────────── helpers ─────────────────────────────────
 
+  /** True when a pending checkout is older than PENDING_CHECKOUT_MINUTES. */
   private abandoned(transaction: Transaction, now: Date): boolean {
     return now.getTime() - transaction.createdAt.getTime() > PENDING_CHECKOUT_MINUTES * 60_000;
   }
 
+  /**
+   * The subscription a payment is for: the live one when renewing, otherwise a waiting one
+   * (reused) or a new one.
+   */
   private async subscriptionFor(
     userId: string,
     plan: SubscriptionPlan,
@@ -357,6 +382,7 @@ export class CheckoutService {
     });
   }
 
+  /** Closes a pending transaction as FAILED or CANCELED (only if still pending). */
   private async finish(
     transaction: Transaction,
     status: 'FAILED' | 'CANCELED',
@@ -371,6 +397,10 @@ export class CheckoutService {
       : transaction;
   }
 
+  /**
+   * Records a confirmed payment and starts or extends the subscription (from the current end when
+   * renewing early). A short payment or a deleted account records the money but grants no access.
+   */
   private async activate(
     transaction: Transaction,
     outcome: Extract<OrderOutcome, { status: 'PAID' }>,
@@ -460,11 +490,13 @@ export class CheckoutService {
     return this.prisma.transaction.findUniqueOrThrow({ where: { id: transaction.id } });
   }
 
+  /** Base URL the gateway sends the person back to. */
   private publicUrl(): string {
     return this.env.PUBLIC_API_URL ?? `http://localhost:${this.env.PORT}`;
   }
 }
 
+/** The transaction's JSON metadata as an object (empty when missing). */
 export function metadataOf(transaction: Pick<Transaction, 'metadata'>): Prisma.JsonObject {
   const value = transaction.metadata;
   return value !== null && typeof value === 'object' && !Array.isArray(value) ? { ...value } : {};

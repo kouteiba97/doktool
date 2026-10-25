@@ -7,6 +7,10 @@ import type { CheckedRow, Target } from './rows.js';
 
 export type RowPlan = NonNullable<CheckedRow['plan']>;
 
+/**
+ * How names found in the sheet become ids: the registry source of a URL, and the substance of an
+ * alternative.
+ */
 export interface Resolved {
   /** Source registry id for a URL. */
   sourceId: (url: string) => string;
@@ -14,6 +18,7 @@ export interface Resolved {
   substanceId: (key: string) => string | null;
 }
 
+/** Union of two lists without repeats; undefined when empty (so empty lists are not stored). */
 const union = <T>(current: T[] | undefined, added: T[]): T[] | undefined => {
   const all = [...new Set([...(current ?? []), ...added])];
   return all.length > 0 ? all : undefined;
@@ -21,6 +26,10 @@ const union = <T>(current: T[] | undefined, added: T[]): T[] | undefined => {
 
 const PREGNANCY_TARGETS = ['T1', 'T2', 'T3', 'PERIPARTUM'] as const;
 
+/**
+ * Writes the accepted rows of one substance into its draft content and returns the new content
+ * (the input is not modified).
+ */
 export function applyRows(
   content: ProfileContent,
   plans: RowPlan[],
@@ -42,6 +51,10 @@ export function applyRows(
   return next;
 }
 
+/**
+ * Writes one row into one period (or lactation): conduct and status word replaced, sources and
+ * alternatives added.
+ */
 function apply(
   content: ProfileContent,
   target: Target,

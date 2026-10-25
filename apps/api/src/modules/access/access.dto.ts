@@ -10,6 +10,10 @@ import {
   UNLOCK_PATHS,
 } from './access.types.js';
 
+/**
+ * One feature as the app receives it: available or locked, with the reason and where to go to
+ * unlock it.
+ */
 export class FeatureDecisionDto {
   @ApiProperty({ enum: FEATURE_KEYS, enumName: 'FeatureKey' })
   key!: FeatureDecision['key'];
@@ -27,6 +31,7 @@ export class FeatureDecisionDto {
   readOnly!: boolean;
 }
 
+/** Which items of a content type open for this person, and the lock shown on the others. */
 export class ContentRuleDto {
   @ApiProperty({ enum: ['ALL', 'STUDENT_TIER', 'DEMO_SAMPLE', 'NONE'], enumName: 'ContentScope' })
   scope!: ContentRule['scope'];
@@ -38,6 +43,7 @@ export class ContentRuleDto {
   unlockPath!: ContentRule['unlockPath'];
 }
 
+/** The content rule of each content type. */
 export class ContentRulesDto {
   @ApiProperty({ type: ContentRuleDto })
   calculators!: ContentRuleDto;
@@ -49,6 +55,7 @@ export class ContentRulesDto {
   pregnancyProfiles!: ContentRuleDto;
 }
 
+/** JSON form of AccessProfile (dates as ISO strings). */
 export class AccessProfileDto {
   @ApiProperty({ enum: ['AUTHENTICATED', 'DEMO'], enumName: 'AccessContext' })
   accessContext!: AccessProfile['accessContext'];
@@ -68,6 +75,7 @@ export class AccessProfileDto {
   @ApiProperty({ example: '2026-09-25.1' })
   policyVersion!: string;
 
+  /** Converts the internal profile into the response body. */
   static from(profile: AccessProfile): AccessProfileDto {
     return {
       accessContext: profile.accessContext,

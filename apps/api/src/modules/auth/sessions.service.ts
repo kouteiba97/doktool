@@ -13,12 +13,14 @@ import {
   SESSION_RETENTION_DAYS,
 } from './auth.policy.js';
 
+/** The device a session is opened on. */
 export interface DeviceInput {
   id: string;
   name?: string;
   platform: DevicePlatform;
 }
 
+/** Tokens returned at sign-in and refresh. */
 export interface AuthTokens {
   sessionId: string;
   accessToken: string;
@@ -27,6 +29,7 @@ export interface AuthTokens {
   refreshTokenExpiresAt: Date;
 }
 
+/** A session as listed in Settings › Appareils. */
 export interface SessionView {
   id: string;
   deviceName: string | null;
@@ -35,10 +38,12 @@ export interface SessionView {
   lastUsedAt: Date;
 }
 
+/** What the refresh transaction decided. */
 type RefreshOutcome =
   | { kind: 'rotated'; userId: string; sessionId: string; refreshToken: string; expiresAt: Date }
   | { kind: 'rejected'; message: string };
 
+/** The refresh token and its session, read together and locked. */
 interface RefreshRow {
   token_id: string;
   session_id: string;
@@ -59,6 +64,10 @@ export class SessionsService {
     private readonly users: UsersService,
   ) {}
 
+  /**
+   * Opens a device session: a 180-day session, a 30-day refresh token and a 15-minute access
+   * token.
+   */
   async open(userId: string, device: DeviceInput, client: ClientInfo): Promise<AuthTokens> {
     const now = Date.now();
     const session = await this.prisma.userSession.create({
@@ -177,6 +186,7 @@ export class SessionsService {
     });
   }
 
+  /** Ends every session of the account (password reset, suspension, deletion, recovery). */
   async revokeAll(userId: string, reason: SessionRevocationReason): Promise<void> {
     await this.prisma.userSession.updateMany({
       where: { userId, revokedAt: null },
@@ -184,6 +194,7 @@ export class SessionsService {
     });
   }
 
+  /** The account's live sessions, most recently used first. */
   listActive(userId: string): Promise<SessionView[]> {
     return this.prisma.userSession.findMany({
       where: { userId, revokedAt: null, expiresAt: { gt: new Date() } },
@@ -202,6 +213,7 @@ export class SessionsService {
     });
   }
 
+  /** Issues the access token and returns it with the refresh token. */
   private async tokensFor(
     userId: string,
     sessionId: string,

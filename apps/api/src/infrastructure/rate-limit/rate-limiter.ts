@@ -3,6 +3,7 @@ import { DomainError } from '../../common/errors/domain-error.js';
 import { sha256Hex } from '../crypto/tokens.js';
 import { PrismaService } from '../database/prisma.service.js';
 
+/** A limit: at most `limit` hits per `windowSeconds` for one subject. */
 export interface RateLimitRule {
   /** Stable rule name, part of the counter key. */
   name: string;

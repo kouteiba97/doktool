@@ -301,6 +301,37 @@ describe('assisted recovery', () => {
     ).toBe(0);
   });
 
+  it('never changes the account when the owner cancels while the job is applying', async () => {
+    const owner = await account();
+    const request = await requestRecovery(owner.email);
+    await app
+      .http()
+      .post('/v1/auth/recovery/submit')
+      .send({ recoveryToken: request.recoveryToken })
+      .expect(200);
+    await superAdmin
+      .post(`/admin/v1/account-recoveries/${request.requestId}/approve`)
+      .send({ note: 'Looks right.' })
+      .expect(200);
+    // The job read the approved request, then the owner signed in before it applied it.
+    const stale = await app
+      .prisma()
+      .accountRecoveryRequest.findUniqueOrThrow({ where: { id: request.requestId } });
+    await signIn(owner.email).expect(200);
+    const recovery = app.get(AccountRecoveryService) as unknown as {
+      apply(row: typeof stale, now: Date): Promise<void>;
+    };
+    await recovery.apply(stale, new Date(Date.now() + 2 * 86_400_000));
+
+    const user = await app.prisma().user.findUniqueOrThrow({ where: { id: owner.userId } });
+    expect(user).toMatchObject({ email: owner.email, phone: null });
+    const after = await app
+      .prisma()
+      .accountRecoveryRequest.findUniqueOrThrow({ where: { id: request.requestId } });
+    expect(after.status).toBe('CANCELED');
+    await signIn(owner.email).expect(200);
+  });
+
   it('answers the same for an unknown contact, and the reviewer rejects it with a reason', async () => {
     const { requestId, recoveryToken, newIdentifier } = await requestRecovery(
       uniqueEmail('nobody'),

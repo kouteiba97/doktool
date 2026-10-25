@@ -4,6 +4,7 @@ import { ActivityModule } from '../activity/index.js';
 import { AdminAuthModule } from '../admin-auth/index.js';
 import { AuditModule } from '../audit/index.js';
 import { BillingModule } from '../billing/index.js';
+import { DemoModule } from '../demo/index.js';
 import { NotificationsModule } from '../notifications/index.js';
 import { PregnancyModule } from '../pregnancy/index.js';
 import { StorageModule } from '../storage/index.js';
@@ -44,6 +45,7 @@ import { SessionsService } from './sessions.service.js';
     StorageModule,
     AuditModule,
     BillingModule,
+    DemoModule,
     NotificationsModule,
     PregnancyModule,
     VerificationModule,
@@ -75,6 +77,10 @@ export class AuthModule implements OnModuleInit {
     private readonly recovery: AccountRecoveryService,
   ) {}
 
+  /**
+   * Schedules the hourly purge of codes and sessions, and the 10-minute recovery job (apply due
+   * approvals, expire and clean up).
+   */
   onModuleInit(): void {
     this.jobs.register('auth.purge-expired', '11 * * * *', async () => {
       await this.otp.purgeExpired();

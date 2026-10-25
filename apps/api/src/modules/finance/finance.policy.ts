@@ -1,5 +1,6 @@
 // Finance rules (design system section 15, ADR-005, ADR-017).
 import type { PaymentProvider } from '../../generated/prisma/enums.js';
+import { csvCell } from '../../common/text/csv.js';
 import type { RevenueRow } from '../billing/index.js';
 
 export const CURRENCY = 'DZD';
@@ -19,11 +20,13 @@ export const MAX_PERIOD_DAYS = 400;
 
 export type Bucket = 'DAY' | 'WEEK' | 'MONTH';
 
+/** A channel's fee: rate in basis points (1 % = 100) plus a fixed amount in centimes. */
 export interface FeeRate {
   rateBps: number;
   fixedMinor: number;
 }
 
+/** A period: from inclusive, to exclusive. */
 export interface Period {
   from: Date;
   to: Date;
@@ -52,6 +55,7 @@ export function bucketStart(date: Date, bucket: Bucket): Date {
   return new Date(day.getTime() - weekday * DAY_MS);
 }
 
+/** Start of the bucket after `start`. */
 export function nextBucket(start: Date, bucket: Bucket): Date {
   if (bucket === 'DAY') return new Date(start.getTime() + DAY_MS);
   if (bucket === 'WEEK') return new Date(start.getTime() + 7 * DAY_MS);
@@ -76,6 +80,7 @@ export function estimateFee(amountMinor: number, rate: FeeRate): number {
   return Math.min(amountMinor, Math.round((amountMinor * rate.rateBps) / 10_000) + rate.fixedMinor);
 }
 
+/** The fee of one payment: actual or estimated. */
 export interface FeeView {
   feesMinor: number;
   /** True while the provider has not settled the actual fee. */
@@ -84,6 +89,10 @@ export interface FeeView {
   rateMissing: boolean;
 }
 
+/**
+ * The fee of one payment: the settled one, else an estimate from the channel's rate (0 and flagged
+ * when no rate is set).
+ */
 export function feeOf(
   row: Pick<RevenueRow, 'amountMinor' | 'paymentFeesMinor' | 'paymentProvider'>,
   rates: ReadonlyMap<PaymentProvider, FeeRate>,
@@ -97,6 +106,7 @@ export function feeOf(
     : { feesMinor: 0, estimated: true, rateMissing: true };
 }
 
+/** The figures of the Finance ledger. */
 export interface Ledger {
   /** Payments plus approved exceptional adjustments. */
   grossMinor: number;
@@ -141,13 +151,6 @@ export function ledgerOf(input: {
     netProfitMinor: net - expenses,
     payments: input.revenue.length,
   };
-}
-
-/** One CSV cell: quoted when it holds a separator, a quote or a line break. */
-export function csvCell(value: string | number | null): string {
-  if (value === null) return '';
-  const text = String(value);
-  return /[";\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 }
 
 /** CSV with `;` separators (Excel in French locales) and a UTF-8 BOM; definitions first. */

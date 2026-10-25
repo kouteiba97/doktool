@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+/** Body of GET /v1/health. */
 export class HealthResponse {
   @ApiProperty({ enum: ['ok', 'degraded'] })
   status!: 'ok' | 'degraded';

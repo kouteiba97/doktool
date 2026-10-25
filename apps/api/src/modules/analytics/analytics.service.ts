@@ -26,17 +26,20 @@ import {
   suppress,
 } from './analytics.policy.js';
 
+/** At most 60 uploads a minute per person or demo session. */
 const INGEST_LIMIT: RateLimitRule = {
   name: 'analytics-ingest:subject',
   limit: 60,
   windowSeconds: 60,
 };
 
+/** How many events of a batch were kept, and how many were dropped for each reason. */
 export interface IngestResult {
   accepted: number;
   rejected: Partial<Record<RejectionReason, number>>;
 }
 
+/** Period and segment of a dashboard. */
 export interface DashboardFilter {
   from: Date;
   to: Date;
@@ -47,6 +50,7 @@ export interface DashboardFilter {
 /** A count and the number of distinct people behind it; null when fewer than 10 (« < 10 »). */
 export type Cell = number | null;
 
+/** Columns the server adds to every event from its own facts (never sent by the app). */
 interface Envelope {
   subjectHash: string;
   accessContext: 'AUTHENTICATED' | 'DEMO';
@@ -77,6 +81,10 @@ export class AnalyticsService {
 
   // ─────────────────────────────── ingestion ───────────────────────────────
 
+  /**
+   * Stores a batch of app events: computes the envelope, rate-limits, checks every event against
+   * its schema and keeps only the valid ones.
+   */
   async ingest(
     viewer: Viewer,
     batch: {
@@ -132,6 +140,10 @@ export class AnalyticsService {
     });
   }
 
+  /**
+   * The pseudonymous envelope of the caller: keyed hash, tier, profession, specialty and wilaya
+   * (demo: none of those).
+   */
   private async envelopeOf(viewer: Viewer): Promise<Envelope> {
     if (viewer.accessContext === 'DEMO') {
       return {
@@ -165,6 +177,7 @@ export class AnalyticsService {
 
   // ─────────────────────────────── dashboards ───────────────────────────────
 
+  /** Refuses empty, reversed or too long dashboard periods. */
   assertPeriod(filter: DashboardFilter): void {
     const days = (filter.to.getTime() - filter.from.getTime()) / 86_400_000;
     if (!(days > 0) || days > MAX_DASHBOARD_DAYS) {
@@ -217,6 +230,7 @@ export class AnalyticsService {
     };
   }
 
+  /** Distinct people active per day (UTC) between two dates. */
   private async dailyActives(filter: DashboardFilter, from: Date, to: Date) {
     const rows = await this.prisma.$queryRaw<{ day: Date; subjects: number }[]>`
       SELECT date_trunc('day', occurred_at) AS day, count(DISTINCT subject_hash)::int AS subjects

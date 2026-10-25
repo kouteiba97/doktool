@@ -36,6 +36,7 @@ export class UserTokens {
     this.key = new TextEncoder().encode(env.USER_JWT_SECRET);
   }
 
+  /** Signs a 15-minute access token for a user session (subject = user id, `sid` = session id). */
   async issue(principal: UserPrincipal): Promise<{ token: string; expiresAt: Date }> {
     const issuedAt = Math.floor(Date.now() / 1000);
     const expiresAt = new Date((issuedAt + ACCESS_TOKEN_TTL_SECONDS) * 1000);
@@ -51,6 +52,7 @@ export class UserTokens {
     return { token, expiresAt };
   }
 
+  /** Verifies a user access token and that its session has not ended; returns who is calling. */
   async verify(token: string): Promise<UserPrincipal> {
     try {
       const { payload } = await jwtVerify(token, this.key, {
@@ -76,6 +78,10 @@ export class UserTokens {
     }
   }
 
+  /**
+   * True when the session exists for this user, is not revoked and has not expired (one indexed
+   * lookup per request).
+   */
   private async sessionIsLive(sessionId: string, userId: string): Promise<boolean> {
     const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuid.test(sessionId) || !uuid.test(userId)) return false;

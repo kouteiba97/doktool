@@ -5,6 +5,7 @@ export function canonicalJson(value: unknown): string {
   return JSON.stringify(sortKeys(value));
 }
 
+/** A copy of a JSON value with object keys sorted, recursively. */
 function sortKeys(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(sortKeys);
   if (value !== null && typeof value === 'object') {

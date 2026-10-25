@@ -13,6 +13,7 @@ import { SecurityNoticesService } from './security-notices.service.js';
 import { SessionsService } from './sessions.service.js';
 
 const clientKey = (client: ClientInfo) => client.ip ?? 'unknown';
+/** Name of a contact kind in audit entries and notices. */
 const channelName = (channel: Identifier['channel']) => (channel === 'EMAIL' ? 'EMAIL' : 'PHONE');
 
 /**
@@ -147,6 +148,7 @@ export class AccountSecurityService {
     await this.notices.notify(userId, 'passwordChanged');
   }
 
+  /** Rate-limited check of the current password; a wrong one is a field error, not a sign-out. */
   private async checkPassword(userId: string, password: string, field = 'password'): Promise<void> {
     await this.limiter.hit(RATE_LIMITS.accountChangePerUser, userId);
     const hash = await this.users.passwordHashOf(userId);

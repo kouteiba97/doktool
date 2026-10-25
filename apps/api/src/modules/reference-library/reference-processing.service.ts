@@ -5,6 +5,7 @@ import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 import { AuditService } from '../audit/index.js';
 import { StorageService } from '../storage/index.js';
 
+/** Result of inspecting an uploaded file. */
 type Outcome =
   { status: 'READY'; sha256: string; pageCount: number } | { status: 'FAILED'; error: string };
 
@@ -23,6 +24,10 @@ export class ReferenceProcessingService {
     private readonly audit: AuditService,
   ) {}
 
+  /**
+   * Processes one uploaded file: checks it, records the result and makes it current when it is
+   * newer.
+   */
   async process(fileId: string): Promise<void> {
     const file = await this.prisma.referenceDocumentFile.findUnique({ where: { id: fileId } });
     if (!file || file.processingStatus !== 'PENDING') return;
@@ -113,6 +118,7 @@ export class ReferenceProcessingService {
     }
   }
 
+  /** Downloads the file, compares its SHA-256 with the declared one and counts its PDF pages. */
   private async inspect(storageKey: string, declaredSha256: string): Promise<Outcome> {
     let bytes: Uint8Array;
     try {

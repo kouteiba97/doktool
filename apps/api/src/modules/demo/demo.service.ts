@@ -8,11 +8,13 @@ import type { RateLimitRule } from '../../infrastructure/rate-limit/rate-limiter
 import { RateLimiter } from '../../infrastructure/rate-limit/rate-limiter.js';
 import { DemoTokens } from '../../infrastructure/security/demo-tokens.js';
 
+/** Limits on starting and renewing demo sessions, per IP. */
 const RATE_LIMITS = {
   startPerIp: { name: 'demo-start:ip', limit: 20, windowSeconds: 3600 },
   renewPerIp: { name: 'demo-renew:ip', limit: 120, windowSeconds: 600 },
 } as const satisfies Record<string, RateLimitRule>;
 
+/** What starting a demo returns: the session, a one-hour token and a renewal token. */
 export interface DemoSessionGrant {
   demoSessionId: string;
   demoContext: DemoContext;
@@ -21,6 +23,7 @@ export interface DemoSessionGrant {
   renewalToken: string;
 }
 
+/** Rate-limit key: the caller's IP. */
 const clientKey = (client: ClientInfo) => client.ip ?? 'unknown';
 
 /**
@@ -35,6 +38,10 @@ export class DemoService {
     private readonly limiter: RateLimiter,
   ) {}
 
+  /**
+   * Starts (or restarts) the demo of a device: one active session per device, a new renewal token
+   * each time.
+   */
   async start(
     demoContext: DemoContext,
     deviceId: string,
@@ -67,6 +74,7 @@ export class DemoService {
     };
   }
 
+  /** A new one-hour demo token, from the renewal token and the same device. */
   async renew(
     renewalToken: string,
     deviceId: string,
@@ -94,6 +102,17 @@ export class DemoService {
       demoContext: session.demoContext,
     });
     return { accessToken: access.token, accessTokenExpiresAt: access.expiresAt };
+  }
+
+  /**
+   * A new account was confirmed on this device: its active demo session ends as CONVERTED (the
+   * « Démo » funnel counts it). The app uses one installation id for the demo and the account.
+   */
+  async markConverted(deviceId: string, userId: string): Promise<void> {
+    await this.prisma.demoSession.updateMany({
+      where: { deviceIdHash: sha256Hex(deviceId), status: 'ACTIVE' },
+      data: { status: 'CONVERTED', convertedUserId: userId },
+    });
   }
 
   /** Demo sessions started in [from, to), and how many of them became accounts. */

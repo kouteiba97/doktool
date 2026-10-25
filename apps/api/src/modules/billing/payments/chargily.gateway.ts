@@ -26,8 +26,10 @@ const PENDING_STATUSES = new Set(['pending', 'processing']);
 const MINIMUM_DINARS = 50;
 const TIMEOUT_MS = 20_000;
 
+/** A parsed JSON object. */
 type Json = Record<string, unknown>;
 
+/** A whole number from a JSON field, or null. */
 const integer = (value: unknown): number | null =>
   typeof value === 'number' && Number.isInteger(value) ? value : null;
 
@@ -52,6 +54,10 @@ export class ChargilyGateway extends PaymentGateway {
     super();
   }
 
+  /**
+   * Creates a Chargily checkout (whole dinars, at least 50 DZD, fees on the merchant) and returns
+   * its page.
+   */
   async register(order: RegisterOrder): Promise<RegisteredOrder> {
     if (order.currency !== 'DZD') {
       throw new PaymentProviderError(`Unsupported currency ${order.currency}`);
@@ -79,6 +85,10 @@ export class ChargilyGateway extends PaymentGateway {
     return { providerReference: id, redirectUrl: url };
   }
 
+  /**
+   * Reads the checkout back from Chargily: paid (amount, fee, time), pending, or
+   * failed/canceled/expired.
+   */
   async status(providerReference: string): Promise<OrderOutcome> {
     const checkout = await this.call('GET', `/checkouts/${encodeURIComponent(providerReference)}`);
     const status = typeof checkout.status === 'string' ? checkout.status : '';
@@ -126,6 +136,10 @@ export class ChargilyGateway extends PaymentGateway {
     return { providerReference: data.id };
   }
 
+  /**
+   * One authenticated call to the Chargily API; network errors and refusals become
+   * PaymentProviderError.
+   */
   private async call(method: 'GET' | 'POST', path: string, body?: Json): Promise<Json> {
     let response: Response;
     try {
@@ -158,6 +172,7 @@ export class ChargilyGateway extends PaymentGateway {
     return payload;
   }
 
+  /** The Chargily secret key (API and webhook signatures). */
   private secret(): string {
     const key = this.env.CHARGILY_SECRET_KEY;
     if (!key) throw new PaymentProviderError('Chargily n’est pas configuré.');

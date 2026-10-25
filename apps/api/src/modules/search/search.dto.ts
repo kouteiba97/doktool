@@ -19,6 +19,7 @@ const trimmed = Transform(({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() : value,
 );
 
+/** Query of GET /v1/search: the text and an optional type. */
 export class SearchQuery {
   @ApiProperty({ minLength: 1, maxLength: 100, description: 'Never stored or logged.' })
   @trimmed
@@ -37,6 +38,7 @@ export class SearchQuery {
   type?: SearchType;
 }
 
+/** One search result. */
 export class SearchHitDto {
   @ApiProperty({ enum: SEARCH_TYPES, enumName: 'SearchType' })
   type!: SearchType;
@@ -67,6 +69,7 @@ export class SearchHitDto {
   }
 }
 
+/** One group of results. */
 export class SearchGroupDto {
   @ApiProperty({ enum: SEARCH_TYPES, enumName: 'SearchType' })
   type!: SearchType;
@@ -78,6 +81,7 @@ export class SearchGroupDto {
   hits!: SearchHitDto[];
 }
 
+/** The search response. */
 export class SearchResultDto {
   @ApiProperty({ type: [SearchGroupDto], description: 'Best group first.' })
   groups!: SearchGroupDto[];
@@ -100,12 +104,14 @@ export class SearchResultDto {
   }
 }
 
+/** Which item's synonyms to read. */
 export class SynonymsQuery {
   @ApiProperty({ enum: SearchEntityType, enumName: 'SearchEntityType' })
   @IsEnum(SearchEntityType)
   entityType!: SearchEntityType;
 }
 
+/** The new list of synonyms, with a reason. */
 export class ReplaceSynonymsDto {
   @ApiProperty({
     type: [String],
@@ -126,6 +132,7 @@ export class ReplaceSynonymsDto {
   reason!: string;
 }
 
+/** An item's synonyms. */
 export class SynonymsDto {
   @ApiProperty({ type: [String] })
   terms!: string[];

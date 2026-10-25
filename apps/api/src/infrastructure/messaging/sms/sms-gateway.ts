@@ -2,6 +2,7 @@ import type { SMS_GATEWAY_IDS } from '../../../config/env.js';
 
 export type SmsGatewayId = (typeof SMS_GATEWAY_IDS)[number];
 
+/** What a provider returns once it has accepted a message. */
 export interface SmsSent {
   /** The provider's id of the message, for its delivery reports. */
   providerMessageId: string | null;

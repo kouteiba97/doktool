@@ -9,6 +9,7 @@ import {
 import { PregnancyService, type SubstanceProfile } from '../pregnancy/index.js';
 import { type ReferenceItem, ReferenceDocumentsService } from '../reference-library/index.js';
 
+/** A reference PDF the device may keep. */
 export interface ManifestReference {
   id: string;
   type: ReferenceItem['type'];
@@ -21,6 +22,7 @@ export interface ManifestReference {
   updatedAt: Date;
 }
 
+/** A calculator version the device may keep, with its self-test cases. */
 export interface ManifestCalculator {
   id: string;
   slug: string;
@@ -32,6 +34,7 @@ export interface ManifestCalculator {
   testCases: PublishedTestCase[];
 }
 
+/** The list of everything the device may keep offline, with a data version fingerprint. */
 export interface OfflineManifest {
   generatedAt: Date;
   /** Changes whenever any entitled file or calculator version changes ("update available"). */
@@ -55,6 +58,10 @@ export class OfflineService {
     private readonly pregnancy: PregnancyService,
   ) {}
 
+  /**
+   * Builds the manifest: entitled PDFs, calculators and pregnancy profiles, and a fingerprint that
+   * changes whenever any of them changes.
+   */
   async manifest(viewer: Viewer): Promise<OfflineManifest> {
     const [referenceItems, calculatorItems, substances] = await Promise.all([
       this.references.openable(viewer),

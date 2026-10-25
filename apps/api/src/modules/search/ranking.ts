@@ -10,6 +10,7 @@ export const SEARCH_TYPES: readonly SearchType[] = [
   'PREGNANCY',
 ];
 
+/** What a search candidate can be matched on. */
 export interface SearchEntry {
   type: SearchType;
   /** Display titles in both languages (either may match, whatever the UI language). */
@@ -50,6 +51,7 @@ export function normalize(text: string): string {
 const NORMALIZED_MAX = 50_000;
 const normalized = new Map<string, string>();
 
+/** The normalised words of a text. */
 export function words(text: string): string[] {
   const normalized = normalize(text);
   return normalized ? normalized.split(' ') : [];
@@ -131,6 +133,7 @@ export function score(query: string, entry: SearchEntry): number | null {
   if (titles.includes(q)) return SCORE.exact;
   if (titles.some((title) => title.startsWith(q))) return SCORE.prefix;
   if (synonyms.includes(q)) return SCORE.synonymExact;
+  /** True when every query word passes the test against some word of the pool. */
   const everyWord = (pool: string[], test: (word: string, candidate: string) => boolean) =>
     qWords.every((word) => pool.some((candidate) => test(word, candidate)));
   if (titles.some((title) => everyWord(title.split(' '), (w, c) => c.startsWith(w)))) {

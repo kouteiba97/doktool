@@ -6,6 +6,7 @@ import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 import type { AdminPrincipal } from '../admin-auth/index.js';
 import { AuditService } from '../audit/index.js';
 
+/** A plan version as the Super Admin writes it. */
 export interface PlanInput {
   code: string;
   nameFr: string;
@@ -41,12 +42,14 @@ export class PlansService {
     });
   }
 
+  /** Every version of every plan (Admin Web). */
   all(): Promise<SubscriptionPlan[]> {
     return this.prisma.subscriptionPlan.findMany({
       orderBy: [{ code: 'asc' }, { version: 'desc' }],
     });
   }
 
+  /** One plan version, or NOT_FOUND. */
   async byId(planId: string): Promise<SubscriptionPlan> {
     const plan = await this.prisma.subscriptionPlan.findUnique({ where: { id: planId } });
     if (!plan) throw new DomainError('NOT_FOUND', 'Plan not found.');
