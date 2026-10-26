@@ -1,0 +1,91 @@
+<section class="chapter">
+<h2 id="ch10">10. لوحة الإدارة، شاشة بعد شاشة</h2>
+<p class="lead">لكل قسم من اللوحة مجلد في <code>apps/admin/src/features/</code>، ومسار في <code>src/app/admin/</code>، وصلاحية تفتحه، ومتحكم في الخادم خلفه. لكل شاشة: ما وظيفتها، وكل زر فيها، وأي استدعاء للخادم يقوم به. الملحق أ يذكر كل هذه الأزرار مرة أخرى مع أرقام أسطرها.</p>
+
+<table>
+  <tr><th>القسم</th><th>العنوان</th><th>الصلاحية</th><th>مجلد الميزة</th><th>الـAPI</th></tr>
+  <tr><td>Vue d'ensemble (نظرة عامة)</td><td>/admin/overview</td><td>— (الكتل حسب الصلاحيات)</td><td>overview</td><td>/admin/v1/overview</td></tr>
+  <tr><td>Utilisateurs (المستخدمون)</td><td>/admin/users</td><td>users.read</td><td>users</td><td>/admin/v1/users</td></tr>
+  <tr><td>Vérifications (التحقق)</td><td>/admin/verification</td><td>verification.queue.read</td><td>verification</td><td>/admin/v1/verification</td></tr>
+  <tr><td>Récupération (الاسترجاع)</td><td>/admin/recovery</td><td>verification.queue.read</td><td>recovery</td><td>/admin/v1/account-recoveries</td></tr>
+  <tr><td>Bibliothèque (المكتبة)</td><td>/admin/library/…</td><td>library.read</td><td>library</td><td>/admin/v1/reference-documents</td></tr>
+  <tr><td>Calculateurs (الحاسبات)</td><td>/admin/calculators</td><td>calculators.read</td><td>calculators</td><td>/admin/v1/calculators</td></tr>
+  <tr><td>Grossesse · Allaitement (الحمل والرضاعة)</td><td>/admin/pregnancy</td><td>pregnancy.read</td><td>pregnancy</td><td>/admin/v1/pregnancy</td></tr>
+  <tr><td>Abonnements (الاشتراكات)</td><td>/admin/subscriptions</td><td>subscriptions.read</td><td>subscriptions</td><td>/admin/v1/plans، …/subscriptions</td></tr>
+  <tr><td>Transactions (المعاملات)</td><td>/admin/transactions</td><td>transactions.read</td><td>transactions</td><td>/admin/v1/transactions</td></tr>
+  <tr><td>Finance (المالية)</td><td>/admin/finance</td><td>finance.read</td><td>finance</td><td>/admin/v1/finance</td></tr>
+  <tr><td>Analytique (التحليلات)</td><td>/admin/analytics</td><td>analytics.read</td><td>analytics</td><td>/admin/v1/analytics</td></tr>
+  <tr><td>Journal d'audit (سجل التدقيق)</td><td>/admin/audit</td><td>audit.read</td><td>audit</td><td>/admin/v1/audit</td></tr>
+  <tr><td>Permissions (الصلاحيات)</td><td>/admin/permissions</td><td>system.roles.write</td><td>permissions</td><td>/admin/v1/admins</td></tr>
+  <tr><td>Paramètres (الإعدادات)</td><td>/admin/settings</td><td>system.settings.write</td><td>settings</td><td>/admin/v1/reference-data، /admin/v1/clinical-review/policies</td></tr>
+</table>
+
+<h3 id="ch10-overview">10.1 Vue d'ensemble — النظرة العامة</h3>
+<p>شريط أرقام واحد (صافي إيراد 30 يومًا، الأشخاص النشطون…) وثلاث قوائم عمل — ملفات تنتظر المراجعة، محتوى ينتظر المراجعة، حوادث دفع — كلٌّ منها يظهر فقط للمشرفين الذين تغطيه صلاحياتهم. لا جدار أرقام: الشاشة تجيب عن « ماذا يحتاجني اليوم؟ ». والملف الفاشل في المكتبة يربط بقائمة نوعه الصحيح (إصلاح التدقيق A6).</p>
+
+<h3 id="ch10-users">10.2 Utilisateurs — المستخدمون</h3>
+<ul>
+  <li>مربع بحث (مع تأخير)، مرشّحات حسب المهنة والحالة، و« Charger plus » للـ50 التالية.</li>
+  <li>الصف يفتح <b>لوحة المستخدم</b>: « Profil » (الملف)، « Accès » (ملف الوصول والحقائق التي جاء منها)، « Abonnements » (الاشتراكات)، « Activité » (أعداد فقط — لا ما بحث عنه الشخص أبدًا)، « Historique » (سطور التدقيق لهذا الحساب).</li>
+  <li>أفعال قائمة اللوحة (مع سبب): « Suspendre » / « Réactiver » الحساب (إيقاف/إعادة تفعيل)، وإخراجه من كل الأجهزة.</li>
+</ul>
+[[code apps/admin/src/features/users/user-drawer.tsx | export function UserDrawer | 30]]
+
+<h3 id="ch10-verif">10.3 Vérifications — التحقق</h3>
+<ul>
+  <li>تبويبات الطابور « En attente · Vérifiés · Rejetés · Expirés · Appels » (في الانتظار، مُتحقَّق، مرفوض، منتهٍ، استئنافات)، شرائح النوع، الأقدم أولًا؛ عمود « Soumis » يتحوّل إلى تحذير بعد مهلة 24 ساعة (بكلمة، لا بلون وحده).</li>
+  <li>لوحة الملف: « Prendre le dossier » (أخذ الملف)، « Libérer » (إعادته)، الوثائق مع « Ouvrir » في <b>العارض المقيَّد</b> (رابط لـ60 ثانية، علامة مائية باسم المراجِع، منع الطباعة والنسخ، كل فتح مسجَّل؛ و« Rouvrir » يطلب رابطًا جديدًا)، ثم « Approuver » (مع تاريخ انتهاء اختياري) أو « Rejeter » (بكود سبب).</li>
+  <li>لا يقرّر الاستئناف إلا مراجِع يملك <code>verification.appeal.decide</code> ولم يكن هو من رفض الملف.</li>
+</ul>
+[[code apps/admin/src/features/verification/restricted-viewer.tsx | export function RestrictedViewer | 30]]
+
+<h3 id="ch10-recovery">10.4 Récupération — الاسترجاع</h3>
+<p>طلبات الاسترجاع بمساعدة حسب الحالة. اللوحة تقارن الطلب (جهة الاتصال المفقودة، الأسماء، الجهة الجديدة) بالحساب الذي وُجد، تعرض الصورتين (« Ouvrir »، 60 ثانية، مسجَّل) بجانب الهوية المُتحقَّق منها، وتقدّم « Approuver » (فقط إن طابق حساب؛ يُطبَّق بعد 24 ساعة) أو « Rejeter » — حتى خلال مهلة الـ24 ساعة (إصلاح التدقيق A4).</p>
+
+<h3 id="ch10-library">10.5 Bibliothèque — المكتبة (الوصفات، الشهادات)</h3>
+<ul>
+  <li>تبويبات النوع (لكلٍّ عنوانه)، شرائح الحالة مع أعدادها، مربع تصفية، و« Ajouter un modèle » (إضافة نموذج).</li>
+  <li><b>لوحة الرفع</b>: إسقاط ملف PDF أو اختياره (يُفحص في المتصفح: النوع، الحجم، ترويسة « %PDF »)؛ العنوان الفرنسي يُملأ مسبقًا من اسم الملف؛ عنوان الزر يتبع المرحلة — البصمة، الإرسال، الحفظ.</li>
+  <li><b>لوحة النموذج</b>: تعديل العناوين و« Échantillon démo » (« Enregistrer » يطلب سببًا)، « Voir le PDF » (مرسوم على canvas، دون تنزيل)، « Remplacer le PDF »، وقائمة الحالة (تفعيل، تعطيل، أرشفة، استعادة). أثناء معالجة ملف تتحدّث اللوحة كل 3 ثوانٍ دون محو ما يكتبه المشرف.</li>
+  <li>« Synonymes »: كلمات إضافية يجب أن يطابقها البحث لهذا النموذج.</li>
+</ul>
+[[code apps/admin/src/features/library/upload-drawer.tsx | const submit = form.handleSubmit( | 30]]
+
+<h3 id="ch10-calc">10.6 Calculateurs — الحاسبات</h3>
+<p>القائمة تعرض لكل حاسبة فئتها، ووصولها، والإصدار المنشور والمفتوح، والمصدر الأساسي، والحالة. « Nouveau calculateur » ينشئ الحاسبة (slug، الأسماء، الغرض، الفئة). وتعرض <b>صفحة التفاصيل</b> خط الإصدارات، وللإصدار المختار خمسة تبويبات:</p>
+<table>
+  <tr><th>التبويب</th><th>الأزرار</th></tr>
+  <tr><td>Définition (التعريف)</td><td>عرض للقراءة للمدخلات (النطاقات، الوحدات، الإجابات والنقاط)، والصيغة مكتوبة بأسماء المدخلات، والأشرطة والحدود؛ « Modifier la définition » يفتح JSON المسودة؛ « Enregistrer la définition » يعرض مشكلات الخادم حسب المسار.</td></tr>
+  <tr><td>Sources (المصادر)</td><td>« Ajouter une source » (الدور، الاستشهاد، الطبعة، موضع الصيغة، DOI أو رابط، تاريخ الاطلاع)؛ أيقونة السلة للحذف. الروابط يجب أن تكون http(s) (إصلاح التدقيق A1).</td></tr>
+  <tr><td>Tests (الاختبارات)</td><td>« Ajouter un cas » (مصدر المثال، المدخلات كـJSON، النتيجة المتوقعة / القيمة ± التسامح / الشريط)؛ « Lancer les tests » على محرّك الخادم.</td></tr>
+  <tr><td>Revue (المراجعة)</td><td>شرط النشر كقائمة فحص؛ « Soumettre à revue » و« Supprimer le brouillon » (للمؤلف)؛ « Approuver et publier » (أو التوقيع الأول/الثاني) و« Renvoyer à l'auteur » (للمراجِع، وليس المؤلف أبدًا)؛ « Retirer » لإصدار منشور.</td></tr>
+  <tr><td>Aperçu (المعاينة)</td><td>كتابة قيم و« Calculer » على محرّك الخادم؛ لا يُخزَّن شيء.</td></tr>
+</table>
+[[code apps/admin/src/features/calculators/review-panel.tsx | export function ReviewPanel | 26]]
+
+<h3 id="ch10-preg">10.7 Grossesse · Allaitement — الحمل والرضاعة</h3>
+<ul>
+  <li>ثلاثة تبويبات: <b>Substances</b> (البحث، المرشّحات حسب الحالة وحسب التصرّف لفترة، « Ajouter une substance »، « Approuver les N affichées » للمراجعة الجماعية)، <b>Sources</b> (السجل: « Ajouter une source »، « Modifier »)، <b>Signalements</b> (بلاغات المستخدمين؛ « Traiter » يغلق البلاغ مع ما فُعل).</li>
+  <li><b>صفحة المادة</b>: « Modifier la substance » (الأسماء، ATC، المرادفات)، « Nouvelle version »، « Fusionner avec… » / « Annuler la fusion »، خط الإصدارات، ومحرّر الملف (الفترات، التصرّف، مستوى الدليل والفئة المدروسة، المصادر المختارة، البدائل، التعارض بين المصادر) مع « Enregistrer le brouillon »، « Soumettre à relecture »، « Approuver et publier »، « Demander des modifications ».</li>
+  <li>صفحات <b>الاستيراد</b>: « Choisir un fichier .xlsx »، ثم معاينة مع ربط الأعمدة (« Appliquer »)، ومعنى كل كلمة حالة، والصفوف ذات المشكلات لتصحيحها واحدًا واحدًا (« Enregistrer la ligne »)، « Abandonner l'import » أو « Ajouter à la bibliothèque » (تكتب مسودات)، و« Soumettre tout à relecture ».</li>
+</ul>
+
+<h3 id="ch10-subs">10.8 الاشتراكات، المعاملات، المالية</h3>
+<ul>
+  <li><b>Abonnements</b> — « Offres »: كتالوج الخطط ذو الإصدارات؛ « Nouveau forfait »، « Nouvelle version » (تغيير السعر)، « Mettre en vente » / « Retirer de la vente ». لوحة الخطة: الكود، الأسماء، السعر بالدينار، المدة، المشمول / غير المشمول (سطر لكل عنصر)، « Publier ». وتبويب ثانٍ يعرض الاشتراكات.</li>
+  <li><b>Transactions</b>: الدفتر غير القابل للتعديل مع البحث والمرشّحات؛ اللوحة تعرض الدفعة ورسومها وتعديلاتها؛ القائمة « Ajustement exceptionnel… » (للمشرف العام) و« Approuver » من مشرف آخر.</li>
+  <li><b>Finance</b>: منتقي الفترة؛ « Vue d'ensemble » (الإجمالي ← الرسوم ← الصافي، ثم المصاريف ← الربح الصافي، الاشتراكات، الإيراد حسب الخطة، الرسوم البيانية)، « Dépenses » (« Ajouter une dépense »، « Annuler la dépense »، نسب الرسوم لكل قناة مع « Modifier »، « Régler les frais » من كشف المزوّد)، « Moyens de paiement » (« Suspendre » / « Reprendre » شبكة بطاقات أثناء عطل)، « Rapports » (« Télécharger le CSV »، مسجَّل).</li>
+</ul>
+
+<h3 id="ch10-analytics">10.9 التحليلات وسجل التدقيق</h3>
+<ul>
+  <li><b>Analytique</b>: مرشّحات الفترة والشريحة (المهنة، التخصص، الولاية)؛ تبويبات Usage، Bibliothèque، Calculateurs، Utilisateurs (مسار التسجيل ← التحقق)، Abonnements، Démo. الخلايا خلف أقل من 10 أشخاص تعرض « &lt; 10 »؛ وسطر يبيّن متى وصل آخر حدث.</li>
+  <li><b>Journal d'audit</b>: مرشّحات (المشرف، مجموعة الفعل، السجل، الفترة)، الأحدث أولًا، « Charger plus »، « Exporter en CSV » (يحتاج <code>audit.export</code>؛ والتصدير نفسه مسجَّل).</li>
+</ul>
+
+<h3 id="ch10-perm">10.10 الصلاحيات والإعدادات</h3>
+<ul>
+  <li><b>Permissions</b> (المشرف العام): « Nouvel administrateur » (البريد، الاسم، القالب) يعرض كلمة مرور لمرة واحدة مرة واحدة فقط — « Copier »، ثم « J'ai transmis le mot de passe ». لوحة المشرف: الصلاحيات حسب المجال مع فحص مباشر لفصل المهام، « Enregistrer les permissions »، والقائمة « Accès temporaire »، « Réinitialiser l'authentificateur »، « Suspendre » / « Réactiver ».</li>
+  <li><b>Paramètres</b>: قوائم الاختيار في التطبيق (التخصصات، المؤسسات، الجامعات حسب الولاية: « Ajouter… ») و« Double relecture » — هل تحتاج الحاسبات وملفات الحمل توقيعًا واحدًا أو اثنين (يُرفض إن كان أقل من مشرفَين قادرَين على الموافقة).</li>
+</ul>
+</section>

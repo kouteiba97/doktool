@@ -176,6 +176,8 @@ On the first machine the local database was a PostgreSQL 18 cluster on port 5543
 ## Documents for the owner
 
 - Arabic guide to every feature, app and Admin Web: `docs/guide/guide-ar.html`. Export it to PDF with Chrome (print to PDF).
+- Code audit of 26 October 2026 (defects fixed, recommendations, repository layout): `docs/CODE-AUDIT-2026-10.md`.
+- Learning book on the whole code base, in English and Arabic: `docs/learning-book/` (PDFs and `build.py` to rebuild them after code changes).
 - Decisions: `docs/adr/` (ADR-001 to ADR-027).
 - Operations: `docs/operations/` (Chargily, SATIM, SMS, R2, demo data, pregnancy spreadsheet import).
 - Medicalcul extraction report and catalogue: `docs/medicalcul-integration/`.

@@ -1,0 +1,75 @@
+<section class="chapter">
+<h2 id="ch11">11. كيف بُني تطبيق الهاتف — Flutter وRiverpod وgo_router وdrift</h2>
+<p class="lead">التطبيق مكتوب بـDart مع Flutter، شيفرة واحدة لـiOS وAndroid. أربع مكتبات تشكّل كل ملف: <b>Riverpod</b> (الحالة والاعتماديات)، <b>go_router</b> (الشاشات والتحويلات)، <b>dio</b> مع عميل مولَّد (الخادم)، و<b>drift</b> (قاعدة بيانات SQLite صغيرة على الهاتف). يشرح هذا الفصل كلًّا منها بشيفرة التطبيق نفسها.</p>
+
+<h3 id="ch11-layout">11.1 المجلدات</h3>
+<div class="diagram">lib/main.dart                 runApp(ProviderScope(DokToolApp))
+lib/src/app.dart              MaterialApp.router: themes, languages, router; wraps every screen with
+                              AnalyticsHost (screen views) and OfflineSyncHost (sync on resume)
+lib/src/core/                 api/ (dio, interceptors, errors, generated client) · auth/ (session, vault)
+                              database/ (drift) · storage/ (Keychain/Keystore) · network/ · config/
+lib/src/features/&lt;feature&gt;/   screens + their providers/controllers, one folder per feature
+lib/src/ui/                   the widget kit: DtButton, DtAlert, DtBadge, DtTextField, ContentRow, locks…
+lib/src/theme/                doktool_tokens.dart (generated) + tokens.dart (context.colors…)
+lib/src/router/app_router.dart  every route and the redirect rules
+lib/l10n/                     ARB files built from packages/i18n → AppLocalizations</div>
+<p>بالعربية: <code>core</code> هو الأساس التقني (الشبكة، الجلسة، قاعدة البيانات، التخزين الآمن)؛ <code>features</code> مجلد لكل ميزة بشاشاتها ومتحكماتها؛ <code>ui</code> مجموعة الودجات المشتركة؛ <code>router</code> كل المسارات وقواعد التحويل؛ و<code>l10n</code> النصوص المولّدة.</p>
+
+<h3 id="ch11-start">11.2 الإقلاع</h3>
+[[file apps/mobile/lib/main.dart]]
+[[code apps/mobile/lib/src/app.dart | class DokToolApp | block]]
+<p>المظهر (فاتح، داكن، النظام) واللغة (FR، EN) يأتيان من <code>SettingsController</code> ويُطبَّقان فورًا. و<code>providerRetry</code> يجعل Riverpod يعيد محاولة التحميل الفاشل بضع مرات — إلا عند غياب الشبكة، حيث تقول الشاشة « Connexion requise » فورًا.</p>
+
+<h3 id="ch11-riverpod">11.3 Riverpod في خمس دقائق</h3>
+<p><b>المزوّد (provider)</b> قطعة حالة أو خدمة لها اسم. الودجات تستدعي <code>ref.watch(provider)</code> لتعيد البناء عند تغيّره، أو <code>ref.read(provider)</code> لتستعمله مرة واحدة (داخل معالج زر). الأنواع المستعملة هنا:</p>
+<table>
+  <tr><th>النوع</th><th>مثال</th><th>يُستعمل لـ</th></tr>
+  <tr><td><code>Provider</code></td><td><code>apiProvider</code>، <code>appDatabaseProvider</code>، <code>offlineStoreProvider</code></td><td>الخدمات (نسخة واحدة، تُحقن).</td></tr>
+  <tr><td><code>FutureProvider</code></td><td><code>wilayasProvider</code>، <code>legalProvider</code></td><td>تحميل مرة واحدة، وعرض التحميل / الخطأ / البيانات.</td></tr>
+  <tr><td><code>AsyncNotifier</code></td><td><code>SessionController</code>، <code>AccessController</code>، <code>FavoritesController</code>، <code>OfflineSyncController</code></td><td>حالة تُحمَّل ثم تتغيّر عبر دوال (<code>toggle</code>، <code>reload</code>، <code>signOut</code>).</td></tr>
+  <tr><td><code>Notifier</code></td><td><code>OnboardingDraftController</code>، <code>PendingCheckoutController</code></td><td>حالة متزامنة محفوظة في الذاكرة.</td></tr>
+</table>
+<p>المزوّدات تعتمد على بعضها: <code>AccessController.build</code> يراقب الجلسة، فعندما تتغيّر الجلسة (دخول، خروج، عرض تجريبي) يُعاد تحميل ملف الوصول وحده:</p>
+[[code apps/mobile/lib/src/features/access/access_controller.dart | class AccessController | block]]
+<p>في الشاشة، تُرسم الحالات الثلاث بـ<code>.when(...)</code> أو بقراءة <code>.value</code> و<code>.isLoading</code> و<code>.hasError</code>. القوائم أثناء التحميل تعرض صفوفًا هيكلية، وليس مؤشر دوران أبدًا (القسم 22 من نظام التصميم).</p>
+
+<h3 id="ch11-session">11.4 الجلسة</h3>
+<p>من يستعمل الهاتف هو <b>صنف مختوم (sealed class)</b> بثلاث حالات — يجبر المترجم كل <code>switch</code> على معالجتها كلها:</p>
+[[code apps/mobile/lib/src/core/auth/session.dart | sealed class Session | 25]]
+<p><code>SessionVault</code> يحفظ الأسرار: رموز التحديث والتجديد في Keychain / Keystore (<code>SecureStore</code>)، ورمز الوصول في الذاكرة فقط. وعندما تحتاج عدة طلبات رمز وصول جديدًا في الوقت نفسه، تنتظر كلها <b>التحديث نفسه</b> ("single-flight") — لأن رموز التحديث للاستعمال مرة واحدة، وتحديثان متوازيان سيلغيان الجلسة:</p>
+[[code apps/mobile/lib/src/core/auth/session_vault.dart | Future<String?> accessToken( | block]]
+[[code apps/mobile/lib/src/core/auth/auth_interceptor.dart | Future<void> onError( | block]]
+<p>معرّف التثبيت الذي يربط الجلسة بالهاتف يُنشأ مرة واحدة؛ ومنذ تدقيق أكتوبر صارت الاستدعاءات الأولى المتزامنة تتشارك المستقبل (future) نفسه، فلا يمكن أن تُنشئ معرّفين مختلفين (الإصلاح M1):</p>
+[[code apps/mobile/lib/src/core/storage/secure_store.dart | class SecureStore | block]]
+<p><code>SessionController</code> يكشف الجلسة للتطبيق. الخروج — أو إنهاء الخادم للجلسة — ينسى كل ما هو شخصي متبقٍّ على الهاتف (الإصلاحان M2 وM3):</p>
+[[code apps/mobile/lib/src/core/auth/session_controller.dart | class SessionController | block]]
+
+<h3 id="ch11-router">11.5 المسارات والتحويلات</h3>
+<p>لكل شاشة مسار في <code>Routes</code>. ودالة التحويل تقرّر، عند كل تنقّل وكلما تغيّرت الجلسة أو الحساب، أين يُسمح للشخص أن يكون:</p>
+[[code apps/mobile/lib/src/router/app_router.dart | String? redirectFor({ | block]]
+<ul>
+  <li>غير مسجَّل ← الصفحات العامة فقط (الترحيب، الدخول، التسجيل، الرموز، بدء العرض التجريبي، الاسترجاع).</li>
+  <li>عرض تجريبي ← لا عودة للصفحات العامة، ولا صفحات خاصة بالحسابات (الاشتراك، تعديل الملف، التحقق…).</li>
+  <li>حساب دون مهنة ← « Qui êtes-vous ? » أولًا.</li>
+  <li>المحتوى المقفل <b>لا يُخفى</b> بتحويل أبدًا: الشاشة ترسم حالتها المقفلة.</li>
+</ul>
+<p>التبويبات الثلاثة (Accueil، Bibliothèque، Profil) هي <code>StatefulShellRoute</code>: لكل تبويب مكدّسه الخاص، والضغط على التبويب النشط مرة أخرى يعيد إلى شاشته الأولى. الزر الدائري في وسط الشريط يفتح البحث في كل شيء؛ و« Activité et favoris » يُفتح من الملف الشخصي.</p>
+
+<h3 id="ch11-api">11.6 التحدث مع الخادم</h3>
+<p>العميل تحت <code>core/api/generated/</code> يُنتَج من <code>openapi.json</code> بأداتي <code>swagger_parser</code> و<code>build_runner</code>: دالة لكل نقطة نهاية (<code>api.calculators.calculatorsControllerList()</code>) وصنف ثابت لكل DTO. يُضاف إلى dio معترضان: اللغة (<code>Accept-Language</code>) والرمز (<code>AuthInterceptor</code>). الإخفاقات تصبح <code>ApiError</code> بكود الخادم؛ والشاشات تترجم أكوادها الخاصة وتعود إلى <code>commonErrorText</code> لما سواها.</p>
+[[code apps/mobile/lib/src/core/api/api_error.dart | static ApiError from( | block]]
+
+<h3 id="ch11-db">11.7 قاعدة البيانات المحلية (drift)</h3>
+<p>قاعدة SQLite صغيرة تحفظ: إعدادات الجهاز (مفتاح/قيمة)، والوثائق والحاسبات والمواد المحفوظة دون اتصال، وطابور التحليلات. والإعدادات التي تخص <i>الشخص</i> لا الهاتف مُدرجة في قائمة لكي تُنسى عند الخروج:</p>
+[[code apps/mobile/lib/src/core/database/app_database.dart | static const personalSettings | 22]]
+
+<h3 id="ch11-ui">11.8 مجموعة الودجات والرموز التصميمية</h3>
+<p>تُبنى الشاشات من <code>lib/src/ui/</code>: <code>DtButton</code> (زر رئيسي واحد لكل منطقة، مؤشر تحميل أثناء الانتظار، ومعطّل عندما يكون <code>onPressed</code> فارغًا)، <code>DtTextField</code> (العنوان أعلاه، والخطأ عند مغادرة الحقل)، <code>DtAlert</code>، <code>DtBadge</code> (كلمة دائمًا)، <code>ContentRow</code> (صف قائمة مع قفله)، <code>DtPickerField</code> (منتقٍ في لوحة سفلية قابلة للبحث)، <code>DtSegmentedControl</code>، <code>DtPillTabs</code>، <code>DtChoiceList</code> (الإجابات الطويلة كاملة)، الواجهة الزجاجية (<code>DtGlass</code>، <code>DtHeroAppBar</code>) و<code>LockLabel</code> / <code>showLockSheet</code>. الألوان والمسافات وأنصاف الأقطار والمدد تأتي من الرموز التصميمية فقط: <code>context.colors.brand</code>، <code>DtSpace.s4</code>، <code>DtRadius.lg</code>. ويرفض CI أي لون مكتوب مباشرة.</p>
+[[code apps/mobile/lib/src/ui/locks.dart | Future<void> showLockSheet( | block]]
+
+<h3 id="ch11-l10n">11.9 النصوص</h3>
+<p>كل نص هو <code>AppLocalizations.of(context).someKey</code>، مولَّد من ملفات ARB التي تبنيها <code>packages/i18n</code>. لإضافة نص: أضف المفتاح بالفرنسية والإنجليزية إلى الكتالوج، أعد بناء ARB، شغّل <code>flutter gen-l10n</code> (الفصل 14).</p>
+
+<h3 id="ch11-tests">11.10 الاختبارات</h3>
+<p>في <code>apps/mobile/test/</code> اختبارات وحدة (المحرّك، المتجهات المشتركة، مخزن العمل دون اتصال، الأساس) واختبارات ودجات تشغّل شاشات حقيقية بمزوّدات وهمية. و<code>accessibility_test.dart</code> يفحص كل شاشة رئيسية بالفاتح والداكن، وبنص 200 %، من حيث حجم اللمس (44 بكسل) والعناوين والتباين.</p>
+</section>

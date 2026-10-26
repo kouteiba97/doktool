@@ -1,0 +1,91 @@
+<section class="chapter">
+<h2 id="ch10">10. Admin Web, screen by screen</h2>
+<p class="lead">Each section of the console has a folder in <code>apps/admin/src/features/</code>, a route in <code>src/app/admin/</code>, a grant that opens it and an API controller behind it. For each screen: what it is for, every button, and which API call it makes. Appendix A lists every one of these buttons again with its line number.</p>
+
+<table>
+  <tr><th>Section</th><th>URL</th><th>Grant</th><th>Feature folder</th><th>API</th></tr>
+  <tr><td>Vue d'ensemble</td><td>/admin/overview</td><td>— (blocks follow grants)</td><td>overview</td><td>/admin/v1/overview</td></tr>
+  <tr><td>Utilisateurs</td><td>/admin/users</td><td>users.read</td><td>users</td><td>/admin/v1/users</td></tr>
+  <tr><td>Vérifications</td><td>/admin/verification</td><td>verification.queue.read</td><td>verification</td><td>/admin/v1/verification</td></tr>
+  <tr><td>Récupération</td><td>/admin/recovery</td><td>verification.queue.read</td><td>recovery</td><td>/admin/v1/account-recoveries</td></tr>
+  <tr><td>Bibliothèque</td><td>/admin/library/…</td><td>library.read</td><td>library</td><td>/admin/v1/reference-documents</td></tr>
+  <tr><td>Calculateurs</td><td>/admin/calculators</td><td>calculators.read</td><td>calculators</td><td>/admin/v1/calculators</td></tr>
+  <tr><td>Grossesse · Allaitement</td><td>/admin/pregnancy</td><td>pregnancy.read</td><td>pregnancy</td><td>/admin/v1/pregnancy</td></tr>
+  <tr><td>Abonnements</td><td>/admin/subscriptions</td><td>subscriptions.read</td><td>subscriptions</td><td>/admin/v1/plans, …/subscriptions</td></tr>
+  <tr><td>Transactions</td><td>/admin/transactions</td><td>transactions.read</td><td>transactions</td><td>/admin/v1/transactions</td></tr>
+  <tr><td>Finance</td><td>/admin/finance</td><td>finance.read</td><td>finance</td><td>/admin/v1/finance</td></tr>
+  <tr><td>Analytique</td><td>/admin/analytics</td><td>analytics.read</td><td>analytics</td><td>/admin/v1/analytics</td></tr>
+  <tr><td>Journal d'audit</td><td>/admin/audit</td><td>audit.read</td><td>audit</td><td>/admin/v1/audit</td></tr>
+  <tr><td>Permissions</td><td>/admin/permissions</td><td>system.roles.write</td><td>permissions</td><td>/admin/v1/admins</td></tr>
+  <tr><td>Paramètres</td><td>/admin/settings</td><td>system.settings.write</td><td>settings</td><td>/admin/v1/reference-data, /admin/v1/clinical-review/policies</td></tr>
+</table>
+
+<h3 id="ch10-overview">10.1 Vue d'ensemble</h3>
+<p>One ledger strip (net revenue of 30 days, active people…) and three work lists — cases waiting for review, content waiting for review, payment incidents — each shown only to admins whose grants cover it. No wall of numbers: it answers "what needs me today?". A failed file in the library links to its own type's list (audit fix A6).</p>
+
+<h3 id="ch10-users">10.2 Utilisateurs</h3>
+<ul>
+  <li>Search box (debounced), filters by profession and status, « Charger plus » for the next 50.</li>
+  <li>A row opens the <b>user drawer</b>: « Profil », « Accès » (the AccessProfile and the facts it came from), « Abonnements », « Activité » (counts only — never what someone searched), « Historique » (audit entries of this account).</li>
+  <li>Actions in the drawer menu (with a reason): « Suspendre » / « Réactiver » the account, and sign it out of every device.</li>
+</ul>
+[[code apps/admin/src/features/users/user-drawer.tsx | export function UserDrawer | 30]]
+
+<h3 id="ch10-verif">10.3 Vérifications</h3>
+<ul>
+  <li>Queue tabs « En attente · Vérifiés · Rejetés · Expirés · Appels », type chips, oldest first; the « Soumis » column turns into a warning past the 24-hour SLA (with a word, never colour alone).</li>
+  <li>The case drawer: « Prendre le dossier » (claim), « Libérer » (give back), the documents with « Ouvrir » in the <b>restricted viewer</b> (60-second URL, watermark with the reviewer's name, printing and copying blocked, every opening audited; « Rouvrir » asks for a new link), then « Approuver » (optional expiry) or « Rejeter » (reason code).</li>
+  <li>An appeal can only be decided by a reviewer with <code>verification.appeal.decide</code> who did not reject the case.</li>
+</ul>
+[[code apps/admin/src/features/verification/restricted-viewer.tsx | export function RestrictedViewer | 30]]
+
+<h3 id="ch10-recovery">10.4 Récupération</h3>
+<p>Assisted recovery requests by status. The drawer compares the request (lost contact, names, new contact) with the account found, shows the two photos (« Ouvrir », 60 seconds, audited) beside the verified identity, and offers « Approuver » (only when an account matches; applies after 24 h) or « Rejeter » — also during the 24-hour hold (audit fix A4).</p>
+
+<h3 id="ch10-library">10.5 Bibliothèque (ordonnances, certificats)</h3>
+<ul>
+  <li>Type tabs (each has its own URL), status chips with counts, a filter box, « Ajouter un modèle ».</li>
+  <li><b>Upload drawer</b>: drop or choose a PDF (checked in the browser: type, size, « %PDF » header); the French title is pre-filled from the file name; the button label follows the stage — checksum, sending, saving.</li>
+  <li><b>Model drawer</b>: edit titles and « Échantillon démo » (« Enregistrer » asks for a reason), « Voir le PDF » (drawn on canvases, no download), « Remplacer le PDF », and the status menu (activate, deactivate, archive, restore). While a file is being processed the drawer refreshes every 3 seconds without erasing what the admin is typing.</li>
+  <li>« Synonymes »: extra words search should match for this model.</li>
+</ul>
+[[code apps/admin/src/features/library/upload-drawer.tsx | const submit = form.handleSubmit( | 30]]
+
+<h3 id="ch10-calc">10.6 Calculateurs</h3>
+<p>The list shows each calculator's category, access, published and open version, primary source and status. « Nouveau calculateur » creates the calculator (slug, names, purpose, category). The <b>detail page</b> shows the version timeline and, for the selected version, five tabs:</p>
+<table>
+  <tr><th>Tab</th><th>Buttons</th></tr>
+  <tr><td>Définition</td><td>Read-only view of inputs (ranges, units, answers and points), formula written with the inputs' names, bands and limitations; « Modifier la définition » opens the draft's JSON; « Enregistrer la définition » shows the API's problems by path.</td></tr>
+  <tr><td>Sources</td><td>« Ajouter une source » (role, citation, edition, where the formula is stated, DOI or link, date accessed); bin icon to remove. Links must be http(s) (audit fix A1).</td></tr>
+  <tr><td>Tests</td><td>« Ajouter un cas » (where the example comes from, inputs as JSON, expected outcome / value ± tolerance / band); « Lancer les tests » on the server engine.</td></tr>
+  <tr><td>Revue</td><td>The publication gate as a checklist; « Soumettre à revue », « Supprimer le brouillon » (author); « Approuver et publier » (or first/second sign-off) and « Renvoyer à l'auteur » (reviewer, never the author); « Retirer » a published version.</td></tr>
+  <tr><td>Aperçu</td><td>Type values and « Calculer » on the server engine; nothing is stored.</td></tr>
+</table>
+[[code apps/admin/src/features/calculators/review-panel.tsx | export function ReviewPanel | 26]]
+
+<h3 id="ch10-preg">10.7 Grossesse · Allaitement</h3>
+<ul>
+  <li>Three tabs: <b>Substances</b> (search, filters by state and by conduct for a period, « Ajouter une substance », « Approuver les N affichées » for bulk review), <b>Sources</b> (the registry: « Ajouter une source », « Modifier »), <b>Signalements</b> (user reports; « Traiter » closes one with what was done).</li>
+  <li>The <b>substance page</b>: « Modifier la substance » (names, ATC, synonyms), « Nouvelle version », « Fusionner avec… » / « Annuler la fusion », the version timeline, and the profile editor (periods, conduct, evidence level and population, sources ticked, alternatives, conflicts between sources) with « Enregistrer le brouillon », « Soumettre à relecture », « Approuver et publier », « Demander des modifications ».</li>
+  <li>The <b>import</b> pages: « Choisir un fichier .xlsx », then a preview with column mapping (« Appliquer »), the meaning of each status word, rows with issues to correct one by one (« Enregistrer la ligne »), « Abandonner l'import » or « Ajouter à la bibliothèque » (writes drafts), and « Soumettre tout à relecture ».</li>
+</ul>
+
+<h3 id="ch10-subs">10.8 Abonnements, Transactions, Finance</h3>
+<ul>
+  <li><b>Abonnements</b> — « Offres »: the versioned plan catalogue; « Nouveau forfait », « Nouvelle version » (a price change), « Mettre en vente » / « Retirer de la vente ». The plan drawer: code, names, price in dinars, duration, includes / not included (one per line), « Publier ». A second tab lists subscriptions.</li>
+  <li><b>Transactions</b>: the immutable ledger with search and filters; the drawer shows the payment, its fee and adjustments; menu « Ajustement exceptionnel… » (Super Admin) and « Approuver » by a different admin.</li>
+  <li><b>Finance</b>: the period picker; « Vue d'ensemble » (gross → fees → net, then expenses → net profit, subscriptions, revenue by plan, charts), « Dépenses » (« Ajouter une dépense », « Annuler la dépense », fee rates per channel with « Modifier », « Régler les frais » from a provider statement), « Moyens de paiement » (« Suspendre » / « Reprendre » a card network during an outage), « Rapports » (« Télécharger le CSV », audited).</li>
+</ul>
+
+<h3 id="ch10-analytics">10.9 Analytique and Journal d'audit</h3>
+<ul>
+  <li><b>Analytique</b>: period and segment filters (profession, specialty, wilaya); tabs Usage, Bibliothèque, Calculateurs, Utilisateurs (sign-up → verification funnel), Abonnements, Démo. Cells behind fewer than 10 people show « &lt; 10 »; a freshness line says when the last event arrived.</li>
+  <li><b>Journal d'audit</b>: filters (admin, action group, record, period), newest first, « Charger plus », « Exporter en CSV » (needs <code>audit.export</code>; the export itself is logged).</li>
+</ul>
+
+<h3 id="ch10-perm">10.10 Permissions and Paramètres</h3>
+<ul>
+  <li><b>Permissions</b> (Super Admin): « Nouvel administrateur » (e-mail, name, preset) shows a one-time password once — « Copier », then « J'ai transmis le mot de passe ». The admin drawer: grants by area with live separation-of-duties checks, « Enregistrer les permissions », menu « Accès temporaire », « Réinitialiser l'authentificateur », « Suspendre » / « Réactiver ».</li>
+  <li><b>Paramètres</b>: the pickers of the app (specialties, institutions, universities by wilaya: « Ajouter… ») and « Double relecture » — whether calculators and pregnancy profiles need one or two sign-offs (refused if fewer than two admins could approve).</li>
+</ul>
+</section>

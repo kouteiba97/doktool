@@ -1,0 +1,70 @@
+<section class="chapter">
+<h2 id="ch4">4. How the API is built — NestJS, using DokTool's own code</h2>
+<p class="lead">NestJS is a framework that organises a Node.js server into <b>modules</b>, each made of <b>controllers</b> (HTTP endpoints), <b>services</b> (the logic) and <b>DTOs</b> (the shapes of what comes in and goes out). Nest builds every object and hands it what it needs through its constructor — <i>dependency injection</i>. This chapter teaches those pieces with the smallest complete module of DokTool: notifications.</p>
+
+<h3 id="ch4-start">4.1 Start-up: main.ts and app.setup.ts</h3>
+<p>The server starts in <code>main.ts</code>. It reads the environment once, builds the application from <code>AppModule</code>, applies the shared HTTP settings and listens:</p>
+[[file apps/api/src/main.ts]]
+<p><code>loadEnv</code> (in <code>config/env.ts</code>) validates every environment variable with a Zod schema: a missing secret or a malformed URL stops the server at start-up instead of failing later. <code>configureApp</code> is shared with the integration tests, so tests run the exact same HTTP stack as production:</p>
+[[code apps/api/src/app.setup.ts | export function configureApp | block]]
+<p>Read it line by line: <code>helmet()</code> adds security headers; <code>cookieParser()</code> reads the admin session cookie; payment webhooks keep their raw bytes (their signature is computed over them); the global <code>ValidationPipe</code> rejects any field a DTO does not declare (<code>forbidNonWhitelisted</code>) and converts types (<code>transform</code>); the global <code>ErrorFilter</code> gives every error the same shape; Swagger is served at <code>/docs</code> outside production.</p>
+
+<h3 id="ch4-root">4.2 The root module</h3>
+[[code apps/api/src/app.module.ts | export class AppModule | block]]
+<p>The infrastructure modules come first (configuration, database, jobs, cryptography, rate limits, messaging, token security, health), then the 20 domain modules. Most infrastructure modules are <i>global</i>: their services can be injected anywhere without importing the module.</p>
+
+<h3 id="ch4-module">4.3 A module: notifications</h3>
+<p>A module declares its controllers, its providers (services) and what it exports to other modules. This one also schedules a daily clean-up job when it starts:</p>
+[[file apps/api/src/modules/notifications/notifications.module.ts]]
+<p>Other modules must import only from <code>index.ts</code> — the module's public door:</p>
+[[file apps/api/src/modules/notifications/index.ts]]
+
+<h3 id="ch4-controller">4.4 A controller: endpoints and guards</h3>
+<p>A controller maps URLs to methods. Decorators (the <code>@…</code> lines) tell Nest the HTTP verb, the guard to run first, and tell Swagger how to document the endpoint:</p>
+[[code apps/api/src/modules/notifications/notifications.controller.ts | @ApiTags('notifications') | block]]
+<ul>
+  <li><code>@Controller(`${USER_API_PREFIX}/me/notifications`)</code> — every route here starts with <code>/v1/me/notifications</code>.</li>
+  <li><code>@UseGuards(UserAuthGuard)</code> — a valid user token is required (a demo token is not enough: demos have no notifications).</li>
+  <li><code>@CurrentUser() user</code> — injects the principal the guard stored on the request (<code>userId</code>, <code>sessionId</code>).</li>
+  <li><code>@Query() query: NotificationListQuery</code> — the query string, validated against the DTO class.</li>
+  <li><code>@Param('id', new ParseUUIDPipe())</code> — the URL id, refused unless it is a UUID.</li>
+  <li><code>@HttpCode(HttpStatus.NO_CONTENT)</code> — answers 204 with no body.</li>
+</ul>
+<div class="tip"><b>Controllers stay thin.</b> In DokTool a controller only translates HTTP into a service call and the service's result into a DTO. Every rule lives in services, so it can be tested and reused.</div>
+
+<h3 id="ch4-dto">4.5 DTOs: the contract</h3>
+<p>A DTO is a class with decorated fields. <code>class-validator</code> decorators (<code>@IsOptional</code>, <code>@IsISO8601</code>…) check incoming data; <code>@ApiProperty</code> describes the field in the OpenAPI contract, from which the mobile and admin clients are generated. Changing a DTO therefore changes both apps' generated code.</p>
+[[code apps/api/src/modules/notifications/notifications.dto.ts | export class NotificationDto | block]]
+<p>The static <code>from()</code> turns an internal record into exactly what the client may see (dates as ISO text, parameters as strings).</p>
+
+<h3 id="ch4-service">4.6 A service and the database</h3>
+<p>Services are <code>@Injectable()</code> classes. The constructor lists what they need; Nest provides it. Here the only dependency is <code>PrismaService</code>, the single database client:</p>
+[[code apps/api/src/modules/notifications/notifications.service.ts | export class NotificationsService | 40]]
+<p>Prisma turns the models of <code>prisma/schema.prisma</code> into a typed client: <code>this.prisma.notification.findMany(…)</code> is checked by the compiler against the table's columns. The model behind this service:</p>
+[[code apps/api/prisma/schema.prisma | model Notification { | block]]
+<p>Note the conventions used in the whole schema: UUID v7 identifiers, <code>snake_case</code> column names mapped from <code>camelCase</code> fields, timestamps with time zone, and an index shaped exactly like the list query (user, unread, newest first).</p>
+[[code apps/api/src/infrastructure/database/prisma.service.ts | export class PrismaService | block]]
+
+<h3 id="ch4-guards">4.7 Guards and decorators you will see everywhere</h3>
+<table>
+  <tr><th>Decorator / guard</th><th>Where</th><th>What it does</th></tr>
+  <tr><td><code>@UseGuards(UserAuthGuard)</code> + <code>@CurrentUser()</code></td><td>user-only routes</td><td>Valid user token; the principal is <code>{ userId, sessionId }</code>.</td></tr>
+  <tr><td><code>@UseGuards(ViewerAuthGuard)</code> + <code>@CurrentViewer()</code></td><td>content routes</td><td>A user token <i>or</i> a demo token; the viewer says which.</td></tr>
+  <tr><td><code>@RequireFeature('offline.sync')</code></td><td>feature routes</td><td>Viewer guard + the access policy: refuses with <code>FEATURE_LOCKED</code> and the unlock path.</td></tr>
+  <tr><td><code>@RequireGrants('finance.read')</code> + <code>@CurrentAdmin()</code></td><td>admin routes</td><td>Admin session cookie, origin check, and the listed grants.</td></tr>
+</table>
+[[code apps/api/src/modules/access/require-feature.ts | export class FeatureGuard | block]]
+[[code apps/api/src/modules/access/require-feature.ts | export function RequireFeature | block]]
+
+<h3 id="ch4-errors">4.8 Refusing: DomainError</h3>
+<p>Services never build HTTP responses. They throw <code>new DomainError('CODE', 'developer message', details?)</code>; the code decides the HTTP status:</p>
+[[code apps/api/src/common/errors/domain-error.ts | export const ErrorCode | block]]
+
+<h3 id="ch4-tests">4.9 How the API is tested</h3>
+<ul>
+  <li><b>Unit tests</b> (<code>apps/api/test/unit</code>): pure logic without a database — the access policy matrix, the calculator engine, CSV cells, payment gateway parsing, search ranking.</li>
+  <li><b>Integration tests</b> (<code>apps/api/test/integration/*.e2e.spec.ts</code>): the real application (<code>configureApp</code> included) against a real PostgreSQL test database, driven over HTTP with <code>supertest</code>. Helpers in <code>actors.ts</code> create a doctor, a student, an admin with given grants…, and <code>content.ts</code> publishes test content.</li>
+</ul>
+<div class="diagram">DATABASE_URL="postgresql://…/doktool_test" npx vitest run --project unit
+DATABASE_URL="postgresql://…/doktool_test" npx vitest run --project integration test/integration/activity.e2e.spec.ts</div>
+</section>

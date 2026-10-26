@@ -1,0 +1,466 @@
+{
+ "apps/admin/src": {
+  "en": "Root of Admin Web: <code>proxy.ts</code> sends the browser to sign-in when there is no session cookie.",
+  "ar": "جذر لوحة الإدارة: الملف <code>proxy.ts</code> يحوّل المتصفح إلى صفحة الدخول إذا لم توجد كعكة الجلسة."
+ },
+ "apps/admin/src/api": {
+  "en": "The typed API client: <code>client.ts</code> (openapi-fetch typed by the generated <code>schema.d.ts</code>, <code>call()</code> and <code>ApiFailure</code>) and <code>download.ts</code> for CSV exports.",
+  "ar": "عميل الـAPI المكتوب الأنواع: <code>client.ts</code> (openapi-fetch مع الأنواع المولّدة في <code>schema.d.ts</code>، والدالة <code>call()</code> والخطأ <code>ApiFailure</code>) و<code>download.ts</code> لتنزيل ملفات CSV."
+ },
+ "apps/admin/src/app": {
+  "en": "Next.js App Router: each folder is a URL. The root layout (title, icon, no indexing), the providers (React Query, languages, toasts) and the redirect of <code>/</code> to the console.",
+  "ar": "موجّه Next.js: كل مجلد هو عنوان URL. التخطيط الجذري (العنوان، الأيقونة، منع الفهرسة)، والمزوّدات (React Query، اللغات، الإشعارات) وتحويل <code>/</code> إلى اللوحة."
+ },
+ "apps/admin/src/app/admin": {
+  "en": "The console: <code>layout.tsx</code> puts every page inside the shell; <code>page.tsx</code> opens the first section the admin's grants allow. Every sub-folder is one section; its <code>page.tsx</code> only checks the grant and renders the feature component.",
+  "ar": "اللوحة نفسها: <code>layout.tsx</code> يضع كل صفحة داخل الإطار؛ و<code>page.tsx</code> يفتح أول قسم تسمح به صلاحيات المشرف. كل مجلد فرعي هو قسم واحد، وملف <code>page.tsx</code> فيه يتحقق من الصلاحية ثم يعرض مكوّن الميزة فقط."
+ },
+ "apps/admin/src/app/admin/analytics": {
+  "en": "Route of the « Analytique » section: grant check, then the feature component.",
+  "ar": "مسار قسم « التحليلات »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/audit": {
+  "en": "Route of the « Journal d'audit » section: grant check, then the feature component.",
+  "ar": "مسار قسم « سجل التدقيق »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/calculators": {
+  "en": "Route of the « Calculateurs (list) » section: grant check, then the feature component.",
+  "ar": "مسار قسم « الحاسبات (القائمة) »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/calculators/[id]": {
+  "en": "Route of the « one calculator » section: grant check, then the feature component.",
+  "ar": "مسار قسم « حاسبة واحدة »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/finance": {
+  "en": "Route of the « Finance » section: grant check, then the feature component.",
+  "ar": "مسار قسم « المالية »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/library": {
+  "en": "Route of the « Bibliothèque (opens the ordonnances) » section: grant check, then the feature component.",
+  "ar": "مسار قسم « المكتبة (تفتح الوصفات) »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/library/[type]": {
+  "en": "Route of the « ordonnances or certificates » section: grant check, then the feature component.",
+  "ar": "مسار قسم « الوصفات أو الشهادات »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/overview": {
+  "en": "Route of the « Vue d'ensemble » section: grant check, then the feature component.",
+  "ar": "مسار قسم « نظرة عامة »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/permissions": {
+  "en": "Route of the « Permissions » section: grant check, then the feature component.",
+  "ar": "مسار قسم « الصلاحيات »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/pregnancy": {
+  "en": "Route of the « Grossesse · Allaitement » section: grant check, then the feature component.",
+  "ar": "مسار قسم « الحمل والرضاعة »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/pregnancy/[id]": {
+  "en": "Route of the « one substance » section: grant check, then the feature component.",
+  "ar": "مسار قسم « مادة واحدة »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/pregnancy/import": {
+  "en": "Route of the « spreadsheet imports » section: grant check, then the feature component.",
+  "ar": "مسار قسم « استيراد الجداول »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/pregnancy/import/[id]": {
+  "en": "Route of the « one import's preview » section: grant check, then the feature component.",
+  "ar": "مسار قسم « معاينة استيراد واحد »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/recovery": {
+  "en": "Route of the « Récupération » section: grant check, then the feature component.",
+  "ar": "مسار قسم « استرجاع الحسابات »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/settings": {
+  "en": "Route of the « Paramètres » section: grant check, then the feature component.",
+  "ar": "مسار قسم « الإعدادات »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/subscriptions": {
+  "en": "Route of the « Abonnements » section: grant check, then the feature component.",
+  "ar": "مسار قسم « الاشتراكات »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/transactions": {
+  "en": "Route of the « Transactions » section: grant check, then the feature component.",
+  "ar": "مسار قسم « المعاملات »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/users": {
+  "en": "Route of the « Utilisateurs » section: grant check, then the feature component.",
+  "ar": "مسار قسم « المستخدمون »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/admin/verification": {
+  "en": "Route of the « Vérifications » section: grant check, then the feature component.",
+  "ar": "مسار قسم « التحقق »: التحقق من الصلاحية ثم عرض مكوّن الميزة."
+ },
+ "apps/admin/src/app/sign-in": {
+  "en": "The two-step sign-in: password, then the authenticator code (QR code enrolment the first time).",
+  "ar": "تسجيل الدخول على خطوتين: كلمة المرور ثم رمز تطبيق المصادقة (مع رمز QR للتسجيل في المرة الأولى)."
+ },
+ "apps/admin/src/features/analytics": {
+  "en": "The analytics dashboards: usage, library, calculators, onboarding funnel, subscriptions, demo; small counts are hidden.",
+  "ar": "لوحات التحليلات: الاستخدام، المكتبة، الحاسبات، مسار التسجيل، الاشتراكات، العرض التجريبي؛ مع إخفاء الأعداد الصغيرة."
+ },
+ "apps/admin/src/features/audit": {
+  "en": "The audit log page (filters, CSV export) and the « Historique » tab reused by every drawer; human names of audited actions.",
+  "ar": "صفحة سجل التدقيق (المرشحات وتصدير CSV) وتبويب « السجل » المستعمل في كل لوحة جانبية؛ وأسماء مقروءة للأفعال المسجّلة."
+ },
+ "apps/admin/src/features/calculators": {
+  "en": "Calculator governance: the list, the detail page with its version timeline, and the five tabs Définition · Sources · Tests · Revue · Aperçu; <code>definition.ts</code> reads a definition for display.",
+  "ar": "حوكمة الحاسبات: القائمة، وصفحة التفاصيل مع خط الإصدارات، والتبويبات الخمسة: التعريف · المصادر · الاختبارات · المراجعة · المعاينة؛ والملف <code>definition.ts</code> يقرأ التعريف لعرضه."
+ },
+ "apps/admin/src/features/clinical-review": {
+  "en": "Shared by calculators and pregnancy: who has signed off a version and what the current admin's approval would do.",
+  "ar": "مشترك بين الحاسبات والحمل: من وقّع على الإصدار، وما الذي ستفعله موافقة المشرف الحالي."
+ },
+ "apps/admin/src/features/finance": {
+  "en": "Finance: the ledger and charts, expenses and fee rates, fee settlement, payment methods on/off, CSV reports.",
+  "ar": "المالية: الدفتر والرسوم البيانية، المصاريف ونسب الرسوم، تسوية الرسوم، تشغيل وإيقاف وسائل الدفع، تقارير CSV."
+ },
+ "apps/admin/src/features/library": {
+  "en": "Reference library: the list per type, the upload drawer (checksum → signed upload → create), the model drawer (metadata, preview, replace, status).",
+  "ar": "المكتبة المرجعية: القائمة حسب النوع، ولوحة الرفع (البصمة ← رفع موقّع ← الإنشاء)، ولوحة النموذج (البيانات، المعاينة، الاستبدال، الحالة)."
+ },
+ "apps/admin/src/features/overview": {
+  "en": "The overview page: one ledger strip and the work lists of the admin's grants.",
+  "ar": "صفحة النظرة العامة: شريط الأرقام الرئيسية وقوائم العمل بحسب صلاحيات المشرف."
+ },
+ "apps/admin/src/features/permissions": {
+  "en": "Admin accounts: creation with a one-time password, grants by area with separation-of-duties checks, temporary grants, authenticator reset, suspension.",
+  "ar": "حسابات المشرفين: الإنشاء بكلمة مرور لمرة واحدة، الصلاحيات حسب المجال مع فحص فصل المهام، الصلاحيات المؤقتة، إعادة ضبط المصادقة، الإيقاف."
+ },
+ "apps/admin/src/features/pregnancy": {
+  "en": "Grossesse · Allaitement: substances, sources and reports tables, the substance page with the profile editor and viewer, merging duplicates, spreadsheet import pages.",
+  "ar": "الحمل والرضاعة: جداول المواد والمصادر والبلاغات، صفحة المادة مع محرّر الملف وعارضه، دمج المكرّرات، وصفحات استيراد الجداول."
+ },
+ "apps/admin/src/features/recovery": {
+  "en": "Assisted account recovery: the queue by status, the comparison drawer, watermarked photos, approve and reject.",
+  "ar": "استرجاع الحسابات بمساعدة الفريق: الطابور حسب الحالة، لوحة المقارنة، الصور بعلامة مائية، القبول والرفض."
+ },
+ "apps/admin/src/features/search": {
+  "en": "The synonyms editor: extra words search should match for a model or a calculator.",
+  "ar": "محرّر المرادفات: كلمات إضافية يجب أن يطابقها البحث لنموذج أو حاسبة."
+ },
+ "apps/admin/src/features/settings": {
+  "en": "Settings: the pickers of the app (specialties, institutions, universities) and the double sign-off policies.",
+  "ar": "الإعدادات: قوائم الاختيار في التطبيق (التخصصات، المؤسسات، الجامعات) وسياسات التوقيع المزدوج."
+ },
+ "apps/admin/src/features/subscriptions": {
+  "en": "Plans and subscriptions: the versioned catalogue, the plan drawer, the subscriptions list.",
+  "ar": "الخطط والاشتراكات: الكتالوج ذو الإصدارات، لوحة الخطة، وقائمة الاشتراكات."
+ },
+ "apps/admin/src/features/transactions": {
+  "en": "The payments ledger and its drawer with fees and exceptional adjustments (two admins).",
+  "ar": "دفتر المدفوعات ولوحته مع الرسوم والتعديلات الاستثنائية (بمشرفَين اثنين)."
+ },
+ "apps/admin/src/features/users": {
+  "en": "Users: the searchable list and the user drawer (profile, access, subscriptions, activity counts, history).",
+  "ar": "المستخدمون: القائمة القابلة للبحث ولوحة المستخدم (الملف، الوصول، الاشتراكات، عدد الأنشطة، السجل)."
+ },
+ "apps/admin/src/features/verification": {
+  "en": "Verification review: the queue, the case drawer, claim and release, the restricted viewer, approve / reject / release dialogs, SLA badge.",
+  "ar": "مراجعة التحقق: الطابور، لوحة الملف، الأخذ والإرجاع، العارض المقيَّد، نوافذ القبول والرفض والإرجاع، وشارة مهلة الخدمة."
+ },
+ "apps/admin/src/i18n": {
+  "en": "Languages: the FR/EN catalogue (<code>admin.*</code> keys), the provider and <code>useI18n</code>, formatting of dates, numbers, money and sizes.",
+  "ar": "اللغات: كتالوج الفرنسية والإنجليزية (مفاتيح <code>admin.*</code>)، والمزوّد و<code>useI18n</code>، وتنسيق التواريخ والأرقام والمبالغ والأحجام."
+ },
+ "apps/admin/src/session": {
+  "en": "Who is signed in (<code>useMe</code>) and what they may do (<code>useGrants</code>); safe redirect after sign-in.",
+  "ar": "من سجّل الدخول (<code>useMe</code>) وما يُسمح له به (<code>useGrants</code>)؛ والتحويل الآمن بعد الدخول."
+ },
+ "apps/admin/src/shell": {
+  "en": "The console frame: top bar, navigation list filtered by grants, and <code>RequireGrant</code> for pages opened without their grant.",
+  "ar": "إطار اللوحة: الشريط العلوي، قائمة التنقل المرشّحة حسب الصلاحيات، و<code>RequireGrant</code> للصفحات المفتوحة دون صلاحيتها."
+ },
+ "apps/admin/src/test": {
+  "en": "Admin Web tests (Vitest): the data table, helpers, pregnancy review problems.",
+  "ar": "اختبارات لوحة الإدارة (Vitest): جدول البيانات، الدوال المساعدة، مشكلات مراجعة الحمل."
+ },
+ "apps/admin/src/ui": {
+  "en": "The console kit: buttons, badges, tables, dialogs, drawers, fields, menus, tabs, toasts, charts, period picker, PDF pages, debounce.",
+  "ar": "مجموعة مكوّنات اللوحة: الأزرار، الشارات، الجداول، النوافذ، اللوحات الجانبية، الحقول، القوائم، التبويبات، الإشعارات، الرسوم، منتقي الفترة، صفحات PDF، والتأخير."
+ },
+ "apps/api/src": {
+  "en": "The server entry point (<code>main.ts</code>), the HTTP settings shared with tests (<code>app.setup.ts</code>) and the root module (<code>app.module.ts</code>).",
+  "ar": "نقطة بدء الخادم (<code>main.ts</code>)، وإعدادات HTTP المشتركة مع الاختبارات (<code>app.setup.ts</code>)، والوحدة الجذرية (<code>app.module.ts</code>)."
+ },
+ "apps/api/src/common/errors": {
+  "en": "The error contract: <code>DomainError</code> with its stable codes, the response shape, and the global filter that renders every failure the same way.",
+  "ar": "عقد الأخطاء: <code>DomainError</code> بأكوادها الثابتة، وشكل الرد، والمرشّح العام الذي يعرض كل فشل بنفس الشكل."
+ },
+ "apps/api/src/common/http": {
+  "en": "Who is calling (IP, user agent), for rate limits and audit entries.",
+  "ar": "من المتصل (العنوان IP ووكيل المستخدم)، لحدود المعدّل وسجل التدقيق."
+ },
+ "apps/api/src/common/text": {
+  "en": "Text helpers: safe CSV cells, accent-insensitive search text.",
+  "ar": "أدوات النصوص: خلايا CSV آمنة، ونص بحث لا يتأثر بالحركات واللواحق."
+ },
+ "apps/api/src/config": {
+  "en": "Environment variables, validated at start-up and injectable as <code>ENV</code>.",
+  "ar": "متغيرات البيئة، يُتحقَّق منها عند التشغيل وتُحقَن باسم <code>ENV</code>."
+ },
+ "apps/api/src/health": {
+  "en": "The public health endpoint (<code>GET /v1/health</code>).",
+  "ar": "نقطة الصحة العامة (<code>GET /v1/health</code>)."
+ },
+ "apps/api/src/http": {
+  "en": "URL prefixes: <code>/v1</code> for the app, <code>/admin/v1</code> for Admin Web.",
+  "ar": "بادئات العناوين: <code>/v1</code> للتطبيق و<code>/admin/v1</code> للوحة الإدارة."
+ },
+ "apps/api/src/infrastructure/crypto": {
+  "en": "Cryptography: Argon2id passwords, AES-GCM secret box (admin TOTP secrets), random tokens, hashes and HMACs.",
+  "ar": "التشفير: كلمات المرور بـArgon2id، صندوق الأسرار AES-GCM (أسرار المصادقة الثنائية للمشرفين)، الرموز العشوائية، والبصمات وHMAC."
+ },
+ "apps/api/src/infrastructure/database": {
+  "en": "The single Prisma client, connected lazily, sessions in UTC.",
+  "ar": "عميل Prisma الوحيد، يتصل عند الحاجة، والجلسات بتوقيت UTC."
+ },
+ "apps/api/src/infrastructure/jobs": {
+  "en": "Background jobs on pg-boss (in PostgreSQL): registration of cron schedules, server analytics events.",
+  "ar": "المهام الخلفية عبر pg-boss (داخل PostgreSQL): تسجيل الجداول الزمنية، وأحداث التحليلات من الخادم."
+ },
+ "apps/api/src/infrastructure/messaging": {
+  "en": "E-mails and SMS: delivery with daily limits, server texts in the account's language.",
+  "ar": "البريد والرسائل القصيرة: الإرسال مع حدود يومية، ونصوص الخادم بلغة الحساب."
+ },
+ "apps/api/src/infrastructure/messaging/sms": {
+  "en": "SMS providers (Infobip, Twilio) behind one interface, with fallback and masked numbers in logs.",
+  "ar": "مزودو الرسائل القصيرة (Infobip وTwilio) خلف واجهة واحدة، مع البديل الاحتياطي وإخفاء الأرقام في السجلات."
+ },
+ "apps/api/src/infrastructure/rate-limit": {
+  "en": "Rate limits stored in PostgreSQL (fixed windows), valid across several API instances.",
+  "ar": "حدود المعدّل مخزّنة في PostgreSQL (نوافذ ثابتة)، صالحة عبر عدة نسخ من الخادم."
+ },
+ "apps/api/src/infrastructure/security": {
+  "en": "Tokens and guards: user tokens (15 min, live session check), demo tokens (1 h), <code>UserAuthGuard</code>, <code>ViewerAuthGuard</code>.",
+  "ar": "الرموز والحرّاس: رموز المستخدم (15 دقيقة مع فحص الجلسة)، رموز العرض التجريبي (ساعة)، <code>UserAuthGuard</code> و<code>ViewerAuthGuard</code>."
+ },
+ "apps/api/src/modules": {
+  "en": "The list of the 20 domain modules (<code>index.ts</code>).",
+  "ar": "قائمة الوحدات العشرين للمجال (<code>index.ts</code>)."
+ },
+ "apps/api/src/modules/access": {
+  "en": "The entitlement policy as data, its pure evaluation, the access service, <code>GET /v1/me/access</code> and <code>@RequireFeature</code>.",
+  "ar": "سياسة الاستحقاق كبيانات، وتقييمها النقي، وخدمة الوصول، و<code>GET /v1/me/access</code> و<code>@RequireFeature</code>."
+ },
+ "apps/api/src/modules/activity": {
+  "en": "Favorites and the person's own research history (private; admins see counts only).",
+  "ar": "المفضلة وسجل البحث الخاص بالشخص (خاص؛ المشرفون يرون الأعداد فقط)."
+ },
+ "apps/api/src/modules/admin": {
+  "en": "Admin read screens across modules: overview, users and the user drawer, audit log and export.",
+  "ar": "شاشات القراءة الإدارية عبر الوحدات: النظرة العامة، المستخدمون ولوحة المستخدم، سجل التدقيق وتصديره."
+ },
+ "apps/api/src/modules/admin-auth": {
+  "en": "Admin authentication and permissions: password + TOTP, cookie sessions, guards, grants and presets, separation of duties, admin accounts.",
+  "ar": "مصادقة المشرفين وصلاحياتهم: كلمة المرور + TOTP، جلسات الكعكات، الحرّاس، الصلاحيات والقوالب، فصل المهام، حسابات المشرفين."
+ },
+ "apps/api/src/modules/analytics": {
+  "en": "Pseudonymous events: ingestion with strict schemas, server envelope, dashboards with small-count suppression.",
+  "ar": "أحداث بأسماء مستعارة: الاستقبال بمخططات صارمة، والغلاف من الخادم، ولوحات تخفي الأعداد الصغيرة."
+ },
+ "apps/api/src/modules/audit": {
+  "en": "The append-only audit log: record, list, history of one record.",
+  "ar": "سجل التدقيق غير القابل للتعديل: التسجيل، العرض، وتاريخ سجل واحد."
+ },
+ "apps/api/src/modules/auth": {
+  "en": "Proving who someone is: sign-up, codes, sign-in, sessions and refresh tokens, password reset, contacts and password changes, assisted recovery, account deletion.",
+  "ar": "إثبات الهوية: التسجيل، الرموز، الدخول، الجلسات ورموز التحديث، استعادة كلمة المرور، تغيير جهات الاتصال وكلمة المرور، الاسترجاع بمساعدة، وحذف الحساب."
+ },
+ "apps/api/src/modules/billing": {
+  "en": "Plans, checkout, payment confirmation, webhooks, subscription lifecycle (reminders, grace, expiry), ledgers for Admin Web.",
+  "ar": "الخطط، الدفع، تأكيد الدفع، الإشعارات من البوابات، دورة حياة الاشتراك (التذكير، المهلة، الانتهاء)، والدفاتر للوحة الإدارة."
+ },
+ "apps/api/src/modules/billing/payments": {
+  "en": "Payment gateways behind one abstract class: Chargily, SATIM, and a fake gateway outside production.",
+  "ar": "بوابات الدفع خلف صنف مجرّد واحد: Chargily وSATIM، وبوابة وهمية خارج الإنتاج."
+ },
+ "apps/api/src/modules/calculators": {
+  "en": "Calculators for the app (list, detail, published version) and their governance for Admin Web (drafts, sources, tests, review, publication).",
+  "ar": "الحاسبات للتطبيق (القائمة، التفاصيل، الإصدار المنشور) وحوكمتها في لوحة الإدارة (المسودات، المصادر، الاختبارات، المراجعة، النشر)."
+ },
+ "apps/api/src/modules/calculators/engine": {
+  "en": "The authoritative calculator engine: the definition schema, deeper checks, evaluation, test runs, canonical JSON checksum.",
+  "ar": "محرّك الحاسبات المرجعي: مخطط التعريف، الفحوص المعمّقة، التقييم، تشغيل الاختبارات، وبصمة JSON القياسية."
+ },
+ "apps/api/src/modules/clinical-review": {
+  "en": "The double sign-off policy for clinical content (one or two reviewers).",
+  "ar": "سياسة التوقيع المزدوج للمحتوى السريري (مراجع واحد أو اثنان)."
+ },
+ "apps/api/src/modules/demo": {
+  "en": "Demo sessions: start, renew, mark converted, statistics.",
+  "ar": "جلسات العرض التجريبي: البدء، التجديد، تعليم التحويل إلى حساب، والإحصاءات."
+ },
+ "apps/api/src/modules/finance": {
+  "en": "Revenue, fees, expenses, adjustments, reports, and the transactions ledger for Admin Web.",
+  "ar": "الإيرادات، الرسوم، المصاريف، التعديلات، التقارير، ودفتر المعاملات للوحة الإدارة."
+ },
+ "apps/api/src/modules/notifications": {
+  "en": "In-app notifications stored as catalogue keys with parameters.",
+  "ar": "إشعارات داخل التطبيق مخزّنة كمفاتيح من الكتالوج مع معاملات."
+ },
+ "apps/api/src/modules/offline": {
+  "en": "The offline manifest: what an account may keep on the phone, with a data version.",
+  "ar": "بيان العمل دون اتصال: ما يحق للحساب حفظه على الهاتف، مع رقم إصدار البيانات."
+ },
+ "apps/api/src/modules/pregnancy": {
+  "en": "Grossesse · Allaitement: the app side (list, search, profile, reports) and the admin side (substances, versions, sources, merges, imports).",
+  "ar": "الحمل والرضاعة: جانب التطبيق (القائمة، البحث، الملف، البلاغات) وجانب الإدارة (المواد، الإصدارات، المصادر، الدمج، الاستيراد)."
+ },
+ "apps/api/src/modules/pregnancy/import": {
+  "en": "Reading XLSX workbooks safely, finding and mapping columns, checking rows, applying them as drafts.",
+  "ar": "قراءة ملفات XLSX بأمان، العثور على الأعمدة وربطها، فحص الصفوف، وتطبيقها كمسودات."
+ },
+ "apps/api/src/modules/reference-library": {
+  "en": "Ordonnances and certificates: app list and signed PDF URLs; admin upload, replacement, metadata, status; PDF processing job.",
+  "ar": "الوصفات والشهادات: القائمة في التطبيق وروابط PDF الموقّعة؛ الرفع والاستبدال والبيانات والحالة في الإدارة؛ ومهمة معالجة ملفات PDF."
+ },
+ "apps/api/src/modules/search": {
+  "en": "Global search: ranking with typo tolerance, intent detection, suggestions, admin synonyms.",
+  "ar": "البحث الشامل: الترتيب مع تحمّل الأخطاء الإملائية، اكتشاف النية، الاقتراحات، والمرادفات من الإدارة."
+ },
+ "apps/api/src/modules/storage": {
+  "en": "The only door to files: abstract <code>StorageService</code>, R2 and local adapters, immutable keys, upload intents, limits and signed URL lifetimes.",
+  "ar": "الباب الوحيد إلى الملفات: <code>StorageService</code> المجرّد، ومحوّلا R2 والتخزين المحلي، مفاتيح ثابتة، نوايا الرفع، الحدود ومدد الروابط الموقّعة."
+ },
+ "apps/api/src/modules/users": {
+  "en": "Accounts: identifiers, profile, photo, preferences, access facts, reference data (wilayas, specialties, institutions, universities).",
+  "ar": "الحسابات: المعرّفات، الملف الشخصي، الصورة، التفضيلات، معطيات الوصول، والبيانات المرجعية (الولايات، التخصصات، المؤسسات، الجامعات)."
+ },
+ "apps/api/src/modules/verification": {
+  "en": "Identity and status verification: the person's cases, the reviewer side, files, maintenance (expiry, reminders, deletion), the access snapshot.",
+  "ar": "التحقق من الهوية والصفة: ملفات الشخص، جانب المراجِع، الوثائق، الصيانة (الانتهاء، التذكير، الحذف)، ولقطة الوصول."
+ },
+ "apps/api/src/openapi": {
+  "en": "Builds the OpenAPI document from the controllers and DTOs.",
+  "ar": "يبني وثيقة OpenAPI من المتحكمات وكائنات نقل البيانات."
+ },
+ "apps/api/src/scripts": {
+  "en": "Command-line tools: create an admin, generate the contract, seed demo data, Medicalcul extraction and import.",
+  "ar": "أدوات سطر الأوامر: إنشاء مشرف، توليد العقد، تعبئة بيانات العرض، استخراج Medicalcul واستيراده."
+ },
+ "apps/api/src/scripts/medicalcul": {
+  "en": "Medicalcul extraction: parse the HTML pages, translate exact formula patterns into definitions, build the catalogue and coverage report.",
+  "ar": "استخراج Medicalcul: تحليل صفحات HTML، وترجمة أنماط الصيغ الدقيقة إلى تعريفات، وبناء الكتالوج وتقرير التغطية."
+ },
+ "apps/mobile/lib": {
+  "en": "The app's entry point: <code>main.dart</code> starts Riverpod and the app.",
+  "ar": "نقطة بدء التطبيق: <code>main.dart</code> يشغّل Riverpod والتطبيق."
+ },
+ "apps/mobile/lib/src": {
+  "en": "The root widget: themes, languages, router, and the analytics and offline hosts around every screen.",
+  "ar": "الودجت الجذري: السمات، اللغات، الموجّه، ومضيفا التحليلات والعمل دون اتصال حول كل شاشة."
+ },
+ "apps/mobile/lib/src/core/api": {
+  "en": "The dio client with its interceptors, <code>ApiError</code>, and the retry rule for providers (the generated client is skipped here).",
+  "ar": "عميل dio مع معترضاته، و<code>ApiError</code>، وقاعدة إعادة المحاولة للمزوّدات (العميل المولّد غير معروض هنا)."
+ },
+ "apps/mobile/lib/src/core/auth": {
+  "en": "The session (signed out, account, demo), the vault holding tokens, the controller the router follows, the token interceptor.",
+  "ar": "الجلسة (خروج، حساب، عرض تجريبي)، والخزنة التي تحفظ الرموز، والمتحكم الذي يتبعه الموجّه، ومعترض الرموز."
+ },
+ "apps/mobile/lib/src/core/config": {
+  "en": "Build-time configuration (<code>--dart-define</code>): API address and environment.",
+  "ar": "إعدادات وقت البناء (<code>--dart-define</code>): عنوان الخادم والبيئة."
+ },
+ "apps/mobile/lib/src/core/database": {
+  "en": "The drift (SQLite) database: settings, offline tables, analytics queue; personal settings forgotten at sign-out.",
+  "ar": "قاعدة بيانات drift (SQLite): الإعدادات، جداول العمل دون اتصال، طابور التحليلات؛ والإعدادات الشخصية تُنسى عند الخروج."
+ },
+ "apps/mobile/lib/src/core/network": {
+  "en": "Whether the phone is online, on Wi-Fi or on mobile data.",
+  "ar": "هل الهاتف متصل، وعبر Wi-Fi أم بيانات الجوال."
+ },
+ "apps/mobile/lib/src/core/storage": {
+  "en": "Keychain / Keystore storage for secrets and the installation id.",
+  "ar": "التخزين الآمن (Keychain / Keystore) للأسرار ومعرّف التثبيت."
+ },
+ "apps/mobile/lib/src/features/access": {
+  "en": "The AccessProfile from the API, reloaded on launch, resume, verification and payment.",
+  "ar": "ملف الوصول من الخادم، يُعاد تحميله عند التشغيل والعودة والتحقق والدفع."
+ },
+ "apps/mobile/lib/src/features/account": {
+  "en": "The signed-in account (cached for offline start) and the public pickers (wilayas, specialties, institutions, universities, legal links).",
+  "ar": "الحساب المسجَّل (مخزّن للبدء دون اتصال) وقوائم الاختيار العامة (الولايات، التخصصات، المؤسسات، الجامعات، الروابط القانونية)."
+ },
+ "apps/mobile/lib/src/features/activity": {
+  "en": "Favorites (server or demo memory), the history recorder and queue, the « Activité et favoris » screen, the ★ button.",
+  "ar": "المفضلة (على الخادم أو في ذاكرة العرض التجريبي)، مسجّل السجل وطابوره، شاشة « النشاط والمفضلة »، وزر النجمة."
+ },
+ "apps/mobile/lib/src/features/analytics": {
+  "en": "Analytics events, the recorder with its offline queue, and the host that records screen views.",
+  "ar": "أحداث التحليلات، والمسجّل مع طابوره دون اتصال، والمضيف الذي يسجّل مشاهدات الشاشات."
+ },
+ "apps/mobile/lib/src/features/calculators": {
+  "en": "The calculator runtime (online or offline, self-tested) and the calculator screen.",
+  "ar": "بيئة تشغيل الحاسبة (متصلة أو دون اتصال، مع اختبار ذاتي) وشاشة الحاسبة."
+ },
+ "apps/mobile/lib/src/features/calculators/engine": {
+  "en": "The Dart engine: definition parsing, evaluation, formula text, self-test of published cases.",
+  "ar": "محرّك Dart: قراءة التعريف، التقييم، نص الصيغة، والاختبار الذاتي للحالات المنشورة."
+ },
+ "apps/mobile/lib/src/features/home": {
+  "en": "The Home screen.",
+  "ar": "الشاشة الرئيسية."
+ },
+ "apps/mobile/lib/src/features/library": {
+  "en": "Library sections, their lists (online or offline) and the library screen.",
+  "ar": "أقسام المكتبة وقوائمها (متصلة أو دون اتصال) وشاشة المكتبة."
+ },
+ "apps/mobile/lib/src/features/notifications": {
+  "en": "The notifications list and its actions.",
+  "ar": "قائمة الإشعارات وأفعالها."
+ },
+ "apps/mobile/lib/src/features/offline": {
+  "en": "Offline: the store (drift + files), the sync controller, the status bar and the settings screen.",
+  "ar": "العمل دون اتصال: المخزن (drift + الملفات)، متحكم المزامنة، شريط الحالة، وشاشة الإعدادات."
+ },
+ "apps/mobile/lib/src/features/onboarding": {
+  "en": "Welcome, demo start, role choice, sign-up, code, sign-in, password reset, and their helpers (draft, validators, code boxes, resend timer).",
+  "ar": "الترحيب، بدء العرض التجريبي، اختيار الصفة، التسجيل، الرمز، الدخول، استعادة كلمة المرور، وأدواتها (المسودة، المدقّقات، خانات الرمز، مؤقّت إعادة الإرسال)."
+ },
+ "apps/mobile/lib/src/features/pregnancy": {
+  "en": "Pregnancy and lactation: search with period filter, the substance profile, the error report sheet.",
+  "ar": "الحمل والرضاعة: البحث مع مرشح الفترة، ملف المادة، ونافذة الإبلاغ عن خطأ."
+ },
+ "apps/mobile/lib/src/features/profile": {
+  "en": "The profile screen, its edit screen and the full account data.",
+  "ar": "شاشة الملف الشخصي وشاشة تعديله وبيانات الحساب الكاملة."
+ },
+ "apps/mobile/lib/src/features/recovery": {
+  "en": "« Accès perdu ? » and the assisted recovery steps.",
+  "ar": "« فقدت الوصول؟ » وخطوات الاسترجاع بمساعدة الفريق."
+ },
+ "apps/mobile/lib/src/features/reference": {
+  "en": "Downloading and checking a reference PDF, and the read-only viewer.",
+  "ar": "تنزيل ملف PDF المرجعي والتحقق منه، والعارض للقراءة فقط."
+ },
+ "apps/mobile/lib/src/features/search": {
+  "en": "Global search and the recent searches kept on the phone.",
+  "ar": "البحث الشامل وعمليات البحث الأخيرة المحفوظة على الهاتف."
+ },
+ "apps/mobile/lib/src/features/settings": {
+  "en": "Settings: appearance, language, account security (contacts, password, recovery), account deletion.",
+  "ar": "الإعدادات: المظهر، اللغة، أمان الحساب (جهات الاتصال، كلمة المرور، الاسترجاع)، وحذف الحساب."
+ },
+ "apps/mobile/lib/src/features/shell": {
+  "en": "The tab bar and the tab stacks.",
+  "ar": "شريط التبويبات ومكدّساتها."
+ },
+ "apps/mobile/lib/src/features/subscription": {
+  "en": "Plans, review and payment, payment result, the current subscription.",
+  "ar": "الخطط، الملخص والدفع، نتيجة الدفع، والاشتراك الحالي."
+ },
+ "apps/mobile/lib/src/features/verification": {
+  "en": "Verification: intro, identity and status steps, camera, on-device document check, document slots, summary, status screen, repository and controller.",
+  "ar": "التحقق: المقدمة، خطوتا الهوية والصفة، الكاميرا، فحص الوثيقة على الهاتف، خانات الوثائق، الملخص، شاشة الحالة، المستودع والمتحكم."
+ },
+ "apps/mobile/lib/src/router": {
+  "en": "Every route and the redirect rules.",
+  "ar": "كل المسارات وقواعد التحويل."
+ },
+ "apps/mobile/lib/src/ui": {
+  "en": "The widget kit and token access (<code>context.colors</code>): buttons, alerts, badges, fields, pickers, rows, locks, glass and hero, tabs, skeletons.",
+  "ar": "مجموعة الودجات والوصول إلى الرموز التصميمية (<code>context.colors</code>): الأزرار، التنبيهات، الشارات، الحقول، المنتقيات، الصفوف، الأقفال، الزجاج والواجهة، التبويبات، هياكل التحميل."
+ }
+}

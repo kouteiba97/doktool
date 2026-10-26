@@ -1,0 +1,102 @@
+<section class="chapter">
+<h2 id="ch2">2. The repository — where everything lives</h2>
+<p class="lead">DokTool is one Git repository (a <i>monorepo</i>) holding three applications and four shared packages. The web console and the mobile app are already completely separate: they live in different folders, use different languages and frameworks, and never import each other's code. What they share is a <b>contract</b> with the server, generated automatically.</p>
+
+<h3 id="ch2-tree">2.1 The top-level folders</h3>
+<div class="diagram">doktool/
+├── apps/
+│   ├── api/       ← the server (NestJS, TypeScript). The ONLY part that touches the database.
+│   │   ├── src/           code: main.ts, app.module.ts, common/, config/, infrastructure/, modules/, scripts/
+│   │   ├── prisma/        schema.prisma (47 tables) + migrations/ (hand-written SQL)
+│   │   └── test/          unit/ (pure logic) and integration/ (real HTTP + real PostgreSQL)
+│   ├── admin/     ← Admin Web (Next.js, React, TypeScript). The team's browser console.
+│   │   ├── src/app/       the pages (one folder = one URL)
+│   │   ├── src/features/  the screens, one folder per console section
+│   │   ├── src/ui/        the shared components (Button, DataTable, Dialog, Drawer…)
+│   │   └── src/api/       the typed API client (schema.d.ts is generated)
+│   └── mobile/    ← the app (Flutter, Dart) for iOS and Android.
+│       ├── lib/src/core/      networking, session, local database, secure storage
+│       ├── lib/src/features/  one folder per feature (onboarding, library, calculators…)
+│       ├── lib/src/ui/        the shared widgets (DtButton, DtAlert, ContentRow…)
+│       └── test/              widget and unit tests
+├── packages/
+│   ├── api-contract/        openapi.json — the contract both clients are generated from
+│   ├── design-tokens/       colours, spacing, radii… → CSS, Tailwind, TypeScript and Dart
+│   ├── i18n/                messages.fr.json + messages.en.json → Flutter ARB + admin catalogue
+│   └── calculator-vectors/  test cases both calculator engines must pass
+├── design/        the design system: specifications, component cards, tokens.json
+└── docs/          decisions (adr/), audits, operations guides, this book</div>
+
+<h3 id="ch2-separation">2.2 How the web app and the mobile app are separated</h3>
+<p>The question "where is the web code, where is the mobile code?" has a clean answer:</p>
+<table>
+  <tr><th></th><th>Admin Web</th><th>Mobile app</th></tr>
+  <tr><td>Folder</td><td><code>apps/admin</code></td><td><code>apps/mobile</code></td></tr>
+  <tr><td>Language</td><td>TypeScript + React (TSX)</td><td>Dart</td></tr>
+  <tr><td>Framework</td><td>Next.js (App Router)</td><td>Flutter</td></tr>
+  <tr><td>Who uses it</td><td>The DokTool team, on a computer (≥ 1024 px)</td><td>Doctors, residents, students, demo visitors, on a phone</td></tr>
+  <tr><td>API it calls</td><td><code>/admin/v1/*</code> with a session cookie + 2FA</td><td><code>/v1/*</code> with a bearer token</td></tr>
+  <tr><td>Generated client</td><td><code>apps/admin/src/api/schema.d.ts</code></td><td><code>apps/mobile/lib/src/core/api/generated/</code></td></tr>
+  <tr><td>Package manager</td><td>npm (workspace)</td><td><code>flutter pub</code></td></tr>
+  <tr><td>Tests</td><td>Vitest (<code>apps/admin/src/test</code>)</td><td><code>flutter test</code> (<code>apps/mobile/test</code>)</td></tr>
+</table>
+<p>The only things they have in common come from <code>packages/</code>: the same words (i18n), the same colours (design tokens) and the same API contract. None of these is imported as source code; each is <b>generated</b> into the format the app needs.</p>
+<div class="diagram"> design/system/tokens.json ──generate──► tokens.css + tailwind preset (admin)   +  doktool_tokens.dart (mobile)
+ packages/i18n/messages.*.json ─build──► admin catalogue (TS)                 +  lib/l10n/*.arb (mobile)
+ apps/api (decorators) ──openapi──► packages/api-contract/openapi.json ──► schema.d.ts (admin) + Dart client (mobile)</div>
+<div class="tip"><b>Never edit a generated file by hand.</b> <code>schema.d.ts</code>, everything under <code>core/api/generated/</code>, <code>doktool_tokens.dart</code> and the ARB files are rewritten by their generators. CI compares them with a fresh generation and fails on any difference ("drift").</div>
+
+<h3 id="ch2-talk">2.3 How the three applications talk</h3>
+<div class="diagram">  ┌────────────────────┐   HTTPS  /v1/*   (Bearer access token)        ┌──────────────────────────┐
+  │  Mobile (Flutter)  │ ─────────────────────────────────────────────► │                          │──► PostgreSQL (Prisma)
+  └────────────────────┘                                                 │      API (NestJS)        │──► Cloudflare R2 (files)
+  ┌────────────────────┐   HTTPS  /admin/v1/*  (cookie + TOTP 2FA)       │  apps/api — the judge    │──► SMS / e-mail providers
+  │ Admin Web (Next.js)│ ─────────────────────────────────────────────► │  of every rule           │──► Chargily / SATIM payments
+  └────────────────────┘                                                 └──────────────────────────┘
+         PDFs and photos go straight between the apps and R2 with short-lived signed URLs the API hands out.</div>
+
+<h3 id="ch2-api-layout">2.4 Inside apps/api</h3>
+<ul>
+  <li><code>src/main.ts</code> — starts the server. <code>src/app.setup.ts</code> — HTTP settings shared with the tests. <code>src/app.module.ts</code> — assembles everything.</li>
+  <li><code>src/config/</code> — reads and validates the environment variables (<code>env.ts</code>).</li>
+  <li><code>src/common/</code> — small shared helpers: the error envelope, client info, CSV and search text.</li>
+  <li><code>src/infrastructure/</code> — technical services every module may use: the database client, cryptography, background jobs, rate limits, e-mail and SMS, token verification.</li>
+  <li><code>src/modules/</code> — the <b>20 domain modules</b>, one per business area. Each owns its tables and exposes only what its <code>index.ts</code> exports.</li>
+  <li><code>src/scripts/</code> — command-line tools: create an admin, generate the OpenAPI contract, seed demo data, Medicalcul extraction and import.</li>
+  <li><code>prisma/schema.prisma</code> — every table, grouped by owning module.</li>
+</ul>
+<p>The list of modules is one file:</p>
+[[code apps/api/src/modules/index.ts | export const DOMAIN_MODULES | block]]
+
+<h3 id="ch2-tools">2.5 Tools you need</h3>
+<table>
+  <tr><th>Tool</th><th>Used for</th></tr>
+  <tr><td>Node.js ≥ 24 + npm</td><td>The API, Admin Web and the packages (one npm <i>workspace</i> at the root).</td></tr>
+  <tr><td>PostgreSQL ≥ 15</td><td>The database (one for development, one dedicated to tests).</td></tr>
+  <tr><td>Flutter (stable)</td><td>The mobile app; Android SDK + emulator, and Xcode on a Mac for iOS.</td></tr>
+  <tr><td>Chrome</td><td>Building the PDF of this book.</td></tr>
+</table>
+
+<h3 id="ch2-run">2.6 Running everything on your machine</h3>
+<p>From the repository root, once:</p>
+<div class="diagram">npm install                                      # installs API, Admin Web and packages
+cp apps/api/.env.example apps/api/.env           # then fill DATABASE_URL and fresh 32+ char secrets
+cp apps/admin/.env.example apps/admin/.env
+npm run prisma:migrate:deploy -w @doktool/api    # creates the tables
+npm run admin:create -w @doktool/api -- --email you@example.dz --name "Your Name"</div>
+<p>Then, in three terminals:</p>
+<div class="diagram">npm run start:dev -w @doktool/api                # API on http://localhost:3000 (Swagger at /docs)
+npm run dev -w @doktool/admin                    # Admin Web on http://localhost:3001
+
+cd apps/mobile
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+flutter gen-l10n
+flutter run --dart-define=API_BASE_URL=http://localhost:3000</div>
+<div class="note"><b>Sample data.</b> <code>npm run demo:seed -w @doktool/api</code> fills a database whose name ends in <code>_demo</code> with demonstration accounts and content (it refuses any other database). The passwords it prints are shown once.</div>
+
+<h3 id="ch2-check">2.7 The one command that checks everything</h3>
+<div class="diagram">DATABASE_URL=postgresql://…/doktool_test npm run ci
+cd apps/mobile && flutter analyze && flutter test</div>
+<p><code>npm run ci</code> runs, in order: Prettier formatting, ESLint, TypeScript type checks, the i18n parity check (every key in both languages), the design-token checks (no raw colour, radius, blur or duration in the code), the OpenAPI drift check, the admin client drift check, then every test of every workspace. At the end of the October 2026 audit it was green: 613 API tests, 30 Admin Web tests, the package tests, and 167 Flutter tests.</p>
+</section>

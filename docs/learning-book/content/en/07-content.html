@@ -1,0 +1,79 @@
+<section class="chapter">
+<h2 id="ch7">7. Content: reference PDFs, calculators, pregnancy, search, offline</h2>
+<p class="lead">The four resources of DokTool live in four modules — <code>reference-library</code>, <code>calculators</code>, <code>pregnancy</code> and (for finding them) <code>search</code> — helped by <code>storage</code>, <code>clinical-review</code>, <code>activity</code> and <code>offline</code>. Each has an <b>app side</b> (read-only, access-checked) and an <b>admin side</b> (authoring, review, publication, audited).</p>
+
+<h3 id="ch7-library">7.1 Reference library: ordonnances and certificates</h3>
+<p>A reference model is a PDF uploaded by the Super Admin, with minimal metadata: a French title (pre-filled from the file name), an optional English title, the <code>demoSample</code> flag and a status. The PDF <i>is</i> the content; nobody edits it in DokTool.</p>
+[[code apps/api/src/modules/reference-library/reference-documents-admin.service.ts | export class ReferenceDocumentsAdminService | 10]]
+<div class="diagram">Admin Web « Ajouter un modèle »                     API                                       R2 / DB
+ 1 compute SHA-256 of the PDF in the browser
+ 2 POST …/reference-documents/uploads   ──► requestUpload: new id, upload intent, signed PUT (15 min)
+ 3 PUT bytes ─────────────────────────────────────────────────────────────────────────────► doktool-content
+ 4 POST …/reference-documents  ──────────► create: confirm intent (size, %PDF-), create model + file v1
+ 5                                         job "process file": download, SHA-256 = declared?, count pages
+                                           → file READY, becomes the model's current file
+ 6 « Activer »  ─────────────────────────► changeStatus ENABLED (needs a processed PDF)   → visible in the app</div>
+[[code apps/api/src/modules/storage/upload-intents.service.ts | async confirm( | block]]
+[[code apps/api/src/modules/reference-library/reference-processing.service.ts | async process(fileId | block]]
+<p>« Remplacer le PDF » creates the next file version under the <b>same</b> model id, so favorites, history and links keep working; earlier versions stay stored (immutable keys) and can still be previewed by admins.</p>
+
+<h3 id="ch7-storage">7.2 StorageService: one door to files</h3>
+<p>No module imports the R2 SDK. They all use the abstract <code>StorageService</code>; <code>R2StorageAdapter</code> implements it in production and <code>LocalStorageAdapter</code> (files on disk, signed URLs served by the API itself) in development and tests:</p>
+[[code apps/api/src/modules/storage/storage.service.ts | export abstract class StorageService | block]]
+
+<h3 id="ch7-calc">7.3 Calculators: a formula as data</h3>
+<p>A calculator is never code. It is a <b>definition</b> — JSON validated by a Zod schema — that both engines (TypeScript on the server, Dart on the phone) interpret the same way. A definition holds:</p>
+<ul>
+  <li><b>inputs</b>: <code>NUMBER</code>/<code>INTEGER</code> (with units from a sourced registry and three ranges: <i>hard</i> — impossible values; <i>validated</i> — where the formula was validated; <i>plausible</i> — beyond it, a « vérifiez la valeur » note), <code>CHOICE</code> (answers, optionally with points) and <code>BOOLEAN</code>;</li>
+  <li><b>cross-field rules</b> (e.g. diastolic must be below systolic);</li>
+  <li>the <b>formula</b>, a tree over a closed set of operators;</li>
+  <li>the <b>result</b> (unit, decimals), the interpretation <b>bands</b> and the <b>limitations</b>.</li>
+</ul>
+[[code apps/api/src/modules/calculators/engine/definition.ts | export type Expr | 10]]
+[[code apps/api/src/modules/calculators/engine/definition.ts | export const BINARY_OPS | 16]]
+<p>There is no <code>eval</code>, no free-form expression and no operator outside these lists: a definition cannot do anything the engine does not know. <code>checkDefinition</code> then checks what a schema cannot: unique keys, known units, nested ranges, a well-typed formula, ordered bands that do not overlap.</p>
+
+<h4 id="ch7-evaluate">The engine</h4>
+[[code apps/api/src/modules/calculators/engine/evaluate.ts | export function evaluate( | block]]
+<p>Read the order: presence and types → hard ranges → cross-field rules → validated ranges → plausibility notes → formula → band. The engine <b>never returns a result</b> for invalid input or input outside the validated range: it returns the issues instead, and the app explains them. Rounding is "half away from zero" computed on the decimal text, so 2.675 rounds the same way in TypeScript and Dart.</p>
+<div class="note"><b>Two engines, one truth.</b> The TypeScript engine is authoritative: admins' test runs and publication use it. The Dart engine lets the phone compute offline; before using a version, the app runs the version's published test cases on its own engine (« self-test ») and refuses the calculator if one fails. <code>packages/calculator-vectors</code> holds shared cases both engines must pass in CI.</div>
+
+<h4 id="ch7-governance">Governance: draft → review → published</h4>
+<div class="diagram">DRAFT ──submit──► IN_REVIEW ──approve──► PUBLISHED ──retire──► RETIRED
+  ▲  (author)          │ (reviewer ≠ author)     immutable: a change is a new version
+  └──── return ────────┘
+ gate to submit:  primary source + a passing test run of THIS definition (checksum)
+ gate to publish: tests re-run on the server, sources, four-eyes, and 1 or 2 sign-offs (ADR-024)</div>
+[[code apps/api/src/modules/calculators/calculators-admin.service.ts | async publish( | block]]
+[[code apps/api/src/modules/calculators/calculators-admin.service.ts | private async assertIndependentReviewer | block]]
+<p>A test run is stored with the SHA-256 of the canonical JSON of the definition it ran on (<code>canonical-json.ts</code>). Editing the definition changes the checksum, so an old green run no longer counts — it is impossible to submit a definition that was not tested as it is.</p>
+
+<h4 id="ch7-review">Double sign-off (clinical-review)</h4>
+[[code apps/api/src/modules/clinical-review/clinical-review.service.ts | export class ClinicalReviewService | 8]]
+[[code apps/api/src/modules/clinical-review/clinical-review.service.ts | async approval( | block]]
+
+<h3 id="ch7-preg">7.4 Grossesse · Allaitement</h3>
+<p>A <b>substance</b> (names, ATC code, synonyms, <code>demoSample</code>, enabled) has <b>profile versions</b>, governed like calculators (draft → review → published, author ≠ reviewer, optional second sign-off). A profile's content has two blocks: pregnancy (T1, T2, T3, peripartum) and lactation. For each period: a <b>conduct</b> (<code>CONTRAINDICATED</code>, <code>AVOID</code>, <code>OCCASIONAL_USE</code> or none) and, separately, an <b>evidence level</b> from 0 (« Absence de données ») to 4 (« Données robustes ») with its sources — never merged into a "safe" verdict.</p>
+[[code apps/api/src/modules/pregnancy/pregnancy.content.ts | export const CONDUCTS | 30]]
+[[code apps/api/src/modules/pregnancy/pregnancy.content.ts | export function reviewProblems( | 12]]
+<p>Three more tools exist on the admin side:</p>
+<ul>
+  <li><b>Spreadsheet import</b> (ADR-025): an uploaded XLSX becomes a <i>preview batch</i>; the admin maps columns and status words, corrects rows, then commits — which writes <b>drafts</b>, never published content.</li>
+  <li><b>Merging duplicates</b> (ADR-027): a duplicate substance's names become synonyms of the one kept; favorites and links of the duplicate open the kept substance; the merge can be undone.</li>
+  <li><b>User reports</b> (« Signaler une erreur » in the app) arrive in a queue the clinical team resolves.</li>
+</ul>
+[[code apps/api/src/modules/pregnancy/pregnancy.service.ts | async get(viewer | block]]
+
+<h3 id="ch7-search">7.5 Search</h3>
+<p>Global search (<code>GET /v1/search?q=…</code>) runs over enabled reference models, published calculators and listed substances, with the viewer's access on each hit (locked results stay in place). Ranking is in <code>ranking.ts</code>: text is normalised (lower case, no accents), each query word may have typos (none up to 2 letters, 1 up to 5, 2 above, Damerau-Levenshtein), exact and prefix matches score higher, and a query naming a category (« certificat… ») puts that group first. Nothing is ever boosted commercially.</p>
+[[code apps/api/src/modules/search/ranking.ts | export function score( | block]]
+
+<h3 id="ch7-activity">7.6 Favorites and history</h3>
+[[code apps/api/src/modules/activity/activity.service.ts | export class ActivityService | 10]]
+[[code apps/api/src/modules/activity/activity.service.ts | async record( | block]]
+<p>The phone records history entries locally and sends them in batches. A restricted (read-only) account's entries are dropped silently on purpose — the phone's queue must never get stuck on a refusal.</p>
+
+<h3 id="ch7-offline">7.7 The offline manifest</h3>
+[[code apps/api/src/modules/offline/offline.service.ts | async manifest( | block]]
+<p>The manifest's <code>dataVersion</code> is a fingerprint of everything in it: the phone compares it with the version it stored to know whether anything changed, and shows it in « Données et hors ligne ».</p>
+</section>

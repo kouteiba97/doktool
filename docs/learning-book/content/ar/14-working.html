@@ -1,0 +1,81 @@
+<section class="chapter">
+<h2 id="ch14">14. العمل على الشيفرة: الاختبارات، CI، والوصفات</h2>
+<p class="lead">أنت تعرف الآن أين يوجد كل شيء. هذا الفصل الأخير عملي: كيف تفحص عملك، والخطوات الدقيقة للتغييرات التي ستقوم بها كثيرًا.</p>
+
+<h3 id="ch14-check">14.1 قبل كل commit</h3>
+<div class="diagram">DATABASE_URL=postgresql://…/doktool_test npm run ci      # format, lint, types, i18n, tokens, contract, all tests
+cd apps/mobile && flutter analyze && flutter test
+npm run build -w @doktool/admin                            # when Admin Web changed</div>
+<div class="rule"><b>استعمل قاعدة بيانات مخصّصة للاختبار.</b> اختبارات التكامل لا تتراجع عن تغييراتها. والاختبار الذي يغيّر شيئًا على مستوى المنصة (مثل سياسة التوقيع المزدوج) يجب أن يعيده، كما يفعل <code>clinical-review.e2e.spec.ts</code>.</div>
+
+<h3 id="ch14-endpoint">14.2 وصفة: إضافة نقطة نهاية للخادم</h3>
+<ol>
+  <li>اكتب دالة الخدمة في الوحدة التي تملك البيانات (مع تعليق من سطر واحد).</li>
+  <li>أضف أصناف DTO (<code>@ApiProperty</code> + مزخرفات class-validator).</li>
+  <li>أضف دالة المتحكم مع الحارس المناسب: <code>UserAuthGuard</code>، <code>ViewerAuthGuard</code>، <code>@RequireFeature</code> أو <code>@RequireGrants</code>. التغييرات الإدارية تستدعي <code>AuditService.record</code> مع السبب.</li>
+  <li>اكتب اختبار تكامل في <code>apps/api/test/integration</code>.</li>
+  <li>أعد توليد العقد والعميلين:</li>
+</ol>
+<div class="diagram">npm run openapi:generate -w @doktool/api
+npm run generate:api -w @doktool/admin
+cd apps/mobile && dart run swagger_parser && dart run build_runner build --delete-conflicting-outputs</div>
+
+<h3 id="ch14-table">14.3 وصفة: إضافة عمود أو جدول</h3>
+<ol>
+  <li>عدّل <code>apps/api/prisma/schema.prisma</code> في قسم الوحدة المالكة (<code>// ── [module] ──</code>)؛ اختبار وحدة يفحص ملكية الجداول.</li>
+  <li>اكتب الترحيل (migration) باليد في <code>prisma/migrations/&lt;timestamp&gt;_&lt;name&gt;/migration.sql</code>. إضافة قيمة إلى enum (<code>ADD VALUE</code>) تكون في ترحيل خاص بها.</li>
+  <li>الفهارس المكتوبة بـSQL (trigram، الجزئية) تُصرَّح أيضًا في المخطط، وإلا سيقترح <code>prisma migrate diff</code> حذفها. افحص بـ<code>npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code</code>.</li>
+  <li><code>npm run prisma:migrate:deploy -w @doktool/api</code>، ثم يعمل <code>prisma generate</code> عند التثبيت.</li>
+</ol>
+
+<h3 id="ch14-text">14.4 وصفة: إضافة نص أو تغييره</h3>
+<div class="diagram">// keys.json
+{ "fr": { "mobile.home.newKey": "Bonjour" }, "en": { "mobile.home.newKey": "Hello" }, "remove": [] }
+
+npm run add-keys -w @doktool/i18n -- keys.json
+npm run build:arb -w @doktool/i18n
+cd apps/mobile && flutter gen-l10n</div>
+<p>لوحة الإدارة تقرأ الكتالوج مباشرة؛ والهاتف يستعمل <code>AppLocalizations.of(context).homeNewKey</code>. ويفشل CI إن وُجد مفتاح بلغة واحدة فقط.</p>
+
+<h3 id="ch14-screen">14.5 وصفة: إضافة شاشة في الهاتف</h3>
+<ol>
+  <li>أنشئ الشاشة في <code>lib/src/features/&lt;feature&gt;/</code>، مبنية من ودجات <code>lib/src/ui</code> والرموز التصميمية فقط.</li>
+  <li>أضف مسارها إلى <code>Routes</code> و<code>GoRoute</code> في <code>app_router.dart</code>؛ وإن كانت للحسابات الحقيقية فقط، أضفها إلى <code>Routes.accountOnly</code>.</li>
+  <li>حمّل البيانات عبر مزوّد؛ وارسم حالات التحميل (هيكل)، والخطأ (« Réessayer »)، والفراغ.</li>
+  <li>الأشياء المقفلة تبقى ظاهرة: استعمل ملف الوصول و<code>LockLabel</code> و<code>showLockSheet</code>.</li>
+  <li>أضف اختبار ودجت، وأضف الشاشة إلى <code>accessibility_test.dart</code>.</li>
+  <li>نسّق بـ<code>dart format --page-width 120</code> (ولا تنسّق <code>doktool_tokens.dart</code> أبدًا).</li>
+</ol>
+
+<h3 id="ch14-admin">14.6 وصفة: إضافة قسم في لوحة الإدارة</h3>
+<ol>
+  <li>نقاط النهاية في الخادم مع <code>@RequireGrants</code>؛ الصلاحية الجديدة تُضاف في <code>grants.ts</code> وعنوانها في <code>features/permissions/grants.ts</code> (يفشل البناء حتى تُعنوَن).</li>
+  <li><code>src/features/&lt;section&gt;/</code>: الصفحة، لوحاتها ونوافذها، و<code>labels.ts</code> لأسماء الحالات وألوانها.</li>
+  <li><code>src/app/admin/&lt;section&gt;/page.tsx</code> يغلّفها بـ<code>&lt;RequireGrant&gt;</code>، ورابط في <code>shell/nav.ts</code>.</li>
+  <li>كل تغيير يطلب سببًا (<code>ReasonDialog</code>) ويعرض إشعارًا عند النجاح.</li>
+</ol>
+
+<h3 id="ch14-calc">14.7 إضافة حاسبة ليست تغييرًا في الشيفرة</h3>
+<p>الحاسبة الجديدة بيانات، يُدخلها طبيب في لوحة الإدارة من مصدر مذكور (الفصل 13.5)، يراجعها شخص آخر، ثم تُنشر. لا حاجة لنشر نسخة جديدة من البرنامج: الهواتف تستلمها في القائمة أو المزامنة التالية. المحرّكان لا يتغيّران إلا عند الحاجة إلى <i>نوع</i> جديد من العمليات أو المدخلات — وعندها يتغيّر المحرّكان و<code>checkDefinition</code> والمتجهات المشتركة ورقم إصدار المحرّك معًا.</p>
+
+<h3 id="ch14-security">14.8 قائمة الفحص التي تحفظ أمان DokTool</h3>
+<table>
+  <tr><th>القاعدة</th><th>أين تُفرض</th></tr>
+  <tr><td>كل نقطة نهاية تعيد فحص الوصول</td><td><code>@RequireFeature</code>، <code>AccessService.decideItems</code>، <code>@RequireGrants</code></td></tr>
+  <tr><td>لا بيانات مرضى، ولا نص حر في التحليلات</td><td>مخططات <code>analytics.policy.ts</code>؛ قيم الحاسبات لا تُرسل أبدًا</td></tr>
+  <tr><td>الملفات عبر StorageService فقط، موقّعة وقصيرة العمر</td><td><code>storage.policy.ts</code>، وقاعدة استيراد في ESLint</td></tr>
+  <tr><td>الرموز: الوصول في الذاكرة، التحديث في Keychain/Keystore، لمرة واحدة، مرتبط بالجهاز</td><td><code>session_vault.dart</code>، <code>sessions.service.ts</code></td></tr>
+  <tr><td>الإدارة: كعكة + TOTP، الكتابة فقط من لوحة الإدارة، فصل المهام</td><td><code>admin-guards.ts</code>، <code>grants.ts</code></td></tr>
+  <tr><td>المحتوى السريري: موثّق المصدر، مُختبَر، المؤلف ≠ المراجِع، لا يتغيّر بعد النشر</td><td><code>calculators-admin.service.ts</code>، <code>pregnancy-admin.service.ts</code>، قيود قاعدة البيانات</td></tr>
+  <tr><td>كل تغيير إداري مسجَّل، والسجل للإضافة فقط</td><td><code>AuditService</code>، مشغّلات الجدول (triggers)</td></tr>
+  <tr><td>خلايا CSV لا تُنفَّذ كصيغ</td><td><code>common/text/csv.ts</code></td></tr>
+</table>
+
+<h3 id="ch14-audit">14.9 ما الذي غيّره تدقيق أكتوبر 2026</h3>
+<p>التقرير الكامل هو <code>docs/CODE-AUDIT-2026-10.md</code>. باختصار: ثمانية عشر عيبًا أُصلحت مع اختبارات (أخطرها: إعادة التحقق التي كانت تُسقط وصول طبيب مشترك، وحالة سباق في استرجاع الحساب)، تحسّن أداء بيان العمل دون اتصال والمفضلة نحو عشر مرات، تعليقات أُضيفت لكل دالة وكل زر في التطبيقات الثلاثة، وست توصيات مسجّلة لقرارات تحتاج مالك المنتج أو دلو R2 حقيقيًا.</p>
+
+<h3 id="ch14-book">14.10 إعادة بناء هذا الكتاب</h3>
+<div class="diagram">python3 docs/learning-book/build.py           # HTML + PDF, English and Arabic (needs Chrome)
+python3 docs/learning-book/build.py --html    # HTML only</div>
+<p>الفصول في <code>docs/learning-book/content/en</code> و<code>content/ar</code>؛ ومقدمات المجلدات في <code>folders.json</code>. مقتطفات الشيفرة والملحق أ تُقرأ من المصادر وقت البناء، فبعد أي تغيير في الشيفرة تكفي إعادة البناء لتحديث الكتاب. والعنصر النائب الذي لم يعد مرساه موجودًا يوقف البناء ويذكر اسمه، فلا يتقادم شيء بصمت.</p>
+</section>

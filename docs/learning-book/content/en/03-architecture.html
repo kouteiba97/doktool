@@ -1,0 +1,91 @@
+<section class="chapter">
+<h2 id="ch3">3. The architecture in one chapter</h2>
+<p class="lead">Before reading modules one by one, it helps to follow one request from the phone to the database and back, and to know the handful of mechanisms every feature reuses: tokens, the access decision, the error envelope, file storage, background jobs, messages and offline copies.</p>
+
+<h3 id="ch3-request">3.1 The life of one request</h3>
+<p>Take the doctor opening a prescription model on the phone. This is what happens, file by file:</p>
+<div class="diagram">PHONE                                       API                                              DATABASE / R2
+reference_viewer_screen.dart
+  └ openedReferenceProvider
+     └ ReferenceFiles.download(id)
+        └ generated client  GET /v1/reference-documents/{id}/file-url
+           └ AuthInterceptor adds "Authorization: Bearer &lt;access token&gt;"
+                                   ─────────►  ViewerAuthGuard: token valid? session live?
+                                               ReferenceLibraryController.fileUrl()
+                                                 └ ReferenceDocumentsService.fileUrl()   reads the published row ──► PostgreSQL
+                                                 └ AccessService.decideItems()           policy evaluated again: AVAILABLE or LOCKED?
+                                                 └ StorageService.getSignedReadUrl()     10-minute signed URL
+                                   ◄─────────  { url, sha256, … }  (or { error: { code: "FEATURE_LOCKED" … } })
+        └ dio GET signed url (no token) ───────────────────────────────────────────────────────► R2 bucket
+        └ SHA-256 of the bytes == published sha256 ?  else refuse to show
+  └ pdfrx draws the pages (no download, print or share button)</div>
+<p>Three ideas are visible in this one example and repeat everywhere:</p>
+<ol>
+  <li><b>The guard proves who is calling</b> (a user token, a demo token or an admin cookie).</li>
+  <li><b>The access policy decides what they may do</b>, again, on this exact request.</li>
+  <li><b>Files never pass through the API</b>: it hands out a short signed URL, and the client checks the file's fingerprint.</li>
+</ol>
+
+<h3 id="ch3-tokens">3.2 Three kinds of identity</h3>
+<table>
+  <tr><th>Who</th><th>Proof</th><th>Lifetime</th><th>Where in the code</th></tr>
+  <tr><td>A signed-in user (mobile)</td><td>A JWT access token in <code>Authorization: Bearer</code>, plus a rotating refresh token kept in the phone's Keychain/Keystore</td><td>Access 15 min; refresh rotates on every use and is bound to the device's installation id</td><td><code>infrastructure/security/user-tokens.ts</code>, <code>modules/auth/sessions.service.ts</code>, mobile <code>core/auth/</code></td></tr>
+  <tr><td>A demo visitor (mobile)</td><td>A demo access token + a renewal token</td><td>Access 1 hour, renewed silently</td><td><code>infrastructure/security/demo-tokens.ts</code>, <code>modules/demo/</code></td></tr>
+  <tr><td>An admin (Admin Web)</td><td>An HTTP-only session cookie obtained after password <i>and</i> a TOTP code</td><td>Idle and absolute limits</td><td><code>modules/admin-auth/</code></td></tr>
+</table>
+<p>The user guard is short enough to read whole. Notice that it only proves identity — it does not decide access:</p>
+[[code apps/api/src/infrastructure/security/user-auth.guard.ts | export class UserAuthGuard | block]]
+<p>And the token check also asks the database whether the session is still live, so a sign-out, a password change or a suspension takes effect on the very next request rather than when the 15-minute token expires:</p>
+[[code apps/api/src/infrastructure/security/user-tokens.ts | export class UserTokens | 22]]
+<p>Refresh tokens are single-use. Using one twice, or from another device, revokes the whole session — this is how a stolen refresh token is detected:</p>
+[[code apps/api/src/modules/auth/sessions.service.ts | async refresh(refreshToken | 40]]
+
+<h3 id="ch3-access">3.3 The access decision</h3>
+<p>Access is computed, never stored. <code>AccessService.profileFor(viewer)</code> gathers three facts — the account (status, professional type), the verification cases and the current subscription — and gives them to a <b>pure function</b>, <code>evaluateAccess</code>, together with the policy table. Chapter 6 reads that table line by line. What matters here: every content endpoint calls it, and the mobile app receives the result from <code>GET /v1/me/access</code> only to <i>draw</i> locks.</p>
+[[code apps/api/src/modules/access/access.service.ts | export class AccessService | block]]
+
+<h3 id="ch3-errors">3.4 One error format for everything</h3>
+<p>Every refusal is a <code>DomainError</code> with a stable code (<code>FEATURE_LOCKED</code>, <code>OTP_INVALID</code>, <code>SESSION_INVALID</code>…). The global <code>ErrorFilter</code> turns any exception into the same JSON:</p>
+<div class="diagram">HTTP 403
+{ "error": { "code": "FEATURE_LOCKED", "message": "for developers only", "details": { "lockReason": "…" } } }</div>
+<p>The apps never show <code>message</code>; they translate <code>code</code> with their own catalogue (mobile <code>ApiError</code> + <code>commonErrorText</code>, admin <code>useErrorText</code>).</p>
+[[code apps/api/src/common/errors/error.filter.ts | export class ErrorFilter | 12]]
+
+<h3 id="ch3-storage">3.5 Files: R2, signed URLs and upload intents</h3>
+<p>All files (reference PDFs, profile photos, verification documents, recovery photos) are in Cloudflare R2, reached only through <code>StorageService</code>. Two buckets exist: <code>doktool-content</code> (reference PDFs, photos) and <code>doktool-private</code> (identity documents). Nothing is public. Uploads follow the same three steps everywhere:</p>
+<ol>
+  <li>The client declares the file (purpose, size, type, SHA-256). The API records an <b>upload intent</b> and answers with a signed PUT URL valid 15 minutes.</li>
+  <li>The client sends the bytes straight to R2.</li>
+  <li>The client confirms; the API checks size, type and the first bytes' signature (a PDF must start with <code>%PDF</code>), then attaches the file to its record.</li>
+</ol>
+[[code apps/api/src/modules/storage/storage.policy.ts | export const SIGNED_READ_TTL | 10]]
+
+<h3 id="ch3-jobs">3.6 Background jobs</h3>
+<p>Work that must happen later or regularly runs in <b>pg-boss</b>, a job queue stored in PostgreSQL itself (no Redis, ADR-007). Each module registers its own schedules when it starts:</p>
+<table>
+  <tr><th>Job</th><th>Schedule</th><th>What it does</th></tr>
+  <tr><td><code>reference-library</code> sweep</td><td>every minute</td><td>Processes uploaded PDFs: page count, checksum, file status.</td></tr>
+  <tr><td><code>auth.account-recovery</code></td><td>every 10 min</td><td>Applies approved recoveries once their 24-hour hold is over.</td></tr>
+  <tr><td><code>billing.reconcile-checkouts</code></td><td>every 10 min</td><td>Asks the gateway about payments still pending.</td></tr>
+  <tr><td><code>billing.advance-subscriptions</code></td><td>daily 02:30</td><td>Reminders, grace period, end of subscriptions.</td></tr>
+  <tr><td><code>verification.expire-and-remind</code></td><td>daily 06:17</td><td>Expiry reminders and expirations of verifications.</td></tr>
+  <tr><td><code>verification.purge-documents</code>, <code>storage.purge-expired-uploads</code>, <code>auth.purge-expired</code>, <code>users.purge-unconfirmed</code>, <code>notifications.purge-old</code>…</td><td>hourly / daily</td><td>Delete what the retention rules say must not be kept.</td></tr>
+</table>
+[[code apps/api/src/modules/notifications/notifications.module.ts | export class NotificationsModule | block]]
+
+<h3 id="ch3-messages">3.7 Messages to people</h3>
+<p>Codes and security notices go out by e-mail (SMTP) or SMS (Infobip or Twilio, with a fallback, ADR-022) through <code>MessageDelivery</code>. Their texts come from server catalogue keys (<code>server.security.…</code>) in the account's language. In-app notifications are rows of the <code>notifications</code> table holding a catalogue key and parameters — never free text.</p>
+
+<h3 id="ch3-offline">3.8 Offline</h3>
+<p>Every real account (students included) can keep, on the phone, the reference PDFs it may open, the published calculator versions and the pregnancy profiles it opened. The API publishes an <b>offline manifest</b> (<code>GET /v1/offline/manifest</code>): what this person may keep, with a version and a SHA-256 for each item. The app's <code>OfflineSyncController</code> downloads what is missing or changed, deletes the rest, and always shows the data version and whether what you see is live or cached.</p>
+
+<h3 id="ch3-modules">3.9 How modules are allowed to depend on each other</h3>
+<div class="rule"><b>Modular monolith (ADR-001).</b> One server, but each module owns its tables. Another module may use it only through what its <code>index.ts</code> exports — usually a service with a few read methods. That is why, for example, <code>AccessService</code> asks <code>UsersService.getAccessFacts()</code> instead of reading the users table itself. A unit test checks that every Prisma model sits in the section of the module that owns it.</div>
+<div class="diagram">            auth ──► users ◄── verification ◄── access ──► billing
+              │                     ▲              ▲  ▲         │
+              ▼                     │              │  │         ▼
+            demo                  admin ───────────┘  │      finance
+                                                      │
+ reference-library, calculators, pregnancy, search, activity, offline ── all ask access for decisions
+ storage, audit, notifications, analytics ── used by many, depend on nobody's tables</div>
+</section>

@@ -1,0 +1,65 @@
+<section class="chapter">
+<h2 id="ch8">8. التحقق، الدفع، المالية، التحليلات، التدقيق، أمان الإدارة</h2>
+<p class="lead">هذه الوحدات تحوّل التسجيل إلى مهني مشترك، وتعطي الفريق أدوات تشغيل الخدمة: فحص الشهادات، قبض المدفوعات، حساب المال، قياس الاستعمال دون تجسّس، الاحتفاظ بسجل لا يُعدَّل لكل فعل إداري، وحماية لوحة الإدارة نفسها.</p>
+
+<h3 id="ch8-verif">8.1 التحقق</h3>
+<p>يثبت الشخص أمرين، في <b>ملفين</b> منفصلين: <b>هويته</b> (بطاقة تعريف وطنية، جواز سفر، أو بطاقة طالب للطلبة) و<b>صفته</b> — التسجيل الجامعي للطالب (<code>STUDENT_STATUS</code>)، والإقامة أو التسجيل في عمادة الأطباء للمقيم أو الطبيب (<code>PROFESSIONAL_STATUS</code>).</p>
+<div class="diagram">PREPARING ──submit──► SUBMITTED ──claim──► IN_REVIEW ──approve──► VERIFIED ──(expiry)──► EXPIRED
+     ▲                                          │                     renew: a new case from 60 days before
+     └──────── start again ◄──── reject (reason)┘
+                     after 2 rejections: APPEALED → decided by a DIFFERENT reviewer</div>
+<p>المراحل: تحضير ← إرسال ← أخذ الملف من مراجِع ← قبول (VERIFIED) أو رفض بسبب؛ يمكن البدء من جديد بعد الرفض، والاستئناف بعد رفضين يقرّره مراجِع <b>آخر</b>؛ والتجديد ممكن قبل الانتهاء بـ60 يومًا.</p>
+[[code apps/api/src/modules/verification/verification.service.ts | export class VerificationService | 10]]
+[[code apps/api/src/modules/verification/verification.policy.ts | export const VERIFICATION_SLA_HOURS | 20]]
+<p>في جانب المراجِع (<code>VerificationReviewService</code>)، <b>يأخذ</b> المراجِع ملفًا (فلا يقرّر شخصان الملف نفسه)، ويعرض الوثائق في <b>عارض مقيَّد</b> (روابط موقّعة لـ60 ثانية، علامة مائية باسم المراجِع، كل عرض مسجَّل)، ثم يقبل أو يرفض بكود سبب. القبول ينسخ الصفة المُثبتة والتفاصيل إلى الملف الشخصي ويجدول حذف الوثائق: لا تُحفظ الملفات إلا بقدر ما تسمح قاعدة الاحتفاظ.</p>
+[[code apps/api/src/modules/verification/verification-review.service.ts | async approve( | block]]
+
+<h3 id="ch8-billing">8.2 الفوترة: الخطط، الدفع، البوابات</h3>
+<p><b>الخطط</b> لها إصدارات: ينشر المشرف العام إصدار خطة بسعره ومدته وأسطر « inclus / non inclus » (مشمول / غير مشمول)؛ تغيير السعر إصدار جديد، والاشتراكات الجارية تحتفظ بإصدارها. و<b>الدفع</b> مفتوح فقط لطبيب أو مقيم نشط مُتحقَّق من صفته المهنية (الطلبة لا يدفعون أبدًا؛ ولا أحد يدفع قبل التحقق — ADR-006 Q6).</p>
+[[code apps/api/src/modules/billing/checkout.service.ts | async eligibility( | block]]
+<div class="diagram">App « Payer » (plan, CIB or Edahabia, acknowledgement « non remboursable »)
+  POST /v1/subscription/checkout ─► CheckoutService.start
+                                       eligibility, plan on sale, method available
+                                       transaction DT-2026-000123 (PENDING)
+                                       gateway.register(order) ─────────────► Chargily / SATIM
+                    ◄─ { redirectUrl } ─────────────────────────────────────── payment page
+  browser: the person pays ON THE GATEWAY'S PAGE (the API never sees card data)
+  return URL / webhook / reconcile job (every 10 min) ─► settle(transaction)
+                                       gateway.status(reference)  ← the only truth
+                                       PAID → activate: subscription starts or extends
+  PaymentResultScreen polls GET /v1/subscription/transactions/:transactionId until final</div>
+<p>الشخص يدفع على صفحة البوابة نفسها، والخادم لا يرى بيانات البطاقة أبدًا. وسواء جاء الإشعار من رابط العودة أو من webhook أو من مهمة المطابقة، يسأل الخادم البوابة عن الحالة الحقيقية — وهي الحقيقة الوحيدة.</p>
+[[code apps/api/src/modules/billing/payments/payment-provider.ts | export abstract class PaymentGateway | block]]
+<p>كل بوابة (<code>ChargilyGateway</code>، <code>SatimGateway</code>، و<code>FakeGateway</code> خارج الإنتاج) تطبّق هذا الصنف. لا يُقبل webhook إلا بتوقيع صحيح محسوب على المحتوى الخام، وحتى عندها يسأل الخادم البوابة عن حالة الطلب بدل الوثوق بالإشعار.</p>
+[[code apps/api/src/modules/billing/checkout.service.ts | async settle( | block]]
+<div class="rule"><b>لا استرداد في أي مكان.</b> لا حالة استرداد، ولا نقطة نهاية، ولا زر. الاستثناء الحقيقي (القانون، المحاسبة، خطأ المزوّد) هو <i>تعديل استثنائي</i> في المالية، يطلبه المشرف العام ولا يُحتسب إلا بعد موافقة مشرف ثانٍ.</div>
+[[code apps/api/src/modules/billing/subscription-lifecycle.service.ts | export class SubscriptionLifecycleService | block]]
+
+<h3 id="ch8-finance">8.3 المالية</h3>
+<p>المالية تقرأ المعاملات (ولا تغيّرها أبدًا) وتضيف حولها ما يحتاجه العمل: رسوم الدفع (تُقدَّر من نسبة لكل بوابة × بطاقة، ثم تُستبدل بكشف المزوّد)، المصاريف التشغيلية (تُلغى ولا تُحذف أبدًا)، التعديلات الاستثنائية (بمشرفَين) وتقارير CSV. للدفتر الشكل نفسه دائمًا (القاعدة L40):</p>
+[[code apps/api/src/modules/finance/finance.policy.ts | export function ledgerOf( | block]]
+<p>أي: الإيراد الإجمالي ← الرسوم ← الإيراد الصافي؛ ثم الإيراد الصافي ← المصاريف ← الربح الصافي. وخلايا CSV تمر عبر <code>csvCell()</code> التي تُبطل النصوص التي قد ينفّذها برنامج الجداول كصيغة (<code>= + - @</code>) — إصلاح من التدقيق.</p>
+
+<h3 id="ch8-analytics">8.4 تحليلات دون تجسّس</h3>
+[[code apps/api/src/modules/analytics/analytics.service.ts | export class AnalyticsService | 10]]
+<p>يرسل التطبيق أسماء الأحداث فقط مع أعداد وأكواد وعلامات. ويضيف الخادم <i>الغلاف</i> من حقائقه الخاصة: بصمة بمفتاح للشخص (ثابتة وغير قابلة للعكس)، المستوى، المهنة، التخصص، الولاية. لكل نوع حدث مخطط صارم؛ وما عداه يُسقَط. واللوحات تُخفي أي خلية خلفها أقل من 10 أشخاص (« &lt; 10 »).</p>
+[[code apps/api/src/modules/analytics/analytics.policy.ts | export const CLIENT_EVENTS | 30]]
+
+<h3 id="ch8-audit">8.5 سجل التدقيق</h3>
+[[code apps/api/src/modules/audit/audit.service.ts | export class AuditService | block]]
+<p>كل تغيير إداري يستدعي <code>audit.record({...})</code> مع من، وماذا، وأي سجل، وقبل/بعد، والسبب الذي كتبه المشرف. والجدول نفسه في قاعدة البيانات يرفض UPDATE وDELETE (بمشغّل trigger)، فحتى خطأ برمجي لا يستطيع إعادة كتابة التاريخ.</p>
+
+<h3 id="ch8-adminauth">8.6 أمان الإدارة: كلمة المرور، TOTP، الصلاحيات</h3>
+<div class="diagram">/sign-in  email + password ─► AdminAuthService.signIn   lockout after 5 failures; same timing for unknown e-mails
+          ◄─ 5-minute challenge: ENROL (first time: QR code) or VERIFY
+          6-digit TOTP code ───► completeTotp ─► opaque session cookie (idle + absolute timeouts)
+every admin request:  AdminBoundaryGuard  (no bearer tokens; writes only from the Admin Web origin)
+                      AdminSessionGuard   (live session + the route's @RequireGrants)</div>
+<p>الدخول: البريد وكلمة المرور (قفل بعد 5 محاولات خاطئة، وزمن الرد نفسه لبريد غير معروف) ← تحدٍّ لـ5 دقائق: تسجيل تطبيق المصادقة بأول مرة (رمز QR) أو التحقق ← رمز TOTP من 6 أرقام ← كعكة جلسة. وكل طلب إداري يمر بحارسين: حدود الثقة (لا رموز Bearer، والكتابة فقط من مصدر لوحة الإدارة) ثم الجلسة والصلاحيات المطلوبة.</p>
+[[code apps/api/src/modules/admin-auth/grants.ts | export const GRANTS | block]]
+[[code apps/api/src/modules/admin-auth/grants.ts | export function separationOfDutiesViolations( | block]]
+<p>تُمنح الصلاحيات لكل مشرف، انطلاقًا من <b>قوالب</b> (المشرف العام، مراجِع التحقق، مدير المكتبة، محرّر الحاسبات، المراجِع السريري…) قابلة للتعديل واحدة واحدة؛ ويمكن أن تكون الصلاحية مؤقتة (بضع ساعات). وفصل المهام يُفحص في لوحة الإدارة (مباشرة قبل الحفظ) وفي الخادم معًا.</p>
+
+<h3 id="ch8-admin">8.7 وحدة admin</h3>
+<p><code>modules/admin</code> تضم شاشات قراءة تجمع عدة وحدات: « Vue d'ensemble » (شريط الأرقام وقوائم العمل)، « Utilisateurs » (البحث ولوحة المستخدم: الملف، الوصول مع مدخلاته، الاشتراكات، <i>أعداد</i> النشاط)، وسجل التدقيق مع تصديره CSV.</p>
+</section>

@@ -1,0 +1,79 @@
+<section class="chapter">
+<h2 id="ch13">13. Eight journeys through the whole system</h2>
+<p class="lead">Each journey follows one real story from the first tap to the database and back, naming the file at every step. Read one with the three apps open side by side: it is the fastest way to feel how the pieces fit.</p>
+
+<h3 id="ch13-j1">13.1 A doctor joins, gets verified and subscribes</h3>
+<div class="diagram">MOBILE                                    API                                         ADMIN WEB
+welcome_screen « Créer un compte »
+role_select_screen  DOCTOR (in memory)
+sign_up_screen ─ POST /v1/auth/sign-up ─► AuthService.signUp → OtpService.issue → SMS/e-mail
+otp_screen ───── POST …/sign-up/confirm ► confirmSignUp → session + tokens; DemoService.markConverted
+             └── POST /v1/me/professional-profile (DOCTOR)  UsersService
+verification_intro → identity_step (camera, ML Kit check)
+   POST /v1/me/verification/cases …/uploads → signed PUT → R2 doktool-private → …/documents (confirm)
+status_step (Ordre number, specialty, attestation)  → saveDetails
+summary_screen « Envoyer » ─────────────► VerificationService.submit  (SUBMITTED)
+                                                                              Vérifications queue (SLA 24 h)
+                                                                              « Prendre le dossier » (claim)
+                                                                              restricted viewer (60 s, audited)
+                                          VerificationReviewService.approve ◄─ « Approuver »
+                                          profile ← role + details; notification; audit entry
+notification « Vérification approuvée »  AccessService → tier PROFESSIONAL_UNPAID, purchase OPEN
+plans_screen « Choisir » → review_screen « Payer » ─► CheckoutService.start → Chargily page
+   browser pays on the gateway's page
+payment_result_screen polls ─────────────► settle → gateway.status = PAID → activate subscription
+access reloads → tier PROFESSIONAL: every model, calculator and profile opens; offline sync starts</div>
+
+<h3 id="ch13-j2">13.2 A visitor tries the demo, then creates an account</h3>
+<ol>
+  <li><code>demo_start_screen</code> → <code>POST /v1/demo/sessions</code> with the installation id → a one-hour demo token + renewal token (<code>SessionVault.saveDemo</code>).</li>
+  <li>The router moves to Home; <code>GET /v1/me/access</code> answers tier DEMO: only <code>demoSample</code> items open; offline, purchase and profile edit are locked with « Créer un compte » as the unlock path.</li>
+  <li>Analytics: <code>DEMO_STARTED</code>, then <code>DEMO_FEATURE_VIEWED</code> for each module seen or limit met (no account, no personal data).</li>
+  <li>« Créer un compte » → sign-up → on confirmation the same installation id marks the demo CONVERTED; the « Démo » funnel in Admin Web counts it.</li>
+</ol>
+
+<h3 id="ch13-j3">13.3 Opening a prescription model</h3>
+<p>Chapter 3.1 followed this request byte by byte. The things to remember: the list shows locked models in place; <code>file-url</code> re-checks access; the PDF comes straight from R2 with a 10-minute URL; its SHA-256 is checked on the phone; <code>ActivityRecorder.referenceViewed</code> adds a history entry; <code>REFERENCE_VIEWED</code> is counted once the PDF has rendered.</p>
+
+<h3 id="ch13-j4">13.4 Using a calculator, offline</h3>
+<ol>
+  <li>During the last sync, <code>OfflineSyncController</code> stored the published calculator version (definition + test cases) in drift.</li>
+  <li>No network: <code>calculatorRuntimeProvider</code> reads the stored version, parses it (<code>definition.dart</code>) and runs its published test cases on the Dart engine (<code>self_test.dart</code>). A failure refuses the calculator.</li>
+  <li>The doctor types the age, weight, creatinine; each field commits after a pause; <code>evaluate()</code> checks ranges and rules and computes; the band and the formula with the values appear.</li>
+  <li>Nothing leaves the phone. <code>CALCULATOR_COMPLETED</code> is queued for analytics with the calculator id and version only.</li>
+</ol>
+
+<h3 id="ch13-j5">13.5 Authoring and publishing a calculator (two admins)</h3>
+<div class="diagram">Author (calculators.draft)                          Reviewer (calculators.review + publish), NOT the author
+« Nouveau calculateur » → createCalculator
+« Nouvelle version » → createVersion (DRAFT)
+Définition: JSON from the cited source → saveDefinition (checkDefinition)
+Sources: PRIMARY source (+ validation sources)
+Tests: cases from the source → « Lancer les tests » (TS engine, stored with checksum)
+« Soumettre à revue » → submit (gate re-checked)   ─►  IN_REVIEW
+                                                     reads definition, sources, tests; « Aperçu »
+                                                     « Approuver et publier » + written note
+                                                       publish: tests re-run, four-eyes, sign-offs
+                                                       (policy 2 → first sign-off; second reviewer publishes)
+                                                     PUBLISHED: immutable; audit entries all along
+Phones: next list / sync → new version, self-tested before use</div>
+
+<h3 id="ch13-j6">13.6 Pregnancy profiles from a spreadsheet</h3>
+<ol>
+  <li>« Importer un fichier » → the XLSX is read on the server without running anything in it (<code>workbook.ts</code> reads the XML inside the zip).</li>
+  <li>The header row is found, columns mapped, status words listed; each row checked against the current library (duplicates, unknown alternatives).</li>
+  <li>The admin maps columns and status words, corrects rows, then « Ajouter à la bibliothèque » → <b>draft</b> profile versions, all or nothing, idempotent on double click.</li>
+  <li>Authors complete evidence levels and explanations; « Soumettre à relecture »; a different admin approves; only then do phones see the profiles.</li>
+</ol>
+
+<h3 id="ch13-j7">13.7 Lost both e-mail and phone</h3>
+<p>Mobile <code>access_help_screen</code> → <code>recovery_screen</code> (form, code to the new contact, two photos to the private bucket, « Envoyer la demande ») → Admin Web « Récupération » (compare, « Approuver » with a note) → 24-hour hold, owner notified on the old contacts → <code>auth.account-recovery</code> job: claim, replace contacts, password unusable, all sessions revoked → the person signs in with the new contact through « Mot de passe oublié ».</p>
+
+<h3 id="ch13-j8">13.8 A subscription reaches its end</h3>
+<ol>
+  <li>14 and 3 days before the end: notifications « Votre abonnement se termine bientôt » (<code>SubscriptionLifecycleService.remind</code>). « Renouveler » is open in the last 14 days; a renewal extends from the current end.</li>
+  <li>At the end without renewal: GRACE for 7 days, access kept (<code>advance</code>).</li>
+  <li>After grace: EXPIRED. <code>placeInTier</code> gives PROFESSIONAL_UNPAID; the doctor keeps the sample set and favorites; offline copies of locked items are removed at the next sync.</li>
+  <li>Never: red banners, countdowns, refund buttons.</li>
+</ol>
+</section>

@@ -1,0 +1,91 @@
+<section class="chapter">
+<h2 id="ch12">12. تطبيق الهاتف، شاشة بعد شاشة</h2>
+<p class="lead">كل شاشة تعيش في <code>apps/mobile/lib/src/features/&lt;feature&gt;/</code>. لكلٍّ منها: ما تعرضه، وكل زر فيها، وما يستدعيه. التعليقات فوق كل زر في الشيفرة تقول الشيء نفسه في سطر واحد؛ والملحق أ يذكرها مع أرقام أسطرها.</p>
+
+<h3 id="ch12-welcome">12.1 الترحيب والتسجيل (features/onboarding)</h3>
+<table>
+  <tr><th>الشاشة</th><th>الأزرار والسلوك</th></tr>
+  <tr><td><b>الترحيب</b> <code>welcome_screen.dart</code></td><td>« Créer un compte » (إنشاء حساب)، « Se connecter » (الدخول)، « Essayer la démo » (تجربة العرض). على هاتف سبق أن دخل منه أحد، يصبح « Se connecter » هو الإجراء الرئيسي ويُملأ المعرّف مسبقًا.</td></tr>
+  <tr><td><b>العرض التجريبي</b> <code>demo_start_screen.dart</code></td><td>اختيار السياق (طبيب، مقيم، طالب) ← « Commencer la démo » ← <code>SessionController.startDemo</code>. دون تسجيل، ودون بيانات شخصية.</td></tr>
+  <tr><td><b>« Qui êtes-vous ? »</b> <code>role_select_screen.dart</code></td><td>صف لكل مهنة؛ « Continuer ». قبل وجود الحساب ينتظر الاختيار في الذاكرة (<code>OnboardingDraft</code>)؛ وبعد الدخول يُحفظ فورًا.</td></tr>
+  <tr><td><b>إنشاء حساب</b> <code>sign_up_screen.dart</code></td><td>الأسماء، البريد أو الهاتف، كلمة المرور مع سطر القوة، منتقي الولاية، مربع الشروط. الأخطاء تظهر عند مغادرة الحقل، لا عند كل حرف. « Créer mon compte » يبقى معطّلًا حتى يصح كل شيء. و« Se connecter » إن كان الحساب موجودًا.</td></tr>
+  <tr><td><b>الرمز</b> <code>otp_screen.dart</code></td><td>ست خانات فوق حقل مخفي واحد (اللصق والملء التلقائي من الرسالة يعملان)؛ « Vérifier »؛ « Renvoyer le code » مع عدّ 60 ثانية؛ وبعد 3 رموز خاطئة قفل 10 دقائق.</td></tr>
+  <tr><td><b>الدخول</b> <code>sign_in_screen.dart</code></td><td>« Se connecter »، « Pas encore de compte ? »، « Accès perdu ? »، « Mot de passe oublié ? ». رسائل لكلمة مرور خاطئة، قفل حتى وقت محدد، حساب غير مؤكَّد، حساب موقوف.</td></tr>
+  <tr><td><b>نسيت كلمة المرور</b> <code>password_reset_screens.dart</code></td><td>« Envoyer le code » (الجواب نفسه سواء وُجد الحساب أم لا)، ثم الرمز + كلمة مرور جديدة ← « Réinitialiser » ← يخرج كل جهاز.</td></tr>
+</table>
+[[code apps/mobile/lib/src/features/onboarding/otp_screen.dart | Future<void> _verify(String code) | block]]
+
+<h3 id="ch12-shell">12.2 الإطار والشاشة الرئيسية</h3>
+<p>يرسم <code>app_shell.dart</code> شريط التبويبات الزجاجي العائم: « Accueil »، « Bibliothèque »، زر البحث الدائري، « Profil » (مع نقطة عندما يحتاج شيء انتباهًا، كالتحقق). و<code>home_screen.dart</code>: سطر الهوية (الاسم، الصفة، الوصول؛ والجرس يفتح الإشعارات)، حقل البحث الزجاجي، اختصار للبحث في الحمل، الموارد الثلاثة كبلاطات، سطر التحقق أو « Voir les offres » حسب ملف الوصول، والعناصر الأخيرة. كل ما يمكن فتحه يأتي من ملف الوصول — لا من المهنة أبدًا.</p>
+
+<h3 id="ch12-library">12.3 المكتبة (features/library)</h3>
+<p>تبويبات Ordonnances · Certificats · Calculateurs · Grossesse، حقل تصفية خاص بالقسم، وقائمة أبجدية من <code>ContentRow</code>. الصف المقفل يحتفظ بمكانه مع كلمة القفل؛ والضغط عليه يفتح لوحة القفل. سحب للتحديث؛ « Réessayer » عند الخطأ؛ ودون اتصال تأتي القائمة من مخزن الهاتف مع تاريخ النسخة. بحث المكتبة يُبلَّغ للتحليلات بعد توقّف الكتابة (والكلمات نفسها لا تُرسَل أبدًا).</p>
+
+<h3 id="ch12-search">12.4 البحث (features/search)</h3>
+<p>شاشة كاملة، ولوحة المفاتيح مفتوحة. تحت حرفين: عمليات البحث الأخيرة (محفوظة على الهاتف فقط؛ « Effacer »، و✕ لكل عنصر) وأمثلة استعلامات. ثم: نتائج مجمّعة حسب النوع (3 لكل مجموعة، « Voir les N »)، شرائح الأنواع مع أعدادها، اقتراحات « Vouliez-vous dire … »، ونتائج من المخزن المحلي عند فشل الشبكة. والجواب الذي يصل متأخرًا لاستعلام أقدم يُتجاهل.</p>
+[[code apps/mobile/lib/src/features/search/search_screen.dart | Future<void> _run() async { | block]]
+
+<h3 id="ch12-viewer">12.5 قراءة ملف PDF مرجعي (features/reference)</h3>
+<p>ينزّل <code>reference_viewer_screen.dart</code> ملف PDF عبر رابط موقّع، يتحقق من بصمته SHA-256 مقابل المنشورة، ويرسمه بـpdfrx. أداة عائمة: الصفحة « 2 / 5 »، تصغير، ملاءمة العرض، تكبير؛ والنجمة ★ في الشريط العلوي تضيف إلى المفضلة. لا زر تنزيل أو طباعة أو مشاركة في أي مكان. ودون اتصال تُستعمل النسخة المحفوظة على الهاتف.</p>
+
+<h3 id="ch12-calc">12.6 الحاسبة (features/calculators)</h3>
+<div class="diagram">CalculatorRuntime: detail from API (or offline store) → parse definition → SELF-TEST the published cases
+  ready → the form        locked → lock message      unsupported → "update the app"      self-test failed → refuse
+form: number fields (with unit picker) · choice lists · yes/no switches
+  typing → commit after 400 ms idle, "next", or leaving the field → evaluate() on the DEVICE
+  result: value + unit + band, formula with the values, notes (« vérifiez la valeur »), conversions
+  « Copier le résultat » (value, unit, band — never the inputs) · « Réinitialiser » · « Source » sheet</div>
+<p>بيئة التشغيل تقرأ التفاصيل (من الخادم أو من المخزن)، تقرأ التعريف، وتشغّل الاختبار الذاتي؛ فإما النموذج، أو رسالة قفل، أو « حدّث التطبيق »، أو رفض. في النموذج: حقول أرقام مع منتقي الوحدة، قوائم إجابات، مفاتيح نعم/لا؛ الكتابة تُثبَّت بعد 400 مللي ثانية من التوقف أو عند « التالي » أو عند مغادرة الحقل، ثم يُحسب كل شيء <b>على الهاتف</b>.</p>
+[[code apps/mobile/lib/src/features/calculators/calculator_screen.dart | void _commit(_Field field) { | block]]
+[[code apps/mobile/lib/src/features/calculators/calculator_screen.dart | void _evaluate() { | block]]
+<p>آخر القيم المكتوبة تُحفظ على الهاتف (لإيجادها بعد مكالمة) وتُنسى عند الخروج. ولا تُرسل إلى أي مكان أبدًا.</p>
+
+<h3 id="ch12-preg">12.7 الحمل والرضاعة (features/pregnancy)</h3>
+<ul>
+  <li><b>البحث</b> (<code>pregnancy_search.dart</code>): بحث على الخادم بعد توقف 300 مللي ثانية؛ مرشّح الفترة (T1، T2، T3، ما حول الولادة، الرضاعة) يعرض تصرّف كل نتيجة لتلك الفترة؛ « Afficher N de plus ».</li>
+  <li><b>الملف</b> (<code>substance_screen.dart</code>): مبدّل Grossesse / Allaitement؛ تبويبات الفترات؛ لكل فترة شارة تصرّف (أيقونة + كلمة) و، منفصلًا، مقياس الدليل (0–4) مع الفئة المدروسة والمصادر؛ « Absence de données » ككتلة كاملة؛ البدائل (كلٌّ يفتح ملفه)؛ التعارض بين المصادر؛ المصادر مع روابطها؛ « Signaler une erreur » (سبب + تعليق اختياري؛ دون بيانات مرضى). الملف المقفل يعرض « Débloquer » مع شرحه.</li>
+</ul>
+
+<h3 id="ch12-activity">12.8 النشاط والمفضلة (features/activity)</h3>
+<p>قسمان. « Favoris »: مجمّعة حسب النوع، مع « Retirer » لكلٍّ منها. « Activité »: سجل الشخص الخاص مجمّعًا حسب اليوم، مع مرشّحات حسب النوع و« Effacer l'historique » (لوحة تأكيد). السجل يُسجَّل على الهاتف ويُرسل على دفعات؛ والعرض التجريبي لا يسجّل شيئًا.</p>
+[[code apps/mobile/lib/src/features/activity/favorites_controller.dart | Future<void> toggle( | block]]
+<p>الإضافة إلى المفضلة تظهر فورًا على الشاشة ثم تُرسل إلى الخادم؛ وإن رفض الخادم يُتراجع عنها.</p>
+
+<h3 id="ch12-profile">12.9 الملف الشخصي، الإعدادات، الأمان (features/profile، settings)</h3>
+<ul>
+  <li><b>Profil</b>: الصورة أو الأحرف الأولى، الاسم، الصفة، شارتا التحقق والوصول، « Modifier le profil » (الأسماء، الصورة « Changer » / « Supprimer »، نبذة ≤ 280 حرفًا)، ثم Activité et favoris، Abonnement (للطلبة: « Accès étudiant — gratuit »)، Vérification، Notifications، Paramètres، « Se déconnecter ».</li>
+  <li><b>Paramètres</b>: Apparence (Clair · Sombre · Appareil) وLangue (Français · English)، تُطبَّقان فورًا؛ « Données et hors ligne »؛ « Sécurité du compte »؛ « Supprimer mon compte ».</li>
+  <li><b>Sécurité du compte</b>: البريد والهاتف مع « Modifier » / « Ajouter » / « Retirer » (كلمة المرور + رمز إلى الجهة الجديدة)، « Changer le mot de passe »، و، خلال مهلة الـ24 ساعة لاسترجاع، « Ce n'est pas moi » (ليس أنا).</li>
+  <li><b>Supprimer mon compte</b>: ما يُمحى، وما يحتفظ به القانون، ونهاية الاشتراك الحالي دون استرداد، ثم كلمة المرور.</li>
+</ul>
+
+<h3 id="ch12-verif">12.10 التحقق (features/verification)</h3>
+<table>
+  <tr><th>الخطوة</th><th>ما يحدث</th></tr>
+  <tr><td>المقدمة</td><td>لماذا، ما الذي يُفحص، أين تذهب الوثائق، كم يستغرق؛ « Commencer »؛ و« Plus tard » متاح دائمًا.</td></tr>
+  <tr><td>1 · الهوية</td><td>نوع الوثيقة (بطاقة تعريف، جواز، بطاقة طالب)؛ « Prendre une photo » يفتح الكاميرا مع أدلة الزوايا، ثم « Utiliser la photo » / « Reprendre ». على الهاتف تقرأ ML Kit النص: النص القليل يعني « غير مقروء »، ويجب أن يظهر الاسم — ويستطيع الشخص مع ذلك « Envoyer quand même ». و« Importer un fichier » يقبل PDF وJPG وPNG.</td></tr>
+  <tr><td>2 · الصفة</td><td>الطبيب: رقم العمادة، التخصص، شهادة أو دبلوم. المقيم: السنة، المؤسسة، التخصص، شهادة. الطالب: الجامعة وإثبات التسجيل.</td></tr>
+  <tr><td>3 · الملخص</td><td>علامات التحقق ووصف الملفات فقط؛ « Envoyer pour vérification ».</td></tr>
+  <tr><td>الحالة</td><td>كل ملف مع خطه الزمني (Reçu ← En cours de revue ← Décision)، وسبب الرفض بكلمات بسيطة، وإجراء واحد: Commencer، Continuer، Corriger، Faire appel، Renouveler؛ و« ⋮ » ← « Effacer mes documents ».</td></tr>
+</table>
+[[code apps/mobile/lib/src/features/verification/document_slot.dart | Future<void> _accept(_Picked picked) async { | block]]
+
+<h3 id="ch12-sub">12.11 الاشتراك (features/subscription)</h3>
+<ul>
+  <li><b>Offres</b> (العروض): لكل خطة المشمول / غير المشمول، المدة، السعر، الوصول؛ والزر حسب الأهلية: « Choisir »، أو التحقق أولًا، أو (في العرض التجريبي) « Créer un compte ». الطلبة يرون شرحًا، لا شراءً أبدًا.</li>
+  <li><b>Récapitulatif</b> (الملخص): الخطة، السعر، الفترة، البطاقة (CIB أو الذهبية Edahabia — فقط ما يقبله الخادم الآن)، الوصول، التجديد اليدوي، وسطر « non remboursable » للتأشير؛ « Payer » يفتح صفحة البوابة في المتصفح.</li>
+  <li><b>Résultat du paiement</b> (نتيجة الدفع): تسأل الخادم كل 4 ثوانٍ وعند العودة إلى التطبيق حتى تصبح الدفعة نهائية — والخادم يسأل البوابة، ولا يثق بالمتصفح أبدًا. « Voir mon abonnement »، « Réessayer »، « Autre moyen de paiement »، « Rouvrir la page de paiement ».</li>
+  <li><b>Mon abonnement</b> (اشتراكي): الخطة، شارة حالة محايدة أو بلون teal، الفترة، المدفوعات؛ « Renouveler » (آخر 14 يومًا)، « Arrêter le renouvellement ». لا أحمر، ولا عدّ تنازلي.</li>
+</ul>
+[[code apps/mobile/lib/src/features/subscription/payment_result_screen.dart | Future<void> _check() async { | block]]
+
+<h3 id="ch12-recovery">12.12 « Accès perdu ? » (features/recovery)</h3>
+<p>ثلاث طرق للعودة: « Mot de passe oublié » (رمز)، « J'ai changé de contact » (الدخول بالجهة الأخرى)، « J'ai perdu l'accès aux deux » (استرجاع بمساعدة: النموذج ← رمز إلى الجهة الجديدة ← صورة الهوية + صورة شخصية ← « Envoyer la demande » ← جواب خلال 72 ساعة، يُطبَّق بعد 24 ساعة من القبول).</p>
+
+<h3 id="ch12-offline">12.13 البيانات والعمل دون اتصال (features/offline)</h3>
+<p>آخر مزامنة، إصدار البيانات، المساحة المستعملة؛ « Tout » أو « Favoris seulement »؛ بيانات الجوال تشغيل/إيقاف؛ « Mettre à jour maintenant »؛ « Supprimer les données hors ligne ». وشريط تحت شريط الحالة يقول: دون اتصال، مزامنة جارية، فشل (« Réessayer ») أو بيانات قديمة.</p>
+[[code apps/mobile/lib/src/features/offline/offline_sync.dart | Future<void> _sync() async { | 40]]
+
+<h3 id="ch12-notif">12.14 الإشعارات</h3>
+<p>الأحدث أولًا؛ غير المقروءة بنقطة؛ الضغط يعلّم الإشعار مقروءًا ويفتح رابطه؛ « Tout marquer comme lu ». النصوص تأتي من مفاتيح الكتالوج مع معاملات، فتتبع لغة التطبيق.</p>
+</section>

@@ -1,0 +1,62 @@
+<section class="chapter">
+<h2 id="ch8">8. Verification, payments, finance, analytics, audit, admin security</h2>
+<p class="lead">These modules turn a sign-up into a paying professional and give the team the tools to run the service: checking diplomas, taking payments, counting money, measuring use without spying, keeping an unchangeable log of every admin action, and protecting the console itself.</p>
+
+<h3 id="ch8-verif">8.1 Verification</h3>
+<p>A person proves two things, in separate <b>cases</b>: their <b>identity</b> (national ID, passport, or student card for students) and their <b>status</b> — enrolment for a student (<code>STUDENT_STATUS</code>), residency or the Ordre des médecins for a resident or doctor (<code>PROFESSIONAL_STATUS</code>).</p>
+<div class="diagram">PREPARING ──submit──► SUBMITTED ──claim──► IN_REVIEW ──approve──► VERIFIED ──(expiry)──► EXPIRED
+     ▲                                          │                     renew: a new case from 60 days before
+     └──────── start again ◄──── reject (reason)┘
+                     after 2 rejections: APPEALED → decided by a DIFFERENT reviewer</div>
+[[code apps/api/src/modules/verification/verification.service.ts | export class VerificationService | 10]]
+[[code apps/api/src/modules/verification/verification.policy.ts | export const VERIFICATION_SLA_HOURS | 20]]
+<p>On the reviewer's side (<code>VerificationReviewService</code>), a reviewer <b>claims</b> a case (so two people never decide the same one), views documents in a <b>restricted viewer</b> (60-second signed URLs, a watermark with the reviewer's name, every view audited), then approves or rejects with a reason code. Approval copies the proven role and details to the profile and schedules the documents' deletion: files are kept only as long as the retention rule says.</p>
+[[code apps/api/src/modules/verification/verification-review.service.ts | async approve( | block]]
+
+<h3 id="ch8-billing">8.2 Billing: plans, checkout, gateways</h3>
+<p><b>Plans</b> are versioned: the Super Admin publishes a plan version with its price, duration and « inclus / non inclus » lines; a price change is a new version, and running subscriptions keep theirs. <b>Checkout</b> is open only to an active, professionally verified doctor or resident (students never pay; nobody pays before verification — ADR-006 Q6).</p>
+[[code apps/api/src/modules/billing/checkout.service.ts | async eligibility( | block]]
+<div class="diagram">App « Payer » (plan, CIB or Edahabia, acknowledgement « non remboursable »)
+  POST /v1/subscription/checkout ─► CheckoutService.start
+                                       eligibility, plan on sale, method available
+                                       transaction DT-2026-000123 (PENDING)
+                                       gateway.register(order) ─────────────► Chargily / SATIM
+                    ◄─ { redirectUrl } ─────────────────────────────────────── payment page
+  browser: the person pays ON THE GATEWAY'S PAGE (the API never sees card data)
+  return URL / webhook / reconcile job (every 10 min) ─► settle(transaction)
+                                       gateway.status(reference)  ← the only truth
+                                       PAID → activate: subscription starts or extends
+  PaymentResultScreen polls GET /v1/subscription/transactions/:transactionId until final</div>
+[[code apps/api/src/modules/billing/payments/payment-provider.ts | export abstract class PaymentGateway | block]]
+<p>Each gateway (<code>ChargilyGateway</code>, <code>SatimGateway</code>, and <code>FakeGateway</code> outside production) implements this class. A webhook is accepted only with a valid signature computed over the raw body, and even then the API asks the gateway for the order's status instead of trusting the notification.</p>
+[[code apps/api/src/modules/billing/checkout.service.ts | async settle( | block]]
+<div class="rule"><b>No refund anywhere.</b> There is no refund status, endpoint or button. A real exception (law, accounting, provider error) is an <i>exceptional adjustment</i> in Finance, requested by the Super Admin and counted only once a second admin approves it.</div>
+[[code apps/api/src/modules/billing/subscription-lifecycle.service.ts | export class SubscriptionLifecycleService | block]]
+
+<h3 id="ch8-finance">8.3 Finance</h3>
+<p>Finance reads transactions (it never changes them) and adds what the business needs around them: payment fees (estimated from a rate per gateway × card, later replaced by the provider's statement), operating expenses (voided, never deleted), exceptional adjustments (two admins) and CSV reports. The ledger always has the same shape (Lock L40):</p>
+[[code apps/api/src/modules/finance/finance.policy.ts | export function ledgerOf( | block]]
+<p>CSV cells go through <code>csvCell()</code>, which neutralises text a spreadsheet would run as a formula (<code>= + - @</code>) — an audit fix.</p>
+
+<h3 id="ch8-analytics">8.4 Analytics without spying</h3>
+[[code apps/api/src/modules/analytics/analytics.service.ts | export class AnalyticsService | 10]]
+<p>The app sends only event names with counts, codes and flags. The server adds the <i>envelope</i> from its own facts: a keyed hash of the person (stable, not reversible), tier, profession, specialty, wilaya. Each event type has a strict schema; anything else is dropped. Dashboards hide any cell behind fewer than 10 people (« &lt; 10 »).</p>
+[[code apps/api/src/modules/analytics/analytics.policy.ts | export const CLIENT_EVENTS | 30]]
+
+<h3 id="ch8-audit">8.5 The audit log</h3>
+[[code apps/api/src/modules/audit/audit.service.ts | export class AuditService | block]]
+<p>Every admin change calls <code>audit.record({...})</code> with who, what, which record, before/after and the reason the admin typed. The database table itself refuses UPDATE and DELETE, so even a bug cannot rewrite history.</p>
+
+<h3 id="ch8-adminauth">8.6 Admin security: password, TOTP, grants</h3>
+<div class="diagram">/sign-in  email + password ─► AdminAuthService.signIn   lockout after 5 failures; same timing for unknown e-mails
+          ◄─ 5-minute challenge: ENROL (first time: QR code) or VERIFY
+          6-digit TOTP code ───► completeTotp ─► opaque session cookie (idle + absolute timeouts)
+every admin request:  AdminBoundaryGuard  (no bearer tokens; writes only from the Admin Web origin)
+                      AdminSessionGuard   (live session + the route's @RequireGrants)</div>
+[[code apps/api/src/modules/admin-auth/grants.ts | export const GRANTS | block]]
+[[code apps/api/src/modules/admin-auth/grants.ts | export function separationOfDutiesViolations( | block]]
+<p>Grants are given per admin, from <b>presets</b> (Super Admin, Verification reviewer, Library manager, Calculator editor, Clinical reviewer…) adjustable one by one; a grant can also be temporary (a few hours). Separation of duties is checked both in Admin Web (live, before saving) and by the API.</p>
+
+<h3 id="ch8-admin">8.7 The admin module</h3>
+<p><code>modules/admin</code> holds read-only screens that combine several modules: « Vue d'ensemble » (the ledger strip and work lists), « Utilisateurs » (search and the user drawer: profile, access with its inputs, subscriptions, activity <i>counts</i>), and the audit log with its CSV export.</p>
+</section>

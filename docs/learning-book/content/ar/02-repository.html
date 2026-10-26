@@ -1,0 +1,104 @@
+<section class="chapter">
+<h2 id="ch2">2. المستودع — أين يوجد كل شيء</h2>
+<p class="lead">DokTool مستودع Git واحد (<i>monorepo</i>) يضم ثلاثة تطبيقات وأربع حزم مشتركة. لوحة الويب وتطبيق الهاتف منفصلان تمامًا من الأصل: يعيشان في مجلدين مختلفين، بلغتين وإطارين مختلفين، ولا يستورد أحدهما شيفرة الآخر أبدًا. ما يتشاركانه هو <b>عقد</b> مع الخادم، يُولَّد آليًا.</p>
+
+<h3 id="ch2-tree">2.1 المجلدات العليا</h3>
+<div class="diagram">doktool/
+├── apps/
+│   ├── api/       ← the server (NestJS, TypeScript). The ONLY part that touches the database.
+│   │   ├── src/           code: main.ts, app.module.ts, common/, config/, infrastructure/, modules/, scripts/
+│   │   ├── prisma/        schema.prisma (47 tables) + migrations/ (hand-written SQL)
+│   │   └── test/          unit/ (pure logic) and integration/ (real HTTP + real PostgreSQL)
+│   ├── admin/     ← Admin Web (Next.js, React, TypeScript). The team's browser console.
+│   │   ├── src/app/       the pages (one folder = one URL)
+│   │   ├── src/features/  the screens, one folder per console section
+│   │   ├── src/ui/        the shared components (Button, DataTable, Dialog, Drawer…)
+│   │   └── src/api/       the typed API client (schema.d.ts is generated)
+│   └── mobile/    ← the app (Flutter, Dart) for iOS and Android.
+│       ├── lib/src/core/      networking, session, local database, secure storage
+│       ├── lib/src/features/  one folder per feature (onboarding, library, calculators…)
+│       ├── lib/src/ui/        the shared widgets (DtButton, DtAlert, ContentRow…)
+│       └── test/              widget and unit tests
+├── packages/
+│   ├── api-contract/        openapi.json — the contract both clients are generated from
+│   ├── design-tokens/       colours, spacing, radii… → CSS, Tailwind, TypeScript and Dart
+│   ├── i18n/                messages.fr.json + messages.en.json → Flutter ARB + admin catalogue
+│   └── calculator-vectors/  test cases both calculator engines must pass
+├── design/        the design system: specifications, component cards, tokens.json
+└── docs/          decisions (adr/), audits, operations guides, this book</div>
+<p>باختصار: <code>apps/api</code> هو الخادم ووحده يلمس قاعدة البيانات؛ <code>apps/admin</code> لوحة الإدارة في المتصفح؛ <code>apps/mobile</code> تطبيق الهاتف لـiOS وAndroid؛ و<code>packages/</code> ما يتشاركونه: العقد، الرموز التصميمية، النصوص، وحالات اختبار الحاسبات.</p>
+
+<h3 id="ch2-separation">2.2 كيف ينفصل تطبيق الويب عن تطبيق الهاتف</h3>
+<p>سؤال « أين شيفرة الويب، وأين شيفرة الهاتف؟ » له جواب واضح:</p>
+<table>
+  <tr><th></th><th>لوحة الإدارة (الويب)</th><th>تطبيق الهاتف</th></tr>
+  <tr><td>المجلد</td><td><code>apps/admin</code></td><td><code>apps/mobile</code></td></tr>
+  <tr><td>اللغة</td><td>TypeScript + React (TSX)</td><td>Dart</td></tr>
+  <tr><td>الإطار</td><td>Next.js (App Router)</td><td>Flutter</td></tr>
+  <tr><td>من يستعمله</td><td>فريق DokTool، على حاسوب (≥ 1024 بكسل)</td><td>الأطباء والمقيمون والطلبة وزوار العرض التجريبي، على الهاتف</td></tr>
+  <tr><td>الـAPI الذي يستدعيه</td><td><code>/admin/v1/*</code> بكعكة جلسة + مصادقة ثنائية</td><td><code>/v1/*</code> برمز Bearer</td></tr>
+  <tr><td>العميل المولَّد</td><td><code>apps/admin/src/api/schema.d.ts</code></td><td><code>apps/mobile/lib/src/core/api/generated/</code></td></tr>
+  <tr><td>مدير الحزم</td><td>npm (مساحة عمل)</td><td><code>flutter pub</code></td></tr>
+  <tr><td>الاختبارات</td><td>Vitest (<code>apps/admin/src/test</code>)</td><td><code>flutter test</code> (<code>apps/mobile/test</code>)</td></tr>
+</table>
+<p>الأشياء الوحيدة المشتركة بينهما تأتي من <code>packages/</code>: الكلمات نفسها (i18n)، الألوان نفسها (الرموز التصميمية) وعقد الـAPI نفسه. لا شيء منها يُستورَد كشيفرة مصدرية؛ كلٌّ منها <b>يُولَّد</b> بالصيغة التي يحتاجها التطبيق.</p>
+<div class="diagram"> design/system/tokens.json ──generate──► tokens.css + tailwind preset (admin)   +  doktool_tokens.dart (mobile)
+ packages/i18n/messages.*.json ─build──► admin catalogue (TS)                 +  lib/l10n/*.arb (mobile)
+ apps/api (decorators) ──openapi──► packages/api-contract/openapi.json ──► schema.d.ts (admin) + Dart client (mobile)</div>
+<div class="tip"><b>لا تعدّل ملفًا مولَّدًا باليد أبدًا.</b> <code>schema.d.ts</code>، وكل ما تحت <code>core/api/generated/</code>، و<code>doktool_tokens.dart</code> وملفات ARB تُعاد كتابتها بمولّداتها. يقارنها CI بتوليد جديد ويفشل عند أي اختلاف ("drift").</div>
+
+<h3 id="ch2-talk">2.3 كيف تتحادث التطبيقات الثلاثة</h3>
+<div class="diagram">  ┌────────────────────┐   HTTPS  /v1/*   (Bearer access token)        ┌──────────────────────────┐
+  │  Mobile (Flutter)  │ ─────────────────────────────────────────────► │                          │──► PostgreSQL (Prisma)
+  └────────────────────┘                                                 │      API (NestJS)        │──► Cloudflare R2 (files)
+  ┌────────────────────┐   HTTPS  /admin/v1/*  (cookie + TOTP 2FA)       │  apps/api — the judge    │──► SMS / e-mail providers
+  │ Admin Web (Next.js)│ ─────────────────────────────────────────────► │  of every rule           │──► Chargily / SATIM payments
+  └────────────────────┘                                                 └──────────────────────────┘
+         PDFs and photos go straight between the apps and R2 with short-lived signed URLs the API hands out.</div>
+<p>الهاتف ولوحة الإدارة يتحدثان مع الخادم فقط. الخادم هو الحَكَم في كل قاعدة، ويتحدث مع قاعدة البيانات وتخزين الملفات R2 ومزوّدي الرسائل وبوابات الدفع. ملفات PDF والصور تنتقل مباشرة بين التطبيقات وR2 عبر روابط موقّعة قصيرة العمر يمنحها الخادم.</p>
+
+<h3 id="ch2-api-layout">2.4 داخل apps/api</h3>
+<ul>
+  <li><code>src/main.ts</code> — يشغّل الخادم. <code>src/app.setup.ts</code> — إعدادات HTTP المشتركة مع الاختبارات. <code>src/app.module.ts</code> — يجمع كل شيء.</li>
+  <li><code>src/config/</code> — يقرأ متغيرات البيئة ويتحقق منها (<code>env.ts</code>).</li>
+  <li><code>src/common/</code> — أدوات صغيرة مشتركة: غلاف الأخطاء، معلومات المتصل، CSV ونص البحث.</li>
+  <li><code>src/infrastructure/</code> — خدمات تقنية تستعملها كل وحدة: عميل قاعدة البيانات، التشفير، المهام الخلفية، حدود المعدّل، البريد والرسائل القصيرة، التحقق من الرموز.</li>
+  <li><code>src/modules/</code> — <b>الوحدات العشرون للمجال</b>، واحدة لكل مجال عمل. كل وحدة تملك جداولها ولا تكشف إلا ما يصدّره ملف <code>index.ts</code> الخاص بها.</li>
+  <li><code>src/scripts/</code> — أدوات سطر الأوامر: إنشاء مشرف، توليد عقد OpenAPI، تعبئة بيانات العرض، استخراج Medicalcul واستيراده.</li>
+  <li><code>prisma/schema.prisma</code> — كل الجداول، مجمّعة حسب الوحدة المالكة.</li>
+</ul>
+<p>قائمة الوحدات ملف واحد:</p>
+[[code apps/api/src/modules/index.ts | export const DOMAIN_MODULES | block]]
+
+<h3 id="ch2-tools">2.5 الأدوات التي تحتاجها</h3>
+<table>
+  <tr><th>الأداة</th><th>استعمالها</th></tr>
+  <tr><td>Node.js ≥ 24 + npm</td><td>الخادم ولوحة الإدارة والحزم (مساحة عمل npm واحدة في الجذر).</td></tr>
+  <tr><td>PostgreSQL ≥ 15</td><td>قاعدة البيانات (واحدة للتطوير، وأخرى مخصّصة للاختبارات).</td></tr>
+  <tr><td>Flutter (المستقر)</td><td>تطبيق الهاتف؛ Android SDK ومحاكٍ، وXcode على ماك لـiOS.</td></tr>
+  <tr><td>Chrome</td><td>لبناء ملف PDF لهذا الكتاب.</td></tr>
+</table>
+
+<h3 id="ch2-run">2.6 تشغيل كل شيء على جهازك</h3>
+<p>من جذر المستودع، مرة واحدة:</p>
+<div class="diagram">npm install                                      # installs API, Admin Web and packages
+cp apps/api/.env.example apps/api/.env           # then fill DATABASE_URL and fresh 32+ char secrets
+cp apps/admin/.env.example apps/admin/.env
+npm run prisma:migrate:deploy -w @doktool/api    # creates the tables
+npm run admin:create -w @doktool/api -- --email you@example.dz --name "Your Name"</div>
+<p>ثم في ثلاث نوافذ طرفية:</p>
+<div class="diagram">npm run start:dev -w @doktool/api                # API on http://localhost:3000 (Swagger at /docs)
+npm run dev -w @doktool/admin                    # Admin Web on http://localhost:3001
+
+cd apps/mobile
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+flutter gen-l10n
+flutter run --dart-define=API_BASE_URL=http://localhost:3000</div>
+<div class="note"><b>بيانات تجريبية.</b> الأمر <code>npm run demo:seed -w @doktool/api</code> يملأ قاعدة بيانات ينتهي اسمها بـ<code>_demo</code> بحسابات ومحتوى للعرض (ويرفض أي قاعدة أخرى). كلمات المرور التي يطبعها تُعرض مرة واحدة فقط.</div>
+
+<h3 id="ch2-check">2.7 الأمر الوحيد الذي يفحص كل شيء</h3>
+<div class="diagram">DATABASE_URL=postgresql://…/doktool_test npm run ci
+cd apps/mobile && flutter analyze && flutter test</div>
+<p>يشغّل <code>npm run ci</code> بالترتيب: تنسيق Prettier، فحص ESLint، فحص أنواع TypeScript، فحص تماثل الترجمة (كل مفتاح باللغتين)، فحص الرموز التصميمية (لا لون ولا نصف قطر ولا ضبابية ولا مدة مكتوبة مباشرة في الشيفرة)، فحص انحراف OpenAPI، فحص انحراف عميل لوحة الإدارة، ثم كل اختبارات كل مساحة عمل. في نهاية تدقيق أكتوبر 2026 كان كله أخضر: 613 اختبارًا للخادم، 30 اختبارًا للوحة الإدارة، اختبارات الحزم، و167 اختبار Flutter.</p>
+</section>
