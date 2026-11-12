@@ -7,6 +7,7 @@ import type {
   ProfileSection,
 } from '../../generated/prisma/enums.js';
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
+import { RateLimiter } from '../../infrastructure/rate-limit/rate-limiter.js';
 import type { Viewer } from '../../infrastructure/security/viewer-auth.guard.js';
 import { AccessService, type ItemAccess } from '../access/index.js';
 import { Prisma } from '../../generated/prisma/client.js';
@@ -80,6 +81,12 @@ export interface SubstanceProfile extends SubstanceItem {
   underReview: boolean;
 }
 
+/**
+ * « Signaler une erreur »: reports one person or one demo session may send per hour. A reader
+ * rarely finds more than a few errors; the limit keeps the clinical team's queue usable.
+ */
+export const REPORT_RATE = { name: 'content-report', limit: 10, windowSeconds: 3600 };
+
 const PUBLISHED = {
   where: { status: 'PUBLISHED' },
   select: {
@@ -102,6 +109,7 @@ export class PregnancyService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly access: AccessService,
+    private readonly limiter: RateLimiter,
   ) {}
 
   /** A–Z list, optionally filtered by name or synonym (accent- and case-insensitive). */
@@ -242,6 +250,10 @@ export class PregnancyService {
         unlockPath: profile.access.unlockPath,
       });
     }
+    await this.limiter.hit(
+      REPORT_RATE,
+      viewer.accessContext === 'DEMO' ? `demo:${viewer.demoSessionId}` : `user:${viewer.userId}`,
+    );
     const version = await this.prisma.substanceProfileVersion.findFirst({
       where: { substanceId, status: 'PUBLISHED' },
       select: { id: true },

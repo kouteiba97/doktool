@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import { type Express, type NextFunction, type Request, type Response, raw } from 'express';
 import helmet from 'helmet';
 import { ErrorFilter } from './common/errors/error.filter.js';
+import { requestId } from './common/http/request-id.js';
 import type { Env } from './config/env.js';
 import { PAYMENT_WEBHOOKS_PATH } from './modules/billing/index.js';
 import { LOCAL_OBJECTS_PATH } from './modules/storage/index.js';
@@ -16,6 +17,7 @@ export function configureApp(app: INestApplication, env: Env): void {
   // Client IPs (rate limits, audit) come from X-Forwarded-For only behind known proxies.
   http.set('trust proxy', env.TRUST_PROXY_HOPS);
 
+  app.use(requestId);
   app.use(helmet());
   app.use(cookieParser());
   // Gateway webhooks are signed over their exact bytes (ADR-021): keep them raw, and small.

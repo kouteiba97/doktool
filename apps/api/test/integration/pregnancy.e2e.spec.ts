@@ -312,6 +312,21 @@ describe('in the app', () => {
     await app.http().get(`/v1/pregnancy/substances/${id}`).set(auth).expect(410);
   });
 
+  it('limits how many error reports one person sends in an hour', async () => {
+    const { id } = await publishedSubstance();
+    const { userId, auth } = await userActor(app, 'PROFESSIONAL');
+    const report = () =>
+      app
+        .http()
+        .post(`/v1/pregnancy/substances/${id}/reports`)
+        .set(auth)
+        .send({ section: 'PREGNANCY', reason: 'OTHER' });
+    for (let sent = 0; sent < 10; sent++) await report().expect(204);
+    const refused = await report().expect(429);
+    expect(refused.body.error.code).toBe('RATE_LIMITED');
+    expect(await app.prisma().contentReport.count({ where: { userId } })).toBe(10);
+  });
+
   it('takes error reports from people who can read the profile, for the clinical team', async () => {
     const { id } = await publishedSubstance();
     const { auth } = await userActor(app, 'PROFESSIONAL');
