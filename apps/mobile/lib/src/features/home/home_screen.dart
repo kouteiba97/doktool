@@ -28,7 +28,6 @@ import '../verification/verification_controller.dart';
 import '../../ui/content_row.dart';
 import '../activity/activity_data.dart';
 import '../activity/activity_screen.dart';
-import '../activity/favorites_controller.dart';
 
 /// ScreenHomeMobile / ScreenHomeStudent: identity line, the glass search field first, the three
 /// V1 resources on one strip, then « Commencer ». What can be opened comes from the AccessProfile,
@@ -400,9 +399,7 @@ class _RecentsAndFavorites extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.colors;
     final recents = ref.watch(recentContentProvider).value ?? const <ContentRef>[];
-    final index = ref.watch(contentIndexProvider).value ?? const <String, ContentRef>{};
-    final favoriteKeys = ref.watch(favoritesProvider).value?.keys ?? const <FavoriteKey>{};
-    final favorites = [for (final key in favoriteKeys) ?index[key.id]].take(5).toList();
+    final favorites = ref.watch(favoriteContentProvider).value ?? const <ContentRef>[];
 
     Widget row(ContentRef content) => ContentRow(
       icon: content.icon,

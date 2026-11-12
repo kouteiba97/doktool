@@ -239,7 +239,6 @@ class _History extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.colors;
     final history = ref.watch(activityHistoryProvider(filter));
-    final index = ref.watch(contentIndexProvider).value ?? const {};
     final entries = history.value ?? const <ActivityDto>[];
 
     // One lifted card per day (ADR-020).
@@ -248,7 +247,7 @@ class _History extends ConsumerWidget {
       final day = _day(context, l10n, entry.occurredAt);
       if (days.isEmpty || days.last.$1 != day) days.add((day, <Widget>[]));
       final rows = days.last.$2;
-      final content = entry.targetId == null ? null : index[entry.targetId];
+      final content = contentOfEntry(entry);
       if (entry.kind == ActivityKind.search) {
         rows.add(
           ListTile(

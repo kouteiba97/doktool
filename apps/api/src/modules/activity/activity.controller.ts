@@ -98,7 +98,7 @@ export class ActivityController {
     @CurrentUser() user: UserPrincipal,
     @Query() query: ActivityQuery,
   ): Promise<ActivityDto[]> {
-    const records = await this.activity.history(user.userId, {
+    const records = await this.activity.history(asViewer(user), {
       kind: query.kind,
       before: query.before ? new Date(query.before) : undefined,
     });

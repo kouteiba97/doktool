@@ -139,13 +139,24 @@ describe('research history', () => {
       'REFERENCE_VIEW',
       'SEARCH',
     ]);
+    // Each entry names what was opened and the access to it, so the app needs no list to show it.
+    // A student opens calculators; an ordonnance is listed and locked (ADR-006 Q2).
+    expect(all.body[0].item).toMatchObject({
+      kind: 'CALCULATOR',
+      titleFr: 'Surface favori',
+      titleEn: 'Favorite area',
+      access: { state: 'AVAILABLE' },
+    });
+    expect(all.body[0].item.slug).toEqual(expect.any(String));
+    expect(all.body[1].item).toMatchObject({ kind: 'ORDONNANCE', access: { state: 'LOCKED' } });
+    expect(all.body[2].item).toBeNull();
     const searches = await app
       .http()
       .get('/v1/me/activity')
       .query({ kind: 'SEARCH' })
       .set(auth)
       .expect(200);
-    expect(searches.body).toMatchObject([{ queryText: 'clairance', targetId: null }]);
+    expect(searches.body).toMatchObject([{ queryText: 'clairance', targetId: null, item: null }]);
 
     await app
       .http()

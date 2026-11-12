@@ -160,6 +160,14 @@ export class ActivityDto {
   @ApiProperty({ format: 'date-time' })
   occurredAt!: string;
 
+  @ApiPropertyOptional({
+    type: FavoriteItemDto,
+    nullable: true,
+    description:
+      'What was opened, with the access to it now. Null for a search and for an item that is no longer available.',
+  })
+  item!: FavoriteItemDto | null;
+
   static from(record: ActivityRecord): ActivityDto {
     return { ...record, occurredAt: record.occurredAt.toISOString() };
   }

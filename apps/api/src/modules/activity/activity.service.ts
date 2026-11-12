@@ -58,6 +58,11 @@ export interface ActivityRecord {
   targetId: string | null;
   queryText: string | null;
   occurredAt: Date;
+  /**
+   * The model, calculator or profile opened, with the person's access to it now. Null for a
+   * search, and for an item that is no longer published.
+   */
+  item: FavoriteView['item'];
 }
 
 /**
@@ -218,12 +223,12 @@ export class ActivityService {
    * One page of the person's history, newest first; `before` continues from the last entry shown.
    */
   async history(
-    userId: string,
+    viewer: Viewer & { userId: string },
     filter: { kind?: ActivityKind; before?: Date },
   ): Promise<ActivityRecord[]> {
-    return this.prisma.recentActivity.findMany({
+    const rows = await this.prisma.recentActivity.findMany({
       where: {
-        userId,
+        userId: viewer.userId,
         ...(filter.kind ? { kind: filter.kind } : {}),
         ...(filter.before ? { occurredAt: { lt: filter.before } } : {}),
       },
@@ -238,6 +243,18 @@ export class ActivityService {
         occurredAt: true,
       },
     });
+    // Each entry comes with its title and access, looked up for the ids of this page only: the
+    // app no longer downloads whole lists to name what was opened.
+    const targets = rows.flatMap((row) =>
+      row.targetType && row.targetId
+        ? [{ targetType: row.targetType, targetId: row.targetId }]
+        : [],
+    );
+    const items = await this.itemsFor(viewer, targets);
+    return rows.map((row) => ({
+      ...row,
+      item: (row.targetType && items.get(`${row.targetType}:${row.targetId}`)) || null,
+    }));
   }
 
   /** Deletes the whole history, or only one kind of entry. */

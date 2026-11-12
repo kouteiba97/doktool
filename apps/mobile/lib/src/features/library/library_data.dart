@@ -5,7 +5,6 @@ import '../../core/api/api_error.dart';
 import '../../core/api/generated/models/calculator_summary_dto.dart';
 import '../../core/api/generated/models/reference_document_type.dart';
 import '../../core/api/generated/models/reference_item_dto.dart';
-import '../../core/api/generated/models/substance_item_dto.dart';
 import '../../core/auth/session_controller.dart';
 import '../offline/offline_store.dart';
 
@@ -56,20 +55,6 @@ final calculatorListProvider = FutureProvider<List<CalculatorSummaryDto>>((ref) 
   } catch (error) {
     if (!ApiError.from(error).isNetwork) rethrow;
     final offline = await ref.read(offlineStoreProvider).calculatorItems();
-    if (offline.isEmpty) rethrow;
-    return offline;
-  }
-});
-
-/// « Grossesse · Allaitement »: substances with a published profile, each with the server's access
-/// decision; without a connection, the profiles kept for offline reading (ADR-019).
-final substanceListProvider = FutureProvider<List<SubstanceItemDto>>((ref) async {
-  ref.watch(sessionControllerProvider);
-  try {
-    return await ref.watch(apiProvider).pregnancy.pregnancyControllerList();
-  } catch (error) {
-    if (!ApiError.from(error).isNetwork) rethrow;
-    final offline = await ref.read(offlineStoreProvider).substanceItems();
     if (offline.isEmpty) rethrow;
     return offline;
   }
