@@ -57,8 +57,8 @@ All 18 build phases of `docs/ARCHITECTURE-AUDIT.md` §15.2 are done, plus:
 - **Release:** the release checklist is `docs/RELEASE-CHECKLIST.md`.
 - **From the October work:**
   - review and merge the branch `feature/medicalcul-and-pregnancy-import`;
-  - written permission from Medicalcul's author (philippe.mignard@free.fr) before any imported calculator is published;
-  - the 147 imported calculator drafts each need a primary source, test cases, limitations, English texts and band severities, then a second admin's review;
+  - keep the written agreement of Medicalcul's author (philippe.mignard@free.fr) with the release records; the Product Owner states it was obtained (ADR-028);
+  - the 147 imported calculators are published with `npm run medicalcul:publish` (ADR-028). Still for a doctor, each as a new reviewed version: English texts, band severities, validated and plausible ranges, specific limitations;
   - a second admin account (Calculator editor preset) so imports can be reviewed by someone else;
   - for each pregnancy spreadsheet: map the status words, then complete evidence levels and explanations before review.
 - **Decisions not yet taken:** calculator engine extensions (several results per calculator, `Math.round`-compatible rounding, value tables), which would unlock more of the 155 Medicalcul calculators kept out of the import (`docs/medicalcul-integration/integration.md`).
@@ -174,6 +174,8 @@ On the first machine the local database was a PostgreSQL 18 cluster on port 5543
 - **Commits:** one per phase or item, with a clear message, ending with the co-author line.
 
 ## Documents for the owner
+
+- Engineering audit of 11 November 2026 (findings, fixes, measurements, open decisions): `docs/ENGINEERING-AUDIT-2026-11.md`. Its fixes are in the working tree, not yet committed.
 
 - Arabic guide to every feature, app and Admin Web: `docs/guide/guide-ar.html`. Export it to PDF with Chrome (print to PDF).
 - Code audit of 26 October 2026 (defects fixed, recommendations, repository layout): `docs/CODE-AUDIT-2026-10.md`.
