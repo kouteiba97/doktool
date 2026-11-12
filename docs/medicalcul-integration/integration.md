@@ -25,7 +25,7 @@ Medicalcul supplies **calculation formats as data**: questions, point values, fo
 | `STRUCTURED_CALCULATION_DEFINITION` | 147 | **Converted through a deterministic adapter.** Importable as drafts; still need a primary source, test cases, limitations, EN texts and band severities before publication |
 | `FORMULA_TEXT_AVAILABLE` | 155 | **Usable only as reference.** The logic needs a construct the engine lacks (several results, `Math.round`, arrays, dates, validation `return`s…): author them by hand from the primary literature, or extend the engine first |
 | `METADATA_ONLY` | 98 | **Reference content, nothing to execute** (classification tables). Could become reference documents later |
-| All | 400 | **Not reusable for release until the publisher's permission is obtained** |
+| All | 400 | The Product Owner states that the publisher's permission was obtained (12 November 2026); keep the written agreement with the release records |
 
 **Copyright position.** A medical score itself (its items, points and thresholds, as published in the literature) is a method, not a protected work. Medicalcul's pages, wording, selection and code are its author's work. DokTool keeps the data and the citations, never Medicalcul's prose or code. Even so, it should not ship content taken from Medicalcul without the author's written agreement. That question is for a lawyer, not for this report.
 
@@ -44,6 +44,17 @@ npm run medicalcul:import -w @doktool/api -- --author editor@example.dz --only a
 ```
 
 The import skips slugs that already exist, so running it again adds only new calculators.
+
+```bash
+# 4. Compare every importable calculator with Medicalcul's own page script (no database)
+npm run medicalcul:verify -w @doktool/api -- --raw ~/Library/Caches/doktool/medicalcul/raw-2026093014
+
+# 5. Publish the imported drafts (ADR-028): author and reviewer are two different admins
+npm run medicalcul:publish -w @doktool/api -- --raw ~/Library/Caches/doktool/medicalcul/raw-2026093014 \
+  --author editor@example.dz --reviewer reviewer@example.dz --dry-run
+```
+
+Publication was decided on 12 November 2026 (ADR-028), with the author's agreement as stated by the Product Owner. The script completes each untouched draft mechanically, writes its test cases from the values Medicalcul's page computes, and leaves as a draft any calculator whose DokTool result differs.
 
 The extractor tests are in `apps/api/test/unit/medicalcul-extract.spec.ts` and use synthetic pages. Setting `MEDICALCUL_RAW=<raw dir>` also checks ABCD² on the real archive.
 

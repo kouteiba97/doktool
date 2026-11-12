@@ -14,8 +14,11 @@ export {
   calculatorDefinition,
   canonicalJson,
   checkDefinition,
+  definitionSha256,
+  evaluate,
   type CalculatorDefinition,
   type CalculatorInput,
+  type EvaluationInputs,
   type Expr,
   type InterpretationBand,
 } from './engine/index.js';
