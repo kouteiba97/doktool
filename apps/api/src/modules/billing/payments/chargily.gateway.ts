@@ -22,6 +22,11 @@ export const CHARGILY_API = {
 /** Chargily's names for the methods it accepts. */
 const METHOD_NAMES: Record<PaymentMethod, string> = { CIB: 'cib', EDAHABIA: 'edahabia' };
 const PENDING_STATUSES = new Set(['pending', 'processing']);
+/**
+ * The statuses after which the person was not charged. `expired` is the state of a checkout left
+ * unpaid for 30 minutes (dev.chargily.com/pay-v2/api-reference/checkouts/expire).
+ */
+const FAILED_STATUSES = new Set(['failed', 'canceled', 'expired']);
 /** Chargily's smallest accepted checkout amount, in dinars. */
 const MINIMUM_DINARS = 50;
 const TIMEOUT_MS = 20_000;
@@ -98,6 +103,10 @@ export class ChargilyGateway extends PaymentGateway {
       details.paymentMethod = checkout.payment_method;
     if (typeof checkout.livemode === 'boolean') details.livemode = String(checkout.livemode);
     if (status === 'paid') {
+      // The checkout was created in dinars; another currency would make the amount meaningless.
+      if (typeof checkout.currency === 'string' && checkout.currency.toLowerCase() !== 'dzd') {
+        throw new PaymentProviderError(`Devise inattendue (${checkout.currency}).`);
+      }
       const dinars = integer(checkout.amount);
       const fees = integer(checkout.fees_on_merchant) ?? integer(checkout.fees);
       const updated = integer(checkout.updated_at);
@@ -109,6 +118,12 @@ export class ChargilyGateway extends PaymentGateway {
         ...(fees === null ? {} : { feesMinor: fees * 100 }),
         details,
       };
+    }
+    if (!FAILED_STATUSES.has(status)) {
+      // A status this adapter does not know says nothing about the money. A failed transaction is
+      // final, so the order stays pending (and is asked about again) instead of being closed.
+      this.logger.error(`Chargily checkout ${providerReference} has unknown status "${status}"`);
+      throw new PaymentProviderError('Statut de paiement inattendu.');
     }
     // failed, canceled, expired: the person was not charged.
     return {

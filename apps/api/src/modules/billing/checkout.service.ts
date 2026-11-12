@@ -25,7 +25,11 @@ import {
   RENEWAL_WINDOW_DAYS,
 } from './billing.policy.js';
 import { PaymentGateways } from './payments/payment-gateways.js';
-import { type OrderOutcome, PaymentProviderError } from './payments/payment-provider.js';
+import {
+  type OrderOutcome,
+  type PaymentGateway,
+  PaymentProviderError,
+} from './payments/payment-provider.js';
 import { PlansService } from './plans.service.js';
 
 /** Whether the person may pay now, and if not, why (shown on the plans screen). */
@@ -121,34 +125,44 @@ export class CheckoutService {
       );
     }
 
-    const pending = await this.prisma.transaction.findFirst({
-      where: {
-        userId,
-        status: 'PENDING',
-        createdAt: { gt: new Date(Date.now() - PENDING_CHECKOUT_MINUTES * 60_000) },
+    // Two « Payer » sent at the same instant must not both find "no payment in progress": the
+    // check and the creation run one person at a time (the lock ends with this transaction).
+    const opened = await this.prisma.$transaction(
+      async (tx): Promise<{ resumed: CheckoutStarted } | { created: Transaction }> => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`checkout.start:${userId}`}))`;
+        const pending = await tx.transaction.findFirst({
+          where: {
+            userId,
+            status: 'PENDING',
+            createdAt: { gt: new Date(Date.now() - PENDING_CHECKOUT_MINUTES * 60_000) },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+        if (pending) {
+          const redirectUrl = metadataOf(pending).redirectUrl;
+          if (
+            pending.planId === plan.id &&
+            pending.paymentProvider === channel &&
+            typeof redirectUrl === 'string'
+          ) {
+            return { resumed: { transactionId: pending.transactionId, redirectUrl } };
+          }
+          throw new DomainError(
+            'INVALID_STATE',
+            'A payment is already in progress; finish or wait for it.',
+          );
+        }
+        const subscription = await this.subscriptionFor(tx, userId, plan, eligibility.renewal);
+        return {
+          created: await this.createTransaction(tx, userId, subscription, plan, channel, {
+            renewal: eligibility.renewal,
+            language: input.language,
+          }),
+        };
       },
-      orderBy: { createdAt: 'desc' },
-    });
-    if (pending) {
-      const redirectUrl = metadataOf(pending).redirectUrl;
-      if (
-        pending.planId === plan.id &&
-        pending.paymentProvider === channel &&
-        typeof redirectUrl === 'string'
-      ) {
-        return { transactionId: pending.transactionId, redirectUrl };
-      }
-      throw new DomainError(
-        'INVALID_STATE',
-        'A payment is already in progress; finish or wait for it.',
-      );
-    }
-
-    const subscription = await this.subscriptionFor(userId, plan, eligibility.renewal);
-    const transaction = await this.createTransaction(userId, subscription, plan, channel, {
-      renewal: eligibility.renewal,
-      language: input.language,
-    });
+    );
+    if ('resumed' in opened) return opened.resumed;
+    const transaction = opened.created;
     try {
       const order = await gateway.register({
         transactionId: transaction.transactionId,
@@ -215,7 +229,35 @@ export class CheckoutService {
     const found = await this.prisma.transaction.findFirst({
       where: { providerReference, paymentProvider: { in: Object.values(gateway.channels) } },
     });
+    if (found?.status === 'CANCELED') await this.reportIfPaidAfterCancellation(found, gateway);
     return found ? this.settle(found) : null;
+  }
+
+  /**
+   * A gateway notified us about a checkout we had already cancelled as abandoned. A cancelled
+   * transaction is final, so a payment that still went through cannot be recorded on it: it is
+   * reported for the Super Admin instead of being lost without a trace.
+   */
+  private async reportIfPaidAfterCancellation(
+    transaction: Transaction,
+    gateway: PaymentGateway,
+  ): Promise<void> {
+    if (!transaction.providerReference) return;
+    try {
+      const outcome = await gateway.status(
+        transaction.providerReference,
+        metadataOf(transaction).language === 'EN' ? 'EN' : 'FR',
+      );
+      if (outcome.status === 'PAID') {
+        this.logger.error(
+          `${transaction.transactionId}: the gateway reports a payment of ${outcome.amountMinor} after this checkout was cancelled; no access was granted — review it with the gateway`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Could not check cancelled ${transaction.transactionId} with its gateway: ${String(error)}`,
+      );
+    }
   }
 
   /**
@@ -323,6 +365,7 @@ export class CheckoutService {
    * (reused) or a new one.
    */
   private async subscriptionFor(
+    tx: Prisma.TransactionClient,
     userId: string,
     plan: SubscriptionPlan,
     renewal: boolean,
@@ -331,54 +374,53 @@ export class CheckoutService {
       const live = await this.liveSubscription(userId);
       if (live) return live;
     }
-    const waiting = await this.prisma.subscription.findFirst({
+    const waiting = await tx.subscription.findFirst({
       where: { userId, status: 'PENDING_PAYMENT' },
       orderBy: { createdAt: 'desc' },
     });
     if (waiting) {
-      return this.prisma.subscription.update({
+      return tx.subscription.update({
         where: { id: waiting.id },
         data: { planId: plan.id },
       });
     }
-    return this.prisma.subscription.create({ data: { userId, planId: plan.id } });
+    return tx.subscription.create({ data: { userId, planId: plan.id } });
   }
 
   /** DT-YYYY-NNNNNN, numbered per year under an advisory lock. */
   private async createTransaction(
+    tx: Prisma.TransactionClient,
     userId: string,
     subscription: Subscription,
     plan: SubscriptionPlan,
     provider: PaymentProvider,
     context: { renewal: boolean; language: 'FR' | 'EN' },
   ): Promise<Transaction> {
-    return this.prisma.$transaction(async (tx) => {
-      const year = new Date().getUTCFullYear();
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('transactions.public_id'))`;
-      const last = await tx.transaction.findFirst({
-        where: { transactionId: { startsWith: `DT-${year}-` } },
-        orderBy: { transactionId: 'desc' },
-        select: { transactionId: true },
-      });
-      const next = last ? Number(last.transactionId.slice(-6)) + 1 : 1;
-      if (next > 999_999) throw new Error(`Transaction numbering exhausted for ${year}`);
-      return tx.transaction.create({
-        data: {
-          transactionId: `DT-${year}-${String(next).padStart(6, '0')}`,
-          userId,
-          subscriptionId: subscription.id,
-          planId: plan.id,
-          amountMinor: plan.priceMinor,
-          currency: plan.currency,
-          paymentProvider: provider,
-          metadata: {
-            renewal: context.renewal,
-            language: context.language,
-            acknowledgement: ACKNOWLEDGEMENT_VERSION,
-            acknowledgedAt: new Date().toISOString(),
-          },
+    const year = new Date().getUTCFullYear();
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('transactions.public_id'))`;
+    const last = await tx.transaction.findFirst({
+      where: { transactionId: { startsWith: `DT-${year}-` } },
+      orderBy: { transactionId: 'desc' },
+      select: { transactionId: true },
+    });
+    const next = last ? Number(last.transactionId.slice(-6)) + 1 : 1;
+    if (next > 999_999) throw new Error(`Transaction numbering exhausted for ${year}`);
+    return tx.transaction.create({
+      data: {
+        transactionId: `DT-${year}-${String(next).padStart(6, '0')}`,
+        userId,
+        subscriptionId: subscription.id,
+        planId: plan.id,
+        amountMinor: plan.priceMinor,
+        currency: plan.currency,
+        paymentProvider: provider,
+        metadata: {
+          renewal: context.renewal,
+          language: context.language,
+          acknowledgement: ACKNOWLEDGEMENT_VERSION,
+          acknowledgedAt: new Date().toISOString(),
         },
-      });
+      },
     });
   }
 

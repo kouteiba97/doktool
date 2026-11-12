@@ -148,6 +148,22 @@ describe('ChargilyGateway.status', () => {
     answer(200, { id: 'chk_2', status, amount: 1500 });
     expect((await gateway.status('chk_2')).status).toBe(expected);
   });
+
+  // A failed transaction is final: only a status known to mean "not charged" may close one.
+  it.each([['refunded'], [''], [undefined]])(
+    'leaves the order open on a status it does not know (%s)',
+    async (status) => {
+      answer(200, { id: 'chk_4', ...(status === undefined ? {} : { status }), amount: 1500 });
+      await expect(gateway.status('chk_4')).rejects.toBeInstanceOf(PaymentProviderError);
+    },
+  );
+
+  it('refuses a paid checkout in another currency than the dinar', async () => {
+    answer(200, { id: 'chk_5', status: 'paid', amount: 1500, currency: 'eur' });
+    await expect(gateway.status('chk_5')).rejects.toBeInstanceOf(PaymentProviderError);
+    answer(200, { id: 'chk_5', status: 'paid', amount: 1500, currency: 'dzd' });
+    expect((await gateway.status('chk_5')).status).toBe('PAID');
+  });
 });
 
 describe('ChargilyGateway.verifyWebhook', () => {
