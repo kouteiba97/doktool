@@ -4,7 +4,6 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_error.dart';
@@ -26,6 +25,7 @@ import '../../ui/skeleton.dart';
 import '../../ui/tokens.dart';
 import 'calculator_runtime.dart';
 import 'engine/definition.dart';
+import 'engine/display_number.dart';
 import 'engine/evaluate.dart';
 import 'engine/formula_text.dart';
 import '../../core/api/generated/models/favorite_target_type.dart';
@@ -316,21 +316,13 @@ class _CalculatorState extends ConsumerState<_Calculator> {
   String get _locale => Localizations.localeOf(context).toLanguageTag();
 
   /// A number in the UI language, with a fixed number of decimals when given.
-  String _number(num value, {int? decimals}) {
-    final format = NumberFormat.decimalPattern(_locale);
-    if (decimals != null) {
-      format
-        ..minimumFractionDigits = decimals
-        ..maximumFractionDigits = decimals;
-    } else {
-      format.maximumFractionDigits = 6;
-    }
-    return format.format(value);
-  }
+  String _number(num value, {int? decimals}) => displayNumber(value, _locale, decimals: decimals);
 
   /// A range as text: « entre 1 et 10 kg », « ≥ 1 kg » or « ≤ 10 kg ».
-  String _range(AppLocalizations l10n, Range? range, String unit) {
+  String _range(AppLocalizations l10n, Range? range, String rawUnit) {
     if (range == null) return '';
+    // « 1 » is the unit of a plain number (a count, a value whose unit is chosen beside it).
+    final unit = rawUnit == '1' ? '' : rawUnit;
     if (range.min != null && range.max != null) {
       return l10n.calculatorRangeBetween(_number(range.min!), _number(range.max!), unit).trim();
     }
