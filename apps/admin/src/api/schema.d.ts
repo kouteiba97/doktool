@@ -128,6 +128,22 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/admin/v1/admins/{id}/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminAccountsController_resetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/v1/admins/{id}/reset-totp": {
         parameters: {
             query?: never;
@@ -314,6 +330,22 @@ export type paths = {
         get: operations["AuditLogController_export"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/v1/auth/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminAuthController_changePassword"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2863,6 +2895,8 @@ export type components = {
         ActivityDto: {
             /** Format: uuid */
             id: string;
+            /** @description What was opened, with the access to it now. Null for a search and for an item that is no longer available. */
+            item?: components["schemas"]["FavoriteItemDto"] | null;
             kind: components["schemas"]["ActivityKind"];
             /** Format: date-time */
             occurredAt: string;
@@ -2990,6 +3024,10 @@ export type components = {
         };
         /** @enum {string} */
         AdminChallengeKind: "TOTP_VERIFY" | "TOTP_ENROLL";
+        AdminChangePasswordDto: {
+            currentPassword: string;
+            newPassword: string;
+        };
         AdminContentReportDto: {
             comment: string | null;
             /** Format: date-time */
@@ -3743,7 +3781,7 @@ export type components = {
         CreatedAdminDto: {
             /** Format: uuid */
             id: string;
-            /** @description Shown once; the admin changes nothing, they enrol TOTP at first sign-in. */
+            /** @description Shown once; the admin enrols TOTP at first sign-in, then replaces this password. */
             oneTimePassword: string;
         };
         CreatePlaceDto: {
@@ -4472,6 +4510,10 @@ export type components = {
             submitted: number | null;
             /** @description null when fewer than 10 people (« < 10 »). */
             verified: number | null;
+        };
+        OneTimePasswordDto: {
+            /** @description Shown once; the admin replaces it after signing in. */
+            oneTimePassword: string;
         };
         OtpChallengeDto: {
             /** Format: uuid */
@@ -5965,6 +6007,40 @@ export interface operations {
             };
         };
     };
+    AdminAccountsController_resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusBody"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OneTimePasswordDto"];
+                };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     AdminAccountsController_resetTotp: {
         parameters: {
             query?: never;
@@ -6356,6 +6432,36 @@ export interface operations {
                 content: {
                     "text/csv": string;
                 };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AdminAuthController_changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminChangePasswordDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error envelope */
             default: {

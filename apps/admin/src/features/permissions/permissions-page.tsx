@@ -27,7 +27,12 @@ export function PermissionsPage() {
   const errorText = useErrorText();
   const [openId, setOpenId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
+  // A one-time password to show once: of a new admin, or re-issued to an existing one.
+  const [created, setCreated] = useState<{
+    email: string;
+    password: string;
+    reissued: boolean;
+  } | null>(null);
   // Every admin with their grants.
   const admins = useQuery({
     queryKey: adminsKey,
@@ -139,13 +144,17 @@ export function PermissionsPage() {
           onOpen={(row) => setOpenId(row.id)}
         />
       )}
-      <AdminDrawer admin={open} onClose={() => setOpenId(null)} />
+      <AdminDrawer
+        admin={open}
+        onClose={() => setOpenId(null)}
+        onPasswordIssued={(email, password) => setCreated({ email, password, reissued: true })}
+      />
       {creating ? (
         <CreateAdminDialog
           onClose={() => setCreating(false)}
           onCreated={(email, password) => {
             setCreating(false);
-            setCreated({ email, password });
+            setCreated({ email, password, reissued: false });
           }}
         />
       ) : null}
@@ -153,6 +162,7 @@ export function PermissionsPage() {
         <PasswordDialog
           email={created.email}
           password={created.password}
+          reissued={created.reissued}
           onClose={() => setCreated(null)}
         />
       ) : null}
@@ -238,14 +248,20 @@ function CreateAdminDialog({
   );
 }
 
-/** The one-time password, shown once: the new admin enrols TOTP at first sign-in. */
+/**
+ * The one-time password, shown once. A new admin enrols TOTP at first sign-in; in both cases the
+ * admin then replaces this password from their account menu.
+ */
 function PasswordDialog({
   email,
   password,
+  reissued,
   onClose,
 }: {
   email: string;
   password: string;
+  /** Re-issued to an existing admin (their authenticator is unchanged). */
+  reissued: boolean;
   onClose: () => void;
 }) {
   const { t } = useI18n();
@@ -255,7 +271,10 @@ function PasswordDialog({
       open
       onOpenChange={(open) => (open ? undefined : onClose())}
       title={t('admin.permissions.passwordTitle')}
-      description={t('admin.permissions.passwordBody', { email })}
+      description={t(
+        reissued ? 'admin.permissions.passwordResetBody' : 'admin.permissions.passwordBody',
+        { email },
+      )}
       footer={
         // « J'ai transmis le mot de passe »: closes; the password is never shown again.
         <Button variant="primary" onClick={onClose}>

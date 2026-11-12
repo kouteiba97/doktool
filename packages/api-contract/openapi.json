@@ -183,6 +183,16 @@
             "format": "uuid",
             "type": "string"
           },
+          "item": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FavoriteItemDto"
+              }
+            ],
+            "description": "What was opened, with the access to it now. Null for a search and for an item that is no longer available.",
+            "nullable": true,
+            "type": "object"
+          },
           "kind": {
             "allOf": [
               {
@@ -636,6 +646,23 @@
           "TOTP_ENROLL"
         ],
         "type": "string"
+      },
+      "AdminChangePasswordDto": {
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "maxLength": 128,
+            "minLength": 12,
+            "type": "string"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ],
+        "type": "object"
       },
       "AdminContentReportDto": {
         "properties": {
@@ -3801,7 +3828,7 @@
             "type": "string"
           },
           "oneTimePassword": {
-            "description": "Shown once; the admin changes nothing, they enrol TOTP at first sign-in.",
+            "description": "Shown once; the admin enrols TOTP at first sign-in, then replaces this password.",
             "type": "string"
           }
         },
@@ -6458,6 +6485,18 @@
           "submitted",
           "verified",
           "rejected"
+        ],
+        "type": "object"
+      },
+      "OneTimePasswordDto": {
+        "properties": {
+          "oneTimePassword": {
+            "description": "Shown once; the admin replaces it after signing in.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "oneTimePassword"
         ],
         "type": "object"
       },
@@ -11285,6 +11324,61 @@
         ]
       }
     },
+    "/admin/v1/admins/{id}/reset-password": {
+      "post": {
+        "operationId": "AdminAccountsController_resetPassword",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OneTimePasswordDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-permissions"
+        ]
+      }
+    },
     "/admin/v1/admins/{id}/reset-totp": {
       "post": {
         "operationId": "AdminAccountsController_resetTotp",
@@ -12116,6 +12210,45 @@
         ],
         "tags": [
           "admin-audit"
+        ]
+      }
+    },
+    "/admin/v1/auth/password": {
+      "post": {
+        "operationId": "AdminAuthController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminChangePasswordDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-auth"
         ]
       }
     },

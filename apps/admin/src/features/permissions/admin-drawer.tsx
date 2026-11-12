@@ -19,17 +19,41 @@ import { adminsKey, GRANT_GROUPS, GRANT_LABELS, PRESET_LABELS, separationProblem
 /** One admin account. */
 type Admin = Schemas['AdminAccountDto'];
 /** Which dialog is open. */
-type Action = 'save' | 'temporary' | 'suspend' | 'reinstate' | 'resetTotp' | null;
+type Action = 'save' | 'temporary' | 'suspend' | 'reinstate' | 'resetTotp' | 'resetPassword' | null;
 
 const TEMPORARY_HOURS = [1, 2, 4, 8] as const;
 
 /** One admin: effective grants with their origin, temporary access, status and TOTP (section 07). */
-export function AdminDrawer({ admin, onClose }: { admin: Admin | null; onClose: () => void }) {
-  return admin ? <AdminDrawerBody key={admin.id} admin={admin} onClose={onClose} /> : null;
+export function AdminDrawer({
+  admin,
+  onClose,
+  onPasswordIssued,
+}: {
+  admin: Admin | null;
+  onClose: () => void;
+  /** A new one-time password was issued: the page shows it once. */
+  onPasswordIssued: (email: string, password: string) => void;
+}) {
+  return admin ? (
+    <AdminDrawerBody
+      key={admin.id}
+      admin={admin}
+      onClose={onClose}
+      onPasswordIssued={onPasswordIssued}
+    />
+  ) : null;
 }
 
 /** The drawer's content: the grants by area, with the separation-of-duties rules checked live. */
-function AdminDrawerBody({ admin, onClose }: { admin: Admin; onClose: () => void }) {
+function AdminDrawerBody({
+  admin,
+  onClose,
+  onPasswordIssued,
+}: {
+  admin: Admin;
+  onClose: () => void;
+  onPasswordIssued: (email: string, password: string) => void;
+}) {
   const { t, locale } = useI18n();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -83,6 +107,11 @@ function AdminDrawerBody({ admin, onClose }: { admin: Admin; onClose: () => void
                 { label: t('admin.permissions.temporary'), onSelect: () => setAction('temporary') },
                 // « Réinitialiser l'authentificateur »: lost phone; enrols again at next sign-in.
                 { label: t('admin.permissions.resetTotp'), onSelect: () => setAction('resetTotp') },
+                // « Émettre un nouveau mot de passe »: forgotten or exposed password.
+                {
+                  label: t('admin.permissions.resetPassword'),
+                  onSelect: () => setAction('resetPassword'),
+                },
                 {
                   label: t('admin.permissions.suspend'),
                   // « Suspendre »: blocks sign-in and ends sessions.
@@ -240,6 +269,21 @@ function AdminDrawerBody({ admin, onClose }: { admin: Admin; onClose: () => void
         onConfirm={async (reason) => {
           await call(api.POST('/admin/v1/admins/{id}/reset-totp', { ...path, body: { reason } }));
           await done(t('admin.permissions.totpReset'));
+        }}
+      />
+      <ReasonDialog
+        open={action === 'resetPassword'}
+        onOpenChange={(open) => setAction(open ? 'resetPassword' : null)}
+        title={t('admin.permissions.resetPasswordTitle')}
+        description={t('admin.permissions.resetPasswordBody')}
+        confirmLabel={t('admin.permissions.resetPassword')}
+        confirmVariant="danger"
+        onConfirm={async (reason) => {
+          const issued = await call(
+            api.POST('/admin/v1/admins/{id}/reset-password', { ...path, body: { reason } }),
+          );
+          await queryClient.invalidateQueries({ queryKey: adminsKey });
+          onPasswordIssued(admin.email, issued.oneTimePassword);
         }}
       />
     </Drawer>

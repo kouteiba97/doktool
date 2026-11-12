@@ -262,3 +262,27 @@ describe('plans', () => {
     expect(planSchema.safeParse({ ...base, price: '10' }).success).toBe(false);
   });
 });
+
+describe('foldForSearch (calculators list)', () => {
+  it('ignores accents, case and extra spaces', async () => {
+    const { foldForSearch } = await import('@/features/calculators/calculators-page');
+    expect(foldForSearch('  Clairance de la  CRÉATININE ')).toBe('clairance de la creatinine');
+    expect(foldForSearch('Œdème aigu')).toContain('aigu');
+    expect(foldForSearch('')).toBe('');
+  });
+});
+
+describe('newPasswordProblem (account menu)', () => {
+  it('names the first rule a new password breaks', async () => {
+    const { newPasswordProblem } = await import('@/shell/change-password-dialog');
+    const current = 'the password I was handed';
+    expect(newPasswordProblem(current, 'too short', 'too short')).toBe('short');
+    expect(newPasswordProblem(current, current, current)).toBe('same');
+    expect(newPasswordProblem(current, 'a passphrase of my own', 'a passphrase of mine')).toBe(
+      'mismatch',
+    );
+    expect(
+      newPasswordProblem(current, 'a passphrase of my own', 'a passphrase of my own'),
+    ).toBeNull();
+  });
+});

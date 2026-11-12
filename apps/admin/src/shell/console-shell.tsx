@@ -2,16 +2,17 @@
 
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
 import { useQueryClient } from '@tanstack/react-query';
-import { ChevronDown, CircleAlert, Languages, LogOut } from 'lucide-react';
+import { ChevronDown, CircleAlert, KeyRound, Languages, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { api, call } from '@/api/client';
 import { useI18n } from '@/i18n/i18n-provider';
 import type { MessageKey } from '@/i18n/messages';
 import { useMe } from '@/session/session';
 import { useErrorText } from '@/ui/errors';
 import { EmptyState, Skeleton } from '@/ui/feedback';
+import { ChangePasswordDialog } from './change-password-dialog';
 import { isActive, visibleNavigation } from './nav';
 
 /** Label of each environment shown in the top bar. */
@@ -34,6 +35,7 @@ export function ConsoleShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const me = useMe();
+  const [changingPassword, setChangingPassword] = useState(false);
 
   // « Se déconnecter »: ends the session on the server, forgets every cached answer and reloads the
   // sign-in page.
@@ -82,6 +84,11 @@ export function ConsoleShell({ children }: { children: ReactNode }) {
                     <div className="dt-cap">{me.data.email}</div>
                   </div>
                   <div className="sep" />
+                  {/* « Changer le mot de passe »: opens the dialog below. */}
+                  <RadixMenu.Item className="it" onSelect={() => setChangingPassword(true)}>
+                    <KeyRound size={16} aria-hidden />
+                    {t('admin.shell.changePassword')}
+                  </RadixMenu.Item>
                   <RadixMenu.Item className="it" onSelect={() => void signOut()}>
                     <LogOut size={16} aria-hidden />
                     {t('admin.shell.signOut')}
@@ -124,6 +131,9 @@ export function ConsoleShell({ children }: { children: ReactNode }) {
           )}
         </main>
       </div>
+      {changingPassword ? (
+        <ChangePasswordDialog onClose={() => setChangingPassword(false)} />
+      ) : null}
     </div>
   );
 }

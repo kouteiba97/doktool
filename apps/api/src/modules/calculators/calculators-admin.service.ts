@@ -104,13 +104,24 @@ export class CalculatorsAdminService {
 
   /** Every calculator with all its versions. */
   async list(): Promise<CalculatorRecord[]> {
-    const calculators = await this.prisma.calculator.findMany({ orderBy: { nameFr: 'asc' } });
-    return Promise.all(
-      calculators.map(async (calculator) => ({
-        ...calculator,
-        versions: await this.versionsOf(calculator.id),
-      })),
-    );
+    // Two queries whatever the number of calculators (one per calculator used to run at once).
+    const [calculators, versions] = await Promise.all([
+      this.prisma.calculator.findMany({ orderBy: { nameFr: 'asc' } }),
+      this.prisma.calculatorVersion.findMany({
+        orderBy: { version: 'desc' },
+        include: VERSION_INCLUDE,
+      }),
+    ]);
+    const byCalculator = new Map<string, VersionRecord[]>();
+    for (const version of versions) {
+      const list = byCalculator.get(version.calculatorId);
+      if (list) list.push(version);
+      else byCalculator.set(version.calculatorId, [version]);
+    }
+    return calculators.map((calculator) => ({
+      ...calculator,
+      versions: byCalculator.get(calculator.id) ?? [],
+    }));
   }
 
   /** One calculator with all its versions. */

@@ -151,8 +151,14 @@ export class AdminAccountDto {
 export class CreatedAdminDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty({
-    description: 'Shown once; the admin changes nothing, they enrol TOTP at first sign-in.',
+    description: 'Shown once; the admin enrols TOTP at first sign-in, then replaces this password.',
   })
+  oneTimePassword!: string;
+}
+
+/** A new one-time password for an admin who lost theirs. */
+export class OneTimePasswordDto {
+  @ApiProperty({ description: 'Shown once; the admin replaces it after signing in.' })
   oneTimePassword!: string;
 }
 
@@ -312,5 +318,25 @@ export class AdminAccountsController {
     @Client() client: ClientInfo,
   ): Promise<void> {
     await this.accounts.resetTotp(admin, adminId, body.reason, client);
+  }
+
+  /**
+   * POST /admin/v1/admins/:id/reset-password: a new one-time password for another admin, shown
+   * once. Their sessions end; their authenticator is unchanged.
+   */
+  @Post(':id/reset-password')
+  @HttpCode(HttpStatus.OK)
+  @RequireGrants('system.roles.write')
+  @ApiOkResponse({ type: OneTimePasswordDto })
+  @errors
+  async resetPassword(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Param('id', id) adminId: string,
+    @Body() body: StatusBody,
+    @Client() client: ClientInfo,
+  ): Promise<OneTimePasswordDto> {
+    return {
+      oneTimePassword: await this.accounts.resetPassword(admin, adminId, body.reason, client),
+    };
   }
 }
