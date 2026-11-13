@@ -250,7 +250,7 @@ Weaknesses found: M2 (unknown status, currency, paid after cancellation), M8 (co
 
 # Part 2 — Remediation report
 
-Everything below is in the working tree of `feature/medicalcul-and-pregnancy-import`, **not committed**. No migration was added and no database was changed outside local test and demo databases.
+Everything below is committed on `feature/medicalcul-and-pregnancy-import` (commits `4c1b784` to `df148ab`, 12 November 2026), not pushed. No migration was added by these fixes and no database was changed outside local test and demo databases.
 
 ## A. What was fixed
 
@@ -306,7 +306,8 @@ Run on the Android emulator against the demo data, in English: Welcome, « Explo
 - Home puts search first, then the pregnancy shortcut and the four sections: any content is two taps away.
 - Locked models stay in place with a lock and « Pro »; open ones say « View model ». Nothing is hidden.
 - Empty sections say so plainly (« No calculator published yet »).
-- Not walked: a calculator and a pregnancy profile on screen. The demo database has none published (the 147 calculators are drafts, by rule: no clinical content is generated). Their behaviour is covered by the widget and engine tests only.
+- Calculators, walked after the publication of the Medicalcul formats (ADR-028): Body Mass Index (175 cm, 70 kg → 22.86), Cockcroft (60 years, 70 kg, woman, 80 µmol/l → 72.80 ml/mn) and BISAP (yes, no, yes, yes, no → 3). The formula card showed an answer's internal code; fixed on 13 November (`7554130`).
+- Not walked: a pregnancy profile on screen.
 - Not walked: sign-up, verification with the camera, payment, offline use.
 
 No change was made to the app's layout or visual identity.
@@ -314,3 +315,15 @@ No change was made to the app's layout or visual identity.
 ## F. Payments
 
 No payment code path was activated and no live call was made. The architecture was already provider-independent (section 6). Changed: the Chargily status mapping, the currency check, the report of a payment after cancellation, and the lock on checkout start. Before going live, in Chargily's test mode: confirm that amounts are whole dinars, the minimum amount, and that a webhook reaches `PUBLIC_API_URL`.
+
+## G. After the audit — 13 November 2026
+
+| Change | Commit | Verified by |
+|---|---|---|
+| One account, one device at a time (ADR-029, Product Owner): a sign-in ends the sessions elsewhere; the other phone says why | `4b8ea92` | `auth.e2e` (3 tests), `onboarding_test.dart`, `opened_elsewhere_test.dart` |
+| A double « Payer » gets the same payment page instead of a 409 (a race left by M8) | `205cc15` | `billing.e2e` › « opens one checkout… », which failed about one run in two |
+| API tests no longer fail at random on a loaded machine (one listening server per file) | `c1c8c45` | 8 full runs in a row |
+| Formula card shows the chosen answer, not its code | `7554130` | `calculator_runtime_test.dart` |
+
+State on 13 November: `npm run ci` passes (API 636 tests, 1 skipped; Admin Web 32); `flutter analyze` clean; `flutter test` 178; `npm audit` 0 high, 0 critical; no migration drift; Admin Web production build passes.
+
