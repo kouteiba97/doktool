@@ -40,7 +40,10 @@ export function useTestApp(): TestApp {
     }).compile();
     app = moduleRef.createNestApplication({ logger: false });
     configureApp(app, env);
-    await app.init();
+    // One listening server for the whole file. Left to itself, supertest opens and closes a
+    // port for every request, and a request now and then reached a port already handed to
+    // another server: random 404 and 401 answers on a loaded machine.
+    await app.listen(0, '127.0.0.1');
   });
 
   afterAll(async () => {
