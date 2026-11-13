@@ -49,6 +49,10 @@ export interface CheckoutStarted {
   redirectUrl: string;
 }
 
+/** How long a second « Payer » waits for the first one's payment page, and how often it looks. */
+const REGISTRATION_WAIT_MS = 8000;
+const REGISTRATION_POLL_MS = 100;
+
 /** Subscription statuses that can still give access. */
 const LIVE = ['ACTIVE', 'GRACE', 'CANCELED'] as const;
 
@@ -128,7 +132,11 @@ export class CheckoutService {
     // Two « Payer » sent at the same instant must not both find "no payment in progress": the
     // check and the creation run one person at a time (the lock ends with this transaction).
     const opened = await this.prisma.$transaction(
-      async (tx): Promise<{ resumed: CheckoutStarted } | { created: Transaction }> => {
+      async (
+        tx,
+      ): Promise<
+        { resumed: CheckoutStarted } | { registering: Transaction } | { created: Transaction }
+      > => {
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`checkout.start:${userId}`}))`;
         const pending = await tx.transaction.findFirst({
           where: {
@@ -147,6 +155,15 @@ export class CheckoutService {
           ) {
             return { resumed: { transactionId: pending.transactionId, redirectUrl } };
           }
+          // The same checkout, created an instant ago by another « Payer »: its payment page is
+          // still being opened at the provider.
+          if (
+            pending.planId === plan.id &&
+            pending.paymentProvider === channel &&
+            redirectUrl === undefined
+          ) {
+            return { registering: pending };
+          }
           throw new DomainError(
             'INVALID_STATE',
             'A payment is already in progress; finish or wait for it.',
@@ -162,6 +179,7 @@ export class CheckoutService {
       },
     );
     if ('resumed' in opened) return opened.resumed;
+    if ('registering' in opened) return this.awaitRegistration(opened.registering.id);
     const transaction = opened.created;
     try {
       const order = await gateway.register({
@@ -354,6 +372,29 @@ export class CheckoutService {
   }
 
   // ───────────────────────────────── helpers ─────────────────────────────────
+
+  /**
+   * Waits for the payment page of a checkout another request is opening at the provider, so a
+   * double « Payer » gets the same page instead of an error. Gives up after a few seconds, or as
+   * soon as the provider refused the checkout.
+   */
+  private async awaitRegistration(id: string): Promise<CheckoutStarted> {
+    const deadline = Date.now() + REGISTRATION_WAIT_MS;
+    for (;;) {
+      const transaction = await this.prisma.transaction.findUnique({ where: { id } });
+      const redirectUrl = transaction ? metadataOf(transaction).redirectUrl : undefined;
+      if (transaction?.status === 'PENDING' && typeof redirectUrl === 'string') {
+        return { transactionId: transaction.transactionId, redirectUrl };
+      }
+      if (transaction?.status !== 'PENDING' || Date.now() >= deadline) {
+        throw new DomainError(
+          'INVALID_STATE',
+          'A payment is already in progress; finish or wait for it.',
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, REGISTRATION_POLL_MS));
+    }
+  }
 
   /** True when a pending checkout is older than PENDING_CHECKOUT_MINUTES. */
   private abandoned(transaction: Transaction, now: Date): boolean {
