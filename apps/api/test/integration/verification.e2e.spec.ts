@@ -705,6 +705,84 @@ describe('retention and expiry', () => {
   });
 });
 
+describe('re-verification', () => {
+  const plansState = async (auth: Auth) =>
+    (await app.http().get('/v1/subscription/plans').set(auth).expect(200)).body.eligibility
+      .state as string;
+
+  it('keeps a paying doctor professional while the renewal case is prepared and reviewed', async () => {
+    const { userId, auth } = await userActor(app, 'PROFESSIONAL');
+    const prisma = app.prisma();
+    await prisma.verificationCase.updateMany({
+      where: { userId, type: 'PROFESSIONAL_STATUS' },
+      data: { expiresAt: new Date(Date.now() + 30 * 86_400_000) },
+    });
+    const started = await app
+      .http()
+      .post('/v1/me/verification/cases')
+      .set(auth)
+      .send({ type: 'PROFESSIONAL_STATUS' })
+      .expect(200);
+    const renewal = started.body.id as string;
+    expect(await accessTier(auth)).toBe('PROFESSIONAL');
+    await app
+      .http()
+      .put(`/v1/me/verification/cases/${renewal}/details`)
+      .set(auth)
+      .send(DETAILS.DOCTOR!())
+      .expect(200);
+    await uploadStep(auth, renewal, STEP.DOCTOR!, 200);
+    await app.http().post(`/v1/me/verification/cases/${renewal}/submit`).set(auth).expect(200);
+    expect(await accessTier(auth)).toBe('PROFESSIONAL');
+
+    // The old verification lapses before the reviewer decides: the live subscription still counts.
+    await prisma.verificationCase.updateMany({
+      where: { userId, type: 'PROFESSIONAL_STATUS', status: 'VERIFIED' },
+      data: { expiresAt: new Date(Date.now() - 1000) },
+    });
+    await app.get(VerificationMaintenanceService).expireCases();
+    expect(await accessTier(auth)).toBe('PROFESSIONAL');
+
+    // Without a subscription, paying waits for the renewal's decision.
+    await prisma.subscription.updateMany({ where: { userId }, data: { status: 'EXPIRED' } });
+    expect(await accessTier(auth)).toBe('PROFESSIONAL_UNPAID');
+    expect(await purchase(auth)).toMatchObject({
+      state: 'LOCKED',
+      lockReason: 'VERIFICATION_PENDING',
+    });
+    expect(await plansState(auth)).toBe('VERIFICATION_PENDING');
+    await decide(superAdmin, renewal, 'approve');
+    expect(await purchase(auth)).toMatchObject({ state: 'AVAILABLE' });
+    expect(await plansState(auth)).toBe('OPEN');
+  });
+
+  it('lets an unpaid doctor pay while a renewal of a valid verification is reviewed', async () => {
+    const { userId, auth } = await userActor(app, 'PROFESSIONAL_UNPAID');
+    await app.prisma().verificationCase.updateMany({
+      where: { userId, type: 'PROFESSIONAL_STATUS' },
+      data: { expiresAt: new Date(Date.now() + 20 * 86_400_000) },
+    });
+    await submitCase(auth, 'PROFESSIONAL_STATUS');
+    expect(await purchase(auth)).toMatchObject({ state: 'AVAILABLE' });
+    expect(await plansState(auth)).toBe('OPEN');
+  });
+
+  it('keeps a verified student a student while the status is renewed', async () => {
+    const { userId, auth } = await userActor(app, 'STUDENT');
+    await app.prisma().verificationCase.updateMany({
+      where: { userId, type: 'STUDENT_STATUS' },
+      data: { expiresAt: new Date(Date.now() + 30 * 86_400_000) },
+    });
+    await app
+      .http()
+      .post('/v1/me/verification/cases')
+      .set(auth)
+      .send({ type: 'STUDENT_STATUS' })
+      .expect(200);
+    expect(await accessTier(auth)).toBe('STUDENT');
+  });
+});
+
 describe('reference pickers', () => {
   it('lists publicly and is managed with system.settings.write only', async () => {
     const specialties = await app.http().get('/v1/specialties').expect(200);

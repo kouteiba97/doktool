@@ -5,6 +5,7 @@ import { PrismaService } from '../infrastructure/database/prisma.service.js';
 import { USER_API_PREFIX } from '../http/api-prefix.js';
 import { HealthResponse } from './health.response.js';
 
+/** Public health endpoint: no token needed. */
 @ApiTags('health')
 @Controller(`${USER_API_PREFIX}/health`)
 export class HealthController {

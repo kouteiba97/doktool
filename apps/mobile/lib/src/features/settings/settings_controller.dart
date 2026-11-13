@@ -19,6 +19,7 @@ class SettingsController extends AsyncNotifier<AppSettings> {
 
   AppDatabase get _database => ref.read(appDatabaseProvider);
 
+  /// Reads appearance and language from the device (system and French by default).
   @override
   Future<AppSettings> build() async {
     final database = ref.watch(appDatabaseProvider);
@@ -30,12 +31,15 @@ class SettingsController extends AsyncNotifier<AppSettings> {
     );
   }
 
+  /// Changes the appearance.
   Future<void> setAppearance(AppearancePreference appearance) =>
       _update((s) => s.copyWith(appearance: appearance), _appearanceKey, appearance.name);
 
+  /// Changes the language of the app.
   Future<void> setLanguage(AppLanguage language) =>
       _update((s) => s.copyWith(language: language), _languageKey, language.name);
 
+  /// Applies a change at once, then saves it; goes back if saving fails.
   Future<void> _update(AppSettings Function(AppSettings) change, String key, String value) async {
     final previous = await future;
     state = AsyncData(change(previous));

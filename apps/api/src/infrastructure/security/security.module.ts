@@ -4,6 +4,10 @@ import { UserAuthGuard } from './user-auth.guard.js';
 import { UserTokens } from './user-tokens.js';
 import { ViewerAuthGuard } from './viewer-auth.guard.js';
 
+/**
+ * Global module with the token services and the two guards (user-only routes, user-or-demo
+ * routes).
+ */
 @Global()
 @Module({
   providers: [UserTokens, DemoTokens, UserAuthGuard, ViewerAuthGuard],

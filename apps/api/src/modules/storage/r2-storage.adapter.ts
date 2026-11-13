@@ -16,16 +16,19 @@ import {
   type UploadInput,
 } from './storage.service.js';
 
+/** One R2 bucket and the client holding its own credentials. */
 interface BucketTarget {
   name: string;
   client: S3Client;
 }
 
+/** Reads a required setting (the environment check already guarantees it). */
 function required(value: string | undefined, name: string): string {
   if (!value) throw new Error(`${name} is required with STORAGE_DRIVER=r2`);
   return value;
 }
 
+/** True when R2 answered "no such object". */
 const isNotFound = (error: unknown) =>
   error instanceof S3ServiceException &&
   (error.name === 'NotFound' ||
@@ -62,6 +65,7 @@ export class R2StorageAdapter extends StorageService {
     };
   }
 
+  /** PutObject, refusing to overwrite an existing key. */
   async upload(input: UploadInput): Promise<StoredObject> {
     const target = this.buckets[input.bucket];
     const result = await target.client.send(
@@ -84,11 +88,13 @@ export class R2StorageAdapter extends StorageService {
     };
   }
 
+  /** DeleteObject. */
   async delete(bucket: BucketId, key: string): Promise<void> {
     const target = this.buckets[bucket];
     await target.client.send(new DeleteObjectCommand({ Bucket: target.name, Key: key }));
   }
 
+  /** HeadObject, or null when absent. */
   async head(bucket: BucketId, key: string): Promise<StoredObject | null> {
     const target = this.buckets[bucket];
     try {
@@ -108,6 +114,7 @@ export class R2StorageAdapter extends StorageService {
     }
   }
 
+  /** GetObject (optionally a byte range). */
   async download(bucket: BucketId, key: string, range?: ByteRange): Promise<Uint8Array> {
     const target = this.buckets[bucket];
     const result = await target.client.send(
@@ -121,6 +128,7 @@ export class R2StorageAdapter extends StorageService {
     return result.Body.transformToByteArray();
   }
 
+  /** A presigned GET URL (shown inline). */
   getSignedReadUrl(
     bucket: BucketId,
     key: string,
@@ -134,6 +142,7 @@ export class R2StorageAdapter extends StorageService {
     );
   }
 
+  /** A presigned PUT URL that also signs Content-Type and Content-Length. */
   getSignedUploadUrl(
     bucket: BucketId,
     key: string,

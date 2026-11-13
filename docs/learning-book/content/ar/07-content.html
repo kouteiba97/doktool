@@ -1,0 +1,81 @@
+<section class="chapter">
+<h2 id="ch7">7. المحتوى: ملفات PDF المرجعية، الحاسبات، الحمل، البحث، العمل دون اتصال</h2>
+<p class="lead">موارد DokTool الأربعة تعيش في أربع وحدات — <code>reference-library</code> و<code>calculators</code> و<code>pregnancy</code> و(للعثور عليها) <code>search</code> — تساعدها <code>storage</code> و<code>clinical-review</code> و<code>activity</code> و<code>offline</code>. لكلٍّ منها <b>جانب للتطبيق</b> (قراءة فقط، مع فحص الوصول) و<b>جانب للإدارة</b> (تأليف، مراجعة، نشر، مع تسجيل في سجل التدقيق).</p>
+
+<h3 id="ch7-library">7.1 المكتبة المرجعية: الوصفات والشهادات</h3>
+<p>النموذج المرجعي ملف PDF يرفعه المشرف العام، مع بيانات وصفية قليلة: عنوان بالفرنسية (يُملأ مسبقًا من اسم الملف)، عنوان اختياري بالإنجليزية، علامة <code>demoSample</code> وحالة. ملف PDF <i>هو</i> المحتوى؛ ولا أحد يعدّله داخل DokTool.</p>
+[[code apps/api/src/modules/reference-library/reference-documents-admin.service.ts | export class ReferenceDocumentsAdminService | 10]]
+<div class="diagram">Admin Web « Ajouter un modèle »                     API                                       R2 / DB
+ 1 compute SHA-256 of the PDF in the browser
+ 2 POST …/reference-documents/uploads   ──► requestUpload: new id, upload intent, signed PUT (15 min)
+ 3 PUT bytes ─────────────────────────────────────────────────────────────────────────────► doktool-content
+ 4 POST …/reference-documents  ──────────► create: confirm intent (size, %PDF-), create model + file v1
+ 5                                         job "process file": download, SHA-256 = declared?, count pages
+                                           → file READY, becomes the model's current file
+ 6 « Activer »  ─────────────────────────► changeStatus ENABLED (needs a processed PDF)   → visible in the app</div>
+<p>الخطوات: يحسب المتصفح بصمة الملف، يطلب رفعًا موقّعًا، يرسل البايتات إلى R2، ثم ينشئ النموذج؛ فتنزّل مهمة خلفية الملف وتتحقق من بصمته وتعدّ صفحاته؛ وأخيرًا « Activer » يجعله ظاهرًا في التطبيق.</p>
+[[code apps/api/src/modules/storage/upload-intents.service.ts | async confirm( | block]]
+[[code apps/api/src/modules/reference-library/reference-processing.service.ts | async process(fileId | block]]
+<p>« Remplacer le PDF » ينشئ إصدار الملف التالي تحت معرّف النموذج <b>نفسه</b>، فتبقى المفضلة والسجل والروابط تعمل؛ والإصدارات السابقة تبقى مخزّنة (مفاتيح ثابتة) ويستطيع المشرفون معاينتها.</p>
+
+<h3 id="ch7-storage">7.2 StorageService: باب واحد إلى الملفات</h3>
+<p>لا وحدة تستورد مكتبة R2. كلها تستعمل الصنف المجرّد <code>StorageService</code>؛ ويطبّقه <code>R2StorageAdapter</code> في الإنتاج و<code>LocalStorageAdapter</code> (ملفات على القرص، وروابط موقّعة يقدّمها الخادم نفسه) في التطوير والاختبارات:</p>
+[[code apps/api/src/modules/storage/storage.service.ts | export abstract class StorageService | block]]
+
+<h3 id="ch7-calc">7.3 الحاسبات: الصيغة كبيانات</h3>
+<p>الحاسبة ليست شيفرة أبدًا. إنها <b>تعريف</b> — JSON يُتحقَّق منه بمخطط Zod — يفسّره المحرّكان (TypeScript على الخادم وDart على الهاتف) بالطريقة نفسها. يحتوي التعريف على:</p>
+<ul>
+  <li><b>المدخلات</b>: <code>NUMBER</code>/<code>INTEGER</code> (بوحدات من سجل موثّق المصادر، وثلاثة نطاقات: <i>صلب</i> — قيم مستحيلة؛ <i>مُتحقَّق منه</i> — حيث جرى التحقق من الصيغة؛ <i>معقول</i> — خارجه تظهر ملاحظة « vérifiez la valeur »)، و<code>CHOICE</code> (إجابات، مع نقاط أحيانًا) و<code>BOOLEAN</code>؛</li>
+  <li><b>قواعد بين الحقول</b> (مثل: الضغط الانبساطي أقل من الانقباضي)؛</li>
+  <li><b>الصيغة</b>، شجرة فوق مجموعة مغلقة من العمليات؛</li>
+  <li><b>النتيجة</b> (الوحدة، عدد الأرقام العشرية)، و<b>أشرطة</b> التفسير، و<b>الحدود</b>.</li>
+</ul>
+[[code apps/api/src/modules/calculators/engine/definition.ts | export type Expr | 10]]
+[[code apps/api/src/modules/calculators/engine/definition.ts | export const BINARY_OPS | 16]]
+<p>لا يوجد <code>eval</code>، ولا تعبير حر، ولا عملية خارج هذه القوائم: لا يستطيع التعريف فعل شيء لا يعرفه المحرّك. ثم تفحص <code>checkDefinition</code> ما لا يستطيعه المخطط: مفاتيح فريدة، وحدات معروفة، نطاقات متداخلة صحيحًا، صيغة صحيحة الأنواع، أشرطة مرتّبة لا تتداخل.</p>
+
+<h4 id="ch7-evaluate">المحرّك</h4>
+[[code apps/api/src/modules/calculators/engine/evaluate.ts | export function evaluate( | block]]
+<p>اقرأ الترتيب: الحضور والأنواع ← النطاقات الصلبة ← القواعد بين الحقول ← النطاقات المُتحقَّق منها ← ملاحظات المعقولية ← الصيغة ← الشريط. المحرّك <b>لا يعيد نتيجة أبدًا</b> لمدخلات غير صالحة أو خارج النطاق المُتحقَّق منه: بل يعيد المشكلات، والتطبيق يشرحها. التقريب « نصف بعيدًا عن الصفر » ويُحسب على النص العشري، فيُقرَّب 2.675 بالطريقة نفسها في TypeScript وDart.</p>
+<div class="note"><b>محرّكان وحقيقة واحدة.</b> محرّك TypeScript هو المرجع: تشغيل الاختبارات من الإدارة والنشر يستعملانه. ومحرّك Dart يتيح للهاتف الحساب دون اتصال؛ وقبل استعمال إصدار، يشغّل التطبيق حالات الاختبار المنشورة لذلك الإصدار على محرّكه (« الاختبار الذاتي ») ويرفض الحاسبة إن فشلت حالة. والحزمة <code>packages/calculator-vectors</code> تضم حالات مشتركة يجب أن يجتازها المحرّكان في CI.</div>
+
+<h4 id="ch7-governance">الحوكمة: مسودة ← مراجعة ← منشور</h4>
+<div class="diagram">DRAFT ──submit──► IN_REVIEW ──approve──► PUBLISHED ──retire──► RETIRED
+  ▲  (author)          │ (reviewer ≠ author)     immutable: a change is a new version
+  └──── return ────────┘
+ gate to submit:  primary source + a passing test run of THIS definition (checksum)
+ gate to publish: tests re-run on the server, sources, four-eyes, and 1 or 2 sign-offs (ADR-024)</div>
+<p>شرط الإرسال للمراجعة: مصدر أساسي وتشغيل ناجح للاختبارات على <b>هذا</b> التعريف بالذات. شرط النشر: إعادة الاختبارات على الخادم، المصادر، مبدأ « العينين الأربع » (المراجِع غير المؤلف)، وتوقيع واحد أو اثنان.</p>
+[[code apps/api/src/modules/calculators/calculators-admin.service.ts | async publish( | block]]
+[[code apps/api/src/modules/calculators/calculators-admin.service.ts | private async assertIndependentReviewer | block]]
+<p>يُخزَّن تشغيل الاختبارات مع بصمة SHA-256 لـJSON القياسي للتعريف الذي جرى عليه (<code>canonical-json.ts</code>). تعديل التعريف يغيّر البصمة، فلا يعود التشغيل الأخضر القديم صالحًا — يستحيل إرسال تعريف لم يُختبَر كما هو.</p>
+
+<h4 id="ch7-review">التوقيع المزدوج (clinical-review)</h4>
+[[code apps/api/src/modules/clinical-review/clinical-review.service.ts | export class ClinicalReviewService | 8]]
+[[code apps/api/src/modules/clinical-review/clinical-review.service.ts | async approval( | block]]
+
+<h3 id="ch7-preg">7.4 الحمل والرضاعة</h3>
+<p>لكل <b>مادة</b> (الأسماء، رمز ATC، المرادفات، <code>demoSample</code>، مفعّلة أم لا) <b>إصدارات ملف</b>، تُحكَم مثل الحاسبات (مسودة ← مراجعة ← منشور، المؤلف ≠ المراجِع، توقيع ثانٍ اختياري). للمحتوى كتلتان: الحمل (الثلث الأول T1، الثاني T2، الثالث T3، ما حول الولادة) والرضاعة. لكل فترة: <b>تصرّف</b> (<code>CONTRAINDICATED</code> مضاد استطباب، <code>AVOID</code> تجنّب، <code>OCCASIONAL_USE</code> استعمال عرضي، أو لا شيء) و، بشكل منفصل، <b>مستوى دليل</b> من 0 (« Absence de données ») إلى 4 (« Données robustes ») مع مصادره — لا يُدمجان أبدًا في حكم « آمن ».</p>
+[[code apps/api/src/modules/pregnancy/pregnancy.content.ts | export const CONDUCTS | 30]]
+[[code apps/api/src/modules/pregnancy/pregnancy.content.ts | export function reviewProblems( | 12]]
+<p>وثلاث أدوات أخرى في جانب الإدارة:</p>
+<ul>
+  <li><b>استيراد الجداول</b> (ADR-025): ملف XLSX مرفوع يصبح <i>دفعة معاينة</i>؛ يربط المشرف الأعمدة وكلمات الحالة، يصحّح الصفوف، ثم يثبّت — فتُكتب <b>مسودات</b>، وليس محتوى منشورًا أبدًا.</li>
+  <li><b>دمج المكرّرات</b> (ADR-027): أسماء المادة المكرّرة تصبح مرادفات للمادة المحتفظ بها؛ المفضلة والروابط للمكرّرة تفتح المادة المحتفظ بها؛ والدمج يمكن التراجع عنه.</li>
+  <li><b>بلاغات المستخدمين</b> (« Signaler une erreur » في التطبيق) تصل إلى طابور يعالجه الفريق السريري.</li>
+</ul>
+[[code apps/api/src/modules/pregnancy/pregnancy.service.ts | async get(viewer | block]]
+
+<h3 id="ch7-search">7.5 البحث</h3>
+<p>البحث الشامل (<code>GET /v1/search?q=…</code>) يجري على النماذج المرجعية المفعّلة، والحاسبات المنشورة، والمواد المدرجة، مع وصول المشاهد لكل نتيجة (النتائج المقفلة تبقى في مكانها). الترتيب في <code>ranking.ts</code>: يُوحَّد النص (حروف صغيرة، دون حركات)، كل كلمة في الاستعلام تتحمّل أخطاء إملائية (لا شيء حتى حرفين، خطأ حتى 5، خطآن فوق ذلك، بمسافة Damerau-Levenshtein)، المطابقة التامة وبداية الكلمة تأخذ نقاطًا أعلى، والاستعلام الذي يذكر فئة (« certificat… ») يضع تلك المجموعة أولًا. لا تعزيز تجاري أبدًا.</p>
+[[code apps/api/src/modules/search/ranking.ts | export function score( | block]]
+
+<h3 id="ch7-activity">7.6 المفضلة والسجل</h3>
+[[code apps/api/src/modules/activity/activity.service.ts | export class ActivityService | 10]]
+[[code apps/api/src/modules/activity/activity.service.ts | async record( | block]]
+<p>يسجّل الهاتف إدخالات السجل محليًا ويرسلها على دفعات. إدخالات الحساب المقيَّد (قراءة فقط) تُسقَط بصمت عن قصد — يجب ألّا يعلق طابور الهاتف أبدًا على رفض.</p>
+
+<h3 id="ch7-offline">7.7 بيان العمل دون اتصال</h3>
+[[code apps/api/src/modules/offline/offline.service.ts | async manifest( | block]]
+<p>القيمة <code>dataVersion</code> في البيان بصمة لكل ما فيه: يقارنها الهاتف بالإصدار المخزّن لديه ليعرف هل تغيّر شيء، ويعرضها في « Données et hors ligne ».</p>
+</section>

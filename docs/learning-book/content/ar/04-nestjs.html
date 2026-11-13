@@ -1,0 +1,70 @@
+<section class="chapter">
+<h2 id="ch4">4. كيف بُني الخادم — NestJS من خلال شيفرة DokTool نفسها</h2>
+<p class="lead">NestJS إطار ينظّم خادم Node.js في <b>وحدات (modules)</b>، كلٌّ منها مكوّن من <b>متحكمات (controllers)</b> هي نقاط نهاية HTTP، و<b>خدمات (services)</b> هي المنطق، و<b>كائنات نقل البيانات (DTOs)</b> هي أشكال ما يدخل وما يخرج. يبني Nest كل كائن ويعطيه ما يحتاجه عبر مُنشئه — وهذا ما يسمّى <i>حقن الاعتماديات</i>. يعلّمك هذا الفصل هذه القطع بأصغر وحدة كاملة في DokTool: الإشعارات.</p>
+
+<h3 id="ch4-start">4.1 الإقلاع: main.ts وapp.setup.ts</h3>
+<p>يبدأ الخادم في <code>main.ts</code>. يقرأ البيئة مرة واحدة، يبني التطبيق من <code>AppModule</code>، يطبّق إعدادات HTTP المشتركة ثم يستمع:</p>
+[[file apps/api/src/main.ts]]
+<p>الدالة <code>loadEnv</code> (في <code>config/env.ts</code>) تتحقق من كل متغير بيئة بمخطط Zod: سرّ ناقص أو رابط مشوَّه يوقف الخادم عند الإقلاع بدل أن يفشل لاحقًا. والدالة <code>configureApp</code> مشتركة مع اختبارات التكامل، فتعمل الاختبارات بالطبقة نفسها التي يعمل بها الإنتاج:</p>
+[[code apps/api/src/app.setup.ts | export function configureApp | block]]
+<p>اقرأها سطرًا سطرًا: <code>helmet()</code> يضيف ترويسات الأمان؛ <code>cookieParser()</code> يقرأ كعكة جلسة المشرف؛ إشعارات الدفع تحتفظ ببايتاتها الخام (لأن توقيعها محسوب عليها)؛ <code>ValidationPipe</code> العام يرفض أي حقل لا يصرّح به الـDTO (<code>forbidNonWhitelisted</code>) ويحوّل الأنواع (<code>transform</code>)؛ <code>ErrorFilter</code> العام يعطي كل خطأ الشكل نفسه؛ وSwagger متاح على <code>/docs</code> خارج الإنتاج.</p>
+
+<h3 id="ch4-root">4.2 الوحدة الجذرية</h3>
+[[code apps/api/src/app.module.ts | export class AppModule | block]]
+<p>وحدات البنية التحتية أولًا (الإعدادات، قاعدة البيانات، المهام، التشفير، حدود المعدّل، الرسائل، أمان الرموز، الصحة)، ثم الوحدات العشرون للمجال. معظم وحدات البنية التحتية <i>عامة (global)</i>: يمكن حقن خدماتها في أي مكان دون استيراد الوحدة.</p>
+
+<h3 id="ch4-module">4.3 وحدة: الإشعارات</h3>
+<p>تصرّح الوحدة بمتحكماتها، ومزوّداتها (الخدمات)، وما تصدّره للوحدات الأخرى. وهذه الوحدة أيضًا تجدول مهمة تنظيف يومية عند بدئها:</p>
+[[file apps/api/src/modules/notifications/notifications.module.ts]]
+<p>على الوحدات الأخرى ألّا تستورد إلا من <code>index.ts</code> — الباب العام للوحدة:</p>
+[[file apps/api/src/modules/notifications/index.ts]]
+
+<h3 id="ch4-controller">4.4 متحكم: نقاط النهاية والحرّاس</h3>
+<p>المتحكم يربط العناوين بالدوال. المزخرفات (الأسطر التي تبدأ بـ<code>@…</code>) تخبر Nest بفعل HTTP، والحارس الذي يعمل أولًا، وتخبر Swagger كيف يوثّق نقطة النهاية:</p>
+[[code apps/api/src/modules/notifications/notifications.controller.ts | @ApiTags('notifications') | block]]
+<ul>
+  <li><code>@Controller(`${USER_API_PREFIX}/me/notifications`)</code> — كل مسار هنا يبدأ بـ<code>/v1/me/notifications</code>.</li>
+  <li><code>@UseGuards(UserAuthGuard)</code> — يلزم رمز مستخدم صالح (رمز العرض التجريبي لا يكفي: العرض التجريبي بلا إشعارات).</li>
+  <li><code>@CurrentUser() user</code> — يحقن الهوية التي خزّنها الحارس في الطلب (<code>userId</code>، <code>sessionId</code>).</li>
+  <li><code>@Query() query: NotificationListQuery</code> — سلسلة الاستعلام، يُتحقَّق منها حسب صنف الـDTO.</li>
+  <li><code>@Param('id', new ParseUUIDPipe())</code> — معرّف العنوان، مرفوض إن لم يكن UUID.</li>
+  <li><code>@HttpCode(HttpStatus.NO_CONTENT)</code> — يجيب بـ204 دون محتوى.</li>
+</ul>
+<div class="tip"><b>المتحكمات رفيعة.</b> في DokTool لا يفعل المتحكم إلا ترجمة HTTP إلى استدعاء خدمة، ونتيجة الخدمة إلى DTO. كل القواعد في الخدمات، لكي تُختبَر ويُعاد استعمالها.</div>
+
+<h3 id="ch4-dto">4.5 كائنات نقل البيانات: العقد</h3>
+<p>الـDTO صنف بحقول مزخرفة. مزخرفات <code>class-validator</code> (<code>@IsOptional</code>، <code>@IsISO8601</code>…) تفحص البيانات الواردة؛ و<code>@ApiProperty</code> يصف الحقل في عقد OpenAPI الذي يُولَّد منه عميلا الهاتف والإدارة. فتغيير DTO يغيّر الشيفرة المولّدة في التطبيقين معًا.</p>
+[[code apps/api/src/modules/notifications/notifications.dto.ts | export class NotificationDto | block]]
+<p>الدالة الثابتة <code>from()</code> تحوّل سجلًا داخليًا إلى ما يحق للعميل رؤيته بالضبط (التواريخ كنص ISO، والمعاملات كنصوص).</p>
+
+<h3 id="ch4-service">4.6 خدمة وقاعدة البيانات</h3>
+<p>الخدمات أصناف <code>@Injectable()</code>. يذكر المُنشئ ما تحتاجه؛ وNest يوفّره. هنا الاعتمادية الوحيدة هي <code>PrismaService</code>، عميل قاعدة البيانات الوحيد:</p>
+[[code apps/api/src/modules/notifications/notifications.service.ts | export class NotificationsService | 40]]
+<p>يحوّل Prisma نماذج <code>prisma/schema.prisma</code> إلى عميل بأنواع مكتوبة: <code>this.prisma.notification.findMany(…)</code> يفحصه المترجم مقابل أعمدة الجدول. النموذج خلف هذه الخدمة:</p>
+[[code apps/api/prisma/schema.prisma | model Notification { | block]]
+<p>لاحظ الأعراف المستعملة في المخطط كله: معرّفات UUID v7، أسماء أعمدة <code>snake_case</code> مربوطة بحقول <code>camelCase</code>، طوابع زمنية مع المنطقة الزمنية، وفهرس على شكل استعلام القائمة تمامًا (المستخدم، غير المقروء، الأحدث أولًا).</p>
+[[code apps/api/src/infrastructure/database/prisma.service.ts | export class PrismaService | block]]
+
+<h3 id="ch4-guards">4.7 حرّاس ومزخرفات ستراها في كل مكان</h3>
+<table>
+  <tr><th>المزخرف / الحارس</th><th>أين</th><th>ماذا يفعل</th></tr>
+  <tr><td><code>@UseGuards(UserAuthGuard)</code> + <code>@CurrentUser()</code></td><td>مسارات المستخدم فقط</td><td>رمز مستخدم صالح؛ الهوية هي <code>{ userId, sessionId }</code>.</td></tr>
+  <tr><td><code>@UseGuards(ViewerAuthGuard)</code> + <code>@CurrentViewer()</code></td><td>مسارات المحتوى</td><td>رمز مستخدم <i>أو</i> رمز عرض تجريبي؛ والـviewer يقول أيهما.</td></tr>
+  <tr><td><code>@RequireFeature('offline.sync')</code></td><td>مسارات الميزات</td><td>حارس الـviewer + سياسة الوصول: يرفض بـ<code>FEATURE_LOCKED</code> مع مسار الفتح.</td></tr>
+  <tr><td><code>@RequireGrants('finance.read')</code> + <code>@CurrentAdmin()</code></td><td>مسارات الإدارة</td><td>كعكة جلسة المشرف، فحص المصدر (Origin)، والصلاحيات المذكورة.</td></tr>
+</table>
+[[code apps/api/src/modules/access/require-feature.ts | export class FeatureGuard | block]]
+[[code apps/api/src/modules/access/require-feature.ts | export function RequireFeature | block]]
+
+<h3 id="ch4-errors">4.8 الرفض: DomainError</h3>
+<p>الخدمات لا تبني ردود HTTP أبدًا. بل ترمي <code>new DomainError('CODE', 'رسالة للمطوّرين', details?)</code>؛ والكود يحدّد حالة HTTP:</p>
+[[code apps/api/src/common/errors/domain-error.ts | export const ErrorCode | block]]
+
+<h3 id="ch4-tests">4.9 كيف يُختبَر الخادم</h3>
+<ul>
+  <li><b>اختبارات الوحدة</b> (<code>apps/api/test/unit</code>): منطق نقي دون قاعدة بيانات — مصفوفة سياسة الوصول، محرّك الحاسبات، خلايا CSV، قراءة ردود بوابات الدفع، ترتيب البحث.</li>
+  <li><b>اختبارات التكامل</b> (<code>apps/api/test/integration/*.e2e.spec.ts</code>): التطبيق الحقيقي (بما فيه <code>configureApp</code>) مقابل قاعدة PostgreSQL حقيقية للاختبار، يُقاد عبر HTTP بـ<code>supertest</code>. الدوال المساعدة في <code>actors.ts</code> تنشئ طبيبًا أو طالبًا أو مشرفًا بصلاحيات محددة…، و<code>content.ts</code> ينشر محتوى اختباريًا.</li>
+</ul>
+<div class="diagram">DATABASE_URL="postgresql://…/doktool_test" npx vitest run --project unit
+DATABASE_URL="postgresql://…/doktool_test" npx vitest run --project integration test/integration/activity.e2e.spec.ts</div>
+</section>

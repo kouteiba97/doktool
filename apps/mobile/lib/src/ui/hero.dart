@@ -71,6 +71,7 @@ class DtHeroToolbar extends StatelessWidget {
         child: Row(
           children: [
             if (canPop) ...[
+              // Back arrow of the header.
               DtGlassIconButton(
                 icon: LucideIcons.chevronLeft,
                 tooltip: l10n.commonBack,

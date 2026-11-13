@@ -93,6 +93,7 @@ class OfflineSettingsScreen extends ConsumerWidget {
             child: Text(l10n.offlineScope, style: DtType.label.copyWith(color: colors.inkSecondary)),
           ),
           const SizedBox(height: DtSpace.s1),
+          // What to keep offline: everything or only favorites.
           DtSegmentedControl<OfflineScope>(
             semanticLabel: l10n.offlineScope,
             selected: status.scope,
@@ -103,6 +104,7 @@ class OfflineSettingsScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: DtSpace.s3),
+          // Allows syncing over mobile data.
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             value: status.mobileData,
@@ -112,6 +114,7 @@ class OfflineSettingsScreen extends ConsumerWidget {
             onChanged: (allowed) => unawaited(controller.setMobileData(allowed)),
           ),
           const SizedBox(height: DtSpace.s4),
+          // « Mettre à jour maintenant ».
           DtButton(
             label: l10n.offlineUpdate,
             loading: status.phase == SyncPhase.syncing,
@@ -119,6 +122,7 @@ class OfflineSettingsScreen extends ConsumerWidget {
           ),
           if (status.documents > 0) ...[
             const SizedBox(height: DtSpace.s2),
+            // « Supprimer les données hors ligne », after a confirmation.
             DtButton(
               label: l10n.offlineRemove,
               variant: DtButtonVariant.secondary,
@@ -128,7 +132,9 @@ class OfflineSettingsScreen extends ConsumerWidget {
                   builder: (dialog) => AlertDialog(
                     content: Text(l10n.offlineRemoveConfirm),
                     actions: [
+                      // « Annuler ».
                       TextButton(onPressed: () => Navigator.of(dialog).pop(false), child: Text(l10n.commonCancel)),
+                      // Confirms removing the offline data.
                       TextButton(onPressed: () => Navigator.of(dialog).pop(true), child: Text(l10n.offlineRemove)),
                     ],
                   ),

@@ -24,6 +24,7 @@ import { type AdminPrincipal, CurrentAdmin, RequireGrants } from '../admin-auth/
 import { AuditService } from '../audit/index.js';
 import { UsersService } from './users.service.js';
 
+/** Trims a text field before validation. */
 const trimmed = Transform(({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() : value,
 );
@@ -33,6 +34,7 @@ const errors = ApiResponse({
   description: 'Error envelope',
 });
 
+/** A specialty in the pickers. */
 export class SpecialtyDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty() code!: string;
@@ -40,12 +42,14 @@ export class SpecialtyDto {
   @ApiProperty() nameEn!: string;
 }
 
+/** An institution or university in the pickers. */
 export class PlaceDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty() name!: string;
   @ApiProperty() wilayaCode!: number;
 }
 
+/** Optional wilaya filter of the institution picker. */
 export class InstitutionQuery {
   @ApiPropertyOptional({ description: 'Only the institutions of this wilaya.' })
   @IsOptional()
@@ -56,6 +60,7 @@ export class InstitutionQuery {
   wilayaCode?: number;
 }
 
+/** A reason, required for admin changes. */
 class ReasonField {
   @ApiProperty({ minLength: 3, maxLength: 500 })
   @trimmed
@@ -65,12 +70,14 @@ class ReasonField {
   reason!: string;
 }
 
+/** Admin: a new specialty. */
 export class CreateSpecialtyDto extends ReasonField {
   @ApiProperty({ example: 'CARDIOLOGY' }) @Matches(/^[A-Z][A-Z0-9_]{1,39}$/) code!: string;
   @ApiProperty() @trimmed @IsString() @MinLength(1) @MaxLength(120) nameFr!: string;
   @ApiProperty() @trimmed @IsString() @MinLength(1) @MaxLength(120) nameEn!: string;
 }
 
+/** Admin: a new institution or university. */
 export class CreatePlaceDto extends ReasonField {
   @ApiProperty() @trimmed @IsString() @MinLength(2) @MaxLength(200) name!: string;
   @ApiProperty() @IsInt() @Min(1) @Max(999) wilayaCode!: number;
@@ -82,18 +89,21 @@ export class CreatePlaceDto extends ReasonField {
 export class ReferenceDataController {
   constructor(private readonly users: UsersService) {}
 
+  /** GET /v1/reference-data/specialties. */
   @Get('specialties')
   @ApiOkResponse({ type: [SpecialtyDto] })
   specialties(): Promise<SpecialtyDto[]> {
     return this.users.listSpecialties();
   }
 
+  /** GET /v1/reference-data/institutions. */
   @Get('institutions')
   @ApiOkResponse({ type: [PlaceDto] })
   institutions(@Query() query: InstitutionQuery): Promise<PlaceDto[]> {
     return this.users.listInstitutions(query.wilayaCode);
   }
 
+  /** GET /v1/reference-data/universities. */
   @Get('universities')
   @ApiOkResponse({ type: [PlaceDto] })
   universities(): Promise<PlaceDto[]> {
@@ -110,6 +120,7 @@ export class ReferenceDataAdminController {
     private readonly audit: AuditService,
   ) {}
 
+  /** GET /admin/v1/reference-data/specialties. */
   @Get('specialties')
   @RequireGrants('system.settings.write')
   @ApiOkResponse({ type: [SpecialtyDto] })
@@ -118,6 +129,7 @@ export class ReferenceDataAdminController {
     return this.users.listSpecialties();
   }
 
+  /** GET /admin/v1/reference-data/institutions. */
   @Get('institutions')
   @RequireGrants('system.settings.write')
   @ApiOkResponse({ type: [PlaceDto] })
@@ -126,6 +138,7 @@ export class ReferenceDataAdminController {
     return this.users.listInstitutions(query.wilayaCode);
   }
 
+  /** GET /admin/v1/reference-data/universities. */
   @Get('universities')
   @RequireGrants('system.settings.write')
   @ApiOkResponse({ type: [PlaceDto] })
@@ -134,6 +147,7 @@ export class ReferenceDataAdminController {
     return this.users.listUniversities();
   }
 
+  /** POST /admin/v1/reference-data/specialties. */
   @Post('specialties')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('system.settings.write')
@@ -161,6 +175,7 @@ export class ReferenceDataAdminController {
     return created;
   }
 
+  /** POST /admin/v1/reference-data/institutions. */
   @Post('institutions')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('system.settings.write')
@@ -187,6 +202,7 @@ export class ReferenceDataAdminController {
     return created;
   }
 
+  /** POST /admin/v1/reference-data/universities. */
   @Post('universities')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('system.settings.write')
@@ -213,6 +229,7 @@ export class ReferenceDataAdminController {
     return created;
   }
 
+  /** Audit entry of a picker change. */
   private record(
     admin: AdminPrincipal,
     client: ClientInfo,

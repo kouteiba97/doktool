@@ -26,18 +26,21 @@ class DeleteAccountScreen extends ConsumerStatefulWidget {
   ConsumerState<DeleteAccountScreen> createState() => _DeleteAccountScreenState();
 }
 
+/// The password typed, progress and error.
 class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
   final _password = TextEditingController();
   bool _deleting = false;
   bool _wrongPassword = false;
   ApiError? _error;
 
+  /// Frees the text controller.
   @override
   void dispose() {
     _password.dispose();
     super.dispose();
   }
 
+  /// « Supprimer mon compte »: deletes the account with the password, then forgets everything on the device.
   Future<void> _delete() async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -92,6 +95,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
       intro: l10n.deleteAccountIntro,
       actions: [
         if (_error != null) DtAlert(severity: DtAlertSeverity.critical, body: commonErrorText(context, _error!)),
+        // « Supprimer mon compte »: possible once the password is typed.
         DtButton(
           label: l10n.deleteAccountConfirm,
           variant: DtButtonVariant.danger,

@@ -1,5 +1,6 @@
 // Calculator governance rules (section 28, ADR-012).
 
+/** URL name of a calculator: lower-case words joined by dashes. */
 export const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 export const NAME_MAX_LENGTH = 120;
 export const REASON_MIN_LENGTH = 3;

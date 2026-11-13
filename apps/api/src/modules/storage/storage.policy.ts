@@ -15,6 +15,7 @@ export const UPLOAD_URL_TTL_SECONDS = 15 * 60;
 
 const MB = 1024 * 1024;
 
+/** The first bytes a file type always starts with ("magic number"). */
 interface FileSignature {
   contentType: string;
   /** Leading bytes the file must start with. */
@@ -31,6 +32,7 @@ const PNG: FileSignature = {
   magic: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
 };
 
+/** Where an upload purpose goes, how big it may be and which file types it accepts. */
 export interface UploadRule {
   bucket: BucketId;
   keyPrefix: string;
@@ -38,6 +40,7 @@ export interface UploadRule {
   signatures: FileSignature[];
 }
 
+/** Rules of each kind of upload. */
 export const UPLOAD_RULES: Record<UploadPurpose, UploadRule> = {
   REFERENCE_DOCUMENT: {
     bucket: 'CONTENT',
@@ -70,11 +73,13 @@ export const UPLOAD_RULES: Record<UploadPurpose, UploadRule> = {
 /** Longest magic number, i.e. how many leading bytes confirmation reads. */
 export const SIGNATURE_PROBE_BYTES = 8;
 
+/** True when the first bytes match the declared file type. */
 export function matchesSignature(rule: UploadRule, contentType: string, head: Uint8Array): boolean {
   const signature = rule.signatures.find((candidate) => candidate.contentType === contentType);
   return signature !== undefined && signature.magic.every((byte, index) => head[index] === byte);
 }
 
+/** True when the purpose accepts this file type. */
 export function allowsContentType(rule: UploadRule, contentType: string): boolean {
   return rule.signatures.some((signature) => signature.contentType === contentType);
 }

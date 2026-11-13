@@ -4,6 +4,7 @@ import { formatDateTime } from '@/i18n/format';
 import { useI18n } from '@/i18n/i18n-provider';
 import type { MessageKey } from '@/i18n/messages';
 
+/** An admin as shown in sign-off rows. */
 interface Person {
   id: string;
   fullName: string;
@@ -30,6 +31,7 @@ export interface ApprovalStep {
   body: MessageKey | null;
 }
 
+/** What the current admin's approval does: publish, first sign-off, or second sign-off. */
 export function approvalStep(
   version: SignOffState,
   meId: string | undefined,

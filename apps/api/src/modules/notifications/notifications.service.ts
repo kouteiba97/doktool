@@ -7,6 +7,7 @@ import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 /** Parameters are identifiers, dates and numbers only — never free text typed by a person. */
 export type NotificationParams = Record<string, string | number>;
 
+/** A notification to create for one person. */
 export interface NewNotification {
   userId: string;
   /** Stable machine type, e.g. `verification.decided`. */
@@ -16,6 +17,7 @@ export interface NewNotification {
   params?: NotificationParams;
 }
 
+/** A stored notification. */
 export interface NotificationRecord {
   id: string;
   type: string;
@@ -49,6 +51,10 @@ export class NotificationsService {
     await this.prisma.notification.deleteMany({ where: { userId } });
   }
 
+  /**
+   * Creates a notification; its message key must exist in the catalogue (checked so the app can
+   * always render it).
+   */
   async notify(input: NewNotification): Promise<void> {
     if (!input.messageKey.startsWith('mobile.notifications.') || !(input.messageKey in CATALOGUE)) {
       throw new Error(`Unknown notification message key "${input.messageKey}"`);
@@ -77,6 +83,7 @@ export class NotificationsService {
     return count > 0;
   }
 
+  /** One page of notifications, newest first. */
   async list(userId: string, before?: Date): Promise<NotificationRecord[]> {
     const rows = await this.prisma.notification.findMany({
       where: { userId, ...(before ? { createdAt: { lt: before } } : {}) },
@@ -87,10 +94,12 @@ export class NotificationsService {
     return rows.map((row) => ({ ...row, params: row.params as NotificationParams }));
   }
 
+  /** Number of unread notifications (badge). */
   unreadCount(userId: string): Promise<number> {
     return this.prisma.notification.count({ where: { userId, readAt: null } });
   }
 
+  /** Marks one of the person's notifications read. */
   async markRead(userId: string, id: string): Promise<void> {
     const { count } = await this.prisma.notification.updateMany({
       where: { id, userId },
@@ -99,6 +108,7 @@ export class NotificationsService {
     if (count === 0) throw new DomainError('NOT_FOUND', 'Notification not found.');
   }
 
+  /** Marks every unread notification read. */
   async markAllRead(userId: string): Promise<void> {
     await this.prisma.notification.updateMany({
       where: { userId, readAt: null },

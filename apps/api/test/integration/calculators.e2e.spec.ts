@@ -159,6 +159,11 @@ describe('governance', () => {
       ]),
     );
 
+    // A source link is a web address: never a script shown as a link to reviewers.
+    await editor
+      .post(`/admin/v1/calculators/versions/${versionId}/sources`)
+      .send({ ...source('PRIMARY'), url: 'javascript:alert(1)' })
+      .expect(400);
     await editor
       .post(`/admin/v1/calculators/versions/${versionId}/sources`)
       .send(source('PRIMARY'))

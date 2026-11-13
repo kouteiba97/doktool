@@ -3,6 +3,7 @@ import { ENGINE_VERSION, type Evaluation, type EvaluationInputs, evaluate } from
 
 export type ExpectedOutcome = 'RESULT' | 'INVALID' | 'OUT_OF_VALIDATED_RANGE';
 
+/** A test case: inputs and the expected outcome, value (± tolerance) and band. */
 export interface TestCaseSpec {
   id: string;
   inputs: EvaluationInputs;
@@ -12,6 +13,7 @@ export interface TestCaseSpec {
   expectedBand: string | null;
 }
 
+/** The outcome of one test case, with the reason when it fails. */
 export interface TestCaseResult {
   testCaseId: string;
   passed: boolean;
@@ -25,6 +27,7 @@ export interface TestCaseResult {
   failure: string | null;
 }
 
+/** A full run of a version's test cases. */
 export interface TestRun {
   passed: boolean;
   ranAt: string;

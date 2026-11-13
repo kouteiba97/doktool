@@ -30,6 +30,7 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
     }
   }
 
+  /** Closes the database connections when the application shuts down. */
   async onModuleDestroy(): Promise<void> {
     await this.$disconnect();
   }

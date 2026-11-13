@@ -1,0 +1,89 @@
+<section class="chapter">
+<h2 id="ch12">12. The mobile app, screen by screen</h2>
+<p class="lead">Every screen lives in <code>apps/mobile/lib/src/features/&lt;feature&gt;/</code>. For each: what it shows, every button and what it calls. The comments above each button in the code say the same thing in one line; Appendix A lists them with line numbers.</p>
+
+<h3 id="ch12-welcome">12.1 Welcome and onboarding (features/onboarding)</h3>
+<table>
+  <tr><th>Screen</th><th>Buttons and behaviour</th></tr>
+  <tr><td><b>Welcome</b> <code>welcome_screen.dart</code></td><td>« Créer un compte », « Se connecter », « Essayer la démo ». On a phone that signed in before, « Se connecter » becomes the primary action and the identifier is pre-filled.</td></tr>
+  <tr><td><b>Démo</b> <code>demo_start_screen.dart</code></td><td>Choose the context (doctor, resident, student) → « Commencer la démo » → <code>SessionController.startDemo</code>. No sign-up, no personal data.</td></tr>
+  <tr><td><b>Qui êtes-vous ?</b> <code>role_select_screen.dart</code></td><td>One role row per profession; « Continuer ». Before an account exists the choice waits in memory (<code>OnboardingDraft</code>); signed in, it is saved at once.</td></tr>
+  <tr><td><b>Créer un compte</b> <code>sign_up_screen.dart</code></td><td>Names, e-mail or phone, password with strength line, wilaya picker, terms checkbox. Errors appear when a field is left, never per keystroke. « Créer mon compte » stays disabled until everything is valid. « Se connecter » if the account exists.</td></tr>
+  <tr><td><b>Code</b> <code>otp_screen.dart</code></td><td>Six boxes over one hidden field (paste and SMS autofill work); « Vérifier »; « Renvoyer le code » with a 60-second countdown; after 3 wrong codes a 10-minute lock.</td></tr>
+  <tr><td><b>Se connecter</b> <code>sign_in_screen.dart</code></td><td>« Se connecter », « Pas encore de compte ? », « Accès perdu ? », « Mot de passe oublié ? ». Messages for wrong password, lock until a time, unconfirmed, suspended.</td></tr>
+  <tr><td><b>Mot de passe oublié</b> <code>password_reset_screens.dart</code></td><td>« Envoyer le code » (same answer whether or not the account exists), then code + new password → « Réinitialiser » → every device signs out.</td></tr>
+</table>
+[[code apps/mobile/lib/src/features/onboarding/otp_screen.dart | Future<void> _verify(String code) | block]]
+
+<h3 id="ch12-shell">12.2 The shell and Home</h3>
+<p><code>app_shell.dart</code> draws the floating glass tab bar: « Accueil », « Bibliothèque », the round search button, « Profil » (with a dot when something needs attention, such as verification). <code>home_screen.dart</code>: the identity line (name, role, access; the bell opens notifications), the glass search field, a pregnancy search shortcut, the three resources as tiles, a verification line or « Voir les offres » depending on the access profile, and the recent items. Everything that can be opened comes from the AccessProfile — never from the profession.</p>
+
+<h3 id="ch12-library">12.3 Bibliothèque (features/library)</h3>
+<p>Pill tabs Ordonnances · Certificats · Calculateurs · Grossesse, a filter field scoped to the section, an A–Z list of <code>ContentRow</code>s. A locked row keeps its place with its lock word; tapping it opens the lock sheet. Pull to refresh; « Réessayer » on error; offline, the list comes from the phone's store with the date of the copy. A library search is reported to analytics once typing pauses (the words themselves are never sent).</p>
+
+<h3 id="ch12-search">12.4 Recherche (features/search)</h3>
+<p>Full screen, keyboard up. Below two characters: recent searches (kept on the phone only; « Effacer », ✕ per item) and example queries. Then: results grouped by type (3 per group, « Voir les N »), type chips with counts, « Vouliez-vous dire … » suggestions, and offline results from the local store when the network fails. An answer arriving late for an older query is ignored.</p>
+[[code apps/mobile/lib/src/features/search/search_screen.dart | Future<void> _run() async { | block]]
+
+<h3 id="ch12-viewer">12.5 Reading a reference PDF (features/reference)</h3>
+<p><code>reference_viewer_screen.dart</code> downloads the PDF through a signed URL, checks its SHA-256 against the published one, and draws it with pdfrx. Floating control: page « 2 / 5 », zoom out, fit width, zoom in; the ★ in the top bar adds a favorite. There is no download, print or share button anywhere. Offline, the copy kept on the phone is used.</p>
+
+<h3 id="ch12-calc">12.6 A calculator (features/calculators)</h3>
+<div class="diagram">CalculatorRuntime: detail from API (or offline store) → parse definition → SELF-TEST the published cases
+  ready → the form        locked → lock message      unsupported → "update the app"      self-test failed → refuse
+form: number fields (with unit picker) · choice lists · yes/no switches
+  typing → commit after 400 ms idle, "next", or leaving the field → evaluate() on the DEVICE
+  result: value + unit + band, formula with the values, notes (« vérifiez la valeur »), conversions
+  « Copier le résultat » (value, unit, band — never the inputs) · « Réinitialiser » · « Source » sheet</div>
+[[code apps/mobile/lib/src/features/calculators/calculator_screen.dart | void _commit(_Field field) { | block]]
+[[code apps/mobile/lib/src/features/calculators/calculator_screen.dart | void _evaluate() { | block]]
+<p>The last values typed are kept on the phone (to find them again after a call) and are forgotten at sign-out. They are never sent anywhere.</p>
+
+<h3 id="ch12-preg">12.7 Grossesse · Allaitement (features/pregnancy)</h3>
+<ul>
+  <li><b>Search</b> (<code>pregnancy_search.dart</code>): server search after a 300 ms pause; a period filter (T1, T2, T3, peripartum, lactation) shows each hit's conduct for that period; « Afficher N de plus ».</li>
+  <li><b>Profile</b> (<code>substance_screen.dart</code>): a switch Grossesse / Allaitement; period tabs; for each period a conduct badge (icon + word) and, separately, the evidence meter (0–4) with population and sources; « Absence de données » as a full block; alternatives (each opens its profile); conflicts between sources; sources with links; « Signaler une erreur » (reason + optional comment; no patient data). A locked profile shows « Débloquer » with its explanation.</li>
+</ul>
+
+<h3 id="ch12-activity">12.8 Activité et favoris (features/activity)</h3>
+<p>Two segments. « Favoris »: grouped by type, « Retirer » on each. « Activité »: the person's own history grouped by day, with filters by kind and « Effacer l'historique » (confirmation sheet). History is recorded on the phone and sent in batches; a demo records nothing.</p>
+[[code apps/mobile/lib/src/features/activity/favorites_controller.dart | Future<void> toggle( | block]]
+
+<h3 id="ch12-profile">12.9 Profil, Paramètres, Sécurité (features/profile, settings)</h3>
+<ul>
+  <li><b>Profil</b>: photo or initials, name, role, verification and access badges, « Modifier le profil » (names, photo « Changer » / « Supprimer », bio ≤ 280), then Activité et favoris, Abonnement (students: « Accès étudiant — gratuit »), Vérification, Notifications, Paramètres, « Se déconnecter ».</li>
+  <li><b>Paramètres</b>: Apparence (Clair · Sombre · Appareil) and Langue (Français · English), applied at once; « Données et hors ligne »; « Sécurité du compte »; « Supprimer mon compte ».</li>
+  <li><b>Sécurité du compte</b>: the e-mail and phone with « Modifier » / « Ajouter » / « Retirer » (password + code to the new contact), « Changer le mot de passe », and, during a recovery's 24-hour hold, « Ce n'est pas moi ».</li>
+  <li><b>Supprimer mon compte</b>: what is erased, what the law keeps, the end of a current subscription without refund, then the password.</li>
+</ul>
+
+<h3 id="ch12-verif">12.10 Vérification (features/verification)</h3>
+<table>
+  <tr><th>Step</th><th>What happens</th></tr>
+  <tr><td>Intro</td><td>Why, what is checked, where documents go, how long; « Commencer »; « Plus tard » always available.</td></tr>
+  <tr><td>1 · Identité</td><td>Document kind (ID card, passport, student card); « Prendre une photo » opens the camera with corner guides, then « Utiliser la photo » / « Reprendre ». On the phone, ML Kit reads the text: too little text is « illisible », the name must appear — the person can still « Envoyer quand même ». « Importer un fichier » accepts PDF, JPG, PNG.</td></tr>
+  <tr><td>2 · Statut</td><td>Doctor: Ordre number, specialty, attestation or diploma. Resident: year, institution, specialty, attestation. Student: university and proof of enrolment.</td></tr>
+  <tr><td>3 · Récapitulatif</td><td>Checkmarks and file descriptions only; « Envoyer pour vérification ».</td></tr>
+  <tr><td>Statut</td><td>Each case with its timeline (Reçu → En cours de revue → Décision), the refusal reason in plain words and one action: Commencer, Continuer, Corriger, Faire appel, Renouveler; « ⋮ » → « Effacer mes documents ».</td></tr>
+</table>
+[[code apps/mobile/lib/src/features/verification/document_slot.dart | Future<void> _accept(_Picked picked) async { | block]]
+
+<h3 id="ch12-sub">12.11 Abonnement (features/subscription)</h3>
+<ul>
+  <li><b>Offres</b>: each plan's includes / not included, duration, price, access; the button depends on eligibility: « Choisir », or verification first, or (demo) « Créer un compte ». Students see an explanation, never a purchase.</li>
+  <li><b>Récapitulatif</b>: plan, price, period, card (CIB or Edahabia — only those the API accepts now), access, manual renewal, the « non remboursable » line to tick; « Payer » opens the gateway's page in the browser.</li>
+  <li><b>Résultat du paiement</b>: asks the API every 4 seconds and on return to the app until the payment is final — the API asks the gateway, never trusting the browser. « Voir mon abonnement », « Réessayer », « Autre moyen de paiement », « Rouvrir la page de paiement ».</li>
+  <li><b>Mon abonnement</b>: plan, neutral or teal status badge, period, payments; « Renouveler » (last 14 days), « Arrêter le renouvellement ». No red, no countdown.</li>
+</ul>
+[[code apps/mobile/lib/src/features/subscription/payment_result_screen.dart | Future<void> _check() async { | block]]
+
+<h3 id="ch12-recovery">12.12 Accès perdu ? (features/recovery)</h3>
+<p>Three ways back in: « Mot de passe oublié » (code), « J'ai changé de contact » (sign in with the other one), « J'ai perdu l'accès aux deux » (assisted recovery: form → code to the new contact → identity photo + selfie → « Envoyer la demande » → answer within 72 h, applied 24 h after approval).</p>
+
+<h3 id="ch12-offline">12.13 Données et hors ligne (features/offline)</h3>
+<p>Last sync, data version, storage used; « Tout » or « Favoris seulement »; mobile data on/off; « Mettre à jour maintenant »; « Supprimer les données hors ligne ». A bar under the status bar says offline, syncing, failed (« Réessayer ») or outdated.</p>
+[[code apps/mobile/lib/src/features/offline/offline_sync.dart | Future<void> _sync() async { | 40]]
+
+<h3 id="ch12-notif">12.14 Notifications</h3>
+<p>Newest first; unread ones with a dot; tapping marks one read and opens its link; « Tout marquer comme lu ». Texts come from catalogue keys with parameters, so they follow the app's language.</p>
+</section>

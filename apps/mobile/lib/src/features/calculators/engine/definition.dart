@@ -2,40 +2,48 @@
 // no code, no eval. Parsing applies the same defaults as the API schema.
 import 'package:flutter/foundation.dart';
 
+/// A published definition the device cannot read (the calculator is then not offered).
 class DefinitionFormatException extends FormatException {
   const DefinitionFormatException(super.message);
 }
 
 typedef Json = Map<String, Object?>;
 
+/// The value as a JSON object, or a format error naming where in the definition.
 Json _map(Object? value, String path) {
   if (value is Map) return value.cast<String, Object?>();
   throw DefinitionFormatException('$path: expected an object');
 }
 
+/// The value as a list, or a format error.
 List<Object?> _list(Object? value, String path) {
   if (value is List) return value;
   throw DefinitionFormatException('$path: expected a list');
 }
 
+/// The value as a string, or a format error.
 String _string(Object? value, String path) {
   if (value is String) return value;
   throw DefinitionFormatException('$path: expected a string');
 }
 
+/// The value as a finite number, or a format error.
 double _number(Object? value, String path) {
   if (value is num && value.isFinite) return value.toDouble();
   throw DefinitionFormatException('$path: expected a finite number');
 }
 
+/// The value as a number, or null when absent.
 double? _optionalNumber(Object? value, String path) => value == null ? null : _number(value, path);
 
+/// The value as a whole number (fallback when absent), or a format error.
 int _int(Object? value, String path, {required int fallback}) {
   if (value == null) return fallback;
   if (value is num && value == value.roundToDouble()) return value.toInt();
   throw DefinitionFormatException('$path: expected an integer');
 }
 
+/// A text in French and English.
 @immutable
 class LocalizedText {
   const LocalizedText({required this.fr, required this.en});
@@ -48,13 +56,16 @@ class LocalizedText {
   final String fr;
   final String en;
 
+  /// The text in the given language (English for "en", French otherwise).
   String of(String languageCode) => languageCode == 'en' ? en : fr;
 }
 
+/// A range with an optional minimum and maximum (inclusive).
 @immutable
 class Range {
   const Range({this.min, this.max});
 
+  /// Reads a range from the definition (null when absent).
   static Range? parse(Object? raw, String path) {
     if (raw == null) return null;
     final map = _map(raw, path);
@@ -64,6 +75,7 @@ class Range {
   final double? min;
   final double? max;
 
+  /// True when the value is inside the range.
   bool contains(double value) => (min == null || value >= min!) && (max == null || value <= max!);
 }
 
@@ -76,6 +88,7 @@ sealed class Expr {
   static const unary = {'sqrt', 'ln', 'log10', 'exp', 'not'};
   static const variadic = {'min', 'max', 'sum', 'and', 'or'};
 
+  /// Reads a formula node and its children; any operator outside the closed set is refused.
   static Expr parse(Object? raw, String path) {
     final node = _map(raw, path);
     if (node.containsKey('num')) return NumExpr(_number(node['num'], '$path.num'));
@@ -170,6 +183,7 @@ final class PiecewiseExpr extends Expr {
 
 // ───────────────────────────────── inputs ─────────────────────────────────
 
+/// How to convert a unit to the input's canonical unit, and where the factor comes from.
 @immutable
 class UnitConversion {
   const UnitConversion({required this.code, required this.factorToCanonical, required this.source});
@@ -179,6 +193,7 @@ class UnitConversion {
   final String source;
 }
 
+/// One answer of a choice input, with its points if the score uses them.
 @immutable
 class Choice {
   const Choice({required this.value, required this.label, this.points});
@@ -188,8 +203,10 @@ class Choice {
   final double? points;
 }
 
+/// What an input asks for.
 enum InputKind { number, integer, choice, boolean }
 
+/// One input of a calculator: kind, label, units, the three ranges (hard, validated, plausible), help.
 @immutable
 class CalculatorInput {
   const CalculatorInput({
@@ -283,8 +300,10 @@ class CalculatorInput {
   List<String> get unitCodes => [canonicalUnit, for (final unit in units) unit.code];
 }
 
+/// What a cross-field rule does when it matches.
 enum RuleOutcome { invalid, outOfValidatedRange }
 
+/// A rule over several inputs (e.g. diastolic < systolic) that blocks the result.
 @immutable
 class CrossFieldRule {
   const CrossFieldRule({required this.id, required this.when, required this.outcome, required this.message});
@@ -295,6 +314,7 @@ class CrossFieldRule {
   final LocalizedText message;
 }
 
+/// A band of the result (from / to) with its severity and label.
 @immutable
 class InterpretationBand {
   const InterpretationBand({required this.code, required this.severity, required this.label, this.from, this.to});
@@ -306,6 +326,7 @@ class InterpretationBand {
   final LocalizedText label;
 }
 
+/// A whole calculator version: inputs, rules, formula, result unit and decimals, bands, limitations.
 @immutable
 class CalculatorDefinition {
   const CalculatorDefinition({

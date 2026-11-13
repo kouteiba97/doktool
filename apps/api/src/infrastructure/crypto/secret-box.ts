@@ -16,6 +16,10 @@ export class SecretBox {
     if (this.key.length !== 32) throw new Error('SecretBox needs a 32-byte key');
   }
 
+  /**
+   * Encrypts a text with a fresh random IV; the result carries everything needed to decrypt it
+   * except the key.
+   */
   seal(plaintext: string): Uint8Array<ArrayBuffer> {
     const iv = randomBytes(IV_BYTES);
     const cipher = createCipheriv('aes-256-gcm', this.key, iv);
@@ -24,6 +28,7 @@ export class SecretBox {
     return new Uint8Array(sealed);
   }
 
+  /** Decrypts a value made by seal(); throws if it was altered or sealed with another key. */
   open(sealed: Uint8Array): string {
     const buffer = Buffer.from(sealed);
     if (buffer[0] !== VERSION || buffer.length <= 1 + IV_BYTES + TAG_BYTES) {

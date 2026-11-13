@@ -1,0 +1,81 @@
+<section class="chapter">
+<h2 id="ch14">14. Working on the code: tests, CI and recipes</h2>
+<p class="lead">You now know where everything is. This last chapter is practical: how to check your work, and the exact steps for the changes you will make most often.</p>
+
+<h3 id="ch14-check">14.1 Before every commit</h3>
+<div class="diagram">DATABASE_URL=postgresql://…/doktool_test npm run ci      # format, lint, types, i18n, tokens, contract, all tests
+cd apps/mobile && flutter analyze && flutter test
+npm run build -w @doktool/admin                            # when Admin Web changed</div>
+<div class="rule"><b>Use a dedicated test database.</b> Integration tests do not roll back. A test that changes something platform-wide (for example the double sign-off policy) must put it back, as <code>clinical-review.e2e.spec.ts</code> does.</div>
+
+<h3 id="ch14-endpoint">14.2 Recipe: add an API endpoint</h3>
+<ol>
+  <li>Write the service method in the module that owns the data (with a one-line comment).</li>
+  <li>Add the DTO classes (<code>@ApiProperty</code> + class-validator decorators).</li>
+  <li>Add the controller method with the right guard: <code>UserAuthGuard</code>, <code>ViewerAuthGuard</code>, <code>@RequireFeature</code> or <code>@RequireGrants</code>. Admin changes call <code>AuditService.record</code> with the reason.</li>
+  <li>Write an integration test in <code>apps/api/test/integration</code>.</li>
+  <li>Regenerate the contract and both clients:</li>
+</ol>
+<div class="diagram">npm run openapi:generate -w @doktool/api
+npm run generate:api -w @doktool/admin
+cd apps/mobile && dart run swagger_parser && dart run build_runner build --delete-conflicting-outputs</div>
+
+<h3 id="ch14-table">14.3 Recipe: add a column or a table</h3>
+<ol>
+  <li>Edit <code>apps/api/prisma/schema.prisma</code> in the section of the owning module (<code>// ── [module] ──</code>); a unit test checks table ownership.</li>
+  <li>Write the migration by hand in <code>prisma/migrations/&lt;timestamp&gt;_&lt;name&gt;/migration.sql</code>. An enum <code>ADD VALUE</code> goes in its own migration.</li>
+  <li>Indexes written in SQL (trigram, partial) are also declared in the schema, or <code>prisma migrate diff</code> will propose to drop them. Check with <code>npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code</code>.</li>
+  <li><code>npm run prisma:migrate:deploy -w @doktool/api</code>, then <code>prisma generate</code> runs on install.</li>
+</ol>
+
+<h3 id="ch14-text">14.4 Recipe: add or change a text</h3>
+<div class="diagram">// keys.json
+{ "fr": { "mobile.home.newKey": "Bonjour" }, "en": { "mobile.home.newKey": "Hello" }, "remove": [] }
+
+npm run add-keys -w @doktool/i18n -- keys.json
+npm run build:arb -w @doktool/i18n
+cd apps/mobile && flutter gen-l10n</div>
+<p>Admin Web reads the catalogue directly; mobile uses <code>AppLocalizations.of(context).homeNewKey</code>. CI fails if a key exists in one language only.</p>
+
+<h3 id="ch14-screen">14.5 Recipe: add a mobile screen</h3>
+<ol>
+  <li>Create the screen in <code>lib/src/features/&lt;feature&gt;/</code>, built from <code>lib/src/ui</code> widgets and tokens only.</li>
+  <li>Add its path to <code>Routes</code> and a <code>GoRoute</code> in <code>app_router.dart</code>; if it is for real accounts only, add it to <code>Routes.accountOnly</code>.</li>
+  <li>Load data through a provider; draw loading (skeleton), error (« Réessayer ») and empty states.</li>
+  <li>Locked things stay visible: use the AccessProfile, <code>LockLabel</code> and <code>showLockSheet</code>.</li>
+  <li>Add a widget test, and the screen to <code>accessibility_test.dart</code>.</li>
+  <li>Format with <code>dart format --page-width 120</code> (never on <code>doktool_tokens.dart</code>).</li>
+</ol>
+
+<h3 id="ch14-admin">14.6 Recipe: add an Admin Web section</h3>
+<ol>
+  <li>The API endpoints with <code>@RequireGrants</code>; a new grant goes in <code>grants.ts</code> and its label in <code>features/permissions/grants.ts</code> (the build fails until it is labelled).</li>
+  <li><code>src/features/&lt;section&gt;/</code>: the page, its drawers and dialogs, <code>labels.ts</code> for status names and tones.</li>
+  <li><code>src/app/admin/&lt;section&gt;/page.tsx</code> wrapping it in <code>&lt;RequireGrant&gt;</code>, and a link in <code>shell/nav.ts</code>.</li>
+  <li>Every change asks for a reason (<code>ReasonDialog</code>) and shows a toast on success.</li>
+</ol>
+
+<h3 id="ch14-calc">14.7 Adding a calculator is not a code change</h3>
+<p>A new calculator is data, entered in Admin Web by a doctor from a cited source (chapter 13.5), reviewed by someone else, and published. No deployment is needed: phones receive it at their next list or sync. The engines change only when a new <i>kind</i> of operator or input is needed — then both engines, <code>checkDefinition</code>, the shared vectors and the version number of the engine change together.</p>
+
+<h3 id="ch14-security">14.8 The checklist that keeps DokTool safe</h3>
+<table>
+  <tr><th>Rule</th><th>Where it is enforced</th></tr>
+  <tr><td>Every endpoint re-checks access</td><td><code>@RequireFeature</code>, <code>AccessService.decideItems</code>, <code>@RequireGrants</code></td></tr>
+  <tr><td>No patient data, no free text in analytics</td><td><code>analytics.policy.ts</code> schemas; calculator inputs never sent</td></tr>
+  <tr><td>Files only through StorageService, signed and short-lived</td><td><code>storage.policy.ts</code>, ESLint import rule</td></tr>
+  <tr><td>Tokens: access in memory, refresh in Keychain/Keystore, single-use, device-bound</td><td><code>session_vault.dart</code>, <code>sessions.service.ts</code></td></tr>
+  <tr><td>Admin: cookie + TOTP, writes only from Admin Web, separation of duties</td><td><code>admin-guards.ts</code>, <code>grants.ts</code></td></tr>
+  <tr><td>Clinical content: sourced, tested, author ≠ reviewer, immutable</td><td><code>calculators-admin.service.ts</code>, <code>pregnancy-admin.service.ts</code>, database constraints</td></tr>
+  <tr><td>Every admin change audited, log append-only</td><td><code>AuditService</code>, table triggers</td></tr>
+  <tr><td>CSV cells cannot run as formulas</td><td><code>common/text/csv.ts</code></td></tr>
+</table>
+
+<h3 id="ch14-audit">14.9 What the October 2026 audit changed</h3>
+<p>The full report is <code>docs/CODE-AUDIT-2026-10.md</code>. In short: eighteen defects fixed with tests (the most serious: re-verification dropping a paying doctor's access, and a race in account recovery), performance of the offline manifest and favorites improved about tenfold, comments added to every function and button of the three apps, and six recommendations recorded for decisions that need the Product Owner or a real R2 bucket.</p>
+
+<h3 id="ch14-book">14.10 Rebuilding this book</h3>
+<div class="diagram">python3 docs/learning-book/build.py           # HTML + PDF, English and Arabic (needs Chrome)
+python3 docs/learning-book/build.py --html    # HTML only</div>
+<p>Chapters are in <code>docs/learning-book/content/en</code> and <code>content/ar</code>; folder introductions in <code>folders.json</code>. Code excerpts and Appendix A are read from the sources at build time, so after a code change, rebuilding is enough to bring the book up to date. A placeholder whose anchor no longer exists stops the build with its name, so nothing goes silently stale.</p>
+</section>

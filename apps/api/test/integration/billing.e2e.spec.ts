@@ -248,6 +248,16 @@ describe('checkout', () => {
     expect(await app.prisma().subscription.count({ where: { userId, status: 'ACTIVE' } })).toBe(0);
   });
 
+  it('opens one checkout when « Payer » is sent several times at the same instant', async () => {
+    const { userId, auth } = await userActor(app, 'PROFESSIONAL_UNPAID');
+    const answers = await Promise.all(Array.from({ length: 6 }, () => checkout(auth)));
+    // Every request gets the same payment page: one creates it, the others resume it.
+    expect(answers.map((answer) => answer.status)).toEqual(Array(6).fill(200));
+    expect(new Set(answers.map((answer) => answer.body.transactionId)).size).toBe(1);
+    expect(await app.prisma().transaction.count({ where: { userId } })).toBe(1);
+    expect(await app.prisma().subscription.count({ where: { userId } })).toBe(1);
+  });
+
   it('requires the no-refund acknowledgement in its current version', async () => {
     const { auth } = await userActor(app, 'PROFESSIONAL_UNPAID');
     await checkout(auth, { acknowledged: false }).expect(400);

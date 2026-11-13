@@ -25,6 +25,7 @@ import '../../core/api/generated/models/professional_type.dart';
 /// A verified case expiring within this many days shows « Expire bientôt » (section 06).
 const _expiringWindow = Duration(days: 60);
 
+/// The overall state shown at the top.
 enum _Overall { toDo, inReview, verified, toRedo }
 
 /// ScreenVerifyOutcomes « Statut »: identity and status as separate cases, each with its
@@ -42,6 +43,7 @@ class VerificationStatusScreen extends ConsumerWidget {
       loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, _) => DtPage(
         title: l10n.verificationTitle,
+        // « Réessayer ».
         actions: [DtButton(label: l10n.commonRetry, onPressed: () => ref.invalidate(verificationControllerProvider))],
         children: [DtAlert(severity: DtAlertSeverity.critical, body: commonErrorText(context, ApiError.from(error)))],
       ),
@@ -65,6 +67,7 @@ class VerificationStatusScreen extends ConsumerWidget {
               ),
             ),
             if (overall == _Overall.verified && overview.professionalType != ProfessionalType.student)
+              // « Voir les offres » once verified.
               DtButton(label: l10n.verificationActionSeePlans, onPressed: () => context.push(Routes.plans)),
             if (overall == _Overall.inReview)
               Text(l10n.verificationWaitingNote, style: DtType.body.copyWith(color: colors.inkSecondary)),
@@ -74,6 +77,7 @@ class VerificationStatusScreen extends ConsumerWidget {
     );
   }
 
+  /// To redo if a case is refused or expired; verified if all are; in review or to do otherwise.
   _Overall _overallOf(VerificationOverviewDto overview) {
     final latest = [for (final type in overview.relevantTypes) overview.stateOf(type).latest?.status];
     if (latest.contains(VerificationStatus.rejected) || latest.contains(VerificationStatus.expired)) {
@@ -84,6 +88,7 @@ class VerificationStatusScreen extends ConsumerWidget {
     return _Overall.toDo;
   }
 
+  /// The badge of the overall state.
   Widget _overallBadge(AppLocalizations l10n, _Overall overall) => switch (overall) {
     _Overall.toDo => DtBadge(text: l10n.verificationBadgeToDo, icon: LucideIcons.circleDashed),
     _Overall.inReview => DtBadge(
@@ -104,6 +109,7 @@ class VerificationStatusScreen extends ConsumerWidget {
   };
 }
 
+/// One case: its timeline, the refusal reason and its one action.
 class _CaseCard extends ConsumerStatefulWidget {
   const _CaseCard({required this.state, required this.overview});
 
@@ -114,6 +120,7 @@ class _CaseCard extends ConsumerStatefulWidget {
   ConsumerState<_CaseCard> createState() => _CaseCardState();
 }
 
+/// Progress and message of the card's action.
 class _CaseCardState extends ConsumerState<_CaseCard> {
   bool _busy = false;
   String? _message;
@@ -121,6 +128,7 @@ class _CaseCardState extends ConsumerState<_CaseCard> {
   String get _stepRoute =>
       widget.state.type == VerificationType.identity ? Routes.verificationIdentity : Routes.verificationStatusStep;
 
+  /// Runs the action with the busy flag; shows a message when done or failed.
   Future<void> _run(Future<void> Function() action, {String? done}) async {
     setState(() {
       _busy = true;
@@ -136,6 +144,7 @@ class _CaseCardState extends ConsumerState<_CaseCard> {
     }
   }
 
+  /// Asks to confirm, then erases the case's documents.
   Future<void> _confirmErase(VerificationCaseDto latest) async {
     final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
@@ -143,7 +152,9 @@ class _CaseCardState extends ConsumerState<_CaseCard> {
       builder: (context) => AlertDialog(
         content: Text(l10n.verificationEraseConfirm),
         actions: [
+          // « Annuler ».
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.commonCancel)),
+          // Confirms erasing the documents.
           TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.verificationActionErase)),
         ],
       ),
@@ -208,13 +219,16 @@ class _CaseCardState extends ConsumerState<_CaseCard> {
     final identity = widget.overview.stateOf(VerificationType.identity).latest;
     final actions = <Widget>[
       if (status == null || status == VerificationStatus.notStarted)
+        // « Commencer » / « Continuer » this case.
         DtButton(
           label: status == null ? l10n.verificationActionStart : l10n.verificationActionContinue,
           onPressed: _busy ? null : () => context.push(_stepRoute),
         ),
       if (status == VerificationStatus.rejected && widget.state.canStart)
+        // « Corriger »: back to the step to redo.
         DtButton(label: l10n.verificationActionCorrect, onPressed: _busy ? null : () => context.push(_stepRoute)),
       if (latest?.canAppeal ?? false)
+        // « Faire appel » of the refusal.
         DtButton(
           label: l10n.verificationActionAppeal,
           variant: DtButtonVariant.secondary,
@@ -222,6 +236,7 @@ class _CaseCardState extends ConsumerState<_CaseCard> {
           onPressed: () => _run(() => ref.read(verificationControllerProvider.notifier).appeal(latest!.id)),
         ),
       if ((status == VerificationStatus.expired || expiring) && widget.state.canStart)
+        // « Renouveler » an expired verification.
         DtButton(label: l10n.verificationActionRenew, onPressed: _busy ? null : () => context.push(_stepRoute)),
     ];
 
@@ -246,6 +261,7 @@ class _CaseCardState extends ConsumerState<_CaseCard> {
               ),
               badge,
               if (decided && (latest?.documents.isNotEmpty ?? false))
+                // The « ⋮ » menu: « Effacer mes documents ».
                 PopupMenuButton<void>(
                   tooltip: l10n.verificationActionErase,
                   icon: Icon(LucideIcons.ellipsisVertical, color: colors.inkSecondary),

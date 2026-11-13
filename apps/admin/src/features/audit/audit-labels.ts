@@ -71,6 +71,7 @@ export function isSensitiveAction(action: string): boolean {
   return action === 'verification.document_viewed' || action.startsWith('finance.adjustment.');
 }
 
+/** True when an audit action has a translated name. */
 export function hasActionLabel(action: string): boolean {
   return action in ACTIONS;
 }

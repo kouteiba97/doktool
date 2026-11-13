@@ -28,6 +28,7 @@ import {
 } from './labels';
 import { SlaBadge } from './sla-badge';
 
+/** One row of the review queue. */
 type QueueItem = Schemas['AdminVerificationQueueItemDto'];
 
 /** The API returns 50 cases per page, oldest first. */
@@ -42,6 +43,7 @@ export function VerificationPage() {
   const [type, setType] = useState<VerificationType | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
 
+  // Pages of cases for the selected tab and type, oldest first.
   const queue = useInfiniteQuery({
     queryKey: [...queueKey, tab, type],
     initialPageParam: undefined as string | undefined,
@@ -60,8 +62,10 @@ export function VerificationPage() {
     getNextPageParam: (last) => (last.length === PAGE_SIZE ? last.at(-1)?.id : undefined),
   });
   const rows = useMemo(() => queue.data?.pages.flat() ?? [], [queue.data]);
+  // Only cases still waiting get the SLA warning.
   const waiting = tab === 'PENDING' || tab === 'APPEALED';
 
+  // The queue's columns.
   const columns = useMemo<Column<QueueItem>[]>(
     () => [
       {
@@ -129,6 +133,7 @@ export function VerificationPage() {
       />
       <div className="dt-tabs" role="tablist" aria-label={t('admin.verification.title')}>
         {QUEUE_TABS.map((value) => (
+          // Queue tab (En attente, Vérifiés, Rejetés, Expirés, Appels).
           <button
             key={value}
             type="button"
@@ -155,6 +160,7 @@ export function VerificationPage() {
           onOpen={(row) => setOpenId(row.id)}
           toolbar={
             <>
+              {/* Type filter chip « Tous ». */}
               <button
                 type="button"
                 className="dt-chip"
@@ -164,6 +170,7 @@ export function VerificationPage() {
                 {t('admin.verification.allTypes')}
               </button>
               {TYPES.map((value) => (
+                // Type filter chip: identity, professional status or student status.
                 <button
                   key={value}
                   type="button"
@@ -180,6 +187,7 @@ export function VerificationPage() {
       )}
       {queue.hasNextPage ? (
         <div>
+          {/* « Charger plus »: the next 50 cases. */}
           <Button
             size="sm"
             busy={queue.isFetchingNextPage}

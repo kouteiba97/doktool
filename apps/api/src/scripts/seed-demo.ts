@@ -237,18 +237,22 @@ function random(seed: number): () => number {
 }
 const next = random(20261005);
 const pick = <T>(items: readonly T[]): T => items[Math.floor(next() * items.length)] as T;
+/** A pseudo-random integer in [min, max] (seeded, so the demo is reproducible). */
 const between = (min: number, max: number) => min + Math.floor(next() * (max - min + 1));
+/** A moment `days` ago at a plausible hour. */
 const daysAgo = (days: number, hour = between(8, 21)) => {
   const date = new Date(Date.now() - days * DAY);
   date.setUTCHours(hour - 1, between(0, 59), between(0, 59), 0);
   return date;
 };
+/** A URL-safe slug. */
 const slug = (text: string) =>
   text
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .replace(/[^a-z]+/g, '.');
+/** SHA-256 in hex. */
 const sha256 = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
 
 /** One-page A4 PDF that says what it is: a demonstration document. */
@@ -328,6 +332,7 @@ try {
   await app.close();
 }
 
+/** Fills an empty database with demo content, people, payments and analytics. */
 async function seed(prisma: PrismaService, storage: StorageService): Promise<void> {
   // The team ────────────────────────────────────────────────────────────
   const accounts = app.get(AdminAccountsService);
@@ -414,6 +419,7 @@ async function seed(prisma: PrismaService, storage: StorageService): Promise<voi
   // Nobody knows this one: the other users exist for lists and dashboards only.
   const lockedHash = await hasher.hash(randomBytes(32).toString('base64url'));
 
+  /** A demo person and the state they are placed in. */
   interface Person {
     id: string;
     type: ProfessionalType;
@@ -848,8 +854,10 @@ async function seed(prisma: PrismaService, storage: StorageService): Promise<voi
 
   // Thirty days of analytics ────────────────────────────────────────────
   const events: Prisma.AnalyticsEventCreateManyInput[] = [];
+  /** Analytics subject hash, computed like the API does. */
   const subject = (kind: 'user' | 'demo', id: string) =>
     hmacSha256Hex(env.ANALYTICS_SUBJECT_SECRET, `${kind}:${id}`);
+  /** The access tier a demo person ends up in. */
   const tierOf = (person: Person): EntitlementTier =>
     person.type === 'STUDENT' ? 'STUDENT' : person.paying ? 'PROFESSIONAL' : 'PROFESSIONAL_UNPAID';
   for (let day = 29; day >= 0; day -= 1) {

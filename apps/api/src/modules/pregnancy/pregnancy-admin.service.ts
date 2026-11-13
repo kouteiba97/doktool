@@ -13,7 +13,9 @@ import {
   profileContentSchema,
   reviewProblems,
 } from './pregnancy.content.js';
+import { likeWords, searchTextOf } from './pregnancy.search.js';
 
+/** A new substance as Admin Web sends it. */
 export interface SubstanceInput {
   nameFr: string;
   nameEn?: string | null;
@@ -22,6 +24,7 @@ export interface SubstanceInput {
   reason: string;
 }
 
+/** Changes to a substance. */
 export interface SubstancePatch extends Partial<Omit<SubstanceInput, 'reason'>> {
   /** Visibility: set only through the reviewer's endpoint. */
   demoSample?: boolean;
@@ -29,6 +32,7 @@ export interface SubstancePatch extends Partial<Omit<SubstanceInput, 'reason'>> 
   reason: string;
 }
 
+/** A source of the clinical sources registry. */
 export interface SourceInput {
   title: string;
   publisher?: string | null;
@@ -48,11 +52,21 @@ const VERSION_INCLUDE = {
   substance: { select: { id: true, nameFr: true, nameEn: true } },
 } satisfies Prisma.SubstanceProfileVersionInclude;
 
+/** A profile version with its people, sources, substance and review problems. */
 export type AdminVersion = Prisma.SubstanceProfileVersionGetPayload<{
   include: typeof VERSION_INCLUDE;
 }> & { problems: string[] };
 
 const OPEN_STATUSES = ['DRAFT', 'IN_REVIEW', 'CHANGES_REQUESTED'] as const;
+
+/** Filters of the substances page. */
+export interface SubstanceFilter {
+  q?: string;
+  state?: 'PUBLISHED' | 'DRAFT' | 'IN_REVIEW' | 'CHANGES_REQUESTED' | 'NONE';
+  archived?: 'active' | 'archived' | 'all';
+  period?: 'T1' | 'T2' | 'T3' | 'PERIPARTUM' | 'LACTATION';
+  conduct?: 'CONTRAINDICATED' | 'AVOID' | 'OCCASIONAL_USE' | 'NONE';
+}
 const EDITABLE_STATUSES = ['DRAFT', 'CHANGES_REQUESTED'] as const;
 
 /**
@@ -70,17 +84,62 @@ export class PregnancyAdminService {
 
   // ─────────────────────────────── substances ───────────────────────────────
 
-  async listSubstances() {
+  /** The substances page: search, archive filter, profile state and conduct filters. */
+  async listSubstances(filter: SubstanceFilter = {}) {
+    const byConduct = filter.period !== undefined && filter.conduct !== undefined;
     const rows = await this.prisma.substance.findMany({
+      where: {
+        ...(filter.archived === 'active' ? { enabled: true } : {}),
+        ...(filter.archived === 'archived' ? { enabled: false } : {}),
+        ...(filter.q
+          ? {
+              AND: likeWords(filter.q).map((word) => ({
+                searchText: { contains: word.replace(/\\(.)/g, '$1') },
+              })),
+            }
+          : {}),
+      },
       include: {
         versions: {
           where: { status: { in: ['PUBLISHED', ...OPEN_STATUSES] } },
-          select: { id: true, version: true, status: true, publishedAt: true, updatedAt: true },
+          select: {
+            id: true,
+            version: true,
+            status: true,
+            publishedAt: true,
+            updatedAt: true,
+            content: byConduct,
+          },
         },
         _count: { select: { reports: { where: { resolvedAt: null } } } },
+        mergedInto: { select: { id: true, nameFr: true, nameEn: true } },
       },
     });
     return rows
+      .filter((row) => {
+        const open = row.versions.find((version) => version.status !== 'PUBLISHED');
+        const published = row.versions.find((version) => version.status === 'PUBLISHED');
+        if (filter.state === 'NONE' && row.versions.length > 0) return false;
+        if (filter.state === 'PUBLISHED' && !published) return false;
+        if (
+          filter.state &&
+          !['NONE', 'PUBLISHED'].includes(filter.state) &&
+          open?.status !== filter.state
+        )
+          return false;
+        if (byConduct) {
+          const current = open ?? published;
+          if (!current) return false;
+          const content = profileContentSchema.parse(current.content);
+          const period =
+            filter.period === 'LACTATION'
+              ? content.lactation
+              : content.pregnancy?.periods[filter.period!];
+          if (!period) return false;
+          if ((period.conduct ?? 'NONE') !== filter.conduct) return false;
+        }
+        return true;
+      })
       .map((row) => ({
         ...row,
         published: row.versions.find((version) => version.status === 'PUBLISHED') ?? null,
@@ -90,6 +149,7 @@ export class PregnancyAdminService {
       .sort((a, b) => compareFrench(a.nameFr, b.nameFr));
   }
 
+  /** One substance with its versions and open reports. */
   async substance(id: string) {
     const row = await this.prisma.substance.findUnique({
       where: { id },
@@ -99,20 +159,26 @@ export class PregnancyAdminService {
           include: { authoredBy: PERSON, reviewedBy: PERSON, firstSignOffBy: PERSON },
         },
         _count: { select: { reports: { where: { resolvedAt: null } } } },
+        mergedInto: { select: { id: true, nameFr: true, nameEn: true } },
       },
     });
     if (!row) throw new DomainError('NOT_FOUND', 'Substance not found.');
     return { ...row, openReports: row._count.reports };
   }
 
+  /** Creates a substance (no profile yet); a name already used is refused. */
   async createSubstance(admin: AdminPrincipal, input: SubstanceInput, client: ClientInfo) {
     try {
+      const nameFr = input.nameFr.trim();
+      const nameEn = input.nameEn?.trim() || null;
+      const synonyms = cleanSynonyms(input.synonyms ?? []);
       const created = await this.prisma.substance.create({
         data: {
-          nameFr: input.nameFr.trim(),
-          nameEn: input.nameEn?.trim() || null,
+          nameFr,
+          nameEn,
           atcCode: input.atcCode?.trim().toUpperCase() || null,
-          synonyms: cleanSynonyms(input.synonyms ?? []),
+          synonyms,
+          searchText: searchTextOf(nameFr, nameEn, synonyms),
           createdById: admin.adminId,
           updatedById: admin.adminId,
         },
@@ -135,6 +201,9 @@ export class PregnancyAdminService {
     client: ClientInfo,
   ) {
     const before = await this.substance(id);
+    if (before.mergedIntoId && patch.enabled === true) {
+      throw new DomainError('INVALID_STATE', 'Undo the merge before showing this substance again.');
+    }
     const visibility = patch.demoSample !== undefined || patch.enabled !== undefined;
     if (visibility && !admin.grants.includes('pregnancy.review')) {
       throw new DomainError('FORBIDDEN', 'Changing who sees a profile needs pregnancy.review.');
@@ -146,6 +215,13 @@ export class PregnancyAdminService {
     if (patch.synonyms !== undefined) data.synonyms = cleanSynonyms(patch.synonyms);
     if (patch.demoSample !== undefined) data.demoSample = patch.demoSample;
     if (patch.enabled !== undefined) data.enabled = patch.enabled;
+    if (patch.nameFr !== undefined || patch.nameEn !== undefined || patch.synonyms !== undefined) {
+      data.searchText = searchTextOf(
+        (data.nameFr as string | undefined) ?? before.nameFr,
+        data.nameEn !== undefined ? (data.nameEn as string | null) : before.nameEn,
+        (data.synonyms as string[] | undefined) ?? before.synonyms,
+      );
+    }
     try {
       const updated = await this.prisma.substance.update({ where: { id }, data });
       const pick = (row: typeof updated) => ({
@@ -167,6 +243,184 @@ export class PregnancyAdminService {
     return this.substance(id);
   }
 
+  // ──────────────────────────────── merge (ADR-027) ────────────────────────────────
+
+  /**
+   * What merging `sourceId` into `targetId` would do, and what prevents it. The source's names
+   * become synonyms of the target; its profile versions stay on it as history; nothing clinical is
+   * copied. Blockers are codes Admin Web translates.
+   */
+  async mergePreview(sourceId: string, targetId: string) {
+    const [source, target] = await Promise.all([this.mergeRow(sourceId), this.mergeRow(targetId)]);
+    const blockers: string[] = [];
+    if (source.id === target.id) blockers.push('SAME_SUBSTANCE');
+    if (source.mergedIntoId) blockers.push('SOURCE_ALREADY_MERGED');
+    if (target.mergedIntoId) blockers.push('TARGET_MERGED');
+    if (!target.enabled) blockers.push('TARGET_ARCHIVED');
+    if (source._count.merged > 0) blockers.push('SOURCE_HAS_MERGED');
+    if (source.versions.some((version) => isOpen(version.status)))
+      blockers.push('SOURCE_OPEN_VERSION');
+    const known = new Set(
+      [target.nameFr, target.nameEn ?? '', ...target.synonyms].map((name) =>
+        name.trim().toLowerCase(),
+      ),
+    );
+    const namesToAdd = cleanSynonyms([
+      source.nameFr,
+      source.nameEn ?? '',
+      ...source.synonyms,
+    ]).filter((name) => !known.has(name.toLowerCase()));
+    if (target.synonyms.length + namesToAdd.length > 30) blockers.push('TOO_MANY_SYNONYMS');
+    const published = source.versions.find((version) => version.status === 'PUBLISHED') ?? null;
+    return {
+      source: { id: source.id, nameFr: source.nameFr, nameEn: source.nameEn },
+      target: { id: target.id, nameFr: target.nameFr, nameEn: target.nameEn },
+      namesToAdd,
+      sourcePublishedVersion: published?.version ?? null,
+      blockers,
+    };
+  }
+
+  /** Merges a duplicate: one transaction, audited on both substances. */
+  async merge(
+    admin: AdminPrincipal,
+    sourceId: string,
+    input: { into: string; reason: string; acknowledgeHiddenProfile: boolean },
+    client: ClientInfo,
+  ) {
+    const preview = await this.mergePreview(sourceId, input.into);
+    if (preview.blockers.length > 0) {
+      throw new DomainError('INVALID_STATE', 'This merge is not possible.', {
+        fields: { merge: preview.blockers },
+      });
+    }
+    if (preview.sourcePublishedVersion !== null && !input.acknowledgeHiddenProfile) {
+      throw new DomainError(
+        'VALIDATION_FAILED',
+        'Confirm that the published profile will no longer be shown.',
+        {
+          fields: { acknowledgeHiddenProfile: ['required'] },
+        },
+      );
+    }
+    const [source, target] = await Promise.all([
+      this.mergeRow(sourceId),
+      this.mergeRow(input.into),
+    ]);
+    const synonyms = [...target.synonyms, ...preview.namesToAdd];
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      // Guarded: only a substance still unmerged is merged (two reviewers at once).
+      const { count } = await tx.substance.updateMany({
+        where: { id: sourceId, mergedIntoId: null },
+        data: {
+          enabled: false,
+          mergedIntoId: target.id,
+          mergedNames: preview.namesToAdd,
+          mergedAt: now,
+          mergedById: admin.adminId,
+          updatedById: admin.adminId,
+        },
+      });
+      if (count !== 1)
+        throw new DomainError('VERSION_CONFLICT', 'This substance was merged meanwhile.');
+      await tx.substance.update({
+        where: { id: target.id },
+        data: {
+          synonyms,
+          searchText: searchTextOf(target.nameFr, target.nameEn, synonyms),
+          updatedBy: { connect: { id: admin.adminId } },
+        },
+      });
+    });
+    await this.record(admin, client, 'pregnancy.substance.merged', 'Substance', sourceId, {
+      before: { enabled: source.enabled, mergedIntoId: null },
+      after: {
+        enabled: false,
+        mergedIntoId: target.id,
+        hiddenPublishedVersion: preview.sourcePublishedVersion,
+      },
+      reason: input.reason,
+    });
+    await this.record(
+      admin,
+      client,
+      'pregnancy.substance.synonyms_merged',
+      'Substance',
+      target.id,
+      {
+        before: { synonyms: target.synonyms },
+        after: { synonyms, from: sourceId },
+        reason: input.reason,
+      },
+    );
+    return this.substance(sourceId);
+  }
+
+  /**
+   * Undoes a merge: the names it added leave the target, the duplicate stands alone again. It stays
+   * archived: showing it again is a separate visibility decision.
+   */
+  async unmerge(admin: AdminPrincipal, sourceId: string, reason: string, client: ClientInfo) {
+    const source = await this.mergeRow(sourceId);
+    if (!source.mergedIntoId)
+      throw new DomainError('INVALID_STATE', 'This substance is not merged.');
+    const target = await this.mergeRow(source.mergedIntoId);
+    const added = new Set(source.mergedNames.map((name) => name.toLowerCase()));
+    const synonyms = target.synonyms.filter((name) => !added.has(name.toLowerCase()));
+    await this.prisma.$transaction([
+      this.prisma.substance.update({
+        where: { id: target.id },
+        data: {
+          synonyms,
+          searchText: searchTextOf(target.nameFr, target.nameEn, synonyms),
+          updatedBy: { connect: { id: admin.adminId } },
+        },
+      }),
+      this.prisma.substance.update({
+        where: { id: sourceId },
+        data: {
+          mergedIntoId: null,
+          mergedNames: [],
+          mergedAt: null,
+          mergedById: null,
+          updatedById: admin.adminId,
+        },
+      }),
+    ]);
+    await this.record(admin, client, 'pregnancy.substance.unmerged', 'Substance', sourceId, {
+      before: { mergedIntoId: target.id, mergedNames: source.mergedNames },
+      after: { mergedIntoId: null, enabled: false },
+      reason,
+    });
+    await this.record(
+      admin,
+      client,
+      'pregnancy.substance.synonyms_unmerged',
+      'Substance',
+      target.id,
+      {
+        before: { synonyms: target.synonyms },
+        after: { synonyms, from: sourceId },
+        reason,
+      },
+    );
+    return this.substance(sourceId);
+  }
+
+  /** What a merge needs to know about a substance. */
+  private async mergeRow(id: string) {
+    const row = await this.prisma.substance.findUnique({
+      where: { id },
+      include: {
+        versions: { select: { version: true, status: true } },
+        _count: { select: { merged: true } },
+      },
+    });
+    if (!row) throw new DomainError('NOT_FOUND', 'Substance not found.');
+    return row;
+  }
+
   // ──────────────────────────────── versions ────────────────────────────────
 
   /** « Nouvelle version »: starts from the published profile, or empty for a first profile. */
@@ -177,6 +431,12 @@ export class PregnancyAdminService {
     client: ClientInfo,
   ) {
     const substance = await this.substance(substanceId);
+    if (substance.mergedIntoId) {
+      throw new DomainError(
+        'INVALID_STATE',
+        'A merged duplicate gets no new version; edit the substance kept.',
+      );
+    }
     if (substance.versions.some((version) => isOpen(version.status))) {
       throw new DomainError('INVALID_STATE', 'This substance already has a version in progress.');
     }
@@ -209,6 +469,7 @@ export class PregnancyAdminService {
     return this.version(created.id);
   }
 
+  /** One profile version with the problems that would block its review. */
   async version(versionId: string): Promise<AdminVersion> {
     const row = await this.prisma.substanceProfileVersion.findUnique({
       where: { id: versionId },
@@ -273,6 +534,7 @@ export class PregnancyAdminService {
     return this.version(versionId);
   }
 
+  /** The author sends a draft for review; it must have no blocking problem. */
   async submit(admin: AdminPrincipal, versionId: string, reason: string, client: ClientInfo) {
     const current = await this.version(versionId);
     this.assertAuthor(admin, current);
@@ -380,6 +642,7 @@ export class PregnancyAdminService {
     return this.version(versionId);
   }
 
+  /** The reviewer sends a version back to its author with a comment. */
   async requestChanges(
     admin: AdminPrincipal,
     versionId: string,
@@ -434,10 +697,12 @@ export class PregnancyAdminService {
 
   // ───────────────────────────────── sources ─────────────────────────────────
 
+  /** The sources registry. */
   listSources() {
     return this.prisma.clinicalSource.findMany({ orderBy: [{ title: 'asc' }, { year: 'desc' }] });
   }
 
+  /** Adds a source to the registry. */
   async createSource(admin: AdminPrincipal, input: SourceInput, client: ClientInfo) {
     const created = await this.prisma.clinicalSource.create({
       data: { ...normaliseSource(input), createdById: admin.adminId },
@@ -465,6 +730,7 @@ export class PregnancyAdminService {
 
   // ───────────────────────────────── reports ─────────────────────────────────
 
+  /** User reports (« Signaler une erreur »), open ones or all. */
   listReports(filter: { open: boolean; substanceId?: string }) {
     return this.prisma.contentReport.findMany({
       where: {
@@ -481,6 +747,7 @@ export class PregnancyAdminService {
     });
   }
 
+  /** Closes a user report with what was done. */
   async resolveReport(admin: AdminPrincipal, id: string, resolution: string, client: ClientInfo) {
     const { count } = await this.prisma.contentReport.updateMany({
       where: { id, resolvedAt: null },
@@ -493,6 +760,28 @@ export class PregnancyAdminService {
   }
 
   /** Open reports and versions waiting for a reviewer (Admin Web overview). */
+  /**
+   * Bulk submit / approve: each version goes through the single-version rules (author ≠ reviewer,
+   * review gate, sign-offs); one failure does not stop the others and is reported with its code.
+   */
+  async many(
+    ids: string[],
+    action: (id: string) => Promise<unknown>,
+  ): Promise<{ versionId: string; ok: boolean; code?: string }[]> {
+    const results: { versionId: string; ok: boolean; code?: string }[] = [];
+    for (const versionId of [...new Set(ids)]) {
+      try {
+        await action(versionId);
+        results.push({ versionId, ok: true });
+      } catch (error) {
+        if (!(error instanceof DomainError)) throw error;
+        results.push({ versionId, ok: false, code: error.code });
+      }
+    }
+    return results;
+  }
+
+  /** Counts for the overview: open reports and versions in review. */
   async pending() {
     const [reports, inReview] = await Promise.all([
       this.prisma.contentReport.count({ where: { resolvedAt: null } }),
@@ -503,6 +792,7 @@ export class PregnancyAdminService {
 
   // ───────────────────────────────── helpers ─────────────────────────────────
 
+  /** Review problems of a version (missing sources, alternatives that do not exist…). */
   private async problemsOf(row: {
     substanceId: string;
     content: Prisma.JsonValue;
@@ -519,22 +809,26 @@ export class PregnancyAdminService {
     });
   }
 
+  /** Only the author edits, submits or discards a draft. */
   private assertAuthor(admin: AdminPrincipal, version: { authoredById: string }) {
     if (version.authoredById !== admin.adminId) {
       throw new DomainError('FORBIDDEN', 'Only the author edits, submits or discards a draft.');
     }
   }
 
+  /** A version is never reviewed by its author. */
   private assertReviewer(admin: AdminPrincipal, version: { authoredById: string }) {
     if (version.authoredById === admin.adminId) {
       throw new DomainError('FORBIDDEN', 'A version is never reviewed by its author.');
     }
   }
 
+  /** Refuses an action in the wrong status. */
   private assertStatus(status: string, allowed: readonly string[], message: string) {
     if (!allowed.includes(status)) throw new DomainError('INVALID_STATE', message);
   }
 
+  /** Audit entry of a pregnancy change. */
   private record(
     admin: AdminPrincipal,
     client: ClientInfo,
@@ -558,10 +852,12 @@ export class PregnancyAdminService {
   }
 }
 
+/** True for a version not yet decided. */
 function isOpen(status: string): boolean {
   return (OPEN_STATUSES as readonly string[]).includes(status);
 }
 
+/** Trims synonyms and drops empty ones and repeats. */
 function cleanSynonyms(values: string[]): string[] {
   const seen = new Set<string>();
   const result: string[] = [];
@@ -576,6 +872,7 @@ function cleanSynonyms(values: string[]): string[] {
   return result;
 }
 
+/** Trims the fields of a source. */
 function normaliseSource(input: SourceInput) {
   return {
     title: input.title.trim(),
@@ -587,6 +884,7 @@ function normaliseSource(input: SourceInput) {
   };
 }
 
+/** Turns a duplicate-name database error into a field error. */
 function nameTaken(error: unknown): unknown {
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
     return new DomainError('VALIDATION_FAILED', 'A substance already has this name.', {

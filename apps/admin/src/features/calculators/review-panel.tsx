@@ -19,6 +19,7 @@ import { approvalStep, SignOffRows } from '../clinical-review/sign-offs';
 import { currentRun, readDefinition } from './definition';
 import { type Calculator, publicationGates, type Version } from './labels';
 
+/** Which dialog is open. */
 type Action = 'return' | 'publish' | 'retire' | 'discard' | null;
 
 /**
@@ -47,6 +48,7 @@ export function ReviewPanel({
   const iAmAuthor = me?.id === version.authoredBy.id;
   const step = approvalStep(version, me?.id, 'admin.calculators.publish');
 
+  // « Soumettre à revue »: the API checks the gate again.
   const submit = useMutation({
     mutationFn: () =>
       call(
@@ -62,6 +64,7 @@ export function ReviewPanel({
   });
 
   const path = { params: { path: { versionId: version.id } } };
+  // After an action: reload the calculator and confirm with a toast.
   const done = async (message: string) => {
     await onChanged();
     toast(message);
@@ -110,6 +113,7 @@ export function ReviewPanel({
       <div className="flex flex-wrap gap-2">
         {version.status === 'DRAFT' && has('calculators.draft') ? (
           <>
+            {/* « Soumettre à revue »: possible once sources and passing tests are there. */}
             <Button
               variant="primary"
               busy={submit.isPending}
@@ -118,6 +122,7 @@ export function ReviewPanel({
             >
               {t('admin.calculators.submit')}
             </Button>
+            {/* « Supprimer le brouillon ». */}
             <Button variant="danger" onClick={() => setAction('discard')}>
               {t('admin.calculators.discard')}
             </Button>
@@ -126,6 +131,8 @@ export function ReviewPanel({
         {version.status === 'IN_REVIEW' && has('calculators.review') ? (
           <>
             {has('calculators.publish') ? (
+              // « Approuver et publier » (or first / second sign-off): never by the author, never
+              // twice by the same reviewer.
               <Button
                 variant="primary"
                 disabled={iAmAuthor || step.signedByMe || !authorGatesOk}
@@ -134,12 +141,14 @@ export function ReviewPanel({
                 {t(step.label)}
               </Button>
             ) : null}
+            {/* « Renvoyer à l'auteur »: back to draft, with a reason. */}
             <Button disabled={iAmAuthor} onClick={() => setAction('return')}>
               {t('admin.calculators.return')}
             </Button>
           </>
         ) : null}
         {version.status === 'PUBLISHED' && has('calculators.retire') ? (
+          // « Retirer »: the published version leaves the app at the next sync.
           <Button variant="danger" onClick={() => setAction('retire')}>
             {t('admin.calculators.retire')}
           </Button>
@@ -242,6 +251,7 @@ function PublishDialog({
   const errorText = useErrorText();
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
+  // Sends the reviewer's note with the approval.
   const publish = useMutation({
     mutationFn: () => onConfirm(note.trim()),
     onSuccess: () => onOpenChange(false),
@@ -264,9 +274,11 @@ function PublishDialog({
       onSubmit={() => publish.mutate()}
       footer={
         <>
+          {/* « Annuler ». */}
           <Button onClick={() => onOpenChange(false)} disabled={publish.isPending}>
             {t('admin.common.cancel')}
           </Button>
+          {/* Confirms the approval (needs a written note). */}
           <Button type="submit" variant="primary" busy={publish.isPending} disabled={!valid}>
             {confirmLabel}
           </Button>
@@ -294,6 +306,7 @@ function PublishDialog({
   );
 }
 
+/** Confirms deleting a draft. */
 function DiscardDialog({
   open,
   onOpenChange,
@@ -317,9 +330,11 @@ function DiscardDialog({
       description={t('admin.calculators.discardBody')}
       footer={
         <>
+          {/* « Annuler ». */}
           <Button onClick={() => onOpenChange(false)} disabled={discard.isPending}>
             {t('admin.common.cancel')}
           </Button>
+          {/* « Supprimer »: deletes the draft with its sources and tests. */}
           <Button variant="danger" busy={discard.isPending} onClick={() => discard.mutate()}>
             {t('admin.calculators.discard')}
           </Button>

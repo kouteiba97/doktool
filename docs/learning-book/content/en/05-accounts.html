@@ -1,0 +1,63 @@
+<section class="chapter">
+<h2 id="ch5">5. Accounts: sign-up, sign-in, sessions, recovery, deletion</h2>
+<p class="lead">Two modules hold accounts. <code>users</code> owns the account rows (names, contacts, professional profile, preferences). <code>auth</code> owns everything that proves who someone is: codes, passwords, sessions, refresh tokens, contact changes, recovery and deletion (ADR-009, ADR-023).</p>
+
+<h3 id="ch5-identifier">5.1 One field for e-mail or phone</h3>
+<p>People sign up with an e-mail <i>or</i> an Algerian mobile number, typed in the same field. Everything starts by normalising it:</p>
+[[code apps/api/src/modules/users/identifier.ts | export function parseIdentifier | block]]
+<p>E-mails are lower-cased; <code>0555 12 34 56</code> becomes <code>+213555123456</code> (E.164). The <code>channel</code> (<code>EMAIL</code> or <code>SMS</code>) then decides how codes are sent.</p>
+
+<h3 id="ch5-signup">5.2 Sign-up in two steps</h3>
+<div class="diagram">App                                   API                                         DB / providers
+SignUpScreen « Créer mon compte »
+  POST /v1/auth/sign-up  {firstName, lastName, identifier, password, wilayaCode, termsVersion, language}
+                                      AuthService.signUp
+                                        parse identifier, password ≠ identifier, terms version current
+                                        UsersService: create (or restart) an UNCONFIRMED account
+                                        OtpService.issue(SIGN_UP)  ─────────────► code by e-mail / SMS
+                       ◄─ { challengeId, destinationHint "a•••@x.dz", resendAvailableAt, expiresAt }
+OtpScreen (6 boxes)
+  POST /v1/auth/sign-up/confirm {challengeId, code, deviceId}
+                                      OtpService.consume → contact confirmed
+                                      DemoService.markConverted(deviceId)   (if this phone ran a demo)
+                                      SessionsService.open → access + refresh tokens
+                       ◄─ AuthTokens
+RoleSelectScreen « Qui êtes-vous ? » → PUT professional profile → verification</div>
+[[code apps/api/src/modules/auth/auth.service.ts | async signUp( | block]]
+<p>An unconfirmed account that is never confirmed is deleted by the <code>users.purge-unconfirmed</code> job. Signing up again with the same identifier restarts it instead of failing — someone who lost the first code is not stuck.</p>
+[[code apps/api/src/modules/auth/auth.service.ts | async confirmSignUp( | block]]
+
+<h3 id="ch5-otp">5.3 One-time codes</h3>
+<p><code>OtpService</code> serves four purposes: sign-up, password reset, contact change and account recovery. Its rules: 6 digits; the code itself is never stored (only an HMAC bound to the challenge); 60 seconds between sends and at most 5 sends; 3 wrong codes lock the challenge for 10 minutes; a challenge can only be consumed for its own purpose.</p>
+[[code apps/api/src/modules/auth/otp.service.ts | private async verify( | block]]
+<div class="note"><b>No account enumeration.</b> « Mot de passe oublié » always answers with a challenge, even for an identifier with no account — in that case nothing is sent (<code>delivers()</code>), but the answer looks identical, so nobody can test which e-mails have an account.</div>
+
+<h3 id="ch5-signin">5.4 Sign-in, lockout and sessions</h3>
+[[code apps/api/src/modules/auth/auth.service.ts | async signIn( | block]]
+<p>Read it as a checklist: a rate limit per IP and per identifier; five wrong passwords lock the account for 15 minutes (<code>ACCOUNT_LOCKED</code> with <code>retryAt</code>); suspended and unconfirmed accounts are refused with their own codes; a success opens a <b>session</b> bound to the device's installation id and — important for recovery — cancels any account recovery someone else started.</p>
+<p>A session is a row of <code>user_sessions</code> with its refresh tokens in <code>refresh_tokens</code> (only their SHA-256). The API can list a person's sessions (<code>GET /v1/me/sessions</code>) and end one (<code>DELETE /v1/me/sessions/:sessionId</code>); the V1 app does not show this list yet, but a password change, a recovery or a suspension use the same revocation. Because <code>UserTokens.verify</code> checks the session on every request, the other device is out at its very next call.</p>
+
+<h3 id="ch5-security">5.5 Changing contacts and password</h3>
+<p><code>AccountSecurityService</code> (Settings › « Sécurité du compte ») follows one principle: <b>every change asks for the current password</b>, so a borrowed unlocked phone cannot take over the account; and <b>every change is announced on the other contact</b>, so the owner learns about it even if the attacker controls one channel.</p>
+[[code apps/api/src/modules/auth/account-security.service.ts | async changePassword( | block]]
+
+<h3 id="ch5-recovery">5.6 Assisted recovery: « J'ai perdu l'accès aux deux »</h3>
+<p>When someone has lost both their e-mail and their phone, a human checks their identity:</p>
+[[code apps/api/src/modules/auth/account-recovery.service.ts | export class AccountRecoveryService | 24]]
+<div class="diagram">1 start         lost contact + first/last name + NEW contact      → code sent to the new contact
+2 confirm       code proves the new contact                         → recovery token (60 min to finish)
+3 photos        identity document + selfie → private bucket           (JPEG/PNG, 10 MB, signed upload)
+4 submit        request goes to Admin Web « Récupération »             answer promised within 72 h
+5 review        admin compares photos with the verified identity  → approve (note) or reject (reason)
+6 hold 24 h     the owner is told; signing in with the password CANCELS the request
+7 apply         job every 10 min: new contact replaces the old ones, password unusable, all devices out</div>
+<p>The apply step is where the October 2026 audit found a race: the request is now <b>claimed first</b> (APPROVED → APPLIED in one conditional update), and only then are the contacts replaced. If the owner cancels at the same instant, the claim fails and nothing changes.</p>
+[[code apps/api/src/modules/auth/account-recovery.service.ts | private async apply( | block]]
+
+<h3 id="ch5-delete">5.7 Deleting an account</h3>
+[[code apps/api/src/modules/auth/account-deletion.service.ts | async delete(userId | block]]
+<p>Each module that holds personal data exposes an <code>eraseUser(userId)</code> method; deletion calls them all, anonymises the account row (finance and the audit log must keep their history, without a name), revokes every session and writes one audit entry. On the phone, the app then forgets every personal setting it kept (chapter 11).</p>
+
+<h3 id="ch5-constants">5.8 The numbers, in one place</h3>
+[[file apps/api/src/modules/auth/auth.policy.ts]]
+</section>

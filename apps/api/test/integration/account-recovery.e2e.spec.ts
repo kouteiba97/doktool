@@ -130,8 +130,16 @@ describe('contacts', () => {
 
 describe('password change', () => {
   it('keeps this device signed in, signs the others out and tells the person', async () => {
-    const { email, auth } = await account();
-    const other = await signIn(email).expect(200);
+    const { email, userId, auth } = await account();
+    // A session left open elsewhere (an account is normally open on one device, ADR-029).
+    const other = await app.prisma().userSession.create({
+      data: {
+        userId,
+        deviceId: 'device-left-open',
+        platform: 'ANDROID',
+        expiresAt: new Date(Date.now() + 86_400_000),
+      },
+    });
     await app
       .http()
       .post('/v1/me/password')
@@ -145,11 +153,9 @@ describe('password change', () => {
       .send({ currentPassword: PASSWORD, newPassword: 'second password for tests' })
       .expect(204);
     await app.http().get('/v1/me').set(auth).expect(200);
-    await app
-      .http()
-      .post('/v1/auth/refresh')
-      .send({ refreshToken: other.body.refreshToken, deviceId: 'x'.repeat(8) })
-      .expect(401);
+    expect(
+      (await app.prisma().userSession.findUniqueOrThrow({ where: { id: other.id } })).revokedReason,
+    ).toBe('PASSWORD_CHANGED');
     await signIn(email).expect(401);
     await signIn(email, 'second password for tests').expect(200);
     expect(app.messages(email).at(-1)).toContain('mot de passe de votre compte DokTool vient');
@@ -277,7 +283,9 @@ describe('assisted recovery', () => {
       .post('/v1/auth/recovery/submit')
       .send({ recoveryToken: first.recoveryToken })
       .expect(200);
-    await signIn(owner.email).expect(200);
+    // Signing in opens the account here and ends the session of the sign-up (ADR-029).
+    const signedIn = await signIn(owner.email).expect(200);
+    const ownerAuth = { Authorization: `Bearer ${signedIn.body.accessToken}` };
     const canceled = await superAdmin
       .get(`/admin/v1/account-recoveries/${first.requestId}`)
       .expect(200);
@@ -294,11 +302,42 @@ describe('assisted recovery', () => {
       .post(`/admin/v1/account-recoveries/${second.requestId}/approve`)
       .send({ note: 'Looks right.' })
       .expect(200);
-    const cancelled = await app.http().post('/v1/me/recovery/cancel').set(owner.auth).expect(200);
+    const cancelled = await app.http().post('/v1/me/recovery/cancel').set(ownerAuth).expect(200);
     expect(cancelled.body.pendingRecovery).toBeNull();
     expect(
       await app.get(AccountRecoveryService).applyDue(new Date(Date.now() + 2 * 86_400_000)),
     ).toBe(0);
+  });
+
+  it('never changes the account when the owner cancels while the job is applying', async () => {
+    const owner = await account();
+    const request = await requestRecovery(owner.email);
+    await app
+      .http()
+      .post('/v1/auth/recovery/submit')
+      .send({ recoveryToken: request.recoveryToken })
+      .expect(200);
+    await superAdmin
+      .post(`/admin/v1/account-recoveries/${request.requestId}/approve`)
+      .send({ note: 'Looks right.' })
+      .expect(200);
+    // The job read the approved request, then the owner signed in before it applied it.
+    const stale = await app
+      .prisma()
+      .accountRecoveryRequest.findUniqueOrThrow({ where: { id: request.requestId } });
+    await signIn(owner.email).expect(200);
+    const recovery = app.get(AccountRecoveryService) as unknown as {
+      apply(row: typeof stale, now: Date): Promise<void>;
+    };
+    await recovery.apply(stale, new Date(Date.now() + 2 * 86_400_000));
+
+    const user = await app.prisma().user.findUniqueOrThrow({ where: { id: owner.userId } });
+    expect(user).toMatchObject({ email: owner.email, phone: null });
+    const after = await app
+      .prisma()
+      .accountRecoveryRequest.findUniqueOrThrow({ where: { id: request.requestId } });
+    expect(after.status).toBe('CANCELED');
+    await signIn(owner.email).expect(200);
   });
 
   it('answers the same for an unknown contact, and the reviewer rejects it with a reason', async () => {

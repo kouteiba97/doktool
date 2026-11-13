@@ -1,0 +1,67 @@
+<section class="chapter">
+<h2 id="ch9">9. كيف بُنيت لوحة الإدارة — Next.js وReact ومجموعة المكوّنات</h2>
+<p class="lead">لوحة الإدارة تطبيق Next.js مكتوب بـReact وTypeScript. ليس لها قاعدة بيانات ولا قاعدة عمل خاصة بها: كل شاشة تقرأ وتكتب عبر الخادم، وكل زر تُخفيه يرفضه الخادم أيضًا. مهمتها أن تجعل عمل الفريق سريعًا وواضحًا وآمنًا.</p>
+
+<h3 id="ch9-layers">9.1 الطبقات</h3>
+<div class="diagram">src/app/                     URLs. A folder = a route; page.tsx = the page. Thin: grant check + feature component.
+  admin/layout.tsx           every console page inside ConsoleShell (top bar + navigation)
+  admin/users/page.tsx       /admin/users  →  &lt;RequireGrant grant="users.read"&gt;&lt;UsersPage/&gt;
+  sign-in/                   the two-step sign-in (password, then authenticator code)
+src/features/&lt;section&gt;/      the screens: pages, drawers, dialogs, labels, small helpers
+src/ui/                      the console kit: Button, Badge, DataTable, Dialog, Drawer, Field, Tabs, Toast…
+src/api/client.ts            typed calls: api.GET('/admin/v1/users', …) checked against schema.d.ts
+src/session/session.ts       who is signed in (useMe) and what they may do (useGrants)
+src/i18n/                    FR/EN messages from packages/i18n, formatting of dates, money, bytes
+src/shell/                   ConsoleShell, the navigation list, RequireGrant
+src/proxy.ts                 no session cookie → straight to /sign-in</div>
+<p>بالعربية: <code>src/app</code> هي العناوين (كل مجلد مسار، و<code>page.tsx</code> رفيع: فحص الصلاحية ثم مكوّن الميزة)؛ <code>src/features</code> الشاشات الحقيقية؛ <code>src/ui</code> المكوّنات المشتركة؛ <code>src/api</code> العميل المكتوب الأنواع؛ <code>src/session</code> من دخل وماذا يحق له؛ <code>src/i18n</code> اللغات والتنسيق؛ <code>src/shell</code> إطار اللوحة.</p>
+
+<h3 id="ch9-origin">9.2 مصدر واحد: الخادم خلف لوحة الإدارة</h3>
+<p>المتصفح لا يستدعي نطاق الخادم أبدًا. يحوّل Next.js المسارات <code>/admin/v1/*</code> إلى الخادم، فتبقى كعكة الجلسة (<code>__Host-doktool_admin</code>، HTTP-only) تابعة لمصدر لوحة الإدارة نفسه، وكل عملية كتابة تحمل ترويسة <code>Origin</code> الخاصة بها — وحارس حدود الخادم يفحصها. وسياسة أمان المحتوى (CSP) الصارمة لا تسمح بالسكربتات إلا من اللوحة نفسها.</p>
+[[code apps/admin/next.config.ts | async rewrites() | 6]]
+[[file apps/admin/src/proxy.ts]]
+
+<h3 id="ch9-client">9.3 استدعاء الخادم</h3>
+<p><code>openapi-fetch</code> مكتوب الأنواع بـ<code>schema.d.ts</code> المولَّد من عقد الخادم: مسار خاطئ، أو معامل ناقص، أو حقل مكتوب خطأ — كلها أخطاء ترجمة. والدالة <code>call()</code> تحوّل أي فشل إلى <code>ApiFailure</code> يحمل كود خطأ الخادم:</p>
+[[code apps/admin/src/api/client.ts | export async function call | block]]
+[[code apps/admin/src/api/client.ts | export function fieldErrors | block]]
+<p>تُعرض الأخطاء بـ<code>useErrorText()</code> (<code>src/ui/errors.ts</code>)، التي تربط الأكواد بجمل الكتالوج — وليس برسالة المطوّر من الخادم أبدًا. وإذا أجاب استدعاء بأن « الجلسة انتهت »، يعيد المزوّد تحميل صفحة الدخول ويتذكر أين كان المشرف.</p>
+
+<h3 id="ch9-query">9.4 حالة الخادم بـTanStack Query</h3>
+<p>كل قائمة وكل تفاصيل هي <code>useQuery</code> (أو <code>useInfiniteQuery</code> للقوائم المجزّأة) مع <i>مفتاح استعلام</i>. وكل تغيير <code>useMutation</code>؛ عند النجاح يُبطل أو يحدّث المفاتيح التي يمسّها، فتتحدّث كل شاشة تعرض تلك البيانات. اقرأ قائمة صفحة المستخدمين كنموذج لكل القوائم:</p>
+[[code apps/admin/src/features/users/users-page.tsx | const users = useInfiniteQuery({ | 22]]
+<p><code>useDebounced</code> تنتظر 300 مللي ثانية بعد آخر ضغطة قبل سؤال الخادم (إصلاح من التدقيق: كان يسأل عند كل حرف).</p>
+[[file apps/admin/src/ui/use-debounced.ts]]
+
+<h3 id="ch9-grants">9.5 من يرى ماذا: الصلاحيات في الواجهة</h3>
+[[code apps/admin/src/session/session.ts | export function useGrants | block]]
+<ul>
+  <li>قائمة التنقل (<code>shell/nav.ts</code>) تذكر كل قسم مع الصلاحية التي يحتاجها؛ الأقسام التي لا يملكها المشرف لا تظهر.</li>
+  <li>تغلّف الصفحة محتواها بـ<code>&lt;RequireGrant&gt;</code>: كتابة العنوان يدويًا دون الصلاحية تعرض رسالة واضحة بدل استدعاءات فاشلة.</li>
+  <li>الأزرار تفحص <code>has('…')</code>. هذا للراحة فقط: الخادم يرفض على أي حال.</li>
+</ul>
+[[file apps/admin/src/app/admin/users/page.tsx]]
+
+<h3 id="ch9-kit">9.6 مجموعة المكوّنات (src/ui)</h3>
+<table>
+  <tr><th>المكوّن</th><th>الدور</th></tr>
+  <tr><td><code>Button</code></td><td>أنواع primary · secondary · ghost · danger · teal؛ و<code>busy</code> يعرض مؤشر تحميل ويمنع النقر المزدوج.</td></tr>
+  <tr><td><code>DataTable</code></td><td>جدول قابل للفرز مع التنقل بلوحة المفاتيح؛ يمكن للصف أن يفتح لوحة جانبية. النقر على أداة داخل الصف لم يعد يفتح الصف أيضًا (إصلاح التدقيق A2).</td></tr>
+  <tr><td><code>Drawer</code> / <code>Dialog</code></td><td>لوحة جانبية لتفاصيل سجل؛ نافذة وسطى لقرار. كلاهما يحبس التركيز ويُغلق بمفتاح Escape.</td></tr>
+  <tr><td><code>ReasonDialog</code></td><td>كل تغيير إداري يطلب سببًا (3–500 حرف) يذهب إلى سجل التدقيق.</td></tr>
+  <tr><td><code>Field</code>، <code>TextInput</code>، <code>Select</code>، <code>Switch</code></td><td>عناصر نماذج بعناوين، سهلة الوصول؛ الأخطاء تحت الحقل مع أيقونة.</td></tr>
+  <tr><td><code>Badge</code>، <code>Alert</code>، <code>EmptyState</code>، <code>Skeleton</code>، <code>PageHeader</code></td><td>كلمات حالة مع لون (لا لون وحده أبدًا)، رسائل، حالات الفراغ والتحميل.</td></tr>
+  <tr><td><code>PeriodPicker</code>، الرسوم، <code>MetricTile</code></td><td>فترات المالية والتحليلات، رسوم أعمدة وخطوط مع جدول بديل، أرقام الدفتر.</td></tr>
+  <tr><td><code>PdfPages</code></td><td>يرسم ملف PDF على لوحات canvas من رابط موقّع — معاينة دون تنزيل أو طباعة.</td></tr>
+</table>
+[[code apps/admin/src/ui/data-table.tsx | function fromControl | block]]
+
+<h3 id="ch9-forms">9.7 النماذج</h3>
+<p>النماذج تستعمل React Hook Form مع مخطط Zod يحمل الحدود نفسها التي في الخادم (الأطوال، الأنماط). ويبقى الخادم هو الحَكَم: أخطاء الحقول من <code>VALIDATION_FAILED</code> تُعاد تحت الحقول المقابلة بـ<code>fieldErrors()</code>.</p>
+
+<h3 id="ch9-signin">9.8 تسجيل الدخول</h3>
+<p>للملف <code>app/sign-in/sign-in-form.tsx</code> خطوتان. خطوة كلمة المرور تجيب بتحدٍّ: <b>ENROL</b> في المرة الأولى (رمز QR مرسوم من رابط <code>otpauth://</code>، يُمسح بتطبيق مصادقة) أو <b>VERIFY</b> بعد ذلك. ثم الرمز من ستة أرقام ينشئ كعكة الجلسة. إذا انتهى التحدّي ذو الدقائق الخمس أو قُفل، صار النموذج يشرح السبب قبل أن يبدأ من جديد (إصلاح التدقيق A5).</p>
+
+<h3 id="ch9-i18n">9.9 اللغات والتنسيق</h3>
+<p>الرسائل تأتي من الكتالوج نفسه الذي يستعمله التطبيق (<code>packages/i18n</code>)، تحت مفاتيح <code>admin.*</code>: <code>t('admin.users.title')</code>. المفتاح غير الموجود خطأ ترجمة (النوع <code>MessageKey</code>). و<code>src/i18n/format.ts</code> ينسّق التواريخ والأرقام والمبالغ (DZD) وأحجام الملفات والأعمار باللغة المختارة.</p>
+</section>

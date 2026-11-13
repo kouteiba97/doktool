@@ -17,6 +17,7 @@ import { ADMIN_API_PREFIX } from '../../http/api-prefix.js';
 import { RequireGrants } from '../admin-auth/index.js';
 import { BillingLedgerService, type LedgerSubscription } from './billing-ledger.service.js';
 
+/** A plan version as shown in the ledgers. */
 export class LedgerPlanDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty() code!: string;
@@ -26,12 +27,14 @@ export class LedgerPlanDto {
   @ApiProperty() durationDays!: number;
 }
 
+/** The person a subscription or payment belongs to. */
 export class LedgerPersonDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty() firstName!: string;
   @ApiProperty() lastName!: string;
 }
 
+/** The latest payment of a subscription. */
 export class LedgerTransactionRefDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty({ example: 'DT-2026-001842' }) transactionId!: string;
@@ -42,6 +45,7 @@ export class LedgerTransactionRefDto {
   @ApiProperty({ format: 'date-time' }) createdAt!: string;
 }
 
+/** One subscription in Admin Web. */
 export class AdminSubscriptionDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty({ type: LedgerPersonDto }) user!: LedgerPersonDto;
@@ -57,6 +61,7 @@ export class AdminSubscriptionDto {
   @ApiProperty({ type: LedgerTransactionRefDto, nullable: true })
   lastTransaction!: LedgerTransactionRefDto | null;
 
+  /** Converts a ledger row into the response. */
   static from(row: LedgerSubscription): AdminSubscriptionDto {
     return {
       id: row.id,
@@ -73,6 +78,7 @@ export class AdminSubscriptionDto {
   }
 }
 
+/** The plan fields shown in the ledgers. */
 export function planRef(plan: LedgerSubscription['plan']): LedgerPlanDto {
   return {
     id: plan.id,
@@ -84,6 +90,7 @@ export function planRef(plan: LedgerSubscription['plan']): LedgerPlanDto {
   };
 }
 
+/** Filters of the subscriptions page. */
 export class SubscriptionQuery {
   @ApiPropertyOptional({ enum: SubscriptionStatus, enumName: 'SubscriptionStatus' })
   @IsOptional()

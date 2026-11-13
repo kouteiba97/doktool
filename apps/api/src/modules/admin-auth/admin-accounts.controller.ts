@@ -44,12 +44,14 @@ import type { AdminPrincipal } from './admin-auth.service.js';
 import { CurrentAdmin, RequireGrants } from './admin-guards.js';
 import { type Grant, GRANTS, PRESETS, type Preset } from './grants.js';
 
+/** Trims a text field before validation. */
 const trimmed = Transform(({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() : value,
 );
 const PRESET_NAMES = Object.keys(PRESETS) as Preset[];
 const id = new ParseUUIDPipe();
 
+/** A reason, required for every change to an admin account. */
 class ReasonBody {
   @ApiProperty({ minLength: 3, maxLength: 500 })
   @trimmed
@@ -59,6 +61,7 @@ class ReasonBody {
   reason!: string;
 }
 
+/** Body of « Nouvel administrateur ». */
 export class NewAdminBody extends ReasonBody {
   @ApiProperty({ format: 'email' })
   @IsEmail()
@@ -77,6 +80,7 @@ export class NewAdminBody extends ReasonBody {
   preset!: Preset;
 }
 
+/** Body of « Modifier les permissions ». */
 export class GrantsBody extends ReasonBody {
   @ApiProperty({ enum: GRANTS, isArray: true })
   @IsIn(GRANTS, { each: true })
@@ -84,6 +88,7 @@ export class GrantsBody extends ReasonBody {
   grants!: Grant[];
 }
 
+/** Body of a temporary grant. */
 export class TemporaryGrantBody extends ReasonBody {
   @ApiProperty({ enum: TEMPORARY_GRANTS })
   @IsIn(TEMPORARY_GRANTS)
@@ -101,6 +106,7 @@ export class TemporaryGrantBody extends ReasonBody {
   hours?: number;
 }
 
+/** Body of suspend, reinstate and reset TOTP. */
 export class StatusBody extends ReasonBody {}
 
 class GrantorDto {
@@ -108,6 +114,7 @@ class GrantorDto {
   @ApiProperty() fullName!: string;
 }
 
+/** One grant of an admin, with its expiry and who granted it. */
 export class AdminGrantDto {
   @ApiProperty({ enum: GRANTS }) grant!: string;
   @ApiProperty({
@@ -120,6 +127,7 @@ export class AdminGrantDto {
   @ApiProperty({ type: GrantorDto, nullable: true }) grantedBy!: GrantorDto | null;
 }
 
+/** One admin in « Permissions ». */
 export class AdminAccountDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty({ format: 'email' }) email!: string;
@@ -139,14 +147,22 @@ export class AdminAccountDto {
   preset!: Preset | null;
 }
 
+/** A new admin and the one-time password to hand over. */
 export class CreatedAdminDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty({
-    description: 'Shown once; the admin changes nothing, they enrol TOTP at first sign-in.',
+    description: 'Shown once; the admin enrols TOTP at first sign-in, then replaces this password.',
   })
   oneTimePassword!: string;
 }
 
+/** A new one-time password for an admin who lost theirs. */
+export class OneTimePasswordDto {
+  @ApiProperty({ description: 'Shown once; the admin replaces it after signing in.' })
+  oneTimePassword!: string;
+}
+
+/** When a temporary grant ends. */
 export class TemporaryGrantDto {
   @ApiProperty({ format: 'date-time' }) expiresAt!: string;
 }
@@ -163,6 +179,10 @@ const errors = ApiResponse({
 export class AdminAccountsController {
   constructor(private readonly accounts: AdminAccountsService) {}
 
+  /**
+   * GET /admin/v1/admins: every admin with their grants, and the preset their permanent grants
+   * match (if any).
+   */
   @Get()
   @RequireGrants('system.roles.write')
   @ApiOkResponse({ type: [AdminAccountDto] })
@@ -199,6 +219,7 @@ export class AdminAccountsController {
     });
   }
 
+  /** POST /admin/v1/admins: creates an admin; the one-time password is shown once. */
   @Post()
   @HttpCode(HttpStatus.OK)
   @RequireGrants('system.roles.write')
@@ -213,6 +234,7 @@ export class AdminAccountsController {
     return { id: created.id, oneTimePassword: created.password };
   }
 
+  /** PUT /admin/v1/admins/:id/grants: replaces the permanent grants. */
   @Put(':id/grants')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants('system.roles.write')
@@ -227,6 +249,7 @@ export class AdminAccountsController {
     await this.accounts.setGrants(admin, adminId, body.grants, body.reason, client);
   }
 
+  /** POST /admin/v1/admins/:id/temporary-grants: a grant that expires after a few hours. */
   @Post(':id/temporary-grants')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('system.roles.write')
@@ -249,6 +272,7 @@ export class AdminAccountsController {
     return { expiresAt: expiresAt.toISOString() };
   }
 
+  /** POST /admin/v1/admins/:id/suspend: blocks sign-in and ends sessions. */
   @Post(':id/suspend')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants('system.roles.write')
@@ -263,6 +287,7 @@ export class AdminAccountsController {
     await this.accounts.setStatus(admin, adminId, 'SUSPENDED', body.reason, client);
   }
 
+  /** POST /admin/v1/admins/:id/reinstate: lifts the suspension. */
   @Post(':id/reinstate')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants('system.roles.write')
@@ -277,6 +302,10 @@ export class AdminAccountsController {
     await this.accounts.setStatus(admin, adminId, 'ACTIVE', body.reason, client);
   }
 
+  /**
+   * POST /admin/v1/admins/:id/reset-totp: the admin enrols a new authenticator at the next sign-
+   * in.
+   */
   @Post(':id/reset-totp')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants('system.roles.write')
@@ -289,5 +318,25 @@ export class AdminAccountsController {
     @Client() client: ClientInfo,
   ): Promise<void> {
     await this.accounts.resetTotp(admin, adminId, body.reason, client);
+  }
+
+  /**
+   * POST /admin/v1/admins/:id/reset-password: a new one-time password for another admin, shown
+   * once. Their sessions end; their authenticator is unchanged.
+   */
+  @Post(':id/reset-password')
+  @HttpCode(HttpStatus.OK)
+  @RequireGrants('system.roles.write')
+  @ApiOkResponse({ type: OneTimePasswordDto })
+  @errors
+  async resetPassword(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Param('id', id) adminId: string,
+    @Body() body: StatusBody,
+    @Client() client: ClientInfo,
+  ): Promise<OneTimePasswordDto> {
+    return {
+      oneTimePassword: await this.accounts.resetPassword(admin, adminId, body.reason, client),
+    };
   }
 }

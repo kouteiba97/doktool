@@ -1,0 +1,62 @@
+<section class="chapter">
+<h2 id="ch6">6. الوصول: من يحق له فتح ماذا</h2>
+<p class="lead">هذا أهم فصل لفهم سلوك DokTool. جدول واحد يقرّر ما يستطيع كل نوع من الأشخاص فتحه؛ ودالة نقية واحدة تطبّقه؛ وكل نقطة نهاية تعيد فحصه؛ والتطبيقات ترسم الجواب فقط. إذا فهمت <code>modules/access</code>، فهمت لماذا تعرض الشاشة قفلًا أو شرحًا أو زر « Voir les offres ».</p>
+
+<h3 id="ch6-inputs">6.1 المدخلات</h3>
+<p>لجلسة العرض التجريبي، المدخل الوحيد هو « هذا عرض تجريبي » (وأي مهنة يستعرض). أما الحساب الحقيقي فتجمع له <code>AccessService</code> ثلاث حقائق بالتوازي، كلٌّ من الوحدة التي تملكها:</p>
+<table>
+  <tr><th>الحقيقة</th><th>تُطلب من</th><th>تحتوي</th></tr>
+  <tr><td>حقائق الحساب</td><td><code>UsersService.getAccessFacts</code></td><td>الحالة (ACTIVE، SUSPENDED، DELETED)، الصفة المهنية (DOCTOR، RESIDENT، STUDENT أو لم تُختر بعد)</td></tr>
+  <tr><td>لقطة التحقق</td><td><code>VerificationStatusService.accessSnapshot</code></td><td>لكلٍّ من IDENTITY وSTUDENT_STATUS وPROFESSIONAL_STATUS: الحالة، تاريخ الإرسال، تاريخ الانتهاء، <code>renewalPending</code></td></tr>
+  <tr><td>الاشتراك</td><td><code>SubscriptionStatusService.current</code></td><td>الحالة (ACTIVE، CANCELED، GRACE…)، نهاية الفترة، نهاية المهلة</td></tr>
+</table>
+
+<h3 id="ch6-table">6.2 جدول السياسة</h3>
+<p>سياسة النسخة الأولى كلها بيانات. اقرأها كشبكة: كتلة لكل مستوى؛ وفي كلٍّ منها، أي عناصر المحتوى تُفتح (<code>content</code>) وحالة كل ميزة (<code>features</code>):</p>
+[[code apps/api/src/modules/access/access-policy.config.ts | export const ACCESS_POLICY | block]]
+<p>قواعد المحتوى تستعمل ثلاثة نطاقات: <code>ALL</code> (كل شيء يُفتح)، <code>STUDENT_TIER</code> (العناصر المعلَّمة للطلبة، مع العيّنات)، <code>DEMO_SAMPLE</code> (العناصر المعلَّمة <code>demoSample</code> فقط)، و<code>NONE</code> لحساب مقيَّد. العنصر المقفل يحمل دائمًا <code>lockReason</code> و، إن وُجد، <code>unlockPath</code> — الشاشة الوحيدة التي تستطيع المساعدة (التسجيل، رؤية الخطط، بدء التحقق…). الطلبة يتلقّون شروحًا دون مسار فتح: لا ترويج للبيع (القاعدة L38).</p>
+
+<h3 id="ch6-place">6.3 وضع الشخص في مستوى واحد</h3>
+<p>تُقرأ الدالة <code>placeInTier</code> كأنها المواصفات نفسها. تتبّعها من الأعلى إلى الأسفل بمثال في ذهنك — طبيب مُتحقَّق منه انتهى اشتراكه الأسبوع الماضي:</p>
+[[code apps/api/src/modules/access/access-policy.ts | export function placeInTier | block]]
+<ol>
+  <li>ليس عرضًا تجريبيًا. الحساب ACTIVE. الصفة مختارة (DOCTOR). الهوية غير مرفوضة.</li>
+  <li>ليس طالبًا، فننظر إلى <code>PROFESSIONAL_STATUS</code>: VERIFIED.</li>
+  <li><code>isSubscriptionLive</code>: الاشتراك ACTIVE يبقى حيًا 7 أيام بعد نهايته ريثما تنقله وحدة الفوترة إلى GRACE؛ وGRACE يبقى حيًا حتى نهايته. الأسبوع الماضي ← ما زال حيًا ← <b>PROFESSIONAL</b>.</li>
+  <li>بعد المهلة: غير حي. مُتحقَّق منه، إذن <code>purchase = 'OPEN'</code> ← <b>PROFESSIONAL_UNPAID</b> مع زر « Renouveler » متاح.</li>
+</ol>
+[[code apps/api/src/modules/access/access-policy.ts | export function isSubscriptionLive | block]]
+
+<h3 id="ch6-renewal">6.4 إعادة التحقق لا تقطع الوصول أبدًا</h3>
+<p>التحقق ينتهي (الصفة المهنية بعد مدة محددة؛ انظر الفصل 8). تجديده يفتح ملفًا جديدًا من النوع نفسه. قبل تدقيق أكتوبر 2026، كان الملف الأحدث — غير المقرَّر بعد — يحلّ محلّ الملف المُتحقَّق منه، فيسقط طبيب مشترك إلى PROFESSIONAL_UNPAID لحظة ضغطه على « Renouveler ». الآن تُبقي <code>accessSnapshot</code> القرار السابق ساريًا ما دام الملف الجديد غير مقرَّر، وترفع العلامة <code>renewalPending</code> لكي يعرض الشراء « vérification en cours »:</p>
+[[code apps/api/src/modules/verification/verification-status.service.ts | async accessSnapshot( | block]]
+
+<h3 id="ch6-evaluate">6.5 من المستوى إلى الملف، ومن الملف إلى العناصر</h3>
+[[code apps/api/src/modules/access/access-policy.ts | export function evaluateAccess | block]]
+<p>النتيجة، <code>AccessProfile</code>، هي ما يعيده <code>GET /v1/me/access</code> إلى التطبيق. ثم تقرّر نقاط نهاية القوائم والتفاصيل كل عنصر بـ<code>decideItem</code>:</p>
+[[code apps/api/src/modules/access/access-policy.ts | export function decideItem | block]]
+<div class="rule"><b>نقية ومُختبرة كمصفوفة.</b> الملف <code>access-policy.ts</code> لا يقوم بأي إدخال أو إخراج: المدخلات نفسها والوقت نفسه يعطيان الجواب نفسه. والاختبار <code>test/unit/access-policy.matrix.spec.ts</code> يفحص كل مستوى مقابل كل ميزة وكل قاعدة محتوى. لتغيير السياسة: عدّل الجدول، ارفع <code>version</code>، وحدّث اختبار المصفوفة.</div>
+
+<h3 id="ch6-guards">6.6 إعادة الفحص في كل نقطة نهاية</h3>
+<p>آليتان تفرضان الملف على الخادم:</p>
+<ul>
+  <li><code>@RequireFeature('…')</code> على المسار (الفصل 4.7) يرفض الميزة المقفلة قبل تشغيل المعالج.</li>
+  <li>خدمات المحتوى تستدعي <code>AccessService.decideItems(viewer, items)</code> ولا تعيد رابط PDF أو تعريف حاسبة أو محتوى ملف إلا إذا كان العنصر <code>AVAILABLE</code>؛ والعنصر المقفل يبقى في القائمة، مع قفله.</li>
+</ul>
+
+<h3 id="ch6-viewer">6.7 المشاهدون: مستخدم أو عرض تجريبي</h3>
+[[code apps/api/src/infrastructure/security/viewer-auth.guard.ts | export type Viewer | 5]]
+[[code apps/api/src/infrastructure/security/viewer-auth.guard.ts | export class ViewerAuthGuard | block]]
+<p>مسارات القراءة تقبل نوعي الرموز؛ ومسارات الكتابة (المفضلة، السجل، التحقق، الدفع) تستعمل <code>UserAuthGuard</code> الذي يرفض رموز العرض التجريبي. رموز العرض ورموز المستخدم موقّعة بالمفتاح نفسه لكن بـ<i>جمهور (audience)</i> مختلف، فلا يمكن لأحدهما أن يمرّ مكان الآخر.</p>
+
+<h3 id="ch6-demo">6.8 العرض التجريبي</h3>
+[[code apps/api/src/modules/demo/demo.service.ts | export class DemoService | 12]]
+[[code apps/api/src/modules/demo/demo.service.ts | async start( | block]]
+<p>يحتفظ الجهاز بجلسة عرض نشطة واحدة، تُعرَّف بمعرّف تثبيت الهاتف. لا شيء مما يفعله العرض التجريبي يُكتب في جداول المستخدمين: مفضلته تعيش في ذاكرة الهاتف فقط. وعندما يؤكّد الهاتف نفسه حسابًا جديدًا، تغلق <code>markConverted</code> العرض بحالة CONVERTED، لكي يعدّ مسار « Démo » في التحليلات التحويلات (إصلاح آخر من التدقيق).</p>
+
+<h3 id="ch6-app">6.9 ماذا تفعل التطبيقات بالملف</h3>
+<ul>
+  <li><b>الهاتف:</b> <code>AccessController</code> يحمّل الملف عند التشغيل، وعند العودة إلى التطبيق، وبعد التحقق أو الدفع. الصفوف ترسم <code>LockLabel</code>؛ والضغط على صف مقفل يفتح <code>showLockSheet</code> مع الشرح، وإن وُجد، إجراء الفتح الوحيد. الأقفال ليست حمراء أبدًا.</li>
+  <li><b>لوحة الإدارة:</b> تبويب « Accès » في لوحة المستخدم يعرض ملف وصول الحساب والمدخلات التي جاء منها (<code>AccessService.explainForUser</code>)، فيستطيع الدعم أن يجيب « لماذا لا أستطيع فتح هذا؟ ».</li>
+</ul>
+</section>

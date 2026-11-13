@@ -2,8 +2,26 @@ import 'definition.dart';
 
 /// The formula as mono text with the entered values substituted (ScreenCalculatorMobile), e.g.
 /// `(70 × (140 − 60)) ÷ (72 × 1.1)`. Inputs without a value keep their label.
-String formulaText(Expr node, {required Map<String, String> values, required String Function(String key) labelOf}) {
-  String text(Expr expr) => formulaText(expr, values: values, labelOf: labelOf);
+///
+/// A choice compared with one of its answers shows that answer's label, not its internal code:
+/// `(Sexe = « Femme »)`, never `(Sexe = "o2")`. [choiceLabelOf] gives the label of an answer.
+String formulaText(
+  Expr node, {
+  required Map<String, String> values,
+  required String Function(String key) labelOf,
+  String? Function(String key, String value)? choiceLabelOf,
+}) {
+  // Writes a child node.
+  String text(Expr expr) => formulaText(expr, values: values, labelOf: labelOf, choiceLabelOf: choiceLabelOf);
+  // Writes an answer code as its label when the other side of the comparison is its input.
+  String answer(Expr side, Expr other) {
+    if (side is StrExpr && other is InputExpr) {
+      final label = choiceLabelOf?.call(other.key, side.value);
+      if (label != null) return '« $label »';
+    }
+    return text(side);
+  }
+
   switch (node) {
     case NumExpr(:final value):
       return _number(value);
@@ -35,6 +53,9 @@ String formulaText(Expr node, {required Map<String, String> values, required Str
         'eq': '=',
         'ne': '≠',
       };
+      if (op == 'eq' || op == 'ne') {
+        return '(${answer(args[0], args[1])} ${infix[op]} ${answer(args[1], args[0])})';
+      }
       if (infix.containsKey(op)) return '(${text(args[0])} ${infix[op]} ${text(args[1])})';
       return switch (op) {
         'sqrt' => '√(${text(args[0])})',
@@ -49,6 +70,7 @@ String formulaText(Expr node, {required Map<String, String> values, required Str
   }
 }
 
+/// A number without a useless ".0".
 String _number(double value) {
   final text = value.toString();
   return text.endsWith('.0') ? text.substring(0, text.length - 2) : text;

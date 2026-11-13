@@ -6,16 +6,17 @@ Phase 18's exit criterion is this checklist, signed. **Engineering** items are d
 
 | Gate | Evidence |
 |---|---|
-| Root CI green: format, lint, types, i18n parity (FR/EN), token drift, **raw colour / radius / blur / duration literals** (Flutter + Admin Web), OpenAPI contract, Admin Web client freshness, tests | `npm run ci` — API 522 tests, Admin Web 21, tokens 27 |
+| Root CI green: format, lint, types, i18n parity (FR/EN), token drift, **raw colour / radius / blur / duration literals** (Flutter + Admin Web), OpenAPI contract, Admin Web client freshness, tests | `npm run ci` — API 636 tests, Admin Web 32 (13 November 2026) |
 | Database migrations apply and match the schema | CI steps "Prisma schema is valid…" and "Migrations match the schema" |
 | No known high/critical npm advisory | `npm audit --audit-level=high` in CI — 0 vulnerabilities |
-| Flutter analyze clean, tests green (including WCAG checks) | `flutter analyze`, `flutter test` — 152 tests |
+| Flutter analyze clean, tests green (including WCAG checks) | `flutter analyze`, `flutter test` — 178 tests |
 | Android release build | `flutter build apk --release` succeeds (R8 rules for ML Kit in `android/app/proguard-rules.pro`) |
 | Admin Web production build | `npm run build -w @doktool/admin` |
 | Threat model reviewed | [`docs/security/THREAT-MODEL.md`](security/THREAT-MODEL.md) |
 | In-app account deletion (App Store 5.1.1(v), Google Play) | Settings › Compte › « Supprimer mon compte »; [ADR-018](adr/ADR-018-account-deletion.md); `account-deletion.e2e.spec.ts`, `delete_account_test.dart` |
 | Payments through pluggable gateways (Chargily Pay) | [ADR-021](adr/ADR-021-payment-gateways.md); `billing.e2e.spec.ts`, `chargily-gateway.spec.ts` |
 | SMS providers with fallback and fraud guards | [ADR-022](adr/ADR-022-sms-providers.md); `sms-delivery.spec.ts` |
+| One account open on one device at a time | [ADR-029](adr/ADR-029-one-device-per-account.md); `auth.e2e.spec.ts`, `opened_elsewhere_test.dart` |
 | Contacts, security notices, assisted account recovery, immediate session end | [ADR-023](adr/ADR-023-account-recovery.md); `account-recovery.e2e.spec.ts`, `recovery_test.dart` |
 
 ## 2. Accessibility record (WCAG 2.2 AA)
@@ -54,6 +55,8 @@ Phase 18's exit criterion is this checklist, signed. **Engineering** items are d
 ## 4. Operations (operator)
 
 - [ ] PostgreSQL 18 (as in CI) in production with daily backups; run `npm run prisma:migrate:deploy -w @doktool/api`.
+- [ ] The production database allows `CREATE EXTENSION pg_trgm` (migration `20261024090000_pregnancy_import`, ADR-025); ask the host to enable it first if the migration role cannot.
+- [ ] Every admin has replaced the one-time password they were handed (account menu › « Changer le mot de passe »); a forgotten one is re-issued from « Permissions ».
 - [ ] API environment (`apps/api/.env.example` lists every variable): `DATABASE_URL`, `NODE_ENV=production`, `TRUST_PROXY_HOPS`, `USER_JWT_SECRET`, `OTP_HMAC_SECRET`, `ANALYTICS_SUBJECT_SECRET` (set once — changing it splits analytics history), `ADMIN_TOTP_ENCRYPTION_KEY`, `ADMIN_WEB_ORIGIN`, `TERMS_VERSION`, `TERMS_URL`, `PRIVACY_URL`, `SMTP_URL`, `MAIL_FROM`, `STORAGE_DRIVER=r2` and the `R2_*` keys, `PAYMENT_GATEWAYS` and `CHARGILY_*`, `PUBLIC_API_URL`, `JOBS_ENABLED`.
 - [ ] Admin Web environment: `DOKTOOL_API_ORIGIN`, `DOKTOOL_STORAGE_ORIGINS` (the R2 endpoints), `NEXT_PUBLIC_DOKTOOL_ENVIRONMENT=production`.
 - [ ] Cloudflare R2: both buckets private, CORS for Admin Web — [`docs/operations/r2-setup.md`](operations/r2-setup.md).

@@ -7,6 +7,7 @@ import { useI18n } from '@/i18n/i18n-provider';
 import type { MessageKey } from '@/i18n/messages';
 import { type PdfProblem, pdfProblem } from './upload';
 
+/** Catalogue key of each refusal reason. */
 const PROBLEMS: Record<PdfProblem, MessageKey> = {
   type: 'admin.library.fileNotPdf',
   size: 'admin.library.fileTooLarge',
@@ -27,12 +28,14 @@ export function PdfDrop({
   const [over, setOver] = useState(false);
   const [problem, setProblem] = useState<PdfProblem | null>(null);
 
+  // Checks a picked or dropped file; only an acceptable PDF is passed on.
   const accept = (picked: File | undefined) => {
     if (!picked) return;
     const found = pdfProblem(picked);
     setProblem(found);
     onFile(found ? null : picked);
   };
+  // A file dropped on the zone.
   const onDrop = (event: DragEvent) => {
     event.preventDefault();
     setOver(false);
@@ -41,6 +44,7 @@ export function PdfDrop({
 
   return (
     <div className="dt-stack gap-2">
+      {/* The drop zone: click to choose a PDF, or drop one on it. */}
       <button
         type="button"
         className={`dt-drop${over ? ' over' : ''}${problem ? ' error' : ''}`}

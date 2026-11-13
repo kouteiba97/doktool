@@ -27,6 +27,7 @@ import {
   RATE_LIMITS,
 } from './auth.policy.js';
 
+/** What the app needs to show the code screen. */
 export interface OtpChallengeView {
   challengeId: string;
   channel: Identifier['channel'];
@@ -36,6 +37,7 @@ export interface OtpChallengeView {
   resendAvailableAt: Date;
 }
 
+/** A code that was accepted: whose account and which contact it proves. */
 export interface ConsumedChallenge {
   userId: string;
   channel: Identifier['channel'];
@@ -49,6 +51,7 @@ export interface ProvenContact {
   destination: string;
 }
 
+/** Catalogue keys of the code message, per purpose. */
 const MESSAGE_KEYS: Record<OtpPurpose, { subject: string; text: string }> = {
   SIGN_UP: { subject: 'server.otp.signUp.subject', text: 'server.otp.signUp.text' },
   PASSWORD_RESET: {
@@ -73,6 +76,7 @@ const MESSAGE_KEYS: Record<OtpPurpose, { subject: string; text: string }> = {
 const delivers = (purpose: OtpPurpose, userId: string | null) =>
   userId !== null || purpose === 'ACCOUNT_RECOVERY';
 
+/** Hides most of an e-mail or phone for display ("a•••@x.dz", "+2136•••••67"). */
 export function maskDestination(channel: Identifier['channel'], destination: string): string {
   if (channel === 'EMAIL') {
     const [local = '', domain = ''] = destination.split('@');
@@ -81,6 +85,7 @@ export function maskDestination(channel: Identifier['channel'], destination: str
   return `${destination.slice(0, 5)}•••••${destination.slice(-2)}`;
 }
 
+/** The moment `minutes` from now. */
 const minutesFromNow = (minutes: number) => new Date(Date.now() + minutes * 60_000);
 
 /** One-time codes: sign-up, password reset (ADR-009), contact change and account recovery (ADR-023). */
@@ -194,6 +199,10 @@ export class OtpService {
     return { channel: challenge.channel, destination: challenge.destination };
   }
 
+  /**
+   * Checks a code: right purpose, not used, not expired, not locked. A right code consumes the
+   * challenge once; a wrong one counts towards the lock.
+   */
   private async verify(challengeId: string, purpose: OtpPurpose, code: string) {
     const challenge = await this.prisma.otpChallenge.findUnique({ where: { id: challengeId } });
     const now = new Date();
@@ -245,12 +254,12 @@ export class OtpService {
     });
   }
 
-  /** Deletes challenges expired for more than a day (hourly maintenance job). */
   /** Account deletion: no code of the person is left to confirm. */
   async eraseUser(userId: string): Promise<void> {
     await this.prisma.otpChallenge.deleteMany({ where: { userId } });
   }
 
+  /** Deletes challenges expired for more than a day (hourly maintenance job). */
   async purgeExpired(): Promise<number> {
     const { count } = await this.prisma.otpChallenge.deleteMany({
       where: { expiresAt: { lt: new Date(Date.now() - 24 * 3600 * 1000) } },
@@ -258,10 +267,12 @@ export class OtpService {
     return count;
   }
 
+  /** HMAC of the code bound to its challenge: the code itself is never stored. */
   private hash(challengeId: string, code: string): string {
     return hmacSha256Hex(this.env.OTP_HMAC_SECRET, `${challengeId}:${code}`);
   }
 
+  /** Formats the code message in the person's language and sends it. */
   private async send(
     purpose: OtpPurpose,
     identifier: Identifier,
@@ -277,6 +288,7 @@ export class OtpService {
     });
   }
 
+  /** Builds the public view of a challenge (masked destination, timers). */
   private view(challenge: {
     id: string;
     channel: Identifier['channel'];

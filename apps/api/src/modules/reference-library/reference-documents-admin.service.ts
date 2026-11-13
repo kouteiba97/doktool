@@ -20,6 +20,7 @@ import {
 } from '../storage/index.js';
 import { PDF_CONTENT_TYPE, PROCESS_FILE_JOB, suggestTitle } from './reference-library.policy.js';
 
+/** What Admin Web declares before uploading a PDF. */
 export interface UploadRequest {
   type: ReferenceDocumentType;
   fileName: string;
@@ -27,6 +28,7 @@ export interface UploadRequest {
   sha256: string;
 }
 
+/** Step 2 of « Ajouter un modèle ». */
 export interface NewDocument {
   intentId: string;
   documentId: string;
@@ -38,6 +40,7 @@ export interface NewDocument {
   reason: string;
 }
 
+/** Display metadata changes. */
 export interface DocumentPatch {
   titleFr?: string;
   titleEn?: string | null;
@@ -56,6 +59,7 @@ export const LIFECYCLE = {
   { from: ReferenceDocumentStatus[]; to: ReferenceDocumentStatus }
 >;
 
+/** enable, disable, archive or restore. */
 export type LifecycleAction = keyof typeof LIFECYCLE;
 
 /**
@@ -69,10 +73,12 @@ const DETAIL_INCLUDE = {
   updatedBy: { select: { id: true, fullName: true } },
 } satisfies Prisma.ReferenceDocumentInclude;
 
+/** A model with its files and people, as Admin Web shows it. */
 export type AdminDocumentRecord = Prisma.ReferenceDocumentGetPayload<{
   include: typeof DETAIL_INCLUDE;
 }>;
 
+/** The fields recorded in audit entries of a model. */
 const auditSnapshot = (document: {
   type: string;
   titleFr: string;
@@ -269,6 +275,7 @@ export class ReferenceDocumentsAdminService {
     return updated;
   }
 
+  /** Enables, disables, archives or restores a model; enabling needs a processed PDF. */
   async changeStatus(
     admin: AdminPrincipal,
     documentId: string,
@@ -315,6 +322,7 @@ export class ReferenceDocumentsAdminService {
     });
   }
 
+  /** One model with all its files. */
   async detail(documentId: string): Promise<AdminDocumentRecord> {
     return this.require(documentId);
   }
@@ -334,6 +342,7 @@ export class ReferenceDocumentsAdminService {
     };
   }
 
+  /** Loads a model or answers NOT_FOUND. */
   private async require(documentId: string): Promise<AdminDocumentRecord> {
     const document = await this.prisma.referenceDocument.findUnique({
       where: { id: documentId },
@@ -343,6 +352,7 @@ export class ReferenceDocumentsAdminService {
     return document;
   }
 
+  /** Signs the upload of one PDF version under its immutable key. */
   private ticket(
     admin: AdminPrincipal,
     type: ReferenceDocumentType,
@@ -366,6 +376,7 @@ export class ReferenceDocumentsAdminService {
     });
   }
 
+  /** Audit entry of a library change. */
   private record(
     admin: AdminPrincipal,
     client: ClientInfo,

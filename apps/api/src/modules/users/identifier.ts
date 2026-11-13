@@ -1,6 +1,7 @@
 /** A sign-in identifier after normalisation (ADR-009). */
 export type Identifier = { channel: 'EMAIL'; value: string } | { channel: 'SMS'; value: string };
 
+/** Loose e-mail shape (the code sent to it is the real check). */
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const E164 = /^\+[1-9]\d{7,14}$/;
 /** Algerian mobile numbers written locally: 05…, 06…, 07… (10 digits). */

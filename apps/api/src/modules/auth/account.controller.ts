@@ -108,6 +108,9 @@ export class AccountSecurityController {
     );
   }
 
+  /**
+   * Confirms the code sent to the new contact; the contact is then added or replaces the old one.
+   */
   @Post('contacts/confirm')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: AccountContactsDto })
@@ -158,6 +161,9 @@ export class AccountSecurityController {
 export class AccountRecoveryController {
   constructor(private readonly recovery: AccountRecoveryService) {}
 
+  /**
+   * POST /v1/account-recovery: starts a recovery (no account token: the person has lost access).
+   */
   @Post()
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiAcceptedResponse({ type: RecoveryStartedDto })
@@ -170,6 +176,7 @@ export class AccountRecoveryController {
     return { requestId: started.requestId, challenge: OtpChallengeDto.from(started.challenge) };
   }
 
+  /** Confirms the code sent to the new contact; returns the recovery token used for the photos. */
   @Post('confirm')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: RecoveryTokenDto })
@@ -182,6 +189,7 @@ export class AccountRecoveryController {
     return { recoveryToken, expiresAt: expiresAt.toISOString() };
   }
 
+  /** A signed upload URL for one photo. */
   @Post('uploads')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: RecoveryUploadTicketDto })
@@ -192,6 +200,7 @@ export class AccountRecoveryController {
     );
   }
 
+  /** Attaches an uploaded photo to the request. */
   @Post('photos')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
@@ -200,6 +209,7 @@ export class AccountRecoveryController {
     await this.recovery.attach(body.recoveryToken, body);
   }
 
+  /** Sends the request for review once both photos are there. */
   @Post('submit')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: RecoverySubmittedDto })
@@ -222,6 +232,7 @@ const SLOTS: RecoverySlot[] = ['IDENTITY_DOCUMENT', 'SELFIE'];
 export class AccountRecoveryAdminController {
   constructor(private readonly recovery: AccountRecoveryService) {}
 
+  /** Admin: the recovery requests. */
   @Get()
   @RequireGrants('verification.queue.read')
   @ApiOkResponse({ type: [AdminRecoveryDto] })
@@ -229,6 +240,7 @@ export class AccountRecoveryAdminController {
     return (await this.recovery.list(query)).map((row) => AdminRecoveryDto.from(row));
   }
 
+  /** Admin: one recovery request. */
   @Get(':id')
   @RequireGrants('verification.queue.read')
   @ApiOkResponse({ type: AdminRecoveryDetailDto })
@@ -253,6 +265,7 @@ export class AccountRecoveryAdminController {
     return { ...view, expiresAt: view.expiresAt.toISOString() };
   }
 
+  /** Admin: approves a request (applies after the hold). */
   @Post(':id/approve')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('verification.review')
@@ -266,6 +279,7 @@ export class AccountRecoveryAdminController {
     return this.toDetail(await this.recovery.approve(admin, requestId, body.note, client));
   }
 
+  /** Admin: rejects a request with a reason. */
   @Post(':id/reject')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('verification.review')
@@ -279,6 +293,7 @@ export class AccountRecoveryAdminController {
     return this.toDetail(await this.recovery.reject(admin, requestId, body, client));
   }
 
+  /** Builds the recovery drawer response. */
   private toDetail(
     detail: Awaited<ReturnType<AccountRecoveryService['detail']>>,
   ): AdminRecoveryDetailDto {

@@ -11,6 +11,7 @@ import '../../core/auth/session_controller.dart';
 /// never re-derives access from the professional type (Lock L34). Refreshed on launch, on resume
 /// and after verification or purchase events.
 class AccessController extends AsyncNotifier<AccessProfileDto?> {
+  /// Fetches GET /v1/me/access for the current session (null when signed out).
   @override
   Future<AccessProfileDto?> build() async {
     final session = ref.watch(sessionControllerProvider).value;
@@ -18,6 +19,7 @@ class AccessController extends AsyncNotifier<AccessProfileDto?> {
     return ref.read(apiProvider).access.accessControllerMe();
   }
 
+  /// Fetches the profile again (after verification, purchase, resume).
   Future<void> reload() async {
     ref.invalidateSelf();
     await future;
@@ -26,6 +28,8 @@ class AccessController extends AsyncNotifier<AccessProfileDto?> {
 
 final accessControllerProvider = AsyncNotifierProvider<AccessController, AccessProfileDto?>(AccessController.new);
 
+/// Helpers on the access profile.
 extension AccessProfileX on AccessProfileDto {
+  /// The decision (available or locked, with reason) for one feature, if the profile lists it.
   FeatureDecisionDto? feature(FeatureKey key) => features.where((feature) => feature.key == key).firstOrNull;
 }

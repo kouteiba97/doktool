@@ -18,17 +18,21 @@ export type FeatureSetting =
   /** Purchase for PROFESSIONAL_UNPAID: open once professional verification is VERIFIED (Q6). */
   | { state: 'PURCHASE_AFTER_VERIFICATION' };
 
+/** What one tier opens: which items of each content type, and the state of each feature. */
 export interface TierSetting {
   content: Record<ContentType, ContentRule | { scope: 'NONE'; fromRestriction: true }>;
   features: Record<FeatureKey, FeatureSetting>;
 }
 
+/** Small builders that keep the policy table below readable. */
 const available: FeatureSetting = { state: 'AVAILABLE' };
+/** A locked feature with its reason and unlock path. */
 const locked = (lockReason: LockReason, unlockPath: UnlockPath | null): FeatureSetting => ({
   state: 'LOCKED',
   lockReason,
   unlockPath,
 });
+/** Only demo-sample items open; the others show this lock. */
 const demoSamplesOnly = (lockReason: LockReason, unlockPath: UnlockPath | null): ContentRule => ({
   scope: 'DEMO_SAMPLE',
   lockReason,
@@ -40,6 +44,10 @@ const everything: ContentRule = {
   unlockPath: null,
 };
 
+/**
+ * The whole V1 policy, one entry per tier (DEMO, STUDENT, PROFESSIONAL_UNPAID, PROFESSIONAL,
+ * RESTRICTED).
+ */
 export const ACCESS_POLICY = {
   version: '2026-10-04.1',
   /** A student whose status case is submitted keeps student access this long (section 27). */
@@ -148,4 +156,5 @@ export const ACCESS_POLICY = {
   } satisfies Record<Tier, TierSetting>,
 } as const;
 
+/** Type of the policy object; tests pass modified copies. */
 export type AccessPolicy = typeof ACCESS_POLICY;

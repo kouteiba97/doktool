@@ -31,7 +31,9 @@ import {
 } from './labels';
 import { RecoveryPhoto } from './recovery-photo';
 
+/** One request in the list. */
 type Row = Schemas['AdminRecoveryDto'];
+/** A request with the matching account, for the drawer. */
 type Detail = Schemas['AdminRecoveryDetailDto'];
 
 /**
@@ -45,11 +47,13 @@ export function RecoveryPage() {
   const [status, setStatus] = useState<RecoveryStatus>('SUBMITTED');
   const [openId, setOpenId] = useState<string | null>(null);
 
+  // The requests of the selected status.
   const list = useQuery({
     queryKey: [...recoveryKey, status],
     queryFn: () => call(api.GET('/admin/v1/account-recoveries', { params: { query: { status } } })),
   });
 
+  // The list's columns.
   const columns = useMemo<Column<Row>[]>(
     () => [
       {
@@ -100,6 +104,7 @@ export function RecoveryPage() {
       <PageHeader title={t('admin.recovery.title')} caption={t('admin.recovery.lead')} />
       <div className="dt-row-flex gap-2" role="tablist" aria-label={t('admin.recovery.title')}>
         {RECOVERY_TABS.map((tab) => (
+          // Status tab (submitted, approved, applied, rejected…).
           <Button
             key={tab}
             size="sm"
@@ -133,6 +138,10 @@ export function RecoveryPage() {
   );
 }
 
+/**
+ * The drawer of one request: what the person said beside the account, the two photos, and the
+ * decision.
+ */
 function RecoveryDrawer({ requestId, onClose }: { requestId: string | null; onClose: () => void }) {
   const { t, locale } = useI18n();
   const errorText = useErrorText();
@@ -155,8 +164,11 @@ function RecoveryDrawer({ requestId, onClose }: { requestId: string | null; onCl
   });
   const record = detail.data;
   const canDecide = has('verification.review') && record?.request.status === 'SUBMITTED';
+  // An approval can still be stopped during its 24-hour hold (fraud noticed late): reject only.
+  const canStop = has('verification.review') && record?.request.status === 'APPROVED';
   const canView = has('verification.documents.view');
 
+  // After a decision: update the drawer and the list, close the dialog, confirm with a toast.
   const decided = async (next: Detail, message: string) => {
     queryClient.setQueryData([...recoveryKey, 'detail', next.request.id], next);
     await queryClient.invalidateQueries({ queryKey: recoveryKey });
@@ -164,17 +176,26 @@ function RecoveryDrawer({ requestId, onClose }: { requestId: string | null; onCl
     toast(message);
   };
 
-  const footer = canDecide ? (
-    <div className="end">
-      <Button variant="danger" onClick={() => setDecision('reject')}>
-        {t('admin.recovery.reject')}
-      </Button>
-      <Button variant="primary" disabled={!record?.account} onClick={() => setDecision('approve')}>
-        <Check size={16} aria-hidden />
-        {t('admin.recovery.approve')}
-      </Button>
-    </div>
-  ) : null;
+  const footer =
+    canDecide || canStop ? (
+      <div className="end">
+        {/* « Rejeter »: refuses the request (also during the 24-hour hold of an approval). */}
+        <Button variant="danger" onClick={() => setDecision('reject')}>
+          {t('admin.recovery.reject')}
+        </Button>
+        {canDecide ? (
+          // « Approuver »: possible only when an account matches; it applies after 24 hours.
+          <Button
+            variant="primary"
+            disabled={!record?.account}
+            onClick={() => setDecision('approve')}
+          >
+            <Check size={16} aria-hidden />
+            {t('admin.recovery.approve')}
+          </Button>
+        ) : null}
+      </div>
+    ) : null;
 
   return (
     <Drawer
@@ -183,7 +204,7 @@ function RecoveryDrawer({ requestId, onClose }: { requestId: string | null; onCl
         setPhoto(null);
         onClose();
       }}
-      mode={canDecide ? 'review' : 'inspect'}
+      mode={canDecide || canStop ? 'review' : 'inspect'}
       title={
         record
           ? `${record.request.firstName} ${record.request.lastName}`
@@ -239,6 +260,7 @@ function RecoveryDrawer({ requestId, onClose }: { requestId: string | null; onCl
                       ? record.request.hasIdentityPhoto
                       : record.request.hasSelfie;
                   return (
+                    // Opens one photo (identity document or selfie) for 60 seconds; audited.
                     <Button
                       key={slot}
                       size="sm"

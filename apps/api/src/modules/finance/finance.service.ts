@@ -39,16 +39,19 @@ const PROVIDERS = Object.values(PaymentProviders);
 /** A checkout pending longer than this is an incident on the overview. */
 const STALE_PENDING_MINUTES = 60;
 
+/** An expense with who recorded it and who voided it. */
 export type ExpenseWithActors = OperatingExpense & {
   createdBy: { id: string; fullName: string };
   voidedBy: { id: string; fullName: string } | null;
 };
 
+/** An exceptional adjustment with who requested and who approved it. */
 export type AdjustmentWithActors = TransactionAdjustment & {
   requestedBy: { id: string; fullName: string };
   approvedBy: { id: string; fullName: string } | null;
 };
 
+/** One bar of the revenue chart (a day, week or month). */
 export interface SeriesPoint {
   start: Date;
   /** The bucket is not over yet (« période en cours »). */
@@ -60,6 +63,7 @@ export interface SeriesPoint {
   ended: number;
 }
 
+/** Everything the Finance page shows for a period and the one before. */
 export interface FinanceOverview {
   period: Period;
   previous: Period;
@@ -85,6 +89,7 @@ export interface FinanceOverview {
   incidents: { failedPayments: number; stalePendingPayments: number };
 }
 
+/** The CSV reports Finance can export. */
 export type ReportKind = 'revenue-by-plan' | 'subscriptions' | 'provider-fees';
 
 /**
@@ -103,6 +108,7 @@ export class FinanceService {
 
   // ─────────────────────────────── periods ───────────────────────────────
 
+  /** Refuses empty, reversed or too long periods. */
   assertPeriod(period: Period): void {
     const days = (period.to.getTime() - period.from.getTime()) / 86_400_000;
     if (!(days > 0) || days > MAX_PERIOD_DAYS) {
@@ -118,6 +124,7 @@ export class FinanceService {
 
   // ─────────────────────────────── fee rates ───────────────────────────────
 
+  /** The configured fee rate of each payment channel. */
   async feeRates(): Promise<Map<PaymentProvider, FeeRate>> {
     const rows = await this.prisma.paymentFeeRate.findMany();
     return new Map(
@@ -125,6 +132,7 @@ export class FinanceService {
     );
   }
 
+  /** Every channel with its rate (or none), for the fee settings table. */
   async feeRateRows() {
     const rows = await this.prisma.paymentFeeRate.findMany({
       include: { updatedBy: { select: { id: true, fullName: true } } },
@@ -135,6 +143,7 @@ export class FinanceService {
     }));
   }
 
+  /** Sets the estimated fee of one channel (percentage in basis points + fixed part); audited. */
   async setFeeRate(
     admin: AdminPrincipal,
     provider: PaymentProvider,
@@ -157,6 +166,7 @@ export class FinanceService {
 
   // ─────────────────────────────── expenses ───────────────────────────────
 
+  /** Operating expenses of a period, voided ones included (shown struck through). */
   expenses(period: Period): Promise<ExpenseWithActors[]> {
     return this.prisma.operatingExpense.findMany({
       where: { incurredOn: { gte: period.from, lt: period.to } },
@@ -168,6 +178,7 @@ export class FinanceService {
     });
   }
 
+  /** Records an operating expense; audited. */
   async addExpense(
     admin: AdminPrincipal,
     input: {
@@ -205,6 +216,7 @@ export class FinanceService {
     return created;
   }
 
+  /** Voids an expense (never deleted), with a reason; audited. */
   async voidExpense(
     admin: AdminPrincipal,
     id: string,
@@ -233,6 +245,7 @@ export class FinanceService {
 
   // ─────────────────────────────── fee settlement ───────────────────────────────
 
+  /** Replaces estimated fees with the actual fees of the provider's statement; audited. */
   async settleFees(
     admin: AdminPrincipal,
     items: { transactionId: string; feesMinor: number }[],
@@ -256,6 +269,7 @@ export class FinanceService {
 
   // ─────────────────────────────── adjustments ───────────────────────────────
 
+  /** The adjustments of one transaction, oldest first. */
   adjustmentsOf(transactionId: string): Promise<AdjustmentWithActors[]> {
     return this.prisma.transactionAdjustment.findMany({
       where: { transactionId },
@@ -335,6 +349,10 @@ export class FinanceService {
     return created;
   }
 
+  /**
+   * Second admin's approval of an adjustment (never the one who requested it); only then does it
+   * count.
+   */
   async approveAdjustment(
     admin: AdminPrincipal,
     adjustmentId: string,
@@ -377,6 +395,10 @@ export class FinanceService {
 
   // ─────────────────────────────── overview ───────────────────────────────
 
+  /**
+   * Builds the Finance page: ledger of the period and the previous one, subscription figures,
+   * revenue per plan, the chart series and payment incidents.
+   */
   async overview(period: Period, now = new Date()): Promise<FinanceOverview> {
     this.assertPeriod(period);
     const previous = previousPeriod(period);
@@ -585,6 +607,7 @@ export class FinanceService {
 
   // ─────────────────────────────── helpers ───────────────────────────────
 
+  /** Payments, approved adjustments and live expenses of a period, and their ledger. */
   private async periodData(period: Period, rates: Map<PaymentProvider, FeeRate>) {
     const [revenue, adjustments, expenses] = await Promise.all([
       this.ledger.revenue(period.from, period.to),
@@ -600,6 +623,7 @@ export class FinanceService {
     return { revenue, ledger: ledgerOf({ revenue, rates, adjustments, expenses }) };
   }
 
+  /** Audit entry of a finance action. */
   private record(
     admin: AdminPrincipal,
     client: ClientInfo,

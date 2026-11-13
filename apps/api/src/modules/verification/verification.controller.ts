@@ -46,6 +46,7 @@ export class VerificationController {
     return VerificationOverviewDto.from(await this.verification.overview(user.userId));
   }
 
+  /** POST /v1/me/verification/cases: starts a case. */
   @Post('cases')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: VerificationCaseDto })
@@ -58,6 +59,7 @@ export class VerificationController {
     );
   }
 
+  /** PUT /v1/me/verification/cases/:id/details: saves the declared details. */
   @Put('cases/:id/details')
   @ApiOkResponse({ type: VerificationCaseDto })
   async saveDetails(
@@ -94,6 +96,7 @@ export class VerificationController {
     return VerificationCaseDto.from(await this.verification.attach(user.userId, caseId, body));
   }
 
+  /** Removes a file from a case being prepared. */
   @Delete('cases/:id/documents/:documentId')
   @ApiOkResponse({ type: VerificationCaseDto })
   async removeDocument(

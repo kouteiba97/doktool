@@ -28,6 +28,7 @@ export class LocalStorageController {
     private readonly storage: StorageService,
   ) {}
 
+  /** GET with a signed token: streams the object. */
   @Get()
   async read(@Query('token') token: string | undefined, @Res() response: Response): Promise<void> {
     const local = this.local();
@@ -45,6 +46,7 @@ export class LocalStorageController {
       .send(Buffer.from(bytes));
   }
 
+  /** PUT with a signed token: stores the body if type and size match the grant. */
   @Put()
   @HttpCode(HttpStatus.OK)
   async write(@Query('token') token: string | undefined, @Req() request: Request): Promise<void> {
@@ -66,6 +68,7 @@ export class LocalStorageController {
     });
   }
 
+  /** The local adapter, or 404 when R2 is configured. */
   private local(): LocalStorageAdapter {
     if (this.env.STORAGE_DRIVER !== 'local' || !(this.storage instanceof LocalStorageAdapter)) {
       throw new DomainError('NOT_FOUND', 'Not found.');

@@ -1,5 +1,6 @@
 // Reference Library rules (design system section 13).
 
+/** Limits of titles and reasons. */
 export const TITLE_MAX_LENGTH = 200;
 export const REASON_MIN_LENGTH = 3;
 export const REASON_MAX_LENGTH = 500;

@@ -12,6 +12,7 @@ import {
 /** The fee the fake gateway reports, like Chargily's 2.5 % (illustrative only). */
 const FAKE_FEE_RATE = 0.025;
 
+/** An order kept in memory with the outcome chosen on the fake page. */
 interface FakeOrder {
   order: RegisterOrder;
   outcome: 'PENDING' | 'PAID' | 'FAILED';
@@ -35,6 +36,7 @@ export class FakeGateway extends PaymentGateway {
     super();
   }
 
+  /** Keeps the order in memory and points to the API's own fake payment page. */
   register(order: RegisterOrder): Promise<RegisteredOrder> {
     const providerReference = `fake-${randomUUID()}`;
     this.orders.set(providerReference, { order, outcome: 'PENDING' });
@@ -45,6 +47,7 @@ export class FakeGateway extends PaymentGateway {
     });
   }
 
+  /** The outcome chosen on the fake page (pending until a button is pressed). */
   status(providerReference: string): Promise<OrderOutcome> {
     const fake = this.orders.get(providerReference);
     if (!fake || fake.outcome === 'PENDING') return Promise.resolve({ status: 'PENDING' });
@@ -72,6 +75,7 @@ export class FakeGateway extends PaymentGateway {
     return fake.order.returnUrl;
   }
 
+  /** The order shown on the fake page. */
   describe(providerReference: string): RegisterOrder | null {
     return this.orders.get(providerReference)?.order ?? null;
   }

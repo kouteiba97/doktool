@@ -20,6 +20,7 @@ import {
   type SubscriptionStatus,
 } from './labels';
 
+/** One subscription row. */
 type Subscription = Schemas['AdminSubscriptionDto'];
 
 const PAGE_SIZE = 50;
@@ -30,6 +31,7 @@ export function SubscriptionsList() {
   const { t, locale } = useI18n();
   const errorText = useErrorText();
   const [status, setStatus] = useState<SubscriptionStatus | ''>('');
+  // Pages of subscriptions for the filters.
   const list = useInfiniteQuery({
     queryKey: ['admin', 'subscriptions', status],
     initialPageParam: undefined as string | undefined,
@@ -143,6 +145,7 @@ export function SubscriptionsList() {
       />
       {list.hasNextPage ? (
         <div>
+          {/* « Charger plus ». */}
           <Button
             size="sm"
             busy={list.isFetchingNextPage}

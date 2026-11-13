@@ -25,6 +25,7 @@ class EditProfileScreen extends ConsumerStatefulWidget {
   ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
+/// The names and bio being edited, and progress flags.
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _first = TextEditingController();
   final _last = TextEditingController();
@@ -34,6 +35,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool _photoBusy = false;
   ApiError? _error;
 
+  /// Frees the text controllers.
   @override
   void dispose() {
     _first.dispose();
@@ -44,6 +46,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   bool get _valid => _first.text.trim().isNotEmpty && _last.text.trim().isNotEmpty && _bio.text.length <= 280;
 
+  /// « Enregistrer »: saves the names and bio.
   Future<void> _save() async {
     setState(() {
       _saving = true;
@@ -63,6 +66,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
+  /// « Changer la photo »: picks a JPEG or PNG and uploads it.
   Future<void> _changePhoto() async {
     final picked = (await FilePicker.pickFiles(
       type: FileType.custom,
@@ -85,6 +89,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
+  /// « Supprimer la photo ».
   Future<void> _removePhoto() async {
     setState(() => _photoBusy = true);
     try {
@@ -111,6 +116,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       title: l10n.profileEditTitle,
       actions: [
         if (_error != null) DtAlert(severity: DtAlertSeverity.critical, body: commonErrorText(context, _error!)),
+        // « Enregistrer »: needs valid names.
         DtButton(label: l10n.profileSave, loading: _saving, onPressed: me != null && _valid ? _save : null),
       ],
       children: [
@@ -126,6 +132,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // « Changer la photo ».
                     DtButton(
                       label: l10n.profilePhotoChange,
                       variant: DtButtonVariant.secondary,
@@ -135,6 +142,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       onPressed: _changePhoto,
                     ),
                     if (me.avatarUrl != null)
+                      // « Supprimer la photo ».
                       TextButton(
                         onPressed: _photoBusy ? null : _removePhoto,
                         child: Text(l10n.profilePhotoRemove, style: DtType.label.copyWith(color: colors.brand)),

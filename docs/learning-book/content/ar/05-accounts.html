@@ -1,0 +1,65 @@
+<section class="chapter">
+<h2 id="ch5">5. الحسابات: التسجيل، الدخول، الجلسات، الاسترجاع، الحذف</h2>
+<p class="lead">وحدتان تحملان الحسابات. <code>users</code> تملك صفوف الحسابات (الأسماء، جهات الاتصال، الملف المهني، التفضيلات). و<code>auth</code> تملك كل ما يثبت هوية الشخص: الرموز، كلمات المرور، الجلسات، رموز التحديث، تغيير جهات الاتصال، الاسترجاع والحذف (ADR-009، ADR-023).</p>
+
+<h3 id="ch5-identifier">5.1 حقل واحد للبريد أو الهاتف</h3>
+<p>يسجّل الناس ببريد إلكتروني <i>أو</i> رقم هاتف جزائري، يُكتب في الحقل نفسه. كل شيء يبدأ بتوحيد صيغته:</p>
+[[code apps/api/src/modules/users/identifier.ts | export function parseIdentifier | block]]
+<p>البريد يُحوَّل إلى حروف صغيرة؛ والرقم <code>0555 12 34 56</code> يصبح <code>+213555123456</code> (صيغة E.164). ثم تحدّد القناة <code>channel</code> (<code>EMAIL</code> أو <code>SMS</code>) طريقة إرسال الرموز.</p>
+
+<h3 id="ch5-signup">5.2 التسجيل على خطوتين</h3>
+<div class="diagram">App                                   API                                         DB / providers
+SignUpScreen « Créer mon compte »
+  POST /v1/auth/sign-up  {firstName, lastName, identifier, password, wilayaCode, termsVersion, language}
+                                      AuthService.signUp
+                                        parse identifier, password ≠ identifier, terms version current
+                                        UsersService: create (or restart) an UNCONFIRMED account
+                                        OtpService.issue(SIGN_UP)  ─────────────► code by e-mail / SMS
+                       ◄─ { challengeId, destinationHint "a•••@x.dz", resendAvailableAt, expiresAt }
+OtpScreen (6 boxes)
+  POST /v1/auth/sign-up/confirm {challengeId, code, deviceId}
+                                      OtpService.consume → contact confirmed
+                                      DemoService.markConverted(deviceId)   (if this phone ran a demo)
+                                      SessionsService.open → access + refresh tokens
+                       ◄─ AuthTokens
+RoleSelectScreen « Qui êtes-vous ? » → professional profile → verification</div>
+<p>الخطوة الأولى تنشئ حسابًا غير مؤكَّد وترسل رمزًا من ستة أرقام؛ والثانية تتحقق من الرمز، تؤكّد جهة الاتصال، تسجّل الدخول على هذا الجهاز، وإن كان الهاتف قد شغّل عرضًا تجريبيًا تُعلِّم ذلك العرض بأنه « تحوّل إلى حساب ».</p>
+[[code apps/api/src/modules/auth/auth.service.ts | async signUp( | block]]
+<p>الحساب غير المؤكَّد الذي لا يُؤكَّد أبدًا تحذفه المهمة <code>users.purge-unconfirmed</code>. وإعادة التسجيل بالمعرّف نفسه تعيد تشغيله بدل أن تفشل — فمن أضاع الرمز الأول لا يبقى عالقًا.</p>
+[[code apps/api/src/modules/auth/auth.service.ts | async confirmSignUp( | block]]
+
+<h3 id="ch5-otp">5.3 الرموز لمرة واحدة</h3>
+<p><code>OtpService</code> يخدم أربعة أغراض: التسجيل، استعادة كلمة المرور، تغيير جهة الاتصال، واسترجاع الحساب. قواعده: ستة أرقام؛ الرمز نفسه لا يُخزَّن أبدًا (بل HMAC مربوط بالتحدّي)؛ 60 ثانية بين إرسالين و5 إرسالات على الأكثر؛ 3 رموز خاطئة تقفل التحدّي 10 دقائق؛ ولا يُستهلَك تحدٍّ إلا لغرضه.</p>
+[[code apps/api/src/modules/auth/otp.service.ts | private async verify( | block]]
+<div class="note"><b>لا كشف للحسابات.</b> « Mot de passe oublié » (نسيت كلمة المرور) يجيب دائمًا بتحدٍّ، حتى لمعرّف لا حساب له — في هذه الحالة لا يُرسَل شيء (<code>delivers()</code>)، لكن الجواب يبدو مطابقًا، فلا يستطيع أحد أن يختبر أي بريد له حساب.</div>
+
+<h3 id="ch5-signin">5.4 الدخول، القفل والجلسات</h3>
+[[code apps/api/src/modules/auth/auth.service.ts | async signIn( | block]]
+<p>اقرأها كقائمة فحص: حد للمعدّل لكل عنوان IP ولكل معرّف؛ خمس كلمات مرور خاطئة تقفل الحساب 15 دقيقة (<code>ACCOUNT_LOCKED</code> مع <code>retryAt</code>)؛ الحسابات الموقوفة وغير المؤكّدة تُرفض بأكوادها الخاصة؛ والنجاح يفتح <b>جلسة</b> مرتبطة بمعرّف تثبيت الجهاز — ومهم للاسترجاع — يلغي أي استرجاع بدأه شخص آخر.</p>
+<p>الجلسة صف في <code>user_sessions</code> ورموز تحديثها في <code>refresh_tokens</code> (بصمتها SHA-256 فقط). يستطيع الخادم أن يعرض جلسات الشخص (<code>GET /v1/me/sessions</code>) وأن ينهي إحداها (<code>DELETE /v1/me/sessions/:sessionId</code>)؛ تطبيق النسخة الأولى لا يعرض هذه القائمة بعد، لكن تغيير كلمة المرور والاسترجاع والإيقاف تستعمل الإلغاء نفسه. ولأن <code>UserTokens.verify</code> يفحص الجلسة في كل طلب، يخرج الجهاز الآخر من أول طلب تالٍ له.</p>
+
+<h3 id="ch5-security">5.5 تغيير جهات الاتصال وكلمة المرور</h3>
+<p><code>AccountSecurityService</code> (الإعدادات › « Sécurité du compte ») يتبع مبدأً واحدًا: <b>كل تغيير يطلب كلمة المرور الحالية</b>، فهاتف مُعار غير مقفل لا يستطيع الاستيلاء على الحساب؛ و<b>كل تغيير يُعلَن على جهة الاتصال الأخرى</b>، فيعلم المالك به حتى لو سيطر المهاجم على قناة واحدة.</p>
+[[code apps/api/src/modules/auth/account-security.service.ts | async changePassword( | block]]
+
+<h3 id="ch5-recovery">5.6 الاسترجاع بمساعدة: « J'ai perdu l'accès aux deux »</h3>
+<p>عندما يفقد شخص بريده وهاتفه معًا، يتحقق إنسان من هويته:</p>
+[[code apps/api/src/modules/auth/account-recovery.service.ts | export class AccountRecoveryService | 24]]
+<div class="diagram">1 start         lost contact + first/last name + NEW contact      → code sent to the new contact
+2 confirm       code proves the new contact                         → recovery token (60 min to finish)
+3 photos        identity document + selfie → private bucket           (JPEG/PNG, 10 MB, signed upload)
+4 submit        request goes to Admin Web « Récupération »             answer promised within 72 h
+5 review        admin compares photos with the verified identity  → approve (note) or reject (reason)
+6 hold 24 h     the owner is told; signing in with the password CANCELS the request
+7 apply         job every 10 min: new contact replaces the old ones, password unusable, all devices out</div>
+<p>الخطوات: (1) جهة الاتصال المفقودة والاسم وجهة اتصال جديدة، فيُرسَل رمز إليها؛ (2) الرمز يثبت ملكية الجهة الجديدة؛ (3) صورة الهوية وصورة شخصية إلى الدلو الخاص؛ (4) الإرسال إلى طابور الإدارة؛ (5) المراجعة والقبول أو الرفض؛ (6) مهلة 24 ساعة يُبلَّغ فيها المالك، ودخوله بكلمة المرور يلغي الطلب؛ (7) التطبيق.</p>
+<p>خطوة التطبيق هي حيث وجد تدقيق أكتوبر 2026 حالة سباق: صار الطلب الآن <b>يُحجَز أولًا</b> (من APPROVED إلى APPLIED بتحديث شرطي واحد)، وبعد ذلك فقط تُستبدَل جهات الاتصال. إن ألغى المالك في اللحظة نفسها، يفشل الحجز ولا يتغيّر شيء.</p>
+[[code apps/api/src/modules/auth/account-recovery.service.ts | private async apply( | block]]
+
+<h3 id="ch5-delete">5.7 حذف الحساب</h3>
+[[code apps/api/src/modules/auth/account-deletion.service.ts | async delete(userId | block]]
+<p>كل وحدة تحمل بيانات شخصية تكشف دالة <code>eraseUser(userId)</code>؛ والحذف يستدعيها كلها، ويُخفي هوية صف الحساب (المالية وسجل التدقيق يجب أن يحتفظا بتاريخهما، دون اسم)، ويلغي كل جلسة، ويكتب سطر تدقيق واحدًا. وعلى الهاتف ينسى التطبيق بعدها كل إعداد شخصي احتفظ به (الفصل 11).</p>
+
+<h3 id="ch5-constants">5.8 الأرقام، في مكان واحد</h3>
+[[file apps/api/src/modules/auth/auth.policy.ts]]
+</section>

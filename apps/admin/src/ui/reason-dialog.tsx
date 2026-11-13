@@ -14,6 +14,7 @@ import { Field, TextArea } from './field';
 /** Same bounds as the API's reason fields (3–500 characters, trimmed). */
 export const reasonSchema = z.string().trim().min(3).max(500);
 
+/** What a reason dialog shows and does when confirmed. */
 interface ReasonDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -53,6 +54,7 @@ export function ReasonDialog({
     if (open) form.reset({ reason: '' });
   }, [open, form]);
 
+  // Validates the reason, calls onConfirm, closes on success, shows the error otherwise.
   const submit = form.handleSubmit(async ({ reason }) => {
     try {
       await onConfirm(reason.trim());
@@ -72,9 +74,11 @@ export function ReasonDialog({
       onSubmit={() => void submit()}
       footer={
         <>
+          {/* « Annuler »: closes without doing anything. */}
           <Button onClick={() => onOpenChange(false)} disabled={isSubmitting}>
             {t('admin.common.cancel')}
           </Button>
+          {/* Confirm button: submits the reason with the decision. */}
           <Button type="submit" variant={confirmVariant} busy={isSubmitting} disabled={!ready}>
             {confirmLabel}
           </Button>

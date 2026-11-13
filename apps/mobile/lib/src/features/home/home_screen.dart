@@ -28,7 +28,6 @@ import '../verification/verification_controller.dart';
 import '../../ui/content_row.dart';
 import '../activity/activity_data.dart';
 import '../activity/activity_screen.dart';
-import '../activity/favorites_controller.dart';
 
 /// ScreenHomeMobile / ScreenHomeStudent: identity line, the glass search field first, the three
 /// V1 resources on one strip, then « Commencer ». What can be opened comes from the AccessProfile,
@@ -92,7 +91,15 @@ class HomeScreen extends ConsumerWidget {
                           showBell: session is UserSession,
                         ),
                         const SizedBox(height: DtSpace.s5),
+                        // The search bar: opens the search screen.
                         _GlassSearchField(label: l10n.homeSearchHint, onTap: () => context.push(Routes.search)),
+                        const SizedBox(height: DtSpace.s3),
+                        // Fastest way to a drug in pregnancy or lactation: straight into typing (ADR-025).
+                        _GlassSearchField(
+                          label: l10n.homeSearchPregnancy,
+                          icon: LucideIcons.baby,
+                          onTap: () => context.go(Routes.library(LibrarySection.pregnancy, focus: true)),
+                        ),
                       ],
                     ),
                   ),
@@ -127,12 +134,14 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  /// The profession's name in the UI language.
   static String _roleName(AppLocalizations l10n, ProfessionalType type) => switch (type) {
     ProfessionalType.doctor => l10n.roleDoctor,
     ProfessionalType.resident => l10n.roleResident,
     _ => l10n.roleStudent,
   };
 
+  /// The access tier's name (Pro, sample, student, demo, restricted).
   static String _accessName(AppLocalizations l10n, AccessProfileDto access) => switch (access.tier) {
     EntitlementTier.professional => l10n.accessPro,
     EntitlementTier.professionalUnpaid => l10n.accessSample,
@@ -142,6 +151,7 @@ class HomeScreen extends ConsumerWidget {
   };
 }
 
+/// The top line: the person's name, role and access, with the notifications bell.
 class _IdentityLine extends ConsumerWidget {
   const _IdentityLine({required this.name, required this.line, required this.showBell});
 
@@ -186,6 +196,7 @@ class _IdentityLine extends ConsumerWidget {
           ),
         ),
         if (showBell)
+          // The bell: opens the notifications.
           DtGlassIconButton(
             tooltip: l10n.homeNotifications,
             onPressed: () => context.push(Routes.notifications),
@@ -196,11 +207,13 @@ class _IdentityLine extends ConsumerWidget {
   }
 }
 
+/// The search bar of Home; tapping it opens the search screen.
 class _GlassSearchField extends StatelessWidget {
-  const _GlassSearchField({required this.label, required this.onTap});
+  const _GlassSearchField({required this.label, required this.onTap, this.icon = LucideIcons.search});
 
   final String label;
   final VoidCallback onTap;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -232,7 +245,7 @@ class _GlassSearchField extends StatelessWidget {
                   child: Row(
                     children: [
                       const SizedBox(width: DtSpace.s4),
-                      Icon(LucideIcons.search, color: colors.inkMuted),
+                      Icon(icon, color: colors.inkMuted),
                       const SizedBox(width: DtSpace.s2),
                       Expanded(
                         child: Text(label, style: DtType.body.copyWith(color: colors.inkSecondary)),
@@ -249,6 +262,7 @@ class _GlassSearchField extends StatelessWidget {
   }
 }
 
+/// Shortcuts to each library section.
 class _QuickActions extends StatelessWidget {
   const _QuickActions({required this.items});
 
@@ -264,6 +278,7 @@ class _QuickActions extends StatelessWidget {
         children: [
           for (final (section, label, icon) in items)
             Expanded(
+              // A shortcut tile: opens that library section.
               child: Semantics(
                 button: true,
                 label: label,
@@ -331,6 +346,7 @@ class _VerificationLine extends ConsumerWidget {
     return DtAlert(
       severity: DtAlertSeverity.info,
       body: message,
+      // « Voir la vérification ».
       action: InkWell(
         onTap: () => context.push(Routes.verificationStatus),
         child: Text(l10n.homeVerificationLink, style: DtType.label.copyWith(color: colors.brand)),
@@ -355,6 +371,7 @@ class _DemoBar extends StatelessWidget {
           Expanded(
             child: Text(l10n.demoBar, style: DtType.caption.copyWith(color: colors.onHero)),
           ),
+          // « Voir les offres ».
           TextButton(
             onPressed: () => context.push(Routes.plans),
             style: TextButton.styleFrom(minimumSize: const Size(0, DtSize.touchMin)),
@@ -382,9 +399,7 @@ class _RecentsAndFavorites extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.colors;
     final recents = ref.watch(recentContentProvider).value ?? const <ContentRef>[];
-    final index = ref.watch(contentIndexProvider).value ?? const <String, ContentRef>{};
-    final favoriteKeys = ref.watch(favoritesProvider).value?.keys ?? const <FavoriteKey>{};
-    final favorites = [for (final key in favoriteKeys) ?index[key.id]].take(5).toList();
+    final favorites = ref.watch(favoriteContentProvider).value ?? const <ContentRef>[];
 
     Widget row(ContentRef content) => ContentRow(
       icon: content.icon,
@@ -413,6 +428,7 @@ class _RecentsAndFavorites extends ConsumerWidget {
                   (LibrarySection.calculators, l10n.homeStartCalculators, LucideIcons.calculator),
                   (LibrarySection.pregnancy, l10n.homeStartPregnancy, LucideIcons.baby),
                 ])
+                  // A row of the « Raccourcis » list.
                   ListTile(
                     minTileHeight: DtSize.row,
                     leading: Icon(icon, color: colors.brand),

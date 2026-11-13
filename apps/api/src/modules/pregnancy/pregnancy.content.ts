@@ -23,7 +23,8 @@ export type Conduct = (typeof CONDUCTS)[number];
 export const EVIDENCE_LEVELS = [0, 1, 2, 3, 4] as const;
 const evidence = z
   .object({
-    level: z.number().int().min(0).max(4),
+    /** Null only in a draft: an import never invents a level; review requires one. */
+    level: z.number().int().min(0).max(4).nullable(),
     /** « cohortes et séries concordantes », « < 100 grossesses exposées »… */
     population: localized.optional(),
   })
@@ -37,14 +38,29 @@ const conflict = z
   })
   .strict();
 
+/** Status exactly as the imported source wrote it (« Non valide »), kept beside the conduct. */
+const reportedStatus = z.string().trim().min(1).max(200).optional();
+/** Sources (of this version) that support this period specifically. */
+const periodSources = z.array(z.uuid()).max(10).optional();
+/**
+ * Alternative names an import could not link to a substance with certainty. Review is refused
+ * until an author links each one to a substance or removes it: nothing is matched by similarity.
+ */
+const unresolvedAlternatives = z.array(z.string().trim().min(1).max(200)).max(10).optional();
+
 const period = z
   .object({
     conduct: z.enum(CONDUCTS).nullable(),
+    reportedStatus,
     /** One sentence: « Contre-indiqué à partir de 24 SA (5e mois révolu) ». */
     conductDetail: localized.optional(),
     riskContext: localized.optional(),
     evidence,
     considerations: localized.optional(),
+    sourceIds: periodSources,
+    /** Alternatives specific to this period (the block's alternatives apply to every period). */
+    alternatives: z.array(z.uuid()).max(10).optional(),
+    unresolvedAlternatives,
   })
   .strict();
 export type PregnancyPeriod = z.infer<typeof period>;
@@ -72,6 +88,7 @@ const pregnancy = z
 const lactation = z
   .object({
     conduct: z.enum(CONDUCTS).nullable(),
+    reportedStatus,
     /** Conduct first, in one sentence: « Compatible avec l'allaitement. Surveiller les selles. » */
     conductText: localized.optional(),
     /** Relative infant dose as the source states it: « 0,5 – 1 % ». */
@@ -85,6 +102,8 @@ const lactation = z
     considerations: localized.optional(),
     alternatives,
     conflict: conflict.optional(),
+    sourceIds: periodSources,
+    unresolvedAlternatives,
   })
   .strict();
 
@@ -112,6 +131,7 @@ export function reviewProblems(
 ): string[] {
   const problems: string[] = [];
   if (context.sourceIds.length === 0) problems.push('sources: at least one source is required');
+  /** Reports alternatives that are the substance itself or not an existing substance. */
   const checkAlternatives = (where: string, ids: readonly string[]) => {
     for (const id of ids) {
       if (id === context.substanceId)
@@ -120,6 +140,27 @@ export function reviewProblems(
         problems.push(`${where}.alternatives: unknown substance ${id}`);
     }
   };
+  /**
+   * Reports a period without its evidence level, citing a source not attached to this version, or
+   * with alternatives not yet linked to a substance.
+   */
+  const checkPeriod = (
+    where: string,
+    value: {
+      evidence: { level: number | null };
+      sourceIds?: string[];
+      unresolvedAlternatives?: string[];
+    },
+  ) => {
+    if (value.evidence.level === null) problems.push(`${where}.evidence.level: required`);
+    if (value.sourceIds?.some((id) => !context.sourceIds.includes(id)))
+      problems.push(`${where}.sourceIds: cite this version's sources`);
+    for (const name of value.unresolvedAlternatives ?? [])
+      problems.push(
+        `${where}.unresolvedAlternatives: link « ${name} » to a substance or remove it`,
+      );
+  };
+  /** Reports a conflict between sources that cites sources not attached to this version. */
   const checkConflict = (where: string, value: { sourceIds: string[] } | undefined) => {
     if (value && value.sourceIds.some((id) => !context.sourceIds.includes(id))) {
       problems.push(`${where}.conflict: cite two of this version's sources`);
@@ -132,10 +173,14 @@ export function reviewProblems(
     for (const key of PERIODS) {
       const value = content.pregnancy.periods[key];
       if (!value) problems.push(`pregnancy.periods.${key}: required`);
-      else if (value.conduct && !value.conductDetail) {
-        problems.push(
-          `pregnancy.periods.${key}.conductDetail: explain the conduct in one sentence`,
-        );
+      else {
+        if (value.conduct && !value.conductDetail) {
+          problems.push(
+            `pregnancy.periods.${key}.conductDetail: explain the conduct in one sentence`,
+          );
+        }
+        checkPeriod(`pregnancy.periods.${key}`, value);
+        checkAlternatives(`pregnancy.periods.${key}`, value.alternatives ?? []);
       }
     }
     checkAlternatives('pregnancy', content.pregnancy.alternatives);
@@ -146,6 +191,7 @@ export function reviewProblems(
     problems.push('lactation: the lactation block is required');
   } else {
     if (!content.lactation.conductText) problems.push('lactation.conductText: required');
+    checkPeriod('lactation', content.lactation);
     checkAlternatives('lactation', content.lactation.alternatives);
     checkConflict('lactation', content.lactation.conflict);
   }
@@ -157,6 +203,7 @@ export function alternativeIds(content: ProfileContent): string[] {
   return [
     ...new Set([
       ...(content.pregnancy?.alternatives ?? []),
+      ...Object.values(content.pregnancy?.periods ?? {}).flatMap((p) => p?.alternatives ?? []),
       ...(content.lactation?.alternatives ?? []),
     ]),
   ];

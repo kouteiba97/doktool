@@ -21,6 +21,7 @@ export class TwilioSms extends SmsGateway {
     super();
   }
 
+  /** Posts one SMS to Twilio with Basic authentication; returns Twilio's message id. */
   async send(to: string, text: string): Promise<SmsSent> {
     const sid = this.env.TWILIO_ACCOUNT_SID!;
     const form = new URLSearchParams({ To: to, Body: text });

@@ -1,0 +1,74 @@
+<section class="chapter">
+<h2 id="ch11">11. How the mobile app is built — Flutter, Riverpod, go_router, drift</h2>
+<p class="lead">The app is written in Dart with Flutter, one code base for iOS and Android. Four libraries shape every file: <b>Riverpod</b> (state and dependencies), <b>go_router</b> (screens and redirects), <b>dio</b> with a generated client (the API), and <b>drift</b> (a small SQLite database on the phone). This chapter explains each with the app's own code.</p>
+
+<h3 id="ch11-layout">11.1 The folders</h3>
+<div class="diagram">lib/main.dart                 runApp(ProviderScope(DokToolApp))
+lib/src/app.dart              MaterialApp.router: themes, languages, router; wraps every screen with
+                              AnalyticsHost (screen views) and OfflineSyncHost (sync on resume)
+lib/src/core/                 api/ (dio, interceptors, errors, generated client) · auth/ (session, vault)
+                              database/ (drift) · storage/ (Keychain/Keystore) · network/ · config/
+lib/src/features/&lt;feature&gt;/   screens + their providers/controllers, one folder per feature
+lib/src/ui/                   the widget kit: DtButton, DtAlert, DtBadge, DtTextField, ContentRow, locks…
+lib/src/theme/                doktool_tokens.dart (generated) + tokens.dart (context.colors…)
+lib/src/router/app_router.dart  every route and the redirect rules
+lib/l10n/                     ARB files built from packages/i18n → AppLocalizations</div>
+
+<h3 id="ch11-start">11.2 Start-up</h3>
+[[file apps/mobile/lib/main.dart]]
+[[code apps/mobile/lib/src/app.dart | class DokToolApp | block]]
+<p>Appearance (light, dark, system) and language (FR, EN) come from <code>SettingsController</code> and apply instantly. <code>providerRetry</code> makes Riverpod retry a failed load a few times — except when there is no network, where the screen says « Connexion requise » at once.</p>
+
+<h3 id="ch11-riverpod">11.3 Riverpod in five minutes</h3>
+<p>A <b>provider</b> is a named piece of state or service. Widgets <code>ref.watch(provider)</code> to rebuild when it changes, or <code>ref.read(provider)</code> to use it once (in a button handler). The kinds used here:</p>
+<table>
+  <tr><th>Kind</th><th>Example</th><th>Used for</th></tr>
+  <tr><td><code>Provider</code></td><td><code>apiProvider</code>, <code>appDatabaseProvider</code>, <code>offlineStoreProvider</code></td><td>Services (one instance, injected).</td></tr>
+  <tr><td><code>FutureProvider</code></td><td><code>wilayasProvider</code>, <code>legalProvider</code></td><td>Load once, show loading / error / data.</td></tr>
+  <tr><td><code>AsyncNotifier</code></td><td><code>SessionController</code>, <code>AccessController</code>, <code>FavoritesController</code>, <code>OfflineSyncController</code></td><td>State that loads and then changes through methods (<code>toggle</code>, <code>reload</code>, <code>signOut</code>).</td></tr>
+  <tr><td><code>Notifier</code></td><td><code>OnboardingDraftController</code>, <code>PendingCheckoutController</code></td><td>Synchronous state kept in memory.</td></tr>
+</table>
+<p>Providers depend on each other: <code>AccessController.build</code> watches the session, so when the session changes (sign-in, sign-out, demo) the access profile reloads by itself:</p>
+[[code apps/mobile/lib/src/features/access/access_controller.dart | class AccessController | block]]
+<p>In a screen, the three states are drawn with <code>.when(...)</code> or by reading <code>.value</code>, <code>.isLoading</code>, <code>.hasError</code>. Loading lists show skeleton rows, never a spinner (design section 22).</p>
+
+<h3 id="ch11-session">11.4 The session</h3>
+<p>Who is using the phone is a <b>sealed class</b> with three cases — the compiler forces every <code>switch</code> to handle all of them:</p>
+[[code apps/mobile/lib/src/core/auth/session.dart | sealed class Session | 25]]
+<p><code>SessionVault</code> keeps the secrets: refresh and renewal tokens in the Keychain / Keystore (<code>SecureStore</code>), the access token in memory only. When several requests need a new access token at once, they all wait for the <b>same</b> refresh ("single-flight") — refresh tokens are single-use, so two parallel refreshes would revoke the session:</p>
+[[code apps/mobile/lib/src/core/auth/session_vault.dart | Future<String?> accessToken( | block]]
+[[code apps/mobile/lib/src/core/auth/auth_interceptor.dart | Future<void> onError( | block]]
+<p>The installation id that binds a session to the phone is created once; since the October audit concurrent first calls share one future, so they can never create two different ids (fix M1):</p>
+[[code apps/mobile/lib/src/core/storage/secure_store.dart | class SecureStore | block]]
+<p><code>SessionController</code> exposes the session to the app. Signing out — or the server ending the session — forgets everything personal left on the phone (fixes M2 and M3):</p>
+[[code apps/mobile/lib/src/core/auth/session_controller.dart | class SessionController | block]]
+
+<h3 id="ch11-router">11.5 Routes and redirects</h3>
+<p>Every screen has a path in <code>Routes</code>. The redirect function decides, on every navigation and whenever the session or the account changes, where the person is allowed to be:</p>
+[[code apps/mobile/lib/src/router/app_router.dart | String? redirectFor({ | block]]
+<ul>
+  <li>Signed out → only public pages (welcome, sign-in, sign-up, codes, demo start, recovery).</li>
+  <li>Demo → never public pages again, never account-only pages (subscription, profile edit, verification…).</li>
+  <li>Account without a profession → « Qui êtes-vous ? » first.</li>
+  <li>Locked content is <b>never</b> hidden by a redirect: the screen renders its locked state.</li>
+</ul>
+<p>The three tabs (Accueil, Bibliothèque, Profil) are a <code>StatefulShellRoute</code>: each tab keeps its own stack, and tapping the active tab again goes back to its first screen. The round button in the middle of the bar opens search over everything; « Activité et favoris » is reached from Profil.</p>
+
+<h3 id="ch11-api">11.6 Talking to the API</h3>
+<p>The client under <code>core/api/generated/</code> is produced from <code>openapi.json</code> by <code>swagger_parser</code> + <code>build_runner</code>: one method per endpoint (<code>api.calculators.calculatorsControllerList()</code>) and one immutable class per DTO. Two interceptors are added to dio: the language (<code>Accept-Language</code>) and the token (<code>AuthInterceptor</code>). Failures become an <code>ApiError</code> with the server's code; screens translate their specific codes and fall back to <code>commonErrorText</code>.</p>
+[[code apps/mobile/lib/src/core/api/api_error.dart | static ApiError from( | block]]
+
+<h3 id="ch11-db">11.7 The local database (drift)</h3>
+<p>A small SQLite database keeps: device settings (key/value), offline documents, calculators and substances, and the analytics queue. Settings that belong to a <i>person</i> rather than the phone are listed so they can be forgotten at sign-out:</p>
+[[code apps/mobile/lib/src/core/database/app_database.dart | static const personalSettings | 22]]
+
+<h3 id="ch11-ui">11.8 The widget kit and tokens</h3>
+<p>Screens are built from <code>lib/src/ui/</code>: <code>DtButton</code> (one primary per region, a spinner while loading, disabled when <code>onPressed</code> is null), <code>DtTextField</code> (label above, error on blur), <code>DtAlert</code>, <code>DtBadge</code> (always a word), <code>ContentRow</code> (a list row with its lock), <code>DtPickerField</code> (searchable bottom-sheet picker), <code>DtSegmentedControl</code>, <code>DtPillTabs</code>, <code>DtChoiceList</code> (long answers in full), the glass hero (<code>DtGlass</code>, <code>DtHeroAppBar</code>) and <code>LockLabel</code> / <code>showLockSheet</code>. Colours, spacing, radii and durations come only from tokens: <code>context.colors.brand</code>, <code>DtSpace.s4</code>, <code>DtRadius.lg</code>. CI rejects a raw colour literal.</p>
+[[code apps/mobile/lib/src/ui/locks.dart | Future<void> showLockSheet( | block]]
+
+<h3 id="ch11-l10n">11.9 Texts</h3>
+<p>Every text is <code>AppLocalizations.of(context).someKey</code>, generated from the ARB files that <code>packages/i18n</code> builds. To add a text: add the key in French and English to the catalogue, rebuild the ARB, run <code>flutter gen-l10n</code> (chapter 14).</p>
+
+<h3 id="ch11-tests">11.10 Tests</h3>
+<p><code>apps/mobile/test/</code> has unit tests (engine, vectors, offline store, core) and widget tests that pump real screens with fake providers. <code>accessibility_test.dart</code> checks every main screen in light and dark, at 200 % text, for touch size (44 px), labels and contrast.</p>
+</section>

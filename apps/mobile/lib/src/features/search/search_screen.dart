@@ -39,6 +39,7 @@ class SearchScreen extends ConsumerStatefulWidget {
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
 }
 
+/// The query, the timers, the results and totals per type, and the type filter.
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _query = TextEditingController();
   Timer? _debounce;
@@ -57,6 +58,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   List<ContentRef> _local = const [];
   int _request = 0;
 
+  /// Frees the timers and the text controller.
   @override
   void dispose() {
     _debounce?.cancel();
@@ -65,6 +67,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     super.dispose();
   }
 
+  /// The query changed: clears below two characters, otherwise searches after a short pause.
   void _changed(String value) {
     _debounce?.cancel();
     if (value.trim().length < 2) {
@@ -79,6 +82,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     _debounce = Timer(const Duration(milliseconds: 250), _run);
   }
 
+  /// Searches the API (or the offline copy); an older answer arriving late is ignored.
   Future<void> _run() async {
     final query = _query.text.trim();
     if (query.length < 2) return;
@@ -136,17 +140,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     }
   }
 
+  /// A type chip was tapped: searches again with that filter.
   void _setFilter(SearchType? type) {
     setState(() => _filter = type);
     _run();
   }
 
+  /// A recent search was tapped: puts it in the field and searches.
   void _useQuery(String query) {
     _query.text = query;
     _query.selection = TextSelection.collapsed(offset: query.length);
     _run();
   }
 
+  /// Opens a result and remembers the query in recent searches and history.
   void _open(SearchHitDto hit) {
     ref.read(recentSearchesProvider.notifier).add(_query.text);
     ref.read(activityRecorderProvider).search(_query.text);
@@ -163,6 +170,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     }
   }
 
+  /// The name of a result type.
   String _typeLabel(AppLocalizations l10n, SearchType type) => switch (type) {
     SearchType.ordonnance => l10n.typesOrdonnances,
     SearchType.certificate => l10n.typesCertificates,
@@ -186,6 +194,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 padding: const EdgeInsets.fromLTRB(DtSpace.s4, DtSpace.s2, DtSpace.s4, DtSpace.s2),
                 child: Row(
                   children: [
+                    // Closes the search.
                     DtGlassIconButton(
                       icon: LucideIcons.chevronLeft,
                       tooltip: l10n.searchClose,
@@ -193,6 +202,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     ),
                     const SizedBox(width: DtSpace.s3),
                     Expanded(
+                      // The search field: searches as the person types; « Entrée » keeps the query in recent searches.
                       child: TextField(
                         controller: _query,
                         autofocus: true,
@@ -208,6 +218,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           prefixIcon: Icon(LucideIcons.search, color: colors.inkMuted),
                           suffixIcon: query.isEmpty
                               ? null
+                              // Clears the field.
                               : IconButton(
                                   tooltip: l10n.commonClose,
                                   icon: Icon(LucideIcons.x, color: colors.inkMuted),
@@ -237,6 +248,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: DtSpace.s4),
                   children: [
+                    // « Tout »: removes the type filter.
                     _Chip(label: l10n.searchAll, selected: _filter == null, onTap: () => _setFilter(null)),
                     for (final type in [
                       SearchType.ordonnance,
@@ -245,6 +257,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       SearchType.pregnancy,
                     ])
                       if ((_totals[type] ?? 0) > 0)
+                        // A type chip with its count: keeps only that type.
                         _Chip(
                           label: '${_typeLabel(l10n, type)} · ${_totals[type]}',
                           selected: _filter == type,
@@ -260,6 +273,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
+  /// What is under the field: recent searches, offline results, loading, error, nothing found, or results.
   Widget _body(BuildContext context, AppLocalizations l10n, String query) {
     final colors = context.colors;
     if (query.length < 2) return _EmptyQuery(onPick: _useQuery);
@@ -293,6 +307,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           children: [
             DtAlert(severity: DtAlertSeverity.neutral, body: l10n.searchUnavailable),
             const SizedBox(height: DtSpace.s3),
+            // « Réessayer ».
             DtButton(label: l10n.commonRetry, variant: DtButtonVariant.secondary, onPressed: _run),
           ],
         ),
@@ -309,6 +324,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             const SizedBox(height: DtSpace.s4),
             Text(l10n.searchDidYouMean, style: DtType.label.copyWith(color: colors.inkMuted)),
             for (final suggestion in result.suggestions)
+              // A spelling suggestion: searches it.
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: Icon(LucideIcons.cornerDownRight, color: colors.brand),
@@ -353,6 +369,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               padding: const EdgeInsets.symmetric(horizontal: DtSpace.s2),
               child: Align(
                 alignment: AlignmentDirectional.centerStart,
+                // « Voir les N »: filters on this type.
                 child: TextButton(
                   onPressed: () => _setFilter(group.type),
                   child: Text(l10n.searchSeeAll('${group.total}'), style: DtType.label.copyWith(color: colors.brand)),
@@ -365,6 +382,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 }
 
+/// One filter chip.
 class _Chip extends StatelessWidget {
   const _Chip({required this.label, required this.selected, required this.onTap});
 
@@ -411,6 +429,7 @@ class _EmptyQuery extends ConsumerWidget {
               Expanded(
                 child: Text(l10n.searchRecent, style: DtType.label.copyWith(color: colors.inkMuted)),
               ),
+              // « Effacer » the recent searches.
               TextButton(
                 onPressed: () => ref.read(recentSearchesProvider.notifier).clear(),
                 child: Text(l10n.searchClearRecent, style: DtType.label.copyWith(color: colors.brand)),
@@ -418,11 +437,13 @@ class _EmptyQuery extends ConsumerWidget {
             ],
           ),
           for (final item in recent)
+            // A recent search: searches it again.
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Icon(LucideIcons.history, color: colors.inkMuted),
               title: Text(item, style: DtType.body.copyWith(color: colors.ink)),
               onTap: () => onPick(item),
+              // Removes this recent search.
               trailing: IconButton(
                 tooltip: l10n.searchRemoveRecent(item),
                 icon: Icon(LucideIcons.x, color: colors.inkMuted, size: DtSpace.s4),
@@ -443,6 +464,7 @@ class _EmptyQuery extends ConsumerWidget {
               (LibrarySection.calculators, l10n.typesCalculators),
               (LibrarySection.pregnancy, l10n.typesPregnancy),
             ])
+              // An example query: searches it.
               ActionChip(
                 label: Text(label, style: DtType.label.copyWith(color: colors.inkSecondary)),
                 backgroundColor: colors.surface,

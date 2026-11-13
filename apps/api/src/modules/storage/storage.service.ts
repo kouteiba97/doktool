@@ -2,6 +2,7 @@ import type { StorageBucket } from '../../generated/prisma/enums.js';
 
 export type BucketId = StorageBucket;
 
+/** What storage knows about an object. */
 export interface StoredObject {
   bucket: BucketId;
   key: string;
@@ -10,6 +11,7 @@ export interface StoredObject {
   etag: string | null;
 }
 
+/** Bytes to store under a new key. */
 export interface UploadInput {
   bucket: BucketId;
   key: string;
@@ -32,6 +34,7 @@ export abstract class StorageService {
   /** Stores bytes under a new key; fails if the key already exists. */
   abstract upload(input: UploadInput): Promise<StoredObject>;
 
+  /** Deletes an object (no error when it does not exist). */
   abstract delete(bucket: BucketId, key: string): Promise<void>;
 
   /** Object metadata, or null when it does not exist. */

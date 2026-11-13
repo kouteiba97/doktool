@@ -1,0 +1,64 @@
+<section class="chapter">
+<h2 id="ch1">1. Welcome — how to read this book</h2>
+<p class="lead">This book walks you through the whole DokTool code base, from the first line the server runs to the last button of the mobile app. Its goal is simple: after reading it, you should be able to open any file and say what it does, why it is there and what happens when someone presses a button — as if you had written it yourself.</p>
+
+<h3 id="ch1-how">1.1 How the book is organised</h3>
+<ul>
+  <li><b>Part 1 — Foundations (chapters 1–3).</b> What DokTool is, how the repository is laid out, and how the three applications talk to each other.</li>
+  <li><b>Part 2 — The API (chapters 4–8).</b> The NestJS server: how a request is handled, then every module — accounts, access, content, calculators, pregnancy, verification, payments, finance, analytics and the admin side.</li>
+  <li><b>Part 3 — Admin Web (chapters 9–10).</b> The Next.js console the team uses: its building blocks, then every screen and button.</li>
+  <li><b>Part 4 — The mobile app (chapters 11–12).</b> The Flutter app: its foundations, then every screen and button.</li>
+  <li><b>Part 5 — Journeys (chapter 13).</b> Eight complete stories followed through all three applications, step by step.</li>
+  <li><b>Part 6 — Working on the code (chapter 14).</b> Tests, CI, and recipes for the changes you will make most often.</li>
+  <li><b>Appendix A.</b> Generated from the code: every file, every documented function and every commented button, in the order of the file. It is the reference you keep open next to the editor.</li>
+</ul>
+
+<div class="tip"><b>How to study.</b> Read a chapter, then open the files it names in your editor and read them top to bottom. Every function and every button now has a short comment explaining it (that was part of the October 2026 audit). Code shown in this book is not retyped: it is pulled from the files when the book is built, with its real line numbers, so what you read here is exactly what is in the repository.</div>
+
+<h3 id="ch1-what">1.2 What DokTool is</h3>
+<p>DokTool is a <b>mobile clinical utility</b> for doctors, residents and medical students in Algeria. It is deliberately small and fast. It is <b>not</b> a patient record, a prescription generator, a drug database, a chatbot or a marketing platform. It offers four things:</p>
+<table>
+  <tr><th>Resource</th><th>What the doctor does with it</th></tr>
+  <tr><td><b>Ordonnances</b> (prescription models)</td><td>Searches, finds a reference model and reads it as a PDF. Read-only: no editing, no patient field, no printing, no sharing.</td></tr>
+  <tr><td><b>Certificats</b> (certificate models)</td><td>The same, for medical certificates.</td></tr>
+  <tr><td><b>Calculateurs</b> (clinical calculators)</td><td>Picks a score or formula, enters validated values, gets a result with its interpretation band and its published source.</td></tr>
+  <tr><td><b>Grossesse · Allaitement</b> (pregnancy and lactation)</td><td>Looks up a substance and reads, per trimester and for breastfeeding, the conduct and the evidence level — always separate, never a "safe / unsafe" verdict.</td></tr>
+</table>
+<p>The product summary in <code>CLAUDE.md</code> fits in three lines, and the whole code base serves them:</p>
+<div class="diagram">References    SEARCH → FIND REFERENCE MODEL → VIEW PDF → USE AS CLINICAL REFERENCE
+Calculators   SELECT TOOL → ENTER VALIDATED INPUTS → CALCULATE → REVIEW RESULT + SOURCE → DONE
+Prospects     DEMO → EXPLORE → UNDERSTAND → SUBSCRIBE</div>
+
+<h3 id="ch1-who">1.3 Who uses it</h3>
+<table>
+  <tr><th>Person</th><th>Application</th><th>What they can do</th></tr>
+  <tr><td>Doctor or resident, verified and subscribed (« Pro »)</td><td>Mobile</td><td>Everything: every model, calculator and profile, offline copies.</td></tr>
+  <tr><td>Doctor or resident not yet subscribed</td><td>Mobile</td><td>A real account with the demo sample set. May buy once their professional status is verified.</td></tr>
+  <tr><td>Medical student, verified</td><td>Mobile</td><td>Free: the calculators; models and profiles are visible as titles only (locked), except the demo samples. No purchase.</td></tr>
+  <tr><td>Demo visitor</td><td>Mobile</td><td>No sign-up, no contact data, no time limit: the demo sample items only. The demo is an <i>access context</i>, not a kind of person.</td></tr>
+  <tr><td>Admins (Super Admin, editors, reviewers, finance…)</td><td>Admin Web</td><td>Upload models, author and review calculators and profiles, verify professionals, manage plans, read finance, analytics and the audit log — each according to their <i>grants</i>.</td></tr>
+</table>
+
+<h3 id="ch1-rules">1.4 The rules every line of code respects</h3>
+<p>These rules come from the Product Owner's decisions (<code>docs/adr/ADR-006-product-owner-decisions.md</code>) and the design system. Whenever you wonder "why is this code so careful here?", the answer is usually one of them.</p>
+<div class="rule"><b>1. The backend decides access.</b> The server computes an <i>AccessProfile</i> (tier + the state of every feature) and re-checks it on every endpoint. The app only draws what it receives; it never says <code>if (student)</code>.</div>
+<div class="rule"><b>2. Locked is not hidden.</b> A locked item stays visible with its lock and the reason. Only <i>deferred</i> modules (drug database, prescription generation…) are never shown at all.</div>
+<div class="rule"><b>3. No patient data, anywhere.</b> Calculator inputs never leave the phone; analytics carry no free text, no search words and no input values.</div>
+<div class="rule"><b>4. Reference PDFs are read-only.</b> No editor, no export, no print, no share, no download button. Files live in private storage and are reached only through short-lived signed URLs.</div>
+<div class="rule"><b>5. Clinical content is never invented.</b> A calculator formula comes from a cited source, is reviewed by someone other than its author, has test cases, and is immutable once published. AI never writes or changes a formula or a profile.</div>
+<div class="rule"><b>6. Calm money.</b> Subscriptions show what is included, the price, the duration and « non remboursable », with no red, no countdown and no refund workflow.</div>
+<div class="rule"><b>7. Bilingual from one catalogue.</b> French and English for every text, from <code>packages/i18n</code>. No Arabic or right-to-left inside the app itself.</div>
+
+<h3 id="ch1-words">1.5 Words you will meet everywhere</h3>
+<table>
+  <tr><th>Word in the code</th><th>Meaning</th></tr>
+  <tr><td><code>Tier</code></td><td>Where a person lands: <code>DEMO · STUDENT · PROFESSIONAL_UNPAID · PROFESSIONAL · RESTRICTED</code>.</td></tr>
+  <tr><td><code>FeatureKey</code></td><td>A capability the policy decides: <code>search</code>, <code>reference.view</code>, <code>calculator.use</code>, <code>offline.sync</code>, <code>subscription.purchase</code>…</td></tr>
+  <tr><td><code>LockReason</code> / <code>UnlockPath</code></td><td>Why something is locked (<code>SUBSCRIPTION_REQUIRED</code>, <code>VERIFICATION_PENDING</code>…) and the one screen that can unlock it.</td></tr>
+  <tr><td><code>demoSample</code></td><td>A flag on content: this item is part of the free sample set (demo, unpaid professionals, students).</td></tr>
+  <tr><td><code>Viewer</code></td><td>Whoever is looking at content: a signed-in user <i>or</i> a demo session.</td></tr>
+  <tr><td><code>Grant</code></td><td>An admin permission, like <code>calculators.publish</code> or <code>finance.read</code>.</td></tr>
+  <tr><td><code>Version</code> (calculator, profile, plan)</td><td>Clinical content and prices are versioned: a published version never changes; a change is a new version.</td></tr>
+  <tr><td><code>DomainError</code></td><td>The one way the API refuses something: a stable <code>code</code> the apps translate.</td></tr>
+</table>
+</section>

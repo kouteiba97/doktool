@@ -40,8 +40,16 @@ export function ConductBadge({ conduct }: { conduct: Conduct }) {
 }
 
 /** Four neutral segments, the level word and the population note — never a colour verdict. */
-export function EvidenceMeter({ level, population }: { level: number; population?: Localized }) {
+export function EvidenceMeter({
+  level,
+  population,
+}: {
+  level: number | null;
+  population?: Localized;
+}) {
   const { t, locale } = useI18n();
+  // Only a draft has no level (an import never invents one); review requires it.
+  if (level === null) return <b className="text-label">{t('admin.pregnancy.evidenceMissing')}</b>;
   const word = t(EVIDENCE_LABELS[level]!);
   return (
     <div className="dt-row-flex">
@@ -60,6 +68,7 @@ export function EvidenceMeter({ level, population }: { level: number; population
   );
 }
 
+/** A labelled text in the UI language (nothing when empty). */
 function Labelled({ label, text }: { label: string; text: Localized | undefined }) {
   const { locale } = useI18n();
   if (!text) return null;
@@ -86,6 +95,53 @@ function NoData({ alternatives }: { alternatives: string[] }) {
   );
 }
 
+/** What an import recorded for one period (ADR-025): the source's own word, its links, pending names. */
+function PeriodTrace({
+  value,
+  sources,
+}: {
+  value: { reportedStatus?: string; sourceIds?: string[]; unresolvedAlternatives?: string[] };
+  sources: ClinicalSource[];
+}) {
+  const { t } = useI18n();
+  const cited = (value.sourceIds ?? []).flatMap((id) => sources.find((s) => s.id === id) ?? []);
+  if (!value.reportedStatus && cited.length === 0 && !value.unresolvedAlternatives?.length)
+    return null;
+  return (
+    <div className="dt-stack gap-1">
+      {value.reportedStatus ? (
+        <div className="dt-cap">
+          {t('admin.pregnancy.reportedStatus', { status: value.reportedStatus })}
+        </div>
+      ) : null}
+      {cited.length > 0 ? (
+        <div>
+          <div className="dt-label">{t('admin.pregnancy.periodSources')}</div>
+          <ul className="mt-1">
+            {cited.map((source) => (
+              <li key={source.id}>
+                {source.url ? (
+                  <a href={source.url} target="_blank" rel="noopener noreferrer nofollow">
+                    {sourceCitation(source)}
+                  </a>
+                ) : (
+                  sourceCitation(source)
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {value.unresolvedAlternatives?.length ? (
+        <Alert tone="warning" title={t('admin.pregnancy.unresolvedAlternatives')}>
+          {value.unresolvedAlternatives.join(' · ')}
+        </Alert>
+      ) : null}
+    </div>
+  );
+}
+
+/** The alternatives of a period or block. */
 function Alternatives({ names }: { names: string[] }) {
   const { t } = useI18n();
   if (names.length === 0) return null;
@@ -103,6 +159,7 @@ function Alternatives({ names }: { names: string[] }) {
   );
 }
 
+/** Two sources that disagree, and the synthesis written. */
 function Conflict({
   conflict,
   sources,
@@ -151,14 +208,17 @@ export function EvidenceFooter({
   );
 }
 
+/** The pregnancy block: one card per period. */
 function PregnancyView({
   block,
   alternatives,
   sources,
+  nameOf,
 }: {
   block: PregnancyBlock;
   alternatives: string[];
   sources: ClinicalSource[];
+  nameOf: (id: string) => string;
 }) {
   const { t } = useI18n();
   const [period, setPeriod] = useState<PeriodKey>('T1');
@@ -210,7 +270,12 @@ function PregnancyView({
                     label={t('admin.pregnancy.considerations')}
                     text={value.considerations}
                   />
-                  <Alternatives names={alternatives} />
+                  <PeriodTrace value={value} sources={sources} />
+                  <Alternatives
+                    names={[
+                      ...new Set([...alternatives, ...(value.alternatives ?? []).map(nameOf)]),
+                    ]}
+                  />
                 </div>
               )}
             </TabPanel>
@@ -226,7 +291,11 @@ function PregnancyView({
               <span>{t(PERIOD_LABELS[key])}</span>
               <span className="dt-row-flex">
                 <span className="dt-cap">
-                  {value ? t(EVIDENCE_LABELS[value.evidence.level]!) : '—'}
+                  {value
+                    ? value.evidence.level === null
+                      ? t('admin.pregnancy.evidenceMissing')
+                      : t(EVIDENCE_LABELS[value.evidence.level]!)
+                    : '—'}
                 </span>
                 {value?.conduct ? <ConductBadge conduct={value.conduct} /> : null}
               </span>
@@ -238,6 +307,7 @@ function PregnancyView({
   );
 }
 
+/** The lactation block. */
 function LactationView({
   block,
   alternatives,
@@ -285,6 +355,7 @@ function LactationView({
         <EvidenceMeter level={block.evidence.level} population={block.evidence.population} />
       </div>
       <Labelled label={t('admin.pregnancy.considerations')} text={block.considerations} />
+      <PeriodTrace value={block} sources={sources} />
       <Alternatives names={alternatives} />
     </div>
   );
@@ -323,6 +394,7 @@ export function ProfileView({
               block={content.pregnancy}
               alternatives={names(content.pregnancy.alternatives)}
               sources={sources}
+              nameOf={nameOf}
             />
           ) : (
             <Alert tone="info" title={t('admin.pregnancy.blockMissing')} />

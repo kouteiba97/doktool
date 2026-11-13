@@ -36,8 +36,10 @@ import {
 import { PdfDrop } from './pdf-drop';
 import { putSigned, sha256Hex, UploadFailed } from './upload';
 
+/** Status changes offered by the drawer. */
 type Lifecycle = 'enable' | 'disable' | 'archive' | 'restore';
 
+/** Rules of the editable fields. */
 const metadataSchema = z.object({
   titleFr: z.string().trim().min(1).max(200),
   titleEn: z.string().trim().max(200),
@@ -48,6 +50,7 @@ type Metadata = z.infer<typeof metadataSchema>;
 /** While a file is processing, the drawer follows its status. */
 const PROCESSING_POLL_MS = 3_000;
 
+/** Dialog texts of each status change. */
 const LIFECYCLE_COPY: Record<
   Lifecycle,
   { title: MessageKey; body: MessageKey; confirm: MessageKey }
@@ -74,6 +77,7 @@ const LIFECYCLE_COPY: Record<
   },
 };
 
+/** API path of each status change. */
 const LIFECYCLE_PATHS = {
   enable: '/admin/v1/reference-documents/{id}/enable',
   disable: '/admin/v1/reference-documents/{id}/disable',
@@ -100,6 +104,7 @@ export function DocumentDrawer({
   // The file being previewed; another model or a new current file closes the preview.
   const [previewFile, setPreviewFile] = useState<string | null>(null);
 
+  // The model; refreshed every 3 seconds while a file is processing.
   const detail = useQuery({
     queryKey: documentKey(documentId ?? ''),
     queryFn: () =>
@@ -128,6 +133,7 @@ export function DocumentDrawer({
     }),
     [record?.titleFr, record?.titleEn, record?.demoSample],
   );
+  // The edit form; a refresh never overwrites what the admin is typing.
   const form = useForm<Metadata>({
     resolver: zodResolver(metadataSchema),
     values: saved,
@@ -143,6 +149,7 @@ export function DocumentDrawer({
     }
   }, [documentType, documentStatus, queryClient]);
 
+  // After a change: update the drawer and the list, confirm with a toast.
   const updated = (next: ReferenceDocument, message: string) => {
     queryClient.setQueryData(documentKey(next.id), next);
     void queryClient.invalidateQueries({ queryKey: libraryKey(next.type) });
@@ -186,6 +193,7 @@ export function DocumentDrawer({
       />
       {canWrite && !archived ? (
         <div className="end">
+          {/* « Enregistrer »: asks for a reason, then saves titles and demo sample. */}
           <Button
             variant="primary"
             disabled={!isDirty}
@@ -228,6 +236,8 @@ export function DocumentDrawer({
               </h3>
               <div className="flex gap-2">
                 {record.currentFile ? (
+                  // « Voir le PDF » / « Masquer »: shows the current PDF in the drawer (no download
+                  // or print).
                   <Button
                     size="sm"
                     onClick={() =>
@@ -239,6 +249,7 @@ export function DocumentDrawer({
                   </Button>
                 ) : null}
                 {canWrite && !archived ? (
+                  // « Remplacer le PDF »: uploads a new version under the same model.
                   <Button size="sm" onClick={() => setReplacing(true)}>
                     <FileUp size={14} aria-hidden />
                     {t('admin.library.replacePdf')}
@@ -432,6 +443,7 @@ export function DocumentDrawer({
   );
 }
 
+/** The PDF of one file version, drawn on canvases from a signed URL. */
 function DocumentPreview({
   documentId,
   fileId,
@@ -469,6 +481,7 @@ function DocumentPreview({
   );
 }
 
+/** « Remplacer le PDF »: a new file version; favourites and links keep working. */
 function ReplaceDialog({
   record,
   open,
@@ -486,6 +499,7 @@ function ReplaceDialog({
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  // Checksum → signed upload → PUT → register the new version (processed in the background).
   const replace = useMutation({
     mutationFn: async () => {
       if (!file) return;
@@ -522,9 +536,11 @@ function ReplaceDialog({
       onSubmit={() => replace.mutate()}
       footer={
         <>
+          {/* « Annuler ». */}
           <Button onClick={() => onOpenChange(false)} disabled={replace.isPending}>
             {t('admin.common.cancel')}
           </Button>
+          {/* « Remplacer le PDF »: possible once a PDF and a reason are given. */}
           <Button
             type="submit"
             variant="primary"

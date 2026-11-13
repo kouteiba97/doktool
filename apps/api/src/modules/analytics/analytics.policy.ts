@@ -98,6 +98,7 @@ export const CLIENT_EVENTS = {
 export type ClientEventType = keyof typeof CLIENT_EVENTS;
 export const CLIENT_EVENT_TYPES = Object.keys(CLIENT_EVENTS) as ClientEventType[];
 
+/** One event as the app sends it. */
 export interface ClientEventInput {
   type: ClientEventType;
   occurredAt: Date;
@@ -105,6 +106,10 @@ export interface ClientEventInput {
   properties: Record<string, unknown>;
 }
 
+/**
+ * Why an event was dropped: bad properties, bad entity id, out-of-range time, or a demo-only event
+ * from an account.
+ */
 export type RejectionReason = 'PROPERTIES' | 'ENTITY' | 'TIME' | 'CONTEXT';
 
 /** Columns an accepted event fills besides the envelope. */

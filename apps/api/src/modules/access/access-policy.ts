@@ -26,6 +26,7 @@ interface Restriction {
   unlockPath: UnlockPath | null;
 }
 
+/** The tier a person lands in, why they are restricted (if so) and whether they may buy. */
 interface Placement {
   tier: Tier;
   restriction: Restriction | null;
@@ -33,12 +34,17 @@ interface Placement {
   purchase: Restriction | 'OPEN' | null;
 }
 
+/** Shortcut for a RESTRICTED placement with its reason and unlock path. */
 const restricted = (lockReason: LockReason, unlockPath: UnlockPath | null): Placement => ({
   tier: 'RESTRICTED',
   restriction: { lockReason, unlockPath },
   purchase: null,
 });
 
+/**
+ * True while a subscription gives Pro access: ACTIVE (with a grace fallback), CANCELED until the
+ * end of the paid period, GRACE until its end date.
+ */
 export function isSubscriptionLive(
   subscription: SubscriptionSnapshot | null,
   now: Date,
@@ -59,6 +65,7 @@ export function isSubscriptionLive(
   }
 }
 
+/** True when a verification case is waiting for review and was submitted less than `days` ago. */
 function isPendingWithin(snapshot: CaseSnapshot, days: number, now: Date): boolean {
   return (
     PENDING.has(snapshot.status) &&
@@ -101,17 +108,22 @@ export function placeInTier(inputs: AccessInputs, now: Date, policy: AccessPolic
   const purchase: Placement['purchase'] =
     professional.status === 'VERIFIED'
       ? 'OPEN'
-      : PENDING.has(professional.status)
+      : PENDING.has(professional.status) || professional.renewalPending
         ? { lockReason: 'VERIFICATION_PENDING', unlockPath: 'verification.status' }
         : { lockReason: 'VERIFICATION_REQUIRED', unlockPath: 'verification.start' };
   return { tier: 'PROFESSIONAL_UNPAID', restriction: null, purchase };
 }
 
+/**
+ * Turns one feature setting of the tier into the decision sent to the app (available, locked,
+ * read-only).
+ */
 function decideFeature(
   key: FeatureDecision['key'],
   setting: FeatureSetting,
   placement: Placement,
 ): FeatureDecision {
+  // Builds the decision object for this feature.
   const decision = (
     state: FeatureDecision['state'],
     lockReason: LockReason | null = null,
@@ -138,6 +150,10 @@ function decideFeature(
   }
 }
 
+/**
+ * Computes the full AccessProfile: tier, every feature decision and every content rule. Pure: same
+ * inputs and time give the same profile.
+ */
 export function evaluateAccess(
   inputs: AccessInputs,
   now: Date = new Date(),
@@ -145,6 +161,7 @@ export function evaluateAccess(
 ): AccessProfile {
   const placement = placeInTier(inputs, now, policy);
   const tier = policy.tiers[placement.tier];
+  // The content rule of one type; RESTRICTED takes the reason of its restriction.
   const contentRule = (type: ContentType): ContentRule => {
     const rule = tier.content[type];
     if ('fromRestriction' in rule) {
@@ -182,6 +199,7 @@ export function decideItem(profile: AccessProfile, item: AccessibleItem): ItemAc
     : { state: 'LOCKED', lockReason: rule.lockReason, unlockPath: rule.unlockPath };
 }
 
+/** Returns one feature decision of a profile; a missing key is a programming error. */
 export function featureOf(profile: AccessProfile, key: FeatureDecision['key']): FeatureDecision {
   const feature = profile.features.find((candidate) => candidate.key === key);
   if (!feature) throw new Error(`Feature ${key} missing from the profile`);

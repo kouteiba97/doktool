@@ -16,6 +16,7 @@ const ORDER_DEPOSITED = 2;
 const PENDING_ORDER_STATUSES = new Set([0, 1, 5]);
 const TIMEOUT_MS = 20_000;
 
+/** A parsed SATIM response. */
 type SatimResponse = Record<string, unknown>;
 
 /** A scalar field of a SATIM response as text (numbers and strings vary between versions). */
@@ -44,6 +45,7 @@ export class SatimGateway extends PaymentGateway {
     super();
   }
 
+  /** register.do: creates the SATIM order and returns its payment page. */
   async register(order: RegisterOrder): Promise<RegisteredOrder> {
     const currency = NUMERIC_CURRENCY[order.currency];
     if (!currency) throw new PaymentProviderError(`Unsupported currency ${order.currency}`);
@@ -69,17 +71,19 @@ export class SatimGateway extends PaymentGateway {
     return { providerReference: orderId, redirectUrl: formUrl };
   }
 
+  /** confirmOrder.do: whether the order was paid (OrderStatus 2), is still pending, or failed. */
   async status(providerReference: string, language: 'FR' | 'EN'): Promise<OrderOutcome> {
     const response = await this.call('confirmOrder.do', { orderId: providerReference, language });
     const orderStatus = Number(response.OrderStatus ?? response.orderStatus);
     const details = this.details(response);
     if (orderStatus === ORDER_DEPOSITED && (text(response.actionCode) ?? '0') === '0') {
-      return {
-        status: 'PAID',
-        paidAt: new Date(),
-        amountMinor: Number(response.Amount ?? response.amount ?? response.depositAmount),
-        details,
-      };
+      const amountMinor = Number(response.Amount ?? response.amount ?? response.depositAmount);
+      // Without a readable amount the payment cannot be checked against the price: the order
+      // stays pending and the reconciliation job asks again.
+      if (!Number.isInteger(amountMinor) || amountMinor < 0) {
+        throw new PaymentProviderError('Montant absent de la réponse.');
+      }
+      return { status: 'PAID', paidAt: new Date(), amountMinor, details };
     }
     if (PENDING_ORDER_STATUSES.has(orderStatus) && response.actionCode === undefined)
       return { status: 'PENDING' };
@@ -90,6 +94,7 @@ export class SatimGateway extends PaymentGateway {
     };
   }
 
+  /** One form-encoded call to SATIM with the merchant credentials. */
   private async call(method: string, params: Record<string, string>): Promise<SatimResponse> {
     const body = new URLSearchParams({
       userName: this.env.SATIM_USERNAME ?? '',
@@ -114,6 +119,7 @@ export class SatimGateway extends PaymentGateway {
     return (await response.json()) as SatimResponse;
   }
 
+  /** SATIM's human-readable message, wherever the response version puts it. */
   private message(response: SatimResponse): string | null {
     for (const key of ['actionCodeDescription', 'ErrorMessage', 'errorMessage']) {
       const value = response[key];

@@ -28,13 +28,16 @@ class VerificationRepository {
   /// Plain client for signed storage URLs: no API headers, no bearer token.
   final Dio _uploads;
 
+  /// Every case type with its latest case and what can be done.
   Future<VerificationOverviewDto> overview() => _api.verification.verificationControllerOverview();
 
+  /// Opens a new case of this type (for a status case, the profession targeted).
   Future<VerificationCaseDto> start(VerificationType type, {StartVerificationDtoProfessionalType? target}) =>
       _api.verification.verificationControllerStart(
         body: StartVerificationDto(type: type, professionalType: target),
       );
 
+  /// Saves the declared details (document kind, order number, specialty…).
   Future<VerificationCaseDto> saveDetails(String caseId, VerificationDetailsDto details) =>
       _api.verification.verificationControllerSaveDetails(id: caseId, body: details);
 
@@ -77,13 +80,17 @@ class VerificationRepository {
     );
   }
 
+  /// Removes a document from a draft case.
   Future<VerificationCaseDto> removeDocument(String caseId, String documentId) =>
       _api.verification.verificationControllerRemoveDocument(id: caseId, documentId: documentId);
 
+  /// Sends a case for review.
   Future<VerificationCaseDto> submit(String caseId) => _api.verification.verificationControllerSubmit(id: caseId);
 
+  /// Appeals a refusal.
   Future<VerificationCaseDto> appeal(String caseId) => _api.verification.verificationControllerAppeal(id: caseId);
 
+  /// Erases the documents of a decided case.
   Future<VerificationCaseDto> erase(String caseId) => _api.verification.verificationControllerErase(id: caseId);
 }
 

@@ -11,6 +11,7 @@ import { useErrorText } from '@/ui/errors';
 import { EmptyState, Skeleton } from '@/ui/feedback';
 import { RECOVERY_SLOT_LABELS, type RecoveryPhotoSlot } from './labels';
 
+/** How many times the watermark text is repeated over the photo. */
 const WATERMARK_TILES = 12;
 
 /**
@@ -90,6 +91,7 @@ export function RecoveryPhoto({
         <div className="dt-restricted">
           <TimerOff aria-hidden />
           <b>{t('admin.verification.viewerExpired')}</b>
+          {/* « Rouvrir »: a new 60-second link (a new audit entry). */}
           <Button size="sm" onClick={() => void view.refetch()}>
             {t('admin.verification.viewerReopen')}
           </Button>

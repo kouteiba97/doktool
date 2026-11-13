@@ -31,17 +31,20 @@ class ResetRequestScreen extends ConsumerStatefulWidget {
   ConsumerState<ResetRequestScreen> createState() => _ResetRequestScreenState();
 }
 
+/// The e-mail or phone typed, progress and error.
 class _ResetRequestScreenState extends ConsumerState<ResetRequestScreen> {
   final _identifier = TextEditingController();
   bool _sending = false;
   ApiError? _error;
 
+  /// Frees the text controller.
   @override
   void dispose() {
     _identifier.dispose();
     super.dispose();
   }
 
+  /// « Envoyer le code »: asks for a reset code; the answer is the same whether or not the account exists.
   Future<void> _send() async {
     setState(() {
       _sending = true;
@@ -76,6 +79,7 @@ class _ResetRequestScreenState extends ConsumerState<ResetRequestScreen> {
       intro: l10n.resetIntro,
       actions: [
         if (_error != null) DtAlert(severity: DtAlertSeverity.critical, body: otpErrorText(context, _error!)),
+        // « Envoyer le code »: needs a valid e-mail or phone.
         DtButton(label: l10n.resetSend, loading: _sending, onPressed: valid ? _send : null),
       ],
       children: [
@@ -100,6 +104,7 @@ class ResetConfirmScreen extends ConsumerStatefulWidget {
   ConsumerState<ResetConfirmScreen> createState() => _ResetConfirmScreenState();
 }
 
+/// The code and new password typed, progress and error.
 class _ResetConfirmScreenState extends ConsumerState<ResetConfirmScreen> {
   final _code = TextEditingController();
   final _password = TextEditingController();
@@ -108,6 +113,7 @@ class _ResetConfirmScreenState extends ConsumerState<ResetConfirmScreen> {
   ApiError? _error;
   bool _done = false;
 
+  /// Frees the text controllers.
   @override
   void dispose() {
     _code.dispose();
@@ -118,6 +124,7 @@ class _ResetConfirmScreenState extends ConsumerState<ResetConfirmScreen> {
   bool get _valid =>
       _code.text.length == OtpCodeInput.length && passwordStrength(_password.text) != PasswordStrength.tooShort;
 
+  /// Sets the new password with the code; every session of the account ends.
   Future<void> _confirm() async {
     final challenge = ref.read(onboardingDraftProvider).challenge;
     if (challenge == null || !_valid) return;
@@ -146,6 +153,7 @@ class _ResetConfirmScreenState extends ConsumerState<ResetConfirmScreen> {
     }
   }
 
+  /// « Renvoyer le code ».
   Future<void> _resend() async {
     final draft = ref.read(onboardingDraftProvider);
     final challenge = draft.challenge;
@@ -175,6 +183,7 @@ class _ResetConfirmScreenState extends ConsumerState<ResetConfirmScreen> {
     if (_done) {
       return DtPage(
         title: l10n.resetTitle,
+        // « Se connecter » with the new password.
         actions: [DtButton(label: l10n.signInSubmit, onPressed: () => context.go(Routes.signIn))],
         children: [DtAlert(severity: DtAlertSeverity.success, body: l10n.resetDone)],
       );
@@ -185,6 +194,7 @@ class _ResetConfirmScreenState extends ConsumerState<ResetConfirmScreen> {
       intro: challenge == null ? null : l10n.otpSentTo(challenge.destinationHint),
       actions: [
         if (_error != null) DtAlert(severity: DtAlertSeverity.critical, body: otpErrorText(context, _error!)),
+        // « Réinitialiser »: needs the code and a long enough password.
         DtButton(label: l10n.resetConfirm, loading: _saving, onPressed: _valid ? _confirm : null),
         if (challenge != null)
           ResendCodeButton(availableAt: challenge.resendAvailableAt.toLocal(), onResend: _resend, loading: _resending),

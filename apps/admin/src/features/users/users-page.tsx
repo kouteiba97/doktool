@@ -2,7 +2,7 @@
 
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { CircleAlert, Search } from 'lucide-react';
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { api, call, type Schemas } from '@/api/client';
 import { formatDate } from '@/i18n/format';
 import { useI18n } from '@/i18n/i18n-provider';
@@ -12,14 +12,17 @@ import { type Column, DataTable } from '@/ui/data-table';
 import { useErrorText } from '@/ui/errors';
 import { EmptyState, PageHeader } from '@/ui/feedback';
 import { Select, TextInput } from '@/ui/field';
+import { useDebounced } from '@/ui/use-debounced';
 import { SUBSCRIPTION_STATUS_LABELS, SUBSCRIPTION_STATUS_TONES } from '../subscriptions/labels';
 import { PROFESSIONAL_TYPE_LABELS, STATUS_LABELS, STATUS_TONES } from '../verification/labels';
 import { usersKey } from './labels';
 import { UserDrawer } from './user-drawer';
 
+/** One row of the user list. */
 type User = Schemas['AdminUserDto'];
 type ProfessionalType = Schemas['ProfessionalType'];
 
+/** Rows per page of the API (a full page means there may be more). */
 const PAGE_SIZE = 50;
 
 /** « Utilisateurs » (ScreenUsersAdmin): who uses DokTool, with their verification and plan. */
@@ -27,11 +30,12 @@ export function UsersPage() {
   const { t, locale } = useI18n();
   const errorText = useErrorText();
   const [search, setSearch] = useState('');
-  const deferredSearch = useDeferredValue(search.trim());
+  const deferredSearch = useDebounced(search.trim());
   const [type, setType] = useState<ProfessionalType | ''>('');
   const [status, setStatus] = useState<'ACTIVE' | 'SUSPENDED' | ''>('');
   const [openId, setOpenId] = useState<string | null>(null);
 
+  // Pages of users for the current search and filters; the next page starts after the last id.
   const users = useInfiniteQuery({
     queryKey: [...usersKey, deferredSearch, type, status],
     initialPageParam: undefined as string | undefined,
@@ -52,6 +56,7 @@ export function UsersPage() {
   });
   const rows = useMemo(() => users.data?.pages.flat() ?? [], [users.data]);
 
+  // The table's columns (rebuilt when the language changes).
   const columns = useMemo<Column<User>[]>(
     () => [
       {
@@ -188,6 +193,7 @@ export function UsersPage() {
       )}
       {users.hasNextPage ? (
         <div>
+          {/* « Charger plus »: the next 50 users. */}
           <Button
             size="sm"
             busy={users.isFetchingNextPage}

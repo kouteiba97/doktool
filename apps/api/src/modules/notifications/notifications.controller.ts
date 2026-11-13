@@ -48,6 +48,7 @@ export class NotificationsController {
     return { items: items.map((item) => NotificationDto.from(item)), unreadCount };
   }
 
+  /** POST /v1/me/notifications/read-all. */
   @Post('read-all')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
@@ -55,6 +56,7 @@ export class NotificationsController {
     await this.notifications.markAllRead(user.userId);
   }
 
+  /** POST /v1/me/notifications/:id/read. */
   @Post(':id/read')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()

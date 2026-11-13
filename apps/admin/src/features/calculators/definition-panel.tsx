@@ -21,6 +21,7 @@ import {
 } from './definition';
 import type { Version } from './labels';
 
+/** Badge colour of each band severity. */
 const SEVERITY_TONES: Record<DefinitionView['interpretation'][number]['severity'], BadgeTone> = {
   info: 'info',
   caution: 'warning',
@@ -47,6 +48,7 @@ export function DefinitionPanel({
   const definition = readDefinition(version.definition);
   const editable = version.status === 'DRAFT' && has('calculators.draft');
 
+  // Saves the edited JSON; the API checks it and its problems are listed by path.
   const save = useMutation({
     mutationFn: async () => {
       let parsed: Record<string, unknown>;
@@ -104,9 +106,11 @@ export function DefinitionPanel({
           </Alert>
         ) : null}
         <div className="flex gap-2">
+          {/* « Enregistrer la définition ». */}
           <Button variant="primary" busy={save.isPending} onClick={() => save.mutate()}>
             {t('admin.calculators.saveDefinition')}
           </Button>
+          {/* « Annuler »: back to the read-only view. */}
           <Button disabled={save.isPending} onClick={() => setEditing(false)}>
             {t('admin.common.cancel')}
           </Button>
@@ -115,6 +119,7 @@ export function DefinitionPanel({
     );
   }
 
+  // An input's label in the UI language, to show formulas with names instead of keys.
   const labelOf = (key: string) => {
     const input = definition?.inputs.find((item) => item.key === key);
     return input ? input.label[locale] : key;
@@ -124,6 +129,7 @@ export function DefinitionPanel({
     <div className="dt-stack gap-4">
       {editable ? (
         <div>
+          {/* « Modifier la définition »: opens the draft's definition as editable JSON. */}
           <Button
             size="sm"
             onClick={() => {
@@ -235,6 +241,7 @@ export function DefinitionPanel({
   );
 }
 
+/** One row of the inputs table: label, kind, units (or answers and points) and the three ranges. */
 function InputRow({ input }: { input: InputView }) {
   const { t } = useI18n();
   const numeric = input.kind === 'NUMBER' || input.kind === 'INTEGER';

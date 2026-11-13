@@ -42,6 +42,7 @@ const DATE_FORMAT: Intl.DateTimeFormatOptions = {
   timeZone: 'Africa/Algiers',
 };
 
+/** Where a message goes: a channel and an address. */
 export interface Destination {
   channel: MessageChannel;
   to: string;
@@ -119,6 +120,10 @@ export class SecurityNoticesService {
     await this.send(destination, `server.security.${event}`, language, values);
   }
 
+  /**
+   * Formats a notice in the person's language (dates in Algiers time) and sends it; failures are
+   * only logged.
+   */
   private async send(
     destination: Destination,
     key: string,

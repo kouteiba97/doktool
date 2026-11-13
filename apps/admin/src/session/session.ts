@@ -3,14 +3,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { api, call, type Schemas } from '@/api/client';
 
+/** The signed-in admin, as GET /admin/v1/me returns it. */
 export type AdminMe = Schemas['AdminMeDto'];
 export type Grant = AdminMe['grants'][number];
 
 /** Name of the httpOnly admin session cookie set by the API (ADR-009). */
 export const SESSION_COOKIE = '__Host-doktool_admin';
 
+/** Cache key of the signed-in admin. */
 export const meQueryKey = ['admin', 'me'] as const;
 
+/** Loads the signed-in admin (cached for a minute); a 401 sends the browser back to sign-in. */
 export function useMe() {
   return useQuery({
     queryKey: meQueryKey,

@@ -12,6 +12,7 @@ const errors = ApiResponse({
   description: 'Error envelope',
 });
 
+/** POST /v1/demo/sessions and /v1/demo/tokens (no account). */
 @ApiTags('demo')
 @Controller(`${USER_API_PREFIX}/demo/sessions`)
 export class DemoController {
@@ -25,6 +26,7 @@ export class DemoController {
     return DemoSessionDto.from(await this.demo.start(body.demoContext, body.deviceId, client));
   }
 
+  /** POST /v1/demo/tokens: renews the demo access token. */
   @Post('token')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: DemoTokenDto })

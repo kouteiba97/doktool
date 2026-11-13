@@ -183,6 +183,16 @@
             "format": "uuid",
             "type": "string"
           },
+          "item": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FavoriteItemDto"
+              }
+            ],
+            "description": "What was opened, with the access to it now. Null for a search and for an item that is no longer available.",
+            "nullable": true,
+            "type": "object"
+          },
           "kind": {
             "allOf": [
               {
@@ -636,6 +646,23 @@
           "TOTP_ENROLL"
         ],
         "type": "string"
+      },
+      "AdminChangePasswordDto": {
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "maxLength": 128,
+            "minLength": 12,
+            "type": "string"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ],
+        "type": "object"
       },
       "AdminContentReportDto": {
         "properties": {
@@ -1603,6 +1630,16 @@
             "format": "uuid",
             "type": "string"
           },
+          "mergedInto": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubstanceRefDto"
+              }
+            ],
+            "description": "Merged as a duplicate into this substance (ADR-027).",
+            "nullable": true,
+            "type": "object"
+          },
           "nameEn": {
             "nullable": true,
             "type": "string"
@@ -1661,6 +1698,7 @@
           "open",
           "openReports",
           "updatedAt",
+          "mergedInto",
           "versions"
         ],
         "type": "object"
@@ -1680,6 +1718,16 @@
           "id": {
             "format": "uuid",
             "type": "string"
+          },
+          "mergedInto": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubstanceRefDto"
+              }
+            ],
+            "description": "Merged as a duplicate into this substance (ADR-027).",
+            "nullable": true,
+            "type": "object"
           },
           "nameEn": {
             "nullable": true,
@@ -1732,7 +1780,8 @@
           "published",
           "open",
           "openReports",
-          "updatedAt"
+          "updatedAt",
+          "mergedInto"
         ],
         "type": "object"
       },
@@ -2863,6 +2912,63 @@
         ],
         "type": "object"
       },
+      "BulkItemResultDto": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "versionId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "versionId",
+          "ok"
+        ],
+        "type": "object"
+      },
+      "BulkResultDto": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/BulkItemResultDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object"
+      },
+      "BulkVersionsDto": {
+        "properties": {
+          "text": {
+            "description": "Reason (submit) or review comment (approve).",
+            "maxLength": 2000,
+            "minLength": 3,
+            "type": "string"
+          },
+          "versionIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "versionIds",
+          "text"
+        ],
+        "type": "object"
+      },
       "CalculatorActivityDto": {
         "properties": {
           "completions": {
@@ -3225,6 +3331,63 @@
           "NATIONAL_FORMULARY"
         ],
         "type": "string"
+      },
+      "CommitImportDto": {
+        "properties": {
+          "reason": {
+            "description": "Audit log.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "revision": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "revision",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "CommitResultDto": {
+        "properties": {
+          "rowsSkipped": {
+            "type": "number"
+          },
+          "rowsWritten": {
+            "type": "number"
+          },
+          "sourcesCreated": {
+            "type": "number"
+          },
+          "substancesCreated": {
+            "type": "number"
+          },
+          "versionIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "versionsCreated": {
+            "type": "number"
+          },
+          "versionsUpdated": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "substancesCreated",
+          "versionsCreated",
+          "versionsUpdated",
+          "sourcesCreated",
+          "rowsWritten",
+          "rowsSkipped",
+          "versionIds"
+        ],
+        "type": "object"
       },
       "Conduct": {
         "enum": [
@@ -3665,7 +3828,7 @@
             "type": "string"
           },
           "oneTimePassword": {
-            "description": "Shown once; the admin changes nothing, they enrol TOTP at first sign-in.",
+            "description": "Shown once; the admin enrols TOTP at first sign-in, then replaces this password.",
             "type": "string"
           }
         },
@@ -3844,6 +4007,19 @@
         ],
         "type": "string"
       },
+      "DiscardImportDto": {
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
       "EligibilityDto": {
         "properties": {
           "renewableFrom": {
@@ -3947,6 +4123,13 @@
           },
           "retryAt": {
             "format": "date-time",
+            "type": "string"
+          },
+          "sessionEnd": {
+            "description": "SESSION_INVALID only: the account was opened on another device.",
+            "enum": [
+              "SIGNED_IN_ELSEWHERE"
+            ],
             "type": "string"
           },
           "unlockPath": {
@@ -4817,6 +5000,596 @@
         ],
         "type": "object"
       },
+      "ImportCellDto": {
+        "properties": {
+          "formula": {
+            "description": "The cell held a formula: its stored value was read, never evaluated.",
+            "type": "boolean"
+          },
+          "hyperlink": {
+            "nullable": true,
+            "type": "string"
+          },
+          "text": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "hyperlink",
+          "formula"
+        ],
+        "type": "object"
+      },
+      "ImportIssueDto": {
+        "properties": {
+          "code": {
+            "description": "Stable code; Admin Web translates it.",
+            "type": "string"
+          },
+          "field": {
+            "enum": [
+              "substance",
+              "context",
+              "period",
+              "status",
+              "alternative",
+              "sourceUrl",
+              "sourceTitle",
+              "row"
+            ],
+            "type": "string"
+          },
+          "params": {
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "type": "object"
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportIssueSeverity"
+              }
+            ]
+          }
+        },
+        "required": [
+          "field",
+          "severity",
+          "code"
+        ],
+        "type": "object"
+      },
+      "ImportIssueSeverity": {
+        "enum": [
+          "ERROR",
+          "WARNING",
+          "INFO"
+        ],
+        "type": "string"
+      },
+      "ImportListDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ImportListItemDto"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ],
+        "type": "object"
+      },
+      "ImportListItemDto": {
+        "properties": {
+          "committedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "committedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "discardedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "fileBytes": {
+            "type": "number"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "fileSha256": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "parserVersion": {
+            "type": "string"
+          },
+          "reason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommitResultDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "revision": {
+            "description": "Send it back with every change; a stale value is refused.",
+            "type": "number"
+          },
+          "rows": {
+            "type": "number"
+          },
+          "sheetName": {
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportStatus"
+              }
+            ]
+          },
+          "uploadedBy": {
+            "$ref": "#/components/schemas/PersonDto"
+          }
+        },
+        "required": [
+          "id",
+          "fileName",
+          "fileSha256",
+          "fileBytes",
+          "sheetName",
+          "status",
+          "revision",
+          "parserVersion",
+          "uploadedBy",
+          "createdAt",
+          "committedBy",
+          "committedAt",
+          "discardedAt",
+          "reason",
+          "result",
+          "rows"
+        ],
+        "type": "object"
+      },
+      "ImportPreviewDto": {
+        "properties": {
+          "columns": {
+            "additionalProperties": {
+              "enum": [
+                "substance",
+                "context",
+                "period",
+                "status",
+                "alternative",
+                "sourceUrl",
+                "sourceTitle",
+                "ignore"
+              ],
+              "type": "string"
+            },
+            "description": "Column index → field.",
+            "type": "object"
+          },
+          "committedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "committedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "discardedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "fileBytes": {
+            "type": "number"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "fileSha256": {
+            "type": "string"
+          },
+          "headerRow": {
+            "description": "Sheet row of the header.",
+            "type": "number"
+          },
+          "headers": {
+            "items": {
+              "nullable": true,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "missingColumns": {
+            "description": "Required fields no column maps to.",
+            "items": {
+              "enum": [
+                "substance",
+                "context",
+                "period",
+                "status",
+                "alternative",
+                "sourceUrl",
+                "sourceTitle"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "otherSheets": {
+            "description": "Other sheets of the file, not read.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "parserVersion": {
+            "type": "string"
+          },
+          "reason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommitResultDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "revision": {
+            "description": "Send it back with every change; a stale value is refused.",
+            "type": "number"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ImportRowDto"
+            },
+            "type": "array"
+          },
+          "rowsTotal": {
+            "description": "Rows matching the filter.",
+            "type": "number"
+          },
+          "sheetName": {
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportStatus"
+              }
+            ]
+          },
+          "statuses": {
+            "items": {
+              "$ref": "#/components/schemas/ImportStatusWordDto"
+            },
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ImportSummaryDto"
+          },
+          "uploadedBy": {
+            "$ref": "#/components/schemas/PersonDto"
+          }
+        },
+        "required": [
+          "id",
+          "fileName",
+          "fileSha256",
+          "fileBytes",
+          "sheetName",
+          "status",
+          "revision",
+          "parserVersion",
+          "uploadedBy",
+          "createdAt",
+          "committedBy",
+          "committedAt",
+          "discardedAt",
+          "reason",
+          "result",
+          "headerRow",
+          "headers",
+          "otherSheets",
+          "columns",
+          "missingColumns",
+          "statuses",
+          "summary",
+          "rows",
+          "rowsTotal"
+        ],
+        "type": "object"
+      },
+      "ImportRowDto": {
+        "properties": {
+          "edited": {
+            "type": "boolean"
+          },
+          "excluded": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/ImportIssueDto"
+            },
+            "type": "array"
+          },
+          "original": {
+            "items": {
+              "$ref": "#/components/schemas/ImportCellDto"
+            },
+            "type": "array"
+          },
+          "resolution": {
+            "enum": [
+              "UPDATE",
+              "SKIP"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "rowNumber": {
+            "description": "Row number in the sheet.",
+            "type": "number"
+          },
+          "substanceId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "values": {
+            "$ref": "#/components/schemas/ImportValuesDto"
+          },
+          "versionId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "rowNumber",
+          "original",
+          "values",
+          "edited",
+          "excluded",
+          "resolution",
+          "issues",
+          "substanceId",
+          "versionId"
+        ],
+        "type": "object"
+      },
+      "ImportRowFilter": {
+        "enum": [
+          "ALL",
+          "ERROR",
+          "WARNING",
+          "VALID",
+          "EXCLUDED",
+          "DUPLICATE",
+          "CONFLICT"
+        ],
+        "type": "string"
+      },
+      "ImportStatus": {
+        "enum": [
+          "PREVIEW",
+          "COMMITTED",
+          "DISCARDED"
+        ],
+        "type": "string"
+      },
+      "ImportStatusWordDto": {
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "mappedTo": {
+            "enum": [
+              "CONTRAINDICATED",
+              "AVOID",
+              "OCCASIONAL_USE",
+              "NONE"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "rows": {
+            "type": "number"
+          },
+          "sample": {
+            "description": "The word as first written in the sheet.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "sample",
+          "rows",
+          "mappedTo"
+        ],
+        "type": "object"
+      },
+      "ImportSummaryDto": {
+        "properties": {
+          "conflicts": {
+            "type": "number"
+          },
+          "duplicates": {
+            "type": "number"
+          },
+          "errors": {
+            "type": "number"
+          },
+          "excluded": {
+            "type": "number"
+          },
+          "newSubstances": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "valid": {
+            "type": "number"
+          },
+          "warnings": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "total",
+          "excluded",
+          "valid",
+          "errors",
+          "warnings",
+          "duplicates",
+          "conflicts",
+          "newSubstances"
+        ],
+        "type": "object"
+      },
+      "ImportValuesDto": {
+        "properties": {
+          "alternative": {
+            "nullable": true,
+            "type": "string"
+          },
+          "context": {
+            "nullable": true,
+            "type": "string"
+          },
+          "period": {
+            "nullable": true,
+            "type": "string"
+          },
+          "sourceTitle": {
+            "nullable": true,
+            "type": "string"
+          },
+          "sourceUrl": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "nullable": true,
+            "type": "string"
+          },
+          "substance": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "substance",
+          "context",
+          "period",
+          "status",
+          "alternative",
+          "sourceUrl",
+          "sourceTitle"
+        ],
+        "type": "object"
+      },
+      "ImportValuesPatchDto": {
+        "properties": {
+          "alternative": {
+            "nullable": true,
+            "type": "string"
+          },
+          "context": {
+            "nullable": true,
+            "type": "string"
+          },
+          "period": {
+            "nullable": true,
+            "type": "string"
+          },
+          "sourceTitle": {
+            "nullable": true,
+            "type": "string"
+          },
+          "sourceUrl": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "nullable": true,
+            "type": "string"
+          },
+          "substance": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
       "IncidentsDto": {
         "properties": {
           "failedPayments": {
@@ -4968,8 +5741,27 @@
           "reportedEffects": {
             "$ref": "#/components/schemas/ProfileTextDto"
           },
+          "reportedStatus": {
+            "description": "Status as the imported source wrote it, beside the conduct.",
+            "type": "string"
+          },
+          "sourceIds": {
+            "description": "This version's sources that support this period specifically.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
           "specialPopulations": {
             "$ref": "#/components/schemas/ProfileTextDto"
+          },
+          "unresolvedAlternatives": {
+            "description": "Draft only: alternative names not yet linked to a substance (review refuses them).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -5373,6 +6165,76 @@
         ],
         "type": "object"
       },
+      "MergePreviewDto": {
+        "properties": {
+          "blockers": {
+            "items": {
+              "enum": [
+                "SAME_SUBSTANCE",
+                "SOURCE_ALREADY_MERGED",
+                "TARGET_MERGED",
+                "TARGET_ARCHIVED",
+                "SOURCE_HAS_MERGED",
+                "SOURCE_OPEN_VERSION",
+                "TOO_MANY_SYNONYMS"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "namesToAdd": {
+            "description": "Names of the duplicate added to the target's synonyms.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SubstanceRefDto"
+          },
+          "sourcePublishedVersion": {
+            "description": "Published version of the duplicate that will no longer be shown (never copied).",
+            "nullable": true,
+            "type": "number"
+          },
+          "target": {
+            "$ref": "#/components/schemas/SubstanceRefDto"
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "namesToAdd",
+          "sourcePublishedVersion",
+          "blockers"
+        ],
+        "type": "object"
+      },
+      "MergeSubstanceDto": {
+        "properties": {
+          "acknowledgeHiddenProfile": {
+            "description": "Required when the duplicate has a published profile.",
+            "type": "boolean"
+          },
+          "into": {
+            "description": "The substance to keep.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Audit log.",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "into",
+          "acknowledgeHiddenProfile"
+        ],
+        "type": "object"
+      },
       "MessageChannel": {
         "enum": [
           "EMAIL",
@@ -5630,6 +6492,18 @@
           "submitted",
           "verified",
           "rejected"
+        ],
+        "type": "object"
+      },
+      "OneTimePasswordDto": {
+        "properties": {
+          "oneTimePassword": {
+            "description": "Shown once; the admin replaces it after signing in.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "oneTimePassword"
         ],
         "type": "object"
       },
@@ -5996,6 +6870,102 @@
         "required": [
           "from",
           "to"
+        ],
+        "type": "object"
+      },
+      "PeriodSummariesDto": {
+        "properties": {
+          "LACTATION": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PeriodSummaryDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "PERIPARTUM": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PeriodSummaryDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "T1": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PeriodSummaryDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "T2": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PeriodSummaryDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "T3": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PeriodSummaryDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "T1",
+          "T2",
+          "T3",
+          "PERIPARTUM",
+          "LACTATION"
+        ],
+        "type": "object"
+      },
+      "PeriodSummaryDto": {
+        "properties": {
+          "conduct": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Conduct"
+              }
+            ],
+            "nullable": true
+          },
+          "evidenceLevel": {
+            "maximum": 4,
+            "minimum": 0,
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "conduct",
+          "evidenceLevel"
+        ],
+        "type": "object"
+      },
+      "PersonDto": {
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
         ],
         "type": "object"
       },
@@ -6371,6 +7341,14 @@
       },
       "PregnancyPeriodDto": {
         "properties": {
+          "alternatives": {
+            "description": "Alternatives for this period; the block's alternatives apply to every period.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
           "conduct": {
             "allOf": [
               {
@@ -6388,8 +7366,27 @@
           "evidence": {
             "$ref": "#/components/schemas/ProfileEvidenceDto"
           },
+          "reportedStatus": {
+            "description": "Status as the imported source wrote it, beside the conduct.",
+            "type": "string"
+          },
           "riskContext": {
             "$ref": "#/components/schemas/ProfileTextDto"
+          },
+          "sourceIds": {
+            "description": "This version's sources that support this period specifically.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "unresolvedAlternatives": {
+            "description": "Draft only: alternative names not yet linked to a substance (review refuses them).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -6569,9 +7566,10 @@
       "ProfileEvidenceDto": {
         "properties": {
           "level": {
-            "description": "4 robustes · 3 modérées · 2 limitées · 1 très limitées · 0 absence de données",
+            "description": "4 robustes · 3 modérées · 2 limitées · 1 très limitées · 0 absence de données. Null only in a draft (an import never invents it); a published profile always has one.",
             "maximum": 4,
             "minimum": 0,
+            "nullable": true,
             "type": "number"
           },
           "population": {
@@ -7921,6 +8919,46 @@
         ],
         "type": "object"
       },
+      "SetImportMappingDto": {
+        "properties": {
+          "columns": {
+            "additionalProperties": {
+              "enum": [
+                "substance",
+                "context",
+                "period",
+                "status",
+                "alternative",
+                "sourceUrl",
+                "sourceTitle",
+                "ignore"
+              ],
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "revision": {
+            "type": "number"
+          },
+          "statuses": {
+            "additionalProperties": {
+              "enum": [
+                "CONTRAINDICATED",
+                "AVOID",
+                "OCCASIONAL_USE",
+                "NONE"
+              ],
+              "type": "string"
+            },
+            "description": "Normalised status word → conduct, or NONE for no badge.",
+            "type": "object"
+          }
+        },
+        "required": [
+          "revision"
+        ],
+        "type": "object"
+      },
       "SetProfessionalProfileDto": {
         "properties": {
           "academicYear": {
@@ -8361,6 +9399,58 @@
         ],
         "type": "object"
       },
+      "SubstanceHitDto": {
+        "properties": {
+          "access": {
+            "$ref": "#/components/schemas/ItemAccessDto"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "nameFr": {
+            "type": "string"
+          },
+          "periods": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PeriodSummariesDto"
+              }
+            ],
+            "description": "Null while the profile is locked for this viewer.",
+            "nullable": true,
+            "type": "object"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "synonyms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "nameFr",
+          "nameEn",
+          "synonyms",
+          "version",
+          "publishedAt",
+          "access",
+          "periods"
+        ],
+        "type": "object"
+      },
       "SubstanceItemDto": {
         "properties": {
           "access": {
@@ -8500,6 +9590,24 @@
           "id",
           "nameFr",
           "nameEn"
+        ],
+        "type": "object"
+      },
+      "SubstanceSearchDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SubstanceHitDto"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total"
         ],
         "type": "object"
       },
@@ -8762,6 +9870,31 @@
         },
         "required": [
           "reason"
+        ],
+        "type": "object"
+      },
+      "UpdateImportRowDto": {
+        "properties": {
+          "excluded": {
+            "type": "boolean"
+          },
+          "resolution": {
+            "enum": [
+              "UPDATE",
+              "SKIP"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "revision": {
+            "type": "number"
+          },
+          "values": {
+            "$ref": "#/components/schemas/ImportValuesPatchDto"
+          }
+        },
+        "required": [
+          "revision"
         ],
         "type": "object"
       },
@@ -10198,6 +11331,61 @@
         ]
       }
     },
+    "/admin/v1/admins/{id}/reset-password": {
+      "post": {
+        "operationId": "AdminAccountsController_resetPassword",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OneTimePasswordDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-permissions"
+        ]
+      }
+    },
     "/admin/v1/admins/{id}/reset-totp": {
       "post": {
         "operationId": "AdminAccountsController_resetTotp",
@@ -11029,6 +12217,45 @@
         ],
         "tags": [
           "admin-audit"
+        ]
+      }
+    },
+    "/admin/v1/auth/password": {
+      "post": {
+        "operationId": "AdminAuthController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminChangePasswordDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-auth"
         ]
       }
     },
@@ -12857,6 +14084,399 @@
         ]
       }
     },
+    "/admin/v1/pregnancy/imports": {
+      "get": {
+        "operationId": "PregnancyImportController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportListDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      },
+      "post": {
+        "operationId": "PregnancyImportController_upload",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "description": ".xlsx, 5 MB at most",
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPreviewDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/imports/{id}": {
+      "get": {
+        "operationId": "PregnancyImportController_view",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "filter",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ImportRowFilter"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPreviewDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/imports/{id}/commit": {
+      "post": {
+        "operationId": "PregnancyImportController_commit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommitImportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitResultDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/imports/{id}/discard": {
+      "post": {
+        "operationId": "PregnancyImportController_discard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiscardImportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/imports/{id}/mapping": {
+      "put": {
+        "operationId": "PregnancyImportController_mapping",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetImportMappingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/imports/{id}/rows/{rowId}": {
+      "patch": {
+        "operationId": "PregnancyImportController_row",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "rowId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateImportRowDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
     "/admin/v1/pregnancy/reports": {
       "get": {
         "operationId": "PregnancyAdminController_reports",
@@ -13108,7 +14728,77 @@
     "/admin/v1/pregnancy/substances": {
       "get": {
         "operationId": "PregnancyAdminController_list",
-        "parameters": [],
+        "parameters": [
+          {
+            "description": "Words of the name or a synonym.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "NONE = no profile yet.",
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "enum": [
+                "PUBLISHED",
+                "DRAFT",
+                "IN_REVIEW",
+                "CHANGES_REQUESTED",
+                "NONE"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "enum": [
+                "active",
+                "archived",
+                "all"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "enum": [
+                "T1",
+                "T2",
+                "T3",
+                "PERIPARTUM",
+                "LACTATION"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Conduct in that period (open version, else published). Needs `period`.",
+            "in": "query",
+            "name": "conduct",
+            "required": false,
+            "schema": {
+              "enum": [
+                "CONTRAINDICATED",
+                "AVOID",
+                "OCCASIONAL_USE",
+                "NONE"
+              ],
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -13286,6 +14976,171 @@
         ]
       }
     },
+    "/admin/v1/pregnancy/substances/{id}/merge": {
+      "post": {
+        "operationId": "PregnancyAdminController_merge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MergeSubstanceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSubstanceDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/substances/{id}/merge-preview": {
+      "get": {
+        "operationId": "PregnancyAdminController_mergePreview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The substance to keep.",
+            "in": "query",
+            "name": "into",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MergePreviewDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/substances/{id}/unmerge": {
+      "post": {
+        "operationId": "PregnancyAdminController_unmerge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PregnancyReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSubstanceDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
     "/admin/v1/pregnancy/substances/{id}/versions": {
       "post": {
         "operationId": "PregnancyAdminController_createVersion",
@@ -13370,6 +15225,98 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AdminSubstanceDetailDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/versions/approve-many": {
+      "post": {
+        "operationId": "PregnancyAdminController_approveMany",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkVersionsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkResultDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "admin": []
+          }
+        ],
+        "tags": [
+          "admin-pregnancy"
+        ]
+      }
+    },
+    "/admin/v1/pregnancy/versions/submit-many": {
+      "post": {
+        "operationId": "PregnancyAdminController_submitMany",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkVersionsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkResultDto"
                 }
               }
             },
@@ -18105,6 +20052,76 @@
                     "$ref": "#/components/schemas/SubstanceItemDto"
                   },
                   "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Error envelope"
+          }
+        },
+        "security": [
+          {
+            "user": []
+          },
+          {
+            "demo": []
+          }
+        ],
+        "tags": [
+          "pregnancy"
+        ]
+      }
+    },
+    "/v1/pregnancy/substances/search": {
+      "get": {
+        "operationId": "PregnancyController_search",
+        "parameters": [
+          {
+            "description": "Words of the name or a synonym; partial words match.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubstanceSearchDto"
                 }
               }
             },

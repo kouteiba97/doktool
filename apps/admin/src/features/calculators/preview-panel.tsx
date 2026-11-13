@@ -14,6 +14,7 @@ import { Field, Select, Switch, TextInput } from '@/ui/field';
 import { type InputView, readDefinition } from './definition';
 import { OUTCOME_LABELS, type Version } from './labels';
 
+/** What the admin typed in one preview field, and its unit. */
 interface FieldState {
   value: string;
   unit: string;
@@ -39,6 +40,7 @@ export function toEvaluationInputs(
   return out;
 }
 
+/** Empty preview fields (booleans false, numbers in their canonical unit). */
 function initialState(inputs: InputView[]): Record<string, FieldState> {
   return Object.fromEntries(
     inputs.map((input) => [
@@ -63,6 +65,7 @@ export function PreviewPanel({ version }: { version: Version }) {
     initialState(definition?.inputs ?? []),
   );
 
+  // Runs the version on the API's engine with the typed values (never stored).
   const evaluate = useMutation({
     mutationFn: () =>
       call(
@@ -77,6 +80,7 @@ export function PreviewPanel({ version }: { version: Version }) {
 
   if (!definition)
     return <Alert tone="warning">{t('admin.calculators.definitionUnreadable')}</Alert>;
+  // Updates one field of the preview.
   const set = (key: string, patch: Partial<FieldState>) =>
     setState((current) => ({
       ...current,
@@ -104,6 +108,7 @@ export function PreviewPanel({ version }: { version: Version }) {
           />
         ))}
         <div>
+          {/* « Calculer »: evaluates on the server. */}
           <Button type="submit" variant="primary" busy={evaluate.isPending}>
             {t('admin.calculators.calculate')}
           </Button>
@@ -150,6 +155,7 @@ export function PreviewPanel({ version }: { version: Version }) {
   );
 }
 
+/** One preview field: a switch, a list of answers, or a number with its unit picker. */
 function PreviewField({
   input,
   locale,

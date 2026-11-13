@@ -38,6 +38,7 @@ export class VerificationModule implements OnModuleInit {
     private readonly maintenance: VerificationMaintenanceService,
   ) {}
 
+  /** Schedules the daily expiry and reminders, and the hourly purge of documents past retention. */
   onModuleInit(): void {
     this.jobs.register('verification.expire-and-remind', '17 6 * * *', async () => {
       await this.maintenance.expireCases();

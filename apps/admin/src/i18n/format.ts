@@ -5,16 +5,19 @@ import type { Locale } from './messages';
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
+/** A date in the UI language ("12 oct. 2026"). */
 export function formatDate(locale: Locale, value: string | Date): string {
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(value));
 }
 
+/** A date and time in the UI language. */
 export function formatDateTime(locale: Locale, value: string | Date): string {
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(
     new Date(value),
   );
 }
 
+/** A number in the UI language (spaces or commas for thousands). */
 export function formatNumber(locale: Locale, value: number, maximumFractionDigits = 6): string {
   return new Intl.NumberFormat(locale, { maximumFractionDigits }).format(value);
 }
@@ -24,6 +27,7 @@ export function formatMoney(locale: Locale, minor: number, currency: string): st
   return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(minor / 100);
 }
 
+/** A file size in B, kB or MB. */
 export function formatBytes(locale: Locale, bytes: number): string {
   const [value, unit] =
     bytes >= 1_000_000
@@ -51,6 +55,7 @@ export function formatAge(locale: Locale, from: string | Date, now: Date = new D
   return new Intl.NumberFormat(locale, { style: 'unit', unit, unitDisplay: 'short' }).format(value);
 }
 
+/** Hours elapsed since a moment (SLA badges). */
 export function hoursSince(from: string | Date, now: Date = new Date()): number {
   return (now.getTime() - new Date(from).getTime()) / HOUR;
 }

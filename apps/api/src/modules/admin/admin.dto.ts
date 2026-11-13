@@ -28,6 +28,7 @@ const trimmed = Transform(({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() : value,
 );
 
+/** A reason, required for every admin change (kept in the audit log). */
 export class AdminReasonBody {
   @ApiProperty({ minLength: 3, maxLength: 500 })
   @trimmed
@@ -39,6 +40,7 @@ export class AdminReasonBody {
 
 // ─────────────────────────────── users ───────────────────────────────
 
+/** Filters of the user list. */
 export class UserQuery {
   @ApiPropertyOptional({ description: 'Words of the name, e-mail or phone.' })
   @IsOptional()
@@ -73,6 +75,7 @@ export class WilayaDto {
   @ApiProperty() name!: string;
 }
 
+/** Verification state shown in the user list. */
 export class VerificationStateDto {
   @ApiProperty({ enum: VerificationStatus, enumName: 'VerificationStatus' })
   identity!: VerificationStatus;
@@ -86,6 +89,7 @@ export class VerificationStateDto {
     string | null;
 }
 
+/** One row of the user list. */
 export class AdminUserDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty() firstName!: string;
@@ -105,6 +109,7 @@ export class AdminUserDto {
   @ApiProperty({ format: 'date-time' }) createdAt!: string;
 }
 
+/** The facts the access profile was computed from (shown to explain it). */
 export class AccessInputsDto {
   @ApiProperty({ enum: UserStatus, enumName: 'UserStatus' }) accountStatus!: UserStatus;
   @ApiProperty({ enum: ProfessionalType, enumName: 'ProfessionalType', nullable: true })
@@ -133,6 +138,7 @@ export class ActivityCountsDto {
   @ApiProperty({ type: [HistoryCountDto] }) history!: HistoryCountDto[];
 }
 
+/** One audit log entry. */
 export class AuditEntryDto {
   @ApiProperty() id!: string;
   @ApiProperty({ format: 'date-time' }) occurredAt!: string;
@@ -153,6 +159,7 @@ export class AuditEntryDto {
   @ApiProperty({ type: String, nullable: true }) ip!: string | null;
 }
 
+/** The user drawer. */
 export class AdminUserDetailDto extends AdminUserDto {
   @ApiProperty({ enum: Language, enumName: 'Language', nullable: true }) language!: Language | null;
   @ApiProperty({ type: Number, nullable: true }) academicYear!: number | null;
@@ -169,6 +176,7 @@ export class AdminUserDetailDto extends AdminUserDto {
 
 // ─────────────────────────────── audit ───────────────────────────────
 
+/** Filters of the audit log and of its export. */
 export class AuditQuery {
   @ApiPropertyOptional({ enum: AuditActorType, enumName: 'AuditActorType' })
   @IsOptional()
@@ -245,6 +253,7 @@ export class OverviewFileFailureDto {
   @ApiProperty({ format: 'date-time' }) uploadedAt!: string;
 }
 
+/** The « Vue d'ensemble » page; each block is present only with the matching grant. */
 export class OverviewDto {
   @ApiPropertyOptional({
     type: Number,

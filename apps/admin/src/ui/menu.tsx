@@ -5,6 +5,7 @@ import { Ellipsis } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from './button';
 
+/** One entry of an overflow menu. */
 export interface MenuAction {
   label: ReactNode;
   onSelect: () => void;

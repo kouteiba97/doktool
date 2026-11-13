@@ -18,7 +18,10 @@ import {
   ContentReportDto,
   SubstanceItemDto,
   SubstanceProfileDto,
+  SubstanceHitDto,
   SubstanceQuery,
+  SubstanceSearchDto,
+  SubstanceSearchQuery,
 } from './pregnancy.dto.js';
 import { PregnancyService } from './pregnancy.service.js';
 
@@ -39,6 +42,7 @@ const uuid = new ParseUUIDPipe();
 export class PregnancyController {
   constructor(private readonly pregnancy: PregnancyService) {}
 
+  /** GET /v1/pregnancy/substances: the A–Z list (optional filter). */
   @Get()
   @ApiOkResponse({ type: [SubstanceItemDto] })
   @errors
@@ -47,6 +51,25 @@ export class PregnancyController {
     @Query() query: SubstanceQuery,
   ): Promise<SubstanceItemDto[]> {
     return (await this.pregnancy.list(viewer, query.q)).map((item) => SubstanceItemDto.from(item));
+  }
+
+  /**
+   * Server-side search (ADR-025): partial, accent-insensitive words of the name or a synonym,
+   * bounded pages, with each period's conduct and evidence level when the profile is open.
+   */
+  @Get('search')
+  @ApiOkResponse({ type: SubstanceSearchDto })
+  @errors
+  async search(
+    @CurrentViewer() viewer: Viewer,
+    @Query() query: SubstanceSearchQuery,
+  ): Promise<SubstanceSearchDto> {
+    const { items, total } = await this.pregnancy.search(viewer, {
+      q: query.q ?? '',
+      limit: query.limit ?? 20,
+      offset: query.offset ?? 0,
+    });
+    return { total, items: items.map((hit) => SubstanceHitDto.fromHit(hit)) };
   }
 
   /** The published profile; CONTENT_UNAVAILABLE (410) once disabled. */

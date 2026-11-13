@@ -33,6 +33,7 @@ class ReviewScreen extends ConsumerStatefulWidget {
   ConsumerState<ReviewScreen> createState() => _ReviewScreenState();
 }
 
+/// The card chosen, the « non remboursable » acknowledgement, progress and error.
 class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   /// The card chosen; null until the person picks one of those the API accepts right now.
   PaymentMethod? _choice;
@@ -40,6 +41,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   bool _paying = false;
   ApiError? _error;
 
+  /// « Payer »: starts the payment on the API and opens the payment page in the browser.
   Future<void> _pay(String acknowledgementVersion, PaymentMethod method) async {
     setState(() {
       _paying = true;
@@ -108,6 +110,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       actions: [
         if (_error != null) DtAlert(severity: DtAlertSeverity.critical, body: _message(context, _error!)),
         if (methods.isEmpty) DtAlert(severity: DtAlertSeverity.info, body: l10n.reviewMethodsPaused),
+        // « Payer »: needs the plan open, a card chosen and the acknowledgement ticked.
         DtButton(
           label: l10n.reviewPay,
           loading: _paying,
@@ -135,6 +138,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
           if (methods.length == 1)
             Text(methodText(l10n, method), style: DtType.body.copyWith(color: colors.ink))
           else
+            // The card: CIB or Edahabia (those the API accepts now).
             DtSegmentedControl<PaymentMethod>(
               semanticLabel: l10n.reviewMethod,
               selected: method,
@@ -144,6 +148,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         ],
         const SizedBox(height: DtSpace.s6),
         MergeSemantics(
+          // « J'ai compris que l'abonnement n'est pas remboursable ».
           child: CheckboxListTile(
             value: _acknowledged,
             onChanged: (value) => setState(() => _acknowledged = value ?? false),
@@ -157,6 +162,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     );
   }
 
+  /// The message for each refusal (a payment already in progress, method paused…).
   String _message(BuildContext context, ApiError error) {
     final l10n = AppLocalizations.of(context);
     return switch (error.code) {

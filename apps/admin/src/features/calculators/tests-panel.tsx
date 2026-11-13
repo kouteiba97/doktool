@@ -17,6 +17,7 @@ import { useToast } from '@/ui/toast';
 import { currentRun } from './definition';
 import { OUTCOME_LABELS, type TestOutcome, type Version } from './labels';
 
+/** Outcomes a test case can expect. */
 const OUTCOMES: TestOutcome[] = ['RESULT', 'INVALID', 'OUT_OF_VALIDATED_RANGE'];
 
 /** « Tests »: every case with expected vs backend engine result, engine version and run time. */
@@ -39,6 +40,7 @@ export function TestsPanel({
     (version.status === 'DRAFT' || version.status === 'IN_REVIEW') && has('calculators.read');
   const editable = version.status === 'DRAFT' && has('calculators.draft');
 
+  // « Lancer les tests » on the server engine; the run is stored with the definition's checksum.
   const runTests = useMutation({
     mutationFn: () =>
       call(
@@ -52,6 +54,7 @@ export function TestsPanel({
     },
     onError: (error) => toast(errorText(error), 'error'),
   });
+  // Removes a test case from the draft.
   const remove = useMutation({
     mutationFn: (testCaseId: string) =>
       call(
@@ -63,6 +66,7 @@ export function TestsPanel({
     onError: (error) => toast(errorText(error), 'error'),
   });
 
+  // The expected outcome as text ("12 ± 0.1 · HIGH", or the outcome's name).
   const expectation = (
     outcome: TestOutcome,
     value: number | null,
@@ -96,12 +100,14 @@ export function TestsPanel({
         ) : null}
         <div className="ms-auto flex gap-2">
           {editable ? (
+            // « Ajouter un cas ».
             <Button size="sm" onClick={() => setAdding(true)}>
               <Plus size={14} aria-hidden />
               {t('admin.calculators.addTestCase')}
             </Button>
           ) : null}
           {canRun ? (
+            // « Lancer les tests ».
             <Button
               size="sm"
               variant="primary"
@@ -171,6 +177,7 @@ export function TestsPanel({
                     </td>
                     {editable ? (
                       <td>
+                        {/* Bin icon: removes this test case. */}
                         <Button
                           size="sm"
                           variant="ghost"
@@ -197,6 +204,9 @@ export function TestsPanel({
   );
 }
 
+/**
+ * The test-case form: where the example comes from, the inputs as JSON and the expected outcome.
+ */
 function AddTestCaseDialog({
   version,
   open,
@@ -218,6 +228,7 @@ function AddTestCaseDialog({
   const [band, setBand] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  // Adds the case; inputs that are not valid JSON are reported first.
   const add = useMutation({
     mutationFn: async () => {
       let parsed: unknown;
@@ -255,6 +266,7 @@ function AddTestCaseDialog({
       ),
   });
 
+  // Expected value and tolerance must be numbers for a RESULT case.
   const numbersValid =
     outcome !== 'RESULT' ||
     (value.trim() !== '' &&
@@ -273,9 +285,11 @@ function AddTestCaseDialog({
       onSubmit={() => add.mutate()}
       footer={
         <>
+          {/* « Annuler ». */}
           <Button onClick={() => onOpenChange(false)} disabled={add.isPending}>
             {t('admin.common.cancel')}
           </Button>
+          {/* « Ajouter le cas ». */}
           <Button type="submit" variant="primary" busy={add.isPending} disabled={!ready}>
             {t('admin.calculators.addTestCase')}
           </Button>

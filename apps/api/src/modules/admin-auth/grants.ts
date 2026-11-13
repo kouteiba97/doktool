@@ -1,5 +1,6 @@
 // V1 admin grant catalogue and presets (design system section 03). There is no refund grant.
 
+/** Every permission an admin can hold; routes require them with @RequireGrants. */
 export const GRANTS = [
   'users.read',
   'users.write',
@@ -39,6 +40,7 @@ export const GRANTS = [
 
 export type Grant = (typeof GRANTS)[number];
 
+/** Ready-made sets of grants offered when creating an admin. */
 export const PRESETS = {
   SUPER_ADMIN: [...GRANTS],
   /** `verification.documents.view` is granted separately, time-limited (default 2 h). */
@@ -66,6 +68,7 @@ export const PRESETS = {
 
 export type Preset = keyof typeof PRESETS;
 
+/** True when a stored string is a known grant (old grants are ignored). */
 export function isGrant(value: string): value is Grant {
   return (GRANTS as readonly string[]).includes(value);
 }

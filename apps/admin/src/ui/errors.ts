@@ -4,6 +4,7 @@ import { ApiFailure } from '@/api/client';
 import { useI18n } from '@/i18n/i18n-provider';
 import type { MessageKey } from '@/i18n/messages';
 
+/** API error codes and the sentence the console shows for each. */
 const KNOWN: Partial<Record<ApiFailure['code'], MessageKey>> = {
   NETWORK: 'admin.errors.network',
   VALIDATION_FAILED: 'admin.errors.validation',

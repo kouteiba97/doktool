@@ -37,6 +37,7 @@ class PlansScreen extends ConsumerWidget {
           error: (error, _) => [
             DtAlert(severity: DtAlertSeverity.neutral, body: commonErrorText(context, ApiError.from(error))),
             const SizedBox(height: DtSpace.s3),
+            // « Réessayer ».
             DtButton(
               label: l10n.commonRetry,
               variant: DtButtonVariant.secondary,
@@ -75,6 +76,7 @@ class PlansScreen extends ConsumerWidget {
   }
 }
 
+/// One plan: includes, not included, duration, price and its button (or why it is not open yet).
 class _PlanCard extends ConsumerWidget {
   const _PlanCard({required this.plan, required this.state});
 
@@ -104,17 +106,20 @@ class _PlanCard extends ConsumerWidget {
     );
 
     final Widget action = switch (state) {
+      // « Choisir »: opens the review of this plan.
       CheckoutEligibility.open => DtButton(
         label: l10n.plansChoose,
         onPressed: () => context.push(Routes.subscriptionReview(plan.id)),
       ),
       CheckoutEligibility.verificationRequired ||
       CheckoutEligibility.verificationPending ||
+      // Not verified yet: opens the verification.
       CheckoutEligibility.roleRequired => DtButton(
         label: l10n.plansVerificationRequired,
         variant: DtButtonVariant.secondary,
         onPressed: () => context.push(Routes.verificationStatus),
       ),
+      // In the demo: « Créer un compte ».
       CheckoutEligibility.accountRequired => DtButton(
         label: l10n.lockCreateAccount,
         variant: DtButtonVariant.secondary,

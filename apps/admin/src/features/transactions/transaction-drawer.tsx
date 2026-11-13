@@ -26,6 +26,7 @@ import {
   TRANSACTION_STATUS_TONES,
 } from '../subscriptions/labels';
 
+/** API types used by the transaction drawer. */
 type Detail = Schemas['AdminTransactionDetailDto'];
 type Adjustment = Schemas['AdjustmentDto'];
 type Reason = Schemas['AdjustmentBody']['reasonCode'];
@@ -58,6 +59,7 @@ export function TransactionDrawer({
   const [adjusting, setAdjusting] = useState(false);
   const [approving, setApproving] = useState<Adjustment | null>(null);
   const key = ['admin', 'transactions', 'detail', transactionId ?? ''] as const;
+  // The payment with its fee and adjustments.
   const detail = useQuery({
     queryKey: key,
     queryFn: () =>
@@ -68,11 +70,13 @@ export function TransactionDrawer({
   });
   const row = detail.data;
 
+  // After a change: update the drawer and the list, confirm with a toast.
   const updated = (next: Detail, message: string) => {
     queryClient.setQueryData(key, next);
     void queryClient.invalidateQueries({ queryKey: ['admin', 'transactions'], exact: false });
     toast(message);
   };
+  // An amount in the payment's currency.
   const money = (minor: number) => formatMoney(locale, minor, row?.currency ?? 'DZD');
 
   return (
@@ -102,6 +106,8 @@ export function TransactionDrawer({
             actions={[
               {
                 label: t('admin.transactions.adjust'),
+                // « Ajustement exceptionnel… »: a reversal or correction that counts only once a
+                // second admin approves it.
                 onSelect: () => setAdjusting(true),
                 hidden: !has('transactions.adjustment.request') || row.status !== 'SUCCEEDED',
               },
@@ -187,6 +193,10 @@ export function TransactionDrawer({
                         <span className="dt-cap">{t('admin.transactions.secondAdminNeeded')}</span>
                       ) : (
                         <div>
+                          {/*
+                            « Approuver » this adjustment (never by the admin who requested
+                            it).
+                          */}
                           <Button
                             size="sm"
                             variant="primary"
@@ -247,6 +257,7 @@ export function TransactionDrawer({
   );
 }
 
+/** The exceptional adjustment form: kind, amount, reason code and note. */
 function AdjustmentDialog({
   transaction,
   onClose,

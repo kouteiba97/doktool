@@ -23,9 +23,11 @@ class CaseDraftBuilder extends ConsumerStatefulWidget {
   ConsumerState<CaseDraftBuilder> createState() => _CaseDraftBuilderState();
 }
 
+/// Opens (or creates) the draft once and shows its loading or error state.
 class _CaseDraftBuilderState extends ConsumerState<CaseDraftBuilder> {
   late Future<VerificationCaseDto> _opening = _open();
 
+  /// The draft verification case of this type.
   Future<VerificationCaseDto> _open() => ref.read(verificationControllerProvider.notifier).draftFor(widget.type);
 
   @override
@@ -47,6 +49,7 @@ class _CaseDraftBuilderState extends ConsumerState<CaseDraftBuilder> {
                       body: commonErrorText(context, ApiError.from(snapshot.error!)),
                     ),
                     const SizedBox(height: DtSpace.s4),
+                    // « Réessayer » opening the case.
                     DtButton(label: l10n.commonRetry, onPressed: () => setState(() => _opening = _open())),
                   ],
                 ),

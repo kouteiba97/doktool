@@ -17,6 +17,7 @@ import {
   evaluate,
 } from './engine/index.js';
 
+/** A calculator in the app's lists, with the viewer's access. */
 export interface CalculatorSummary {
   id: string;
   slug: string;
@@ -29,6 +30,7 @@ export interface CalculatorSummary {
   access: ItemAccess;
 }
 
+/** A source shown under a calculator. */
 export interface PublishedSource {
   role: CalculatorSourceRole;
   authors: string;
@@ -41,6 +43,7 @@ export interface PublishedSource {
   formulaLocation: string;
 }
 
+/** The published version the app runs: definition, checksum, review and sources. */
 export interface PublishedVersion {
   versionId: string;
   version: number;
@@ -52,6 +55,7 @@ export interface PublishedVersion {
   sources: PublishedSource[];
 }
 
+/** A test case sent to the app so its offline engine can check itself. */
 export interface PublishedTestCase {
   inputs: EvaluationInputs;
   expectedOutcome: CalculatorTestOutcome;
@@ -60,6 +64,7 @@ export interface PublishedTestCase {
   expectedBand: string | null;
 }
 
+/** Relations loaded with a calculator's published version. */
 const PUBLISHED_INCLUDE = {
   currentVersion: {
     include: {
@@ -70,6 +75,24 @@ const PUBLISHED_INCLUDE = {
   },
 } as const;
 
+/** What a list needs of a calculator: its names, access facts and current version number. */
+const SUMMARY_SELECT = {
+  id: true,
+  slug: true,
+  nameFr: true,
+  nameEn: true,
+  purposeFr: true,
+  purposeEn: true,
+  category: true,
+  accessTier: true,
+  demoSample: true,
+  currentVersion: { select: { version: true } },
+} as const;
+
+/** A calculator row as lists read it. */
+type SummaryRow = Omit<Row, 'currentVersion'> & { currentVersion: { version: number } | null };
+
+/** A calculator row with its published version, as read here. */
 type Row = {
   id: string;
   slug: string;
@@ -135,8 +158,12 @@ export class CalculatorsService {
     });
   }
 
+  /**
+   * Active calculators with a published version, optionally filtered by words, A–Z, each with its
+   * lock.
+   */
   async list(viewer: Viewer, query?: string): Promise<CalculatorSummary[]> {
-    const rows = await this.rows();
+    const rows = await this.summaryRows();
     const matching = query
       ? rows.filter((row) => matchesAllWords(query, [row.nameFr, row.nameEn]))
       : rows;
@@ -145,6 +172,7 @@ export class CalculatorsService {
       .sort((a, b) => compareFrench(a.nameFr, b.nameFr));
   }
 
+  /** One calculator by slug; its definition and tests are sent only when the viewer may use it. */
   async get(
     viewer: Viewer,
     slug: string,
@@ -218,6 +246,26 @@ export class CalculatorsService {
       .sort((a, b) => compareFrench(a.nameFr, b.nameFr));
   }
 
+  /** The published calculators among `ids` (favorites), with access; others are left out. */
+  async summariesByIds(viewer: Viewer, ids: readonly string[]): Promise<CalculatorSummary[]> {
+    if (ids.length === 0) return [];
+    const entries = await this.withAccess(viewer, await this.summaryRows([...ids]));
+    return entries.map(({ summary }) => summary);
+  }
+
+  /** Active calculators with a published version (only what a list shows), optionally by id. */
+  private async summaryRows(ids?: string[]): Promise<SummaryRow[]> {
+    return this.prisma.calculator.findMany({
+      where: {
+        status: 'ACTIVE',
+        currentVersionId: { not: null },
+        ...(ids ? { id: { in: ids } } : {}),
+      },
+      select: SUMMARY_SELECT,
+    });
+  }
+
+  /** Every active calculator with a published version. */
   private async rows(): Promise<Row[]> {
     const rows = await this.prisma.calculator.findMany({
       where: { status: 'ACTIVE', currentVersionId: { not: null } },
@@ -226,10 +274,11 @@ export class CalculatorsService {
     return rows as Row[];
   }
 
-  private async withAccess(
+  /** Adds the viewer's access decision to each calculator. */
+  private async withAccess<R extends SummaryRow>(
     viewer: Viewer,
-    rows: Row[],
-  ): Promise<{ summary: CalculatorSummary; row: Row }[]> {
+    rows: R[],
+  ): Promise<{ summary: CalculatorSummary; row: R }[]> {
     const { decisions } = await this.access.decideItems(
       viewer,
       rows.map((row) => ({
@@ -255,6 +304,7 @@ export class CalculatorsService {
   }
 }
 
+/** The published version's test cases in the app's shape. */
 function testCasesOf(row: Row): PublishedTestCase[] {
   return row.currentVersion!.testCases.map((testCase) => ({
     inputs: testCase.inputs,
@@ -265,6 +315,7 @@ function testCasesOf(row: Row): PublishedTestCase[] {
   }));
 }
 
+/** The published version in the app's shape (its definition is checked again). */
 function published(row: Row): PublishedVersion {
   const version = row.currentVersion!;
   const checked = checkDefinition(version.definition);

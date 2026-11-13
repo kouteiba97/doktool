@@ -51,6 +51,7 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
   bool _canceling = false;
   String? _notice;
 
+  /// « Annuler la récupération »: the owner stops a recovery during its 24-hour hold.
   Future<void> _cancelRecovery() async {
     final l10n = AppLocalizations.of(context);
     setState(() => _canceling = true);
@@ -67,6 +68,7 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
     }
   }
 
+  /// « Retirer »: opens the password sheet that removes a contact.
   Future<void> _remove(MessageChannel channel) async {
     final removed = await showModalBottomSheet<bool>(
       // Above the floating tab bar (ADR-020), never under it.
@@ -84,6 +86,7 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
     }
   }
 
+  /// « Modifier » / « Ajouter »: opens the contact screen, then confirms the change.
   Future<void> _edit(MessageChannel channel, bool exists) async {
     final saved = await context.push<bool>(
       Routes.contactEdit(channel == MessageChannel.email ? 'email' : 'phone', exists),
@@ -125,6 +128,7 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
                               .format(value.pendingRecovery!.effectiveAt!.toLocal()),
                         )
                       : l10n.securityPendingSubmitted,
+                  // « Ce n'est pas moi »: cancels the recovery in progress during its 24-hour hold.
                   action: DtButton(
                     label: l10n.securityNotMe,
                     variant: DtButtonVariant.danger,
@@ -177,6 +181,7 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
                 padding: EdgeInsets.zero,
                 child: Material(
                   type: MaterialType.transparency,
+                  // « Changer le mot de passe ».
                   child: ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: DtSpace.s4, vertical: DtSpace.s1),
                     leading: Icon(LucideIcons.keyRound, color: colors.inkSecondary),
@@ -201,6 +206,7 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
           AsyncError(:final error) => DtAlert(
             severity: DtAlertSeverity.critical,
             body: commonErrorText(context, ApiError.from(error)),
+            // « Réessayer » loading the contacts.
             action: DtButton(
               label: l10n.commonRetry,
               size: DtButtonSize.md,
@@ -215,6 +221,7 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
   }
 }
 
+/// One contact (e-mail or phone) with its buttons.
 class _ContactRow extends StatelessWidget {
   const _ContactRow({
     required this.icon,
@@ -256,6 +263,7 @@ class _ContactRow extends StatelessWidget {
             ),
           ),
           if (canRemove)
+            // « Retirer » this contact (only when the other one exists).
             DtButton(
               label: l10n.securityRemove,
               variant: DtButtonVariant.ghost,
@@ -263,6 +271,7 @@ class _ContactRow extends StatelessWidget {
               expand: false,
               onPressed: onRemove,
             ),
+          // « Ajouter » / « Modifier » this contact.
           DtButton(
             label: value == null ? l10n.securityAdd : l10n.securityChange,
             variant: DtButtonVariant.secondary,
@@ -286,17 +295,20 @@ class _RemoveContactSheet extends ConsumerStatefulWidget {
   ConsumerState<_RemoveContactSheet> createState() => _RemoveContactSheetState();
 }
 
+/// The password typed, progress and error.
 class _RemoveContactSheetState extends ConsumerState<_RemoveContactSheet> {
   final _password = TextEditingController();
   bool _busy = false;
   ApiError? _error;
 
+  /// Frees the text controller.
   @override
   void dispose() {
     _password.dispose();
     super.dispose();
   }
 
+  /// Removes the contact after checking the password; the other contact is told.
   Future<void> _remove() async {
     setState(() {
       _busy = true;
@@ -346,6 +358,7 @@ class _RemoveContactSheetState extends ConsumerState<_RemoveContactSheet> {
             DtAlert(severity: DtAlertSeverity.critical, body: _contactErrorText(context, error, removing: true)),
           ],
           const SizedBox(height: DtSpace.s4),
+          // « Retirer »: possible once the password is typed.
           DtButton(
             label: l10n.securityRemove,
             variant: DtButtonVariant.danger,
@@ -358,6 +371,7 @@ class _RemoveContactSheetState extends ConsumerState<_RemoveContactSheet> {
   }
 }
 
+/// The message for each refusal of a contact or password change.
 String _contactErrorText(BuildContext context, ApiError error, {bool removing = false}) {
   final l10n = AppLocalizations.of(context);
   return switch (error.code) {
@@ -387,6 +401,7 @@ class ContactEditScreen extends ConsumerStatefulWidget {
   ConsumerState<ContactEditScreen> createState() => _ContactEditScreenState();
 }
 
+/// The new contact, the password, the code, the challenge, progress and error.
 class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
   final _value = TextEditingController();
   final _password = TextEditingController();
@@ -395,6 +410,7 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
   bool _busy = false;
   ApiError? _error;
 
+  /// Frees the text controllers.
   @override
   void dispose() {
     _value.dispose();
@@ -408,6 +424,7 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
     return isValidIdentifier(text) && text.contains('@') == widget.email;
   }
 
+  /// Runs one step with the busy flag and shows its error if it fails.
   Future<void> _run(Future<void> Function() action) async {
     setState(() {
       _busy = true;
@@ -422,6 +439,7 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
     }
   }
 
+  /// Step 1: the new contact and the password; a code is sent to the new contact.
   Future<void> _send() => _run(() async {
     final challenge = await ref
         .read(apiProvider)
@@ -436,6 +454,7 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
     setState(() => _challenge = challenge);
   });
 
+  /// Step 2: the code confirms the new contact; the old one is told.
   Future<void> _confirm() => _run(() async {
     try {
       await ref
@@ -467,6 +486,7 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
         onBack: () => setState(() => _challenge = null),
         actions: [
           ?alert,
+          // « Confirmer »: possible once the six digits are typed.
           DtButton(
             label: l10n.contactConfirm,
             loading: _busy,
@@ -481,6 +501,7 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
       intro: l10n.contactIntro,
       actions: [
         ?alert,
+        // « Envoyer le code »: needs a valid contact and the password.
         DtButton(
           label: l10n.contactSendCode,
           loading: _busy,
@@ -511,12 +532,14 @@ class PasswordChangeScreen extends ConsumerStatefulWidget {
   ConsumerState<PasswordChangeScreen> createState() => _PasswordChangeScreenState();
 }
 
+/// The current and new passwords, progress and error.
 class _PasswordChangeScreenState extends ConsumerState<PasswordChangeScreen> {
   final _current = TextEditingController();
   final _next = TextEditingController();
   bool _busy = false;
   ApiError? _error;
 
+  /// Frees the text controllers.
   @override
   void dispose() {
     _current.dispose();
@@ -524,6 +547,7 @@ class _PasswordChangeScreenState extends ConsumerState<PasswordChangeScreen> {
     super.dispose();
   }
 
+  /// « Enregistrer »: changes the password; the other sessions end and the contacts are told.
   Future<void> _save() async {
     setState(() {
       _busy = true;
@@ -552,6 +576,7 @@ class _PasswordChangeScreenState extends ConsumerState<PasswordChangeScreen> {
       title: l10n.passwordTitle,
       actions: [
         if (error != null) DtAlert(severity: DtAlertSeverity.critical, body: _contactErrorText(context, error)),
+        // « Enregistrer »: needs the current password and a long enough new one.
         DtButton(
           label: l10n.passwordSave,
           loading: _busy,

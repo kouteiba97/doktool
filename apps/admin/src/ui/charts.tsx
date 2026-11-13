@@ -19,6 +19,7 @@ export const SERIES_TOKENS = ['--brand', '--teal', '--viz-3', '--viz-5'] as cons
 const PREVIOUS_TOKEN = '--viz-4';
 const CHROME_TOKENS = ['--chart-grid', '--chart-axis', '--surface', '--border', '--ink'] as const;
 
+/** One line or bar series of a chart. */
 export interface Series {
   key: string;
   label: string;
@@ -26,6 +27,7 @@ export interface Series {
   previous?: boolean;
 }
 
+/** Reads the colour tokens from the page's CSS. */
 function readTokens(): Record<string, string> {
   const style = getComputedStyle(document.documentElement);
   return Object.fromEntries(
@@ -47,6 +49,9 @@ function useTokens(): Record<string, string> | null {
   );
 }
 
+/**
+ * The colour of a series: dashed grey for the previous period, otherwise the next palette colour.
+ */
 function colorOf(tokens: Record<string, string>, series: Series[], index: number): string {
   const item = series[index]!;
   if (item.previous) return tokens[PREVIOUS_TOKEN]!;
@@ -54,6 +59,7 @@ function colorOf(tokens: Record<string, string>, series: Series[], index: number
   return tokens[SERIES_TOKENS[plain % SERIES_TOKENS.length]!]!;
 }
 
+/** Data and labels of a chart. */
 interface ChartProps<T> {
   /** Accessible name; also the caption of the hidden data table. */
   label: string;
@@ -104,6 +110,7 @@ function DataTableFallback<T>({ label, data, xKey, series, formatX, formatY }: C
   );
 }
 
+/** Grid, axes, tooltip and legend shared by both chart kinds. */
 function axes<T>(tokens: Record<string, string>, props: ChartProps<T>) {
   const tick = { fill: tokens['--chart-axis'], fontSize: 12 };
   return [
@@ -169,6 +176,7 @@ export function BarSeriesChart<T>(props: ChartProps<T> & { stacked?: boolean }) 
   );
 }
 
+/** A line chart (previous period dashed), with its data table for screen readers. */
 export function LineSeriesChart<T>(props: ChartProps<T>) {
   const tokens = useTokens();
   return (

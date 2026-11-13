@@ -19,8 +19,10 @@ import { Field, Select, TextInput } from '@/ui/field';
 import { useToast } from '@/ui/toast';
 import { ROLE_LABELS, type SourceRole, type Version } from './labels';
 
+/** Roles a source can have. */
 const ROLES: SourceRole[] = ['PRIMARY', 'VALIDATION', 'UNIT_CONVERSION'];
 
+/** Rules of a source. */
 const schema = z.object({
   role: z.enum(['PRIMARY', 'VALIDATION', 'UNIT_CONVERSION']),
   authors: z.string().trim().min(1).max(500),
@@ -33,6 +35,7 @@ const schema = z.object({
   formulaLocation: z.string().trim().min(1).max(300),
   accessedAt: z.iso.date(),
 });
+/** The source form's values. */
 type Values = z.input<typeof schema>;
 
 /** « Sources »: citation, edition, where the formula is stated, role (≥ 1 primary, section 28). */
@@ -50,6 +53,7 @@ export function SourcesPanel({
   const [adding, setAdding] = useState(false);
   const editable = version.status === 'DRAFT' && has('calculators.draft');
 
+  // Removes a source from the draft.
   const remove = useMutation({
     mutationFn: (sourceId: string) =>
       call(
@@ -78,6 +82,7 @@ export function SourcesPanel({
               </Badge>
               <b className="min-w-0 flex-1">{source.title}</b>
               {editable ? (
+                // Bin icon: removes this source.
                 <Button
                   size="sm"
                   variant="ghost"
@@ -119,6 +124,7 @@ export function SourcesPanel({
       </ul>
       {editable ? (
         <div>
+          {/* « Ajouter une source ». */}
           <Button size="sm" onClick={() => setAdding(true)}>
             <Plus size={14} aria-hidden />
             {t('admin.calculators.addSource')}
@@ -138,6 +144,10 @@ export function SourcesPanel({
   );
 }
 
+/**
+ * The source form: role, citation, edition, where the formula is stated, DOI or link, date
+ * accessed.
+ */
 function AddSourceDialog({
   version,
   open,
@@ -151,6 +161,7 @@ function AddSourceDialog({
 }) {
   const { t } = useI18n();
   const errorText = useErrorText();
+  // Starting values: PRIMARY for the first source, VALIDATION after.
   const empty: Values = {
     role: version.sources.some((source) => source.role === 'PRIMARY') ? 'VALIDATION' : 'PRIMARY',
     authors: '',
@@ -173,6 +184,7 @@ function AddSourceDialog({
   }, [open]);
   const { errors, isSubmitting } = form.formState;
 
+  // Adds the source (empty optional fields become null).
   const submit = form.handleSubmit(async (values) => {
     try {
       await call(
@@ -193,6 +205,7 @@ function AddSourceDialog({
     }
   });
 
+  // One text field of the form.
   const text = (
     name: Exclude<keyof Values, 'role'>,
     label: string,
@@ -225,9 +238,11 @@ function AddSourceDialog({
       onSubmit={() => void submit()}
       footer={
         <>
+          {/* « Annuler ». */}
           <Button onClick={() => onOpenChange(false)} disabled={isSubmitting}>
             {t('admin.common.cancel')}
           </Button>
+          {/* « Ajouter la source ». */}
           <Button type="submit" variant="primary" busy={isSubmitting}>
             {t('admin.calculators.addSource')}
           </Button>

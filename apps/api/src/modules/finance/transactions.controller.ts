@@ -55,6 +55,7 @@ export class TransactionsController {
     );
   }
 
+  /** GET /admin/v1/transactions/:id: one payment with its adjustments. */
   @Get(':id')
   @RequireGrants('transactions.read')
   @ApiOkResponse({ type: AdminTransactionDetailDto })
@@ -62,6 +63,10 @@ export class TransactionsController {
     return this.present(await this.find(transactionId));
   }
 
+  /**
+   * POST /admin/v1/transactions/:id/adjustments: records an exceptional adjustment (waits for a
+   * second admin).
+   */
   @Post(':id/adjustments')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('transactions.adjustment.request')
@@ -76,6 +81,7 @@ export class TransactionsController {
     return this.present(await this.find(transactionId));
   }
 
+  /** POST /admin/v1/transactions/adjustments/:adjustmentId/approve. */
   @Post('adjustments/:adjustmentId/approve')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('transactions.adjustment.approve')
@@ -90,12 +96,14 @@ export class TransactionsController {
     return this.present(await this.find(approved.transactionId));
   }
 
+  /** Loads a transaction or answers NOT_FOUND. */
   private async find(transactionId: string): Promise<LedgerTransaction> {
     const row = await this.ledger.transaction(transactionId);
     if (!row) throw new DomainError('NOT_FOUND', 'Transaction not found.');
     return row;
   }
 
+  /** Builds the transaction drawer: the payment, its fee and its adjustments. */
   private async present(row: LedgerTransaction): Promise<AdminTransactionDetailDto> {
     const rates = await this.finance.feeRates();
     const [adjustments, history] = await Promise.all([

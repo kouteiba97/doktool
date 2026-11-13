@@ -1,6 +1,7 @@
 // Phase 17: the finance arithmetic (gross → fees → net; net → expenses → profit) and the analytics
 // privacy rules (no free text, suppression under 10 people).
 import { describe, expect, it } from 'vitest';
+import { csvCell } from '../../src/common/text/csv.js';
 import { checkEvent, suppress } from '../../src/modules/analytics/analytics.policy.js';
 import {
   bucketFor,
@@ -91,6 +92,15 @@ describe('finance ledger', () => {
     expect(csv).toContain('"# Gross; with separator"');
     expect(csv).toContain('"PRO ""M""";1500.50');
     expect(decimal(-5)).toBe('-0.05');
+  });
+
+  it('never lets a cell run as a spreadsheet formula, but keeps negative numbers', () => {
+    expect(csvCell('=HYPERLINK("http://x")')).toBe(`"'=HYPERLINK(""http://x"")"`);
+    expect(csvCell('+33 1')).toBe("'+33 1");
+    expect(csvCell('@SUM(A1)')).toBe("'@SUM(A1)");
+    expect(csvCell('-cmd')).toBe("'-cmd");
+    expect(csvCell('-1500.50')).toBe('-1500.50');
+    expect(csvCell(-12)).toBe('-12');
   });
 });
 

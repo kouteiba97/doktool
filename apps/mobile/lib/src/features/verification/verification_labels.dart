@@ -8,12 +8,14 @@ import '../../core/api/generated/models/verification_type.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../ui/error_text.dart';
 
+/// The name of a case type.
 String caseName(AppLocalizations l10n, VerificationType type) => switch (type) {
   VerificationType.identity => l10n.verificationCaseIdentity,
   VerificationType.studentStatus => l10n.verificationCaseStudent,
   _ => l10n.verificationCaseProfessional,
 };
 
+/// The name of a document step (« Page d'identité » for a passport).
 String stepName(AppLocalizations l10n, VerificationCaseDto draft, VerificationStepType step) => switch (step) {
   VerificationStepType.identityFront =>
     draft.details.documentKind == VerificationDeclaredDetailsDtoDocumentKind.passport
@@ -40,6 +42,7 @@ String documentDescription(BuildContext context, VerificationCaseDto draft, Veri
   return '$name · $type · ${sizeText(context, document.sizeBytes)}';
 }
 
+/// A refusal reason in plain words.
 String rejectionReason(AppLocalizations l10n, VerificationRejectionReason reason) => switch (reason) {
   VerificationRejectionReason.illegible => l10n.verificationReasonIllegible,
   VerificationRejectionReason.documentExpired => l10n.verificationReasonDocumentExpired,

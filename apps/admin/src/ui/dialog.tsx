@@ -3,6 +3,7 @@
 import * as RadixDialog from '@radix-ui/react-dialog';
 import type { ReactNode } from 'react';
 
+/** A centred dialog: title, optional description, body and footer buttons. */
 interface DialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -15,6 +16,10 @@ interface DialogProps {
   onSubmit?: () => void;
 }
 
+/**
+ * A modal dialog (Radix): focus stays inside, Escape closes; with onSubmit, Enter submits the
+ * form.
+ */
 export function Dialog({
   open,
   onOpenChange,

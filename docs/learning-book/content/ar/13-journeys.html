@@ -1,0 +1,81 @@
+<section class="chapter">
+<h2 id="ch13">13. ثماني رحلات عبر النظام كله</h2>
+<p class="lead">كل رحلة تتبع قصة حقيقية واحدة من أول ضغطة إلى قاعدة البيانات والعودة، مع ذكر الملف في كل خطوة. اقرأ واحدة والتطبيقات الثلاثة مفتوحة جنبًا إلى جنب: إنها أسرع طريقة لتشعر كيف تتلاءم القطع.</p>
+
+<h3 id="ch13-j1">13.1 طبيب ينضم، يُتحقَّق منه، ويشترك</h3>
+<div class="diagram">MOBILE                                    API                                         ADMIN WEB
+welcome_screen « Créer un compte »
+role_select_screen  DOCTOR (in memory)
+sign_up_screen ─ POST /v1/auth/sign-up ─► AuthService.signUp → OtpService.issue → SMS/e-mail
+otp_screen ───── POST …/sign-up/confirm ► confirmSignUp → session + tokens; DemoService.markConverted
+             └── POST /v1/me/professional-profile (DOCTOR)  UsersService
+verification_intro → identity_step (camera, ML Kit check)
+   POST /v1/me/verification/cases …/uploads → signed PUT → R2 doktool-private → …/documents (confirm)
+status_step (Ordre number, specialty, attestation)  → saveDetails
+summary_screen « Envoyer » ─────────────► VerificationService.submit  (SUBMITTED)
+                                                                              Vérifications queue (SLA 24 h)
+                                                                              « Prendre le dossier » (claim)
+                                                                              restricted viewer (60 s, audited)
+                                          VerificationReviewService.approve ◄─ « Approuver »
+                                          profile ← role + details; notification; audit entry
+notification « Vérification approuvée »  AccessService → tier PROFESSIONAL_UNPAID, purchase OPEN
+plans_screen « Choisir » → review_screen « Payer » ─► CheckoutService.start → Chargily page
+   browser pays on the gateway's page
+payment_result_screen polls ─────────────► settle → gateway.status = PAID → activate subscription
+access reloads → tier PROFESSIONAL: every model, calculator and profile opens; offline sync starts</div>
+<p>الملخص: التسجيل والرمز ← اختيار الصفة ← وثائق الهوية والصفة إلى الدلو الخاص ← الإرسال ← في لوحة الإدارة يأخذ مراجِع الملف ويفحص الوثائق في العارض المقيَّد ثم يقبل ← يصبح الطبيب PROFESSIONAL_UNPAID ويُفتح له الشراء ← يدفع على صفحة البوابة ← يسأل الخادم البوابة ويفعّل الاشتراك ← يصبح PROFESSIONAL ويُفتح كل شيء وتبدأ المزامنة دون اتصال.</p>
+
+<h3 id="ch13-j2">13.2 زائر يجرّب العرض ثم ينشئ حسابًا</h3>
+<ol>
+  <li><code>demo_start_screen</code> ← <code>POST /v1/demo/sessions</code> مع معرّف التثبيت ← رمز عرض لساعة + رمز تجديد (<code>SessionVault.saveDemo</code>).</li>
+  <li>ينتقل الموجّه إلى الشاشة الرئيسية؛ و<code>GET /v1/me/access</code> يجيب بالمستوى DEMO: فقط عناصر <code>demoSample</code> تُفتح؛ والعمل دون اتصال والشراء وتعديل الملف مقفلة مع « Créer un compte » كمسار للفتح.</li>
+  <li>التحليلات: <code>DEMO_STARTED</code>، ثم <code>DEMO_FEATURE_VIEWED</code> لكل وحدة شوهدت أو حدّ بُلغ (دون حساب، ودون بيانات شخصية).</li>
+  <li>« Créer un compte » ← التسجيل ← عند التأكيد يعلّم معرّف التثبيت نفسه العرض بأنه CONVERTED؛ ومسار « Démo » في لوحة الإدارة يحتسبه.</li>
+</ol>
+
+<h3 id="ch13-j3">13.3 فتح نموذج وصفة</h3>
+<p>تتبّع الفصل 3.1 هذا الطلب بايتًا بايتًا. ما يجب تذكّره: القائمة تعرض النماذج المقفلة في مكانها؛ <code>file-url</code> يعيد فحص الوصول؛ ملف PDF يأتي مباشرة من R2 برابط لـ10 دقائق؛ تُفحص بصمته SHA-256 على الهاتف؛ <code>ActivityRecorder.referenceViewed</code> يضيف إدخالًا إلى السجل؛ و<code>REFERENCE_VIEWED</code> يُحتسب بعد أن يُرسم الملف.</p>
+
+<h3 id="ch13-j4">13.4 استعمال حاسبة، دون اتصال</h3>
+<ol>
+  <li>أثناء آخر مزامنة، حفظ <code>OfflineSyncController</code> إصدار الحاسبة المنشور (التعريف + حالات الاختبار) في drift.</li>
+  <li>لا شبكة: <code>calculatorRuntimeProvider</code> يقرأ الإصدار المحفوظ، يقرأ تعريفه (<code>definition.dart</code>) ويشغّل حالات اختباره المنشورة على محرّك Dart (<code>self_test.dart</code>). أي فشل يعني رفض الحاسبة.</li>
+  <li>يكتب الطبيب العمر والوزن والكرياتينين؛ كل حقل يُثبَّت بعد توقف؛ <code>evaluate()</code> يفحص النطاقات والقواعد ويحسب؛ فيظهر الشريط والصيغة مع القيم.</li>
+  <li>لا شيء يغادر الهاتف. يُضاف <code>CALCULATOR_COMPLETED</code> إلى طابور التحليلات بمعرّف الحاسبة وإصدارها فقط.</li>
+</ol>
+
+<h3 id="ch13-j5">13.5 تأليف حاسبة ونشرها (مشرفان)</h3>
+<div class="diagram">Author (calculators.draft)                          Reviewer (calculators.review + publish), NOT the author
+« Nouveau calculateur » → createCalculator
+« Nouvelle version » → createVersion (DRAFT)
+Définition: JSON from the cited source → saveDefinition (checkDefinition)
+Sources: PRIMARY source (+ validation sources)
+Tests: cases from the source → « Lancer les tests » (TS engine, stored with checksum)
+« Soumettre à revue » → submit (gate re-checked)   ─►  IN_REVIEW
+                                                     reads definition, sources, tests; « Aperçu »
+                                                     « Approuver et publier » + written note
+                                                       publish: tests re-run, four-eyes, sign-offs
+                                                       (policy 2 → first sign-off; second reviewer publishes)
+                                                     PUBLISHED: immutable; audit entries all along
+Phones: next list / sync → new version, self-tested before use</div>
+<p>المؤلف ينشئ الحاسبة والإصدار، يكتب التعريف من المصدر المذكور، يضيف المصدر الأساسي وحالات الاختبار ويشغّلها، ثم يرسل للمراجعة. المراجِع (ليس المؤلف) يقرأ ويعاين ثم يوافق بملاحظة مكتوبة؛ وإن كانت السياسة توقيعين، فالموافقة الأولى توقيع أول والثانية من مراجِع آخر تنشر. بعد النشر لا يتغيّر الإصدار، والهواتف تستلمه في القائمة أو المزامنة التالية.</p>
+
+<h3 id="ch13-j6">13.6 ملفات الحمل من جدول بيانات</h3>
+<ol>
+  <li>« Importer un fichier » ← يُقرأ ملف XLSX على الخادم دون تشغيل أي شيء فيه (<code>workbook.ts</code> يقرأ XML داخل الملف المضغوط).</li>
+  <li>يُعثر على صف الترويسة، تُربط الأعمدة، تُسرد كلمات الحالة؛ ويُفحص كل صف مقابل المكتبة الحالية (المكرّرات، البدائل غير المعروفة).</li>
+  <li>يربط المشرف الأعمدة وكلمات الحالة، يصحّح الصفوف، ثم « Ajouter à la bibliothèque » ← إصدارات ملفات <b>مسودة</b>، كلها أو لا شيء، ودون تكرار عند النقر المزدوج.</li>
+  <li>يكمل المؤلفون مستويات الدليل والشروح؛ « Soumettre à relecture »؛ يوافق مشرف آخر؛ وعندها فقط ترى الهواتف الملفات.</li>
+</ol>
+
+<h3 id="ch13-j7">13.7 فقدان البريد والهاتف معًا</h3>
+<p>في الهاتف <code>access_help_screen</code> ← <code>recovery_screen</code> (النموذج، رمز إلى الجهة الجديدة، صورتان إلى الدلو الخاص، « Envoyer la demande ») ← في لوحة الإدارة « Récupération » (المقارنة، « Approuver » مع ملاحظة) ← مهلة 24 ساعة، يُبلَّغ المالك على جهاته القديمة ← المهمة <code>auth.account-recovery</code>: الحجز، استبدال جهات الاتصال، كلمة المرور غير صالحة، إلغاء كل الجلسات ← يدخل الشخص بالجهة الجديدة عبر « Mot de passe oublié ».</p>
+
+<h3 id="ch13-j8">13.8 اشتراك يصل إلى نهايته</h3>
+<ol>
+  <li>قبل النهاية بـ14 و3 أيام: إشعارات « Votre abonnement se termine bientôt » (<code>SubscriptionLifecycleService.remind</code>). « Renouveler » مفتوح في آخر 14 يومًا؛ والتجديد يمدّد من النهاية الحالية.</li>
+  <li>عند النهاية دون تجديد: GRACE لمدة 7 أيام، والوصول باقٍ (<code>advance</code>).</li>
+  <li>بعد المهلة: EXPIRED. تعطي <code>placeInTier</code> المستوى PROFESSIONAL_UNPAID؛ يحتفظ الطبيب بالعيّنات والمفضلة؛ وتُحذف النسخ دون اتصال للعناصر المقفلة في المزامنة التالية.</li>
+  <li>أبدًا: لافتات حمراء، أو عدّ تنازلي، أو أزرار استرداد.</li>
+</ol>
+</section>

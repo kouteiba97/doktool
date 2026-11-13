@@ -4,6 +4,7 @@ import type { ReferenceDocumentType } from '../../generated/prisma/enums.js';
 /** Same rule as the `storage_upload_intents_key_chk` constraint. */
 export const STORAGE_KEY_PATTERN = /^doktool\/[A-Za-z0-9/_.-]+$/;
 
+/** True for a well-formed key (no "..", no empty segment). */
 export function isValidStorageKey(key: string): boolean {
   return STORAGE_KEY_PATTERN.test(key) && !key.includes('..') && !key.includes('//');
 }
@@ -15,6 +16,7 @@ const REFERENCE_FOLDERS: Record<ReferenceDocumentType, string> = {
 
 const SHA256 = /^[0-9a-f]{64}$/;
 
+/** Builders of every object key, so all modules use the same layout. */
 export const StorageKeys = {
   /** doktool/reference-documents/{ordonnances|certificates}/{documentId}/v{n}-{sha8}.pdf */
   referenceDocument(

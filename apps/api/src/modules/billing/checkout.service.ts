@@ -25,9 +25,14 @@ import {
   RENEWAL_WINDOW_DAYS,
 } from './billing.policy.js';
 import { PaymentGateways } from './payments/payment-gateways.js';
-import { type OrderOutcome, PaymentProviderError } from './payments/payment-provider.js';
+import {
+  type OrderOutcome,
+  type PaymentGateway,
+  PaymentProviderError,
+} from './payments/payment-provider.js';
 import { PlansService } from './plans.service.js';
 
+/** Whether the person may pay now, and if not, why (shown on the plans screen). */
 export type Eligibility =
   | { state: 'OPEN'; renewal: boolean }
   | { state: 'ACCOUNT_REQUIRED' }
@@ -38,11 +43,17 @@ export type Eligibility =
   | { state: 'ACCOUNT_SUSPENDED' }
   | { state: 'ACTIVE'; renewableFrom: Date };
 
+/** Answer of « Payer »: our transaction and the payment page to open. */
 export interface CheckoutStarted {
   transactionId: string;
   redirectUrl: string;
 }
 
+/** How long a second « Payer » waits for the first one's payment page, and how often it looks. */
+const REGISTRATION_WAIT_MS = 8000;
+const REGISTRATION_POLL_MS = 100;
+
+/** Subscription statuses that can still give access. */
 const LIVE = ['ACTIVE', 'GRACE', 'CANCELED'] as const;
 
 /**
@@ -65,13 +76,22 @@ export class CheckoutService {
     @Inject(ENV) private readonly env: Env,
   ) {}
 
+  /**
+   * Who may pay: an active, verified doctor or resident; students never pay; an active
+   * subscription may renew only in its last 14 days.
+   */
   async eligibility(userId: string, now = new Date()): Promise<Eligibility> {
     const facts = await this.users.getAccessFacts(userId);
     if (!facts || facts.status !== 'ACTIVE') return { state: 'ACCOUNT_SUSPENDED' };
     if (facts.professionalType === null) return { state: 'ROLE_REQUIRED' };
     if (facts.professionalType === 'STUDENT') return { state: 'STUDENT_FREE' };
-    const status = (await this.verification.snapshot(userId)).PROFESSIONAL_STATUS.status;
-    if (status === 'SUBMITTED' || status === 'IN_REVIEW' || status === 'APPEALED') {
+    // A renewal under review keeps a still-valid verification counting (section 27).
+    const { status, renewalPending } = (await this.verification.accessSnapshot(userId, now))
+      .PROFESSIONAL_STATUS;
+    if (
+      status !== 'VERIFIED' &&
+      (renewalPending || status === 'SUBMITTED' || status === 'IN_REVIEW' || status === 'APPEALED')
+    ) {
       return { state: 'VERIFICATION_PENDING' };
     }
     if (status !== 'VERIFIED') return { state: 'VERIFICATION_REQUIRED' };
@@ -82,6 +102,11 @@ export class CheckoutService {
     return { state: 'OPEN', renewal: true };
   }
 
+  /**
+   * « Payer »: checks eligibility, plan and method, reuses a payment already in progress, creates
+   * the transaction and registers the order with the gateway. A gateway refusal marks the
+   * transaction FAILED.
+   */
   async start(
     userId: string,
     input: { planId: string; method: PaymentMethod; language: 'FR' | 'EN' },
@@ -104,34 +129,58 @@ export class CheckoutService {
       );
     }
 
-    const pending = await this.prisma.transaction.findFirst({
-      where: {
-        userId,
-        status: 'PENDING',
-        createdAt: { gt: new Date(Date.now() - PENDING_CHECKOUT_MINUTES * 60_000) },
+    // Two « Payer » sent at the same instant must not both find "no payment in progress": the
+    // check and the creation run one person at a time (the lock ends with this transaction).
+    const opened = await this.prisma.$transaction(
+      async (
+        tx,
+      ): Promise<
+        { resumed: CheckoutStarted } | { registering: Transaction } | { created: Transaction }
+      > => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`checkout.start:${userId}`}))`;
+        const pending = await tx.transaction.findFirst({
+          where: {
+            userId,
+            status: 'PENDING',
+            createdAt: { gt: new Date(Date.now() - PENDING_CHECKOUT_MINUTES * 60_000) },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+        if (pending) {
+          const redirectUrl = metadataOf(pending).redirectUrl;
+          if (
+            pending.planId === plan.id &&
+            pending.paymentProvider === channel &&
+            typeof redirectUrl === 'string'
+          ) {
+            return { resumed: { transactionId: pending.transactionId, redirectUrl } };
+          }
+          // The same checkout, created an instant ago by another « Payer »: its payment page is
+          // still being opened at the provider.
+          if (
+            pending.planId === plan.id &&
+            pending.paymentProvider === channel &&
+            redirectUrl === undefined
+          ) {
+            return { registering: pending };
+          }
+          throw new DomainError(
+            'INVALID_STATE',
+            'A payment is already in progress; finish or wait for it.',
+          );
+        }
+        const subscription = await this.subscriptionFor(tx, userId, plan, eligibility.renewal);
+        return {
+          created: await this.createTransaction(tx, userId, subscription, plan, channel, {
+            renewal: eligibility.renewal,
+            language: input.language,
+          }),
+        };
       },
-      orderBy: { createdAt: 'desc' },
-    });
-    if (pending) {
-      const redirectUrl = metadataOf(pending).redirectUrl;
-      if (
-        pending.planId === plan.id &&
-        pending.paymentProvider === channel &&
-        typeof redirectUrl === 'string'
-      ) {
-        return { transactionId: pending.transactionId, redirectUrl };
-      }
-      throw new DomainError(
-        'INVALID_STATE',
-        'A payment is already in progress; finish or wait for it.',
-      );
-    }
-
-    const subscription = await this.subscriptionFor(userId, plan, eligibility.renewal);
-    const transaction = await this.createTransaction(userId, subscription, plan, channel, {
-      renewal: eligibility.renewal,
-      language: input.language,
-    });
+    );
+    if ('resumed' in opened) return opened.resumed;
+    if ('registering' in opened) return this.awaitRegistration(opened.registering.id);
+    const transaction = opened.created;
     try {
       const order = await gateway.register({
         transactionId: transaction.transactionId,
@@ -198,7 +247,35 @@ export class CheckoutService {
     const found = await this.prisma.transaction.findFirst({
       where: { providerReference, paymentProvider: { in: Object.values(gateway.channels) } },
     });
+    if (found?.status === 'CANCELED') await this.reportIfPaidAfterCancellation(found, gateway);
     return found ? this.settle(found) : null;
+  }
+
+  /**
+   * A gateway notified us about a checkout we had already cancelled as abandoned. A cancelled
+   * transaction is final, so a payment that still went through cannot be recorded on it: it is
+   * reported for the Super Admin instead of being lost without a trace.
+   */
+  private async reportIfPaidAfterCancellation(
+    transaction: Transaction,
+    gateway: PaymentGateway,
+  ): Promise<void> {
+    if (!transaction.providerReference) return;
+    try {
+      const outcome = await gateway.status(
+        transaction.providerReference,
+        metadataOf(transaction).language === 'EN' ? 'EN' : 'FR',
+      );
+      if (outcome.status === 'PAID') {
+        this.logger.error(
+          `${transaction.transactionId}: the gateway reports a payment of ${outcome.amountMinor} after this checkout was cancelled; no access was granted — review it with the gateway`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Could not check cancelled ${transaction.transactionId} with its gateway: ${String(error)}`,
+      );
+    }
   }
 
   /**
@@ -277,6 +354,9 @@ export class CheckoutService {
     return { subscription, transactions };
   }
 
+  /**
+   * The subscription giving access now (active, in grace, or stopped but not yet ended), if any.
+   */
   async liveSubscription(userId: string, now = new Date()): Promise<Subscription | null> {
     const candidates = await this.prisma.subscription.findMany({
       where: { userId, status: { in: [...LIVE] } },
@@ -293,11 +373,40 @@ export class CheckoutService {
 
   // ───────────────────────────────── helpers ─────────────────────────────────
 
+  /**
+   * Waits for the payment page of a checkout another request is opening at the provider, so a
+   * double « Payer » gets the same page instead of an error. Gives up after a few seconds, or as
+   * soon as the provider refused the checkout.
+   */
+  private async awaitRegistration(id: string): Promise<CheckoutStarted> {
+    const deadline = Date.now() + REGISTRATION_WAIT_MS;
+    for (;;) {
+      const transaction = await this.prisma.transaction.findUnique({ where: { id } });
+      const redirectUrl = transaction ? metadataOf(transaction).redirectUrl : undefined;
+      if (transaction?.status === 'PENDING' && typeof redirectUrl === 'string') {
+        return { transactionId: transaction.transactionId, redirectUrl };
+      }
+      if (transaction?.status !== 'PENDING' || Date.now() >= deadline) {
+        throw new DomainError(
+          'INVALID_STATE',
+          'A payment is already in progress; finish or wait for it.',
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, REGISTRATION_POLL_MS));
+    }
+  }
+
+  /** True when a pending checkout is older than PENDING_CHECKOUT_MINUTES. */
   private abandoned(transaction: Transaction, now: Date): boolean {
     return now.getTime() - transaction.createdAt.getTime() > PENDING_CHECKOUT_MINUTES * 60_000;
   }
 
+  /**
+   * The subscription a payment is for: the live one when renewing, otherwise a waiting one
+   * (reused) or a new one.
+   */
   private async subscriptionFor(
+    tx: Prisma.TransactionClient,
     userId: string,
     plan: SubscriptionPlan,
     renewal: boolean,
@@ -306,57 +415,57 @@ export class CheckoutService {
       const live = await this.liveSubscription(userId);
       if (live) return live;
     }
-    const waiting = await this.prisma.subscription.findFirst({
+    const waiting = await tx.subscription.findFirst({
       where: { userId, status: 'PENDING_PAYMENT' },
       orderBy: { createdAt: 'desc' },
     });
     if (waiting) {
-      return this.prisma.subscription.update({
+      return tx.subscription.update({
         where: { id: waiting.id },
         data: { planId: plan.id },
       });
     }
-    return this.prisma.subscription.create({ data: { userId, planId: plan.id } });
+    return tx.subscription.create({ data: { userId, planId: plan.id } });
   }
 
   /** DT-YYYY-NNNNNN, numbered per year under an advisory lock. */
   private async createTransaction(
+    tx: Prisma.TransactionClient,
     userId: string,
     subscription: Subscription,
     plan: SubscriptionPlan,
     provider: PaymentProvider,
     context: { renewal: boolean; language: 'FR' | 'EN' },
   ): Promise<Transaction> {
-    return this.prisma.$transaction(async (tx) => {
-      const year = new Date().getUTCFullYear();
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('transactions.public_id'))`;
-      const last = await tx.transaction.findFirst({
-        where: { transactionId: { startsWith: `DT-${year}-` } },
-        orderBy: { transactionId: 'desc' },
-        select: { transactionId: true },
-      });
-      const next = last ? Number(last.transactionId.slice(-6)) + 1 : 1;
-      if (next > 999_999) throw new Error(`Transaction numbering exhausted for ${year}`);
-      return tx.transaction.create({
-        data: {
-          transactionId: `DT-${year}-${String(next).padStart(6, '0')}`,
-          userId,
-          subscriptionId: subscription.id,
-          planId: plan.id,
-          amountMinor: plan.priceMinor,
-          currency: plan.currency,
-          paymentProvider: provider,
-          metadata: {
-            renewal: context.renewal,
-            language: context.language,
-            acknowledgement: ACKNOWLEDGEMENT_VERSION,
-            acknowledgedAt: new Date().toISOString(),
-          },
+    const year = new Date().getUTCFullYear();
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('transactions.public_id'))`;
+    const last = await tx.transaction.findFirst({
+      where: { transactionId: { startsWith: `DT-${year}-` } },
+      orderBy: { transactionId: 'desc' },
+      select: { transactionId: true },
+    });
+    const next = last ? Number(last.transactionId.slice(-6)) + 1 : 1;
+    if (next > 999_999) throw new Error(`Transaction numbering exhausted for ${year}`);
+    return tx.transaction.create({
+      data: {
+        transactionId: `DT-${year}-${String(next).padStart(6, '0')}`,
+        userId,
+        subscriptionId: subscription.id,
+        planId: plan.id,
+        amountMinor: plan.priceMinor,
+        currency: plan.currency,
+        paymentProvider: provider,
+        metadata: {
+          renewal: context.renewal,
+          language: context.language,
+          acknowledgement: ACKNOWLEDGEMENT_VERSION,
+          acknowledgedAt: new Date().toISOString(),
         },
-      });
+      },
     });
   }
 
+  /** Closes a pending transaction as FAILED or CANCELED (only if still pending). */
   private async finish(
     transaction: Transaction,
     status: 'FAILED' | 'CANCELED',
@@ -371,6 +480,10 @@ export class CheckoutService {
       : transaction;
   }
 
+  /**
+   * Records a confirmed payment and starts or extends the subscription (from the current end when
+   * renewing early). A short payment or a deleted account records the money but grants no access.
+   */
   private async activate(
     transaction: Transaction,
     outcome: Extract<OrderOutcome, { status: 'PAID' }>,
@@ -460,11 +573,13 @@ export class CheckoutService {
     return this.prisma.transaction.findUniqueOrThrow({ where: { id: transaction.id } });
   }
 
+  /** Base URL the gateway sends the person back to. */
   private publicUrl(): string {
     return this.env.PUBLIC_API_URL ?? `http://localhost:${this.env.PORT}`;
   }
 }
 
+/** The transaction's JSON metadata as an object (empty when missing). */
 export function metadataOf(transaction: Pick<Transaction, 'metadata'>): Prisma.JsonObject {
   const value = transaction.metadata;
   return value !== null && typeof value === 'object' && !Array.isArray(value) ? { ...value } : {};

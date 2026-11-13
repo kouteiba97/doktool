@@ -76,7 +76,9 @@ abstract final class Routes {
   static const profileActivity = '/profile/activity';
   static const profileEdit = '/profile/edit';
 
-  static String library(LibrarySection section) => '/library/${section.slug}';
+  /// Addresses with a parameter (focus=1 puts the cursor in the library filter).
+  static String library(LibrarySection section, {bool focus = false}) =>
+      '/library/${section.slug}${focus ? '?focus=1' : ''}';
   static String reference(String id) => '/reference/$id';
   static String calculator(String slug) => '/calculators/$slug';
   static String substance(String id) => '/pregnancy/$id';
@@ -111,6 +113,7 @@ abstract final class Routes {
 
 /// Re-runs the redirect when the session or the account changes.
 class _RouterRefresh extends ChangeNotifier {
+  /// Re-checks the redirects whenever the session or the account changes.
   _RouterRefresh(Ref ref) {
     ref
       ..listen(sessionControllerProvider, (_, _) => notifyListeners())
@@ -228,8 +231,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/library/:section',
-                builder: (context, state) =>
-                    LibraryScreen(section: LibrarySection.fromSlug(state.pathParameters['section'])),
+                builder: (context, state) => LibraryScreen(
+                  section: LibrarySection.fromSlug(state.pathParameters['section']),
+                  focusSearch: state.uri.queryParameters['focus'] == '1',
+                ),
               ),
             ],
           ),

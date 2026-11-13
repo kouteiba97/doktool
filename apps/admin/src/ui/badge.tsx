@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+/** Colours a badge can take. */
 export type BadgeTone =
   'neutral' | 'brand' | 'teal' | 'success' | 'warning' | 'critical' | 'info' | 'outline';
 

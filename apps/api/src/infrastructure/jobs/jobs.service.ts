@@ -8,12 +8,14 @@ import {
 import { PgBoss } from 'pg-boss';
 import { ENV, type Env } from '../../config/env.js';
 
+/** A job pg-boss runs on a cron schedule. */
 interface ScheduledJob {
   name: string;
   cron: string;
   handler: () => Promise<void>;
 }
 
+/** A queue consumer: runs once per job queued with enqueue(). */
 interface Worker {
   name: string;
   handler: (data: Record<string, unknown>) => Promise<void>;
@@ -61,6 +63,10 @@ export class JobsService implements OnApplicationBootstrap, OnApplicationShutdow
     return [...this.scheduled, ...this.workers].map((job) => job.name);
   }
 
+  /**
+   * Starts pg-boss once every module has registered its jobs: creates the queues, the schedules
+   * and the workers. Does nothing when JOBS_ENABLED is false.
+   */
   async onApplicationBootstrap(): Promise<void> {
     if (!this.env.JOBS_ENABLED) return;
     const boss = new PgBoss({ connectionString: this.env.DATABASE_URL, schema: 'pgboss' });
@@ -85,11 +91,13 @@ export class JobsService implements OnApplicationBootstrap, OnApplicationShutdow
     );
   }
 
+  /** Stops pg-boss, letting running jobs finish. */
   async onApplicationShutdown(): Promise<void> {
     await this.boss?.stop({ graceful: true });
     this.boss = null;
   }
 
+  /** Refuses two jobs with the same name (a programming error, caught at boot). */
   private assertUnique(name: string): void {
     if (this.registeredJobs().includes(name)) throw new Error(`Job "${name}" is registered twice`);
   }

@@ -128,6 +128,22 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/admin/v1/admins/{id}/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminAccountsController_resetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/v1/admins/{id}/reset-totp": {
         parameters: {
             query?: never;
@@ -314,6 +330,22 @@ export type paths = {
         get: operations["AuditLogController_export"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/v1/auth/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminAuthController_changePassword"];
         delete?: never;
         options?: never;
         head?: never;
@@ -848,6 +880,102 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/admin/v1/pregnancy/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PregnancyImportController_list"];
+        put?: never;
+        post: operations["PregnancyImportController_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/v1/pregnancy/imports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PregnancyImportController_view"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/v1/pregnancy/imports/{id}/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PregnancyImportController_commit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/v1/pregnancy/imports/{id}/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PregnancyImportController_discard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/v1/pregnancy/imports/{id}/mapping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["PregnancyImportController_mapping"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/v1/pregnancy/imports/{id}/rows/{rowId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["PregnancyImportController_row"];
+        trace?: never;
+    };
     "/admin/v1/pregnancy/reports": {
         parameters: {
             query?: never;
@@ -944,6 +1072,54 @@ export type paths = {
         patch: operations["PregnancyAdminController_update"];
         trace?: never;
     };
+    "/admin/v1/pregnancy/substances/{id}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PregnancyAdminController_merge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/v1/pregnancy/substances/{id}/merge-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PregnancyAdminController_mergePreview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/v1/pregnancy/substances/{id}/unmerge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PregnancyAdminController_unmerge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/v1/pregnancy/substances/{id}/versions": {
         parameters: {
             query?: never;
@@ -1034,6 +1210,38 @@ export type paths = {
         get?: never;
         put?: never;
         post: operations["PregnancyAdminController_submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/v1/pregnancy/versions/approve-many": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PregnancyAdminController_approveMany"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/v1/pregnancy/versions/submit-many": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PregnancyAdminController_submitMany"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2432,6 +2640,22 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/v1/pregnancy/substances/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PregnancyController_search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/reference-documents": {
         parameters: {
             query?: never;
@@ -2671,6 +2895,8 @@ export type components = {
         ActivityDto: {
             /** Format: uuid */
             id: string;
+            /** @description What was opened, with the access to it now. Null for a search and for an item that is no longer available. */
+            item?: components["schemas"]["FavoriteItemDto"] | null;
             kind: components["schemas"]["ActivityKind"];
             /** Format: date-time */
             occurredAt: string;
@@ -2798,6 +3024,10 @@ export type components = {
         };
         /** @enum {string} */
         AdminChallengeKind: "TOTP_VERIFY" | "TOTP_ENROLL";
+        AdminChangePasswordDto: {
+            currentPassword: string;
+            newPassword: string;
+        };
         AdminContentReportDto: {
             comment: string | null;
             /** Format: date-time */
@@ -2995,6 +3225,8 @@ export type components = {
             enabled: boolean;
             /** Format: uuid */
             id: string;
+            /** @description Merged as a duplicate into this substance (ADR-027). */
+            mergedInto: components["schemas"]["SubstanceRefDto"] | null;
             nameEn: string | null;
             nameFr: string;
             /** @description Draft or review. */
@@ -3012,6 +3244,8 @@ export type components = {
             enabled: boolean;
             /** Format: uuid */
             id: string;
+            /** @description Merged as a duplicate into this substance (ADR-027). */
+            mergedInto: components["schemas"]["SubstanceRefDto"] | null;
             nameEn: string | null;
             nameFr: string;
             /** @description Draft or review. */
@@ -3332,6 +3566,20 @@ export type components = {
             /** @enum {string} */
             severity: "info" | "caution" | "warning" | "critical";
         };
+        BulkItemResultDto: {
+            code?: string;
+            ok: boolean;
+            /** Format: uuid */
+            versionId: string;
+        };
+        BulkResultDto: {
+            results: components["schemas"]["BulkItemResultDto"][];
+        };
+        BulkVersionsDto: {
+            /** @description Reason (submit) or review comment (approve). */
+            text: string;
+            versionIds: string[];
+        };
         CalculatorActivityDto: {
             /** @description null when fewer than 10 people (« < 10 »). */
             completions: number | null;
@@ -3429,6 +3677,20 @@ export type components = {
         };
         /** @enum {string} */
         ClinicalSourceType: "REGULATORY" | "GUIDELINE" | "REFERENCE" | "LITERATURE" | "NATIONAL_FORMULARY";
+        CommitImportDto: {
+            /** @description Audit log. */
+            reason: string;
+            revision: number;
+        };
+        CommitResultDto: {
+            rowsSkipped: number;
+            rowsWritten: number;
+            sourcesCreated: number;
+            substancesCreated: number;
+            versionIds: string[];
+            versionsCreated: number;
+            versionsUpdated: number;
+        };
         /** @enum {string} */
         Conduct: "CONTRAINDICATED" | "AVOID" | "OCCASIONAL_USE";
         ConfirmSignUpDto: {
@@ -3519,7 +3781,7 @@ export type components = {
         CreatedAdminDto: {
             /** Format: uuid */
             id: string;
-            /** @description Shown once; the admin changes nothing, they enrol TOTP at first sign-in. */
+            /** @description Shown once; the admin enrols TOTP at first sign-in, then replaces this password. */
             oneTimePassword: string;
         };
         CreatePlaceDto: {
@@ -3627,6 +3889,9 @@ export type components = {
         };
         /** @enum {string} */
         DevicePlatform: "IOS" | "ANDROID";
+        DiscardImportDto: {
+            reason: string;
+        };
         EligibilityDto: {
             /**
              * Format: date-time
@@ -3655,6 +3920,11 @@ export type components = {
             lockReason?: string;
             /** Format: date-time */
             retryAt?: string;
+            /**
+             * @description SESSION_INVALID only: the account was opened on another device.
+             * @enum {string}
+             */
+            sessionEnd?: "SIGNED_IN_ELSEWHERE";
             /** @description FEATURE_LOCKED only. */
             unlockPath?: string | null;
         };
@@ -3850,6 +4120,146 @@ export type components = {
             occurredAt: string;
             reason: string | null;
         };
+        ImportCellDto: {
+            /** @description The cell held a formula: its stored value was read, never evaluated. */
+            formula: boolean;
+            hyperlink: string | null;
+            text: string | null;
+        };
+        ImportIssueDto: {
+            /** @description Stable code; Admin Web translates it. */
+            code: string;
+            /** @enum {string} */
+            field: "substance" | "context" | "period" | "status" | "alternative" | "sourceUrl" | "sourceTitle" | "row";
+            params?: {
+                [key: string]: string | number;
+            };
+            severity: components["schemas"]["ImportIssueSeverity"];
+        };
+        /** @enum {string} */
+        ImportIssueSeverity: "ERROR" | "WARNING" | "INFO";
+        ImportListDto: {
+            items: components["schemas"]["ImportListItemDto"][];
+            total: number;
+        };
+        ImportListItemDto: {
+            /** Format: date-time */
+            committedAt: string | null;
+            committedBy: components["schemas"]["PersonDto"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            discardedAt: string | null;
+            fileBytes: number;
+            fileName: string;
+            fileSha256: string;
+            /** Format: uuid */
+            id: string;
+            parserVersion: string;
+            reason: string | null;
+            result: components["schemas"]["CommitResultDto"] | null;
+            /** @description Send it back with every change; a stale value is refused. */
+            revision: number;
+            rows: number;
+            sheetName: string;
+            status: components["schemas"]["ImportStatus"];
+            uploadedBy: components["schemas"]["PersonDto"];
+        };
+        ImportPreviewDto: {
+            /** @description Column index → field. */
+            columns: {
+                [key: string]: "substance" | "context" | "period" | "status" | "alternative" | "sourceUrl" | "sourceTitle" | "ignore";
+            };
+            /** Format: date-time */
+            committedAt: string | null;
+            committedBy: components["schemas"]["PersonDto"] | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            discardedAt: string | null;
+            fileBytes: number;
+            fileName: string;
+            fileSha256: string;
+            /** @description Sheet row of the header. */
+            headerRow: number;
+            headers: (string | null)[];
+            /** Format: uuid */
+            id: string;
+            /** @description Required fields no column maps to. */
+            missingColumns: ("substance" | "context" | "period" | "status" | "alternative" | "sourceUrl" | "sourceTitle")[];
+            /** @description Other sheets of the file, not read. */
+            otherSheets: string[];
+            parserVersion: string;
+            reason: string | null;
+            result: components["schemas"]["CommitResultDto"] | null;
+            /** @description Send it back with every change; a stale value is refused. */
+            revision: number;
+            rows: components["schemas"]["ImportRowDto"][];
+            /** @description Rows matching the filter. */
+            rowsTotal: number;
+            sheetName: string;
+            status: components["schemas"]["ImportStatus"];
+            statuses: components["schemas"]["ImportStatusWordDto"][];
+            summary: components["schemas"]["ImportSummaryDto"];
+            uploadedBy: components["schemas"]["PersonDto"];
+        };
+        ImportRowDto: {
+            edited: boolean;
+            excluded: boolean;
+            /** Format: uuid */
+            id: string;
+            issues: components["schemas"]["ImportIssueDto"][];
+            original: components["schemas"]["ImportCellDto"][];
+            /** @enum {string|null} */
+            resolution: "UPDATE" | "SKIP" | null;
+            /** @description Row number in the sheet. */
+            rowNumber: number;
+            /** Format: uuid */
+            substanceId: string | null;
+            values: components["schemas"]["ImportValuesDto"];
+            /** Format: uuid */
+            versionId: string | null;
+        };
+        /** @enum {string} */
+        ImportRowFilter: "ALL" | "ERROR" | "WARNING" | "VALID" | "EXCLUDED" | "DUPLICATE" | "CONFLICT";
+        /** @enum {string} */
+        ImportStatus: "PREVIEW" | "COMMITTED" | "DISCARDED";
+        ImportStatusWordDto: {
+            key: string;
+            /** @enum {string|null} */
+            mappedTo: "CONTRAINDICATED" | "AVOID" | "OCCASIONAL_USE" | "NONE" | null;
+            rows: number;
+            /** @description The word as first written in the sheet. */
+            sample: string;
+        };
+        ImportSummaryDto: {
+            conflicts: number;
+            duplicates: number;
+            errors: number;
+            excluded: number;
+            newSubstances: number;
+            total: number;
+            valid: number;
+            warnings: number;
+        };
+        ImportValuesDto: {
+            alternative: string | null;
+            context: string | null;
+            period: string | null;
+            sourceTitle: string | null;
+            sourceUrl: string | null;
+            status: string | null;
+            substance: string | null;
+        };
+        ImportValuesPatchDto: {
+            alternative?: string | null;
+            context?: string | null;
+            period?: string | null;
+            sourceTitle?: string | null;
+            sourceUrl?: string | null;
+            status?: string | null;
+            substance?: string | null;
+        };
         IncidentsDto: {
             failedPayments: number;
             stalePendingPayments: number;
@@ -3892,7 +4302,13 @@ export type components = {
             /** @example 0,5 – 1 % */
             relativeInfantDose?: string;
             reportedEffects?: components["schemas"]["ProfileTextDto"];
+            /** @description Status as the imported source wrote it, beside the conduct. */
+            reportedStatus?: string;
+            /** @description This version's sources that support this period specifically. */
+            sourceIds?: string[];
             specialPopulations?: components["schemas"]["ProfileTextDto"];
+            /** @description Draft only: alternative names not yet linked to a substance (review refuses them). */
+            unresolvedAlternatives?: string[];
         };
         /** @enum {string} */
         Language: "FR" | "EN";
@@ -4001,6 +4417,26 @@ export type components = {
             professionalProfile: components["schemas"]["ProfessionalProfileDto"] | null;
             wilaya: components["schemas"]["WilayaDto"];
         };
+        MergePreviewDto: {
+            blockers: ("SAME_SUBSTANCE" | "SOURCE_ALREADY_MERGED" | "TARGET_MERGED" | "TARGET_ARCHIVED" | "SOURCE_HAS_MERGED" | "SOURCE_OPEN_VERSION" | "TOO_MANY_SYNONYMS")[];
+            /** @description Names of the duplicate added to the target's synonyms. */
+            namesToAdd: string[];
+            source: components["schemas"]["SubstanceRefDto"];
+            /** @description Published version of the duplicate that will no longer be shown (never copied). */
+            sourcePublishedVersion: number | null;
+            target: components["schemas"]["SubstanceRefDto"];
+        };
+        MergeSubstanceDto: {
+            /** @description Required when the duplicate has a published profile. */
+            acknowledgeHiddenProfile: boolean;
+            /**
+             * Format: uuid
+             * @description The substance to keep.
+             */
+            into: string;
+            /** @description Audit log. */
+            reason: string;
+        };
         /** @enum {string} */
         MessageChannel: "EMAIL" | "SMS";
         ModelActivityDto: {
@@ -4079,6 +4515,10 @@ export type components = {
             submitted: number | null;
             /** @description null when fewer than 10 people (« < 10 »). */
             verified: number | null;
+        };
+        OneTimePasswordDto: {
+            /** @description Shown once; the admin replaces it after signing in. */
+            oneTimePassword: string;
         };
         OtpChallengeDto: {
             /** Format: uuid */
@@ -4196,6 +4636,22 @@ export type components = {
             /** Format: date-time */
             to: string;
         };
+        PeriodSummariesDto: {
+            LACTATION: components["schemas"]["PeriodSummaryDto"] | null;
+            PERIPARTUM: components["schemas"]["PeriodSummaryDto"] | null;
+            T1: components["schemas"]["PeriodSummaryDto"] | null;
+            T2: components["schemas"]["PeriodSummaryDto"] | null;
+            T3: components["schemas"]["PeriodSummaryDto"] | null;
+        };
+        PeriodSummaryDto: {
+            conduct: components["schemas"]["Conduct"] | null;
+            evidenceLevel: number | null;
+        };
+        PersonDto: {
+            fullName: string;
+            /** Format: uuid */
+            id: string;
+        };
         PersonRefDto: {
             fullName: string;
             /** Format: uuid */
@@ -4297,11 +4753,19 @@ export type components = {
             periods: components["schemas"]["PregnancyPeriodsDto"];
         };
         PregnancyPeriodDto: {
+            /** @description Alternatives for this period; the block's alternatives apply to every period. */
+            alternatives?: string[];
             conduct: components["schemas"]["Conduct"] | null;
             conductDetail?: components["schemas"]["ProfileTextDto"];
             considerations?: components["schemas"]["ProfileTextDto"];
             evidence: components["schemas"]["ProfileEvidenceDto"];
+            /** @description Status as the imported source wrote it, beside the conduct. */
+            reportedStatus?: string;
             riskContext?: components["schemas"]["ProfileTextDto"];
+            /** @description This version's sources that support this period specifically. */
+            sourceIds?: string[];
+            /** @description Draft only: alternative names not yet linked to a substance (review refuses them). */
+            unresolvedAlternatives?: string[];
         };
         PregnancyPeriodsDto: {
             PERIPARTUM: components["schemas"]["PregnancyPeriodDto"] | null;
@@ -4336,8 +4800,8 @@ export type components = {
             pregnancy: components["schemas"]["PregnancyBlockDto"] | null;
         };
         ProfileEvidenceDto: {
-            /** @description 4 robustes · 3 modérées · 2 limitées · 1 très limitées · 0 absence de données */
-            level: number;
+            /** @description 4 robustes · 3 modérées · 2 limitées · 1 très limitées · 0 absence de données. Null only in a draft (an import never invents it); a published profile always has one. */
+            level: number | null;
             population?: components["schemas"]["ProfileTextDto"];
         };
         ProfilePersonDto: {
@@ -4718,6 +5182,16 @@ export type components = {
             lastUsedAt: string;
             platform: components["schemas"]["DevicePlatform"];
         };
+        SetImportMappingDto: {
+            columns?: {
+                [key: string]: "substance" | "context" | "period" | "status" | "alternative" | "sourceUrl" | "sourceTitle" | "ignore";
+            };
+            revision: number;
+            /** @description Normalised status word → conduct, or NONE for no badge. */
+            statuses?: {
+                [key: string]: "CONTRAINDICATED" | "AVOID" | "OCCASIONAL_USE" | "NONE";
+            };
+        };
         SetProfessionalProfileDto: {
             /** @description Medical students only. */
             academicYear?: number;
@@ -4842,6 +5316,19 @@ export type components = {
         };
         /** @enum {string} */
         SubscriptionStatus: "PENDING_PAYMENT" | "ACTIVE" | "GRACE" | "EXPIRED" | "CANCELED";
+        SubstanceHitDto: {
+            access: components["schemas"]["ItemAccessDto"];
+            /** Format: uuid */
+            id: string;
+            nameEn: string | null;
+            nameFr: string;
+            /** @description Null while the profile is locked for this viewer. */
+            periods: components["schemas"]["PeriodSummariesDto"] | null;
+            /** Format: date-time */
+            publishedAt: string;
+            synonyms: string[];
+            version: number;
+        };
         SubstanceItemDto: {
             access: components["schemas"]["ItemAccessDto"];
             /** Format: uuid */
@@ -4878,6 +5365,10 @@ export type components = {
             id: string;
             nameEn: string | null;
             nameFr: string;
+        };
+        SubstanceSearchDto: {
+            items: components["schemas"]["SubstanceHitDto"][];
+            total: number;
         };
         SubstanceVisibilityDto: {
             demoSample?: boolean;
@@ -4945,6 +5436,13 @@ export type components = {
             purposeFr?: string | null;
             /** @description Recorded in the audit log. */
             reason: string;
+        };
+        UpdateImportRowDto: {
+            excluded?: boolean;
+            /** @enum {string|null} */
+            resolution?: "UPDATE" | "SKIP" | null;
+            revision: number;
+            values?: components["schemas"]["ImportValuesPatchDto"];
         };
         UpdatePreferencesDto: {
             language?: components["schemas"]["Language"];
@@ -5514,6 +6012,40 @@ export interface operations {
             };
         };
     };
+    AdminAccountsController_resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusBody"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OneTimePasswordDto"];
+                };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     AdminAccountsController_resetTotp: {
         parameters: {
             query?: never;
@@ -5905,6 +6437,36 @@ export interface operations {
                 content: {
                     "text/csv": string;
                 };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    AdminAuthController_changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminChangePasswordDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error envelope */
             default: {
@@ -7098,6 +7660,240 @@ export interface operations {
             };
         };
     };
+    PregnancyImportController_list: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportListDto"];
+                };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PregnancyImportController_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description .xlsx, 5 MB at most
+                     */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportPreviewDto"];
+                };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PregnancyImportController_view: {
+        parameters: {
+            query?: {
+                filter?: components["schemas"]["ImportRowFilter"];
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportPreviewDto"];
+                };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PregnancyImportController_commit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommitImportDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitResultDto"];
+                };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PregnancyImportController_discard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DiscardImportDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PregnancyImportController_mapping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetImportMappingDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PregnancyImportController_row: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                rowId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateImportRowDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     PregnancyAdminController_reports: {
         parameters: {
             query?: {
@@ -7257,7 +8053,16 @@ export interface operations {
     };
     PregnancyAdminController_list: {
         parameters: {
-            query?: never;
+            query?: {
+                archived?: "active" | "archived" | "all";
+                /** @description Conduct in that period (open version, else published). Needs `period`. */
+                conduct?: "CONTRAINDICATED" | "AVOID" | "OCCASIONAL_USE" | "NONE";
+                period?: "T1" | "T2" | "T3" | "PERIPARTUM" | "LACTATION";
+                /** @description Words of the name or a synonym. */
+                q?: string;
+                /** @description NONE = no profile yet. */
+                state?: "PUBLISHED" | "DRAFT" | "IN_REVIEW" | "CHANGES_REQUESTED" | "NONE";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -7357,6 +8162,107 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["UpdateSubstanceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSubstanceDetailDto"];
+                };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PregnancyAdminController_merge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeSubstanceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSubstanceDetailDto"];
+                };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PregnancyAdminController_mergePreview: {
+        parameters: {
+            query: {
+                /** @description The substance to keep. */
+                into: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MergePreviewDto"];
+                };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PregnancyAdminController_unmerge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PregnancyReasonDto"];
             };
         };
         responses: {
@@ -7632,6 +8538,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminProfileVersionDto"];
+                };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PregnancyAdminController_approveMany: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkVersionsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkResultDto"];
+                };
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PregnancyAdminController_submitMany: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkVersionsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkResultDto"];
                 };
             };
             /** @description Error envelope */
@@ -10651,6 +11621,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error envelope */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    PregnancyController_search: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description Words of the name or a synonym; partial words match. */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubstanceSearchDto"];
+                };
             };
             /** @description Error envelope */
             default: {

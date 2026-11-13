@@ -29,6 +29,7 @@ class OtpScreen extends ConsumerStatefulWidget {
   ConsumerState<OtpScreen> createState() => _OtpScreenState();
 }
 
+/// The code typed, progress flags and the last error.
 class _OtpScreenState extends ConsumerState<OtpScreen> {
   final _code = TextEditingController();
   bool _verifying = false;
@@ -36,12 +37,14 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   ApiError? _error;
   bool _resent = false;
 
+  /// Frees the text controller.
   @override
   void dispose() {
     _code.dispose();
     super.dispose();
   }
 
+  /// Checks the six-digit code; a confirmed sign-up signs in and continues onboarding.
   Future<void> _verify(String code) async {
     final draft = ref.read(onboardingDraftProvider);
     final challenge = draft.challenge;
@@ -82,6 +85,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     }
   }
 
+  /// « Renvoyer le code »: asks for a new code (the timer prevents asking too often).
   Future<void> _resend() async {
     final draft = ref.read(onboardingDraftProvider);
     final challenge = draft.challenge;
@@ -128,6 +132,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       title: l10n.otpTitle,
       intro: l10n.otpSentTo(challenge.destinationHint),
       actions: [
+        // « Vérifier »: possible once the six digits are typed (not while locked).
         DtButton(
           label: l10n.otpVerify,
           loading: _verifying,

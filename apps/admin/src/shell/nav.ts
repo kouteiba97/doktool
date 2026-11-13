@@ -17,6 +17,7 @@ import {
 import type { MessageKey } from '@/i18n/messages';
 import type { Grant } from '@/session/session';
 
+/** One link of the navigation. */
 export interface NavItem {
   href: string;
   label: MessageKey;
@@ -25,6 +26,7 @@ export interface NavItem {
   grant: Grant | null;
 }
 
+/** A titled group of links. */
 export interface NavGroup {
   label: MessageKey | null;
   items: NavItem[];

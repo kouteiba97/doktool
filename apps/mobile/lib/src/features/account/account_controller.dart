@@ -41,6 +41,7 @@ class AccountSummary {
   /// Null until « Qui êtes-vous ? » is answered.
   final ProfessionalType? professionalType;
 
+  /// The summary as JSON, for the offline cache.
   Map<String, Object?> toJson() => {
     'userId': userId,
     'firstName': firstName,
@@ -53,6 +54,7 @@ class AccountSummary {
 class AccountController extends AsyncNotifier<AccountSummary?> {
   static const _cacheKey = 'account.summary';
 
+  /// Loads /v1/me and caches it; offline, falls back to the cached copy.
   @override
   Future<AccountSummary?> build() async {
     final session = ref.watch(sessionControllerProvider).value;
@@ -81,6 +83,7 @@ class AccountController extends AsyncNotifier<AccountSummary?> {
     await future;
   }
 
+  /// Loads the account again.
   Future<void> reload() async {
     ref.invalidateSelf();
     await future;

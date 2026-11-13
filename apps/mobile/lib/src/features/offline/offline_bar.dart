@@ -13,6 +13,7 @@ import '../../ui/error_text.dart';
 import '../../ui/tokens.dart';
 import 'offline_sync.dart';
 
+/// The bars the shell can show: offline, syncing, sync failed, data outdated.
 enum OfflineBarKind { offline, syncing, failed, outdated }
 
 /// Which bar shows, if any (the shell reserves its place under the status bar).
@@ -70,6 +71,7 @@ class OfflineBar extends ConsumerWidget {
         colors.critical,
         LucideIcons.circleAlert,
         '${l10n.offlineBarFailed} ${status?.failure == null ? '' : commonErrorText(context, status!.failure!)}',
+        // « Réessayer » the sync.
         TextButton(
           onPressed: () => unawaited(ref.read(offlineSyncProvider.notifier).sync()),
           child: Text(l10n.commonRetry, style: DtType.label.copyWith(color: colors.critical)),
@@ -85,6 +87,7 @@ class OfflineBar extends ConsumerWidget {
       liveRegion: true,
       child: Material(
         color: background,
+        // The bar: opens « Données et hors ligne ».
         child: InkWell(
           onTap: () => context.push(Routes.offlineSettings),
           child: Padding(
@@ -116,19 +119,23 @@ class OfflineSyncHost extends ConsumerStatefulWidget {
   ConsumerState<OfflineSyncHost> createState() => _OfflineSyncHostState();
 }
 
+/// Syncs again when the app returns to the foreground and the data is stale.
 class _OfflineSyncHostState extends ConsumerState<OfflineSyncHost> with WidgetsBindingObserver {
+  /// Starts listening to the app lifecycle.
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
   }
 
+  /// Stops listening to the app lifecycle.
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
+  /// Back in the foreground: syncs if the data is stale.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) unawaited(ref.read(offlineSyncProvider.notifier).sync(ifStale: true));

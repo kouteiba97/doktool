@@ -73,6 +73,39 @@ describe('favorites', () => {
     expect((await app.http().get('/v1/me/favorites').set(auth).expect(200)).body).toHaveLength(2);
   });
 
+  it('is read-only for a restricted account: listed, never added; history is not kept', async () => {
+    const { userId, auth } = await userActor(app, 'PROFESSIONAL_UNPAID');
+    await app.http().put(`/v1/me/favorites/CALCULATOR/${calculatorId}`).set(auth).expect(204);
+    await app
+      .prisma()
+      .verificationCase.updateMany({ where: { userId }, data: { status: 'REJECTED' } });
+    expect((await app.http().get('/v1/me/access').set(auth).expect(200)).body.tier).toBe(
+      'RESTRICTED',
+    );
+
+    const listed = await app.http().get('/v1/me/favorites').set(auth).expect(200);
+    expect(listed.body).toHaveLength(1);
+    const refused = await app
+      .http()
+      .put(`/v1/me/favorites/REFERENCE_DOCUMENT/${referenceId}`)
+      .set(auth)
+      .expect(403);
+    expect(refused.body.error).toMatchObject({
+      code: 'FEATURE_LOCKED',
+      details: { lockReason: 'VERIFICATION_REQUIRED' },
+    });
+    await app
+      .http()
+      .post('/v1/me/activity')
+      .set(auth)
+      .send({
+        deviceId: `device-${randomUUID()}`,
+        entries: [{ kind: 'SEARCH', queryText: 'angine', occurredAt: new Date().toISOString() }],
+      })
+      .expect(204);
+    expect(await app.prisma().recentActivity.count({ where: { userId } })).toBe(0);
+  });
+
   it('is closed to demo tokens (demo favorites stay on the device)', async () => {
     const demo = await demoActor(app);
     await app.http().get('/v1/me/favorites').set(demo.auth).expect(401);
@@ -106,13 +139,24 @@ describe('research history', () => {
       'REFERENCE_VIEW',
       'SEARCH',
     ]);
+    // Each entry names what was opened and the access to it, so the app needs no list to show it.
+    // A student opens calculators; an ordonnance is listed and locked (ADR-006 Q2).
+    expect(all.body[0].item).toMatchObject({
+      kind: 'CALCULATOR',
+      titleFr: 'Surface favori',
+      titleEn: 'Favorite area',
+      access: { state: 'AVAILABLE' },
+    });
+    expect(all.body[0].item.slug).toEqual(expect.any(String));
+    expect(all.body[1].item).toMatchObject({ kind: 'ORDONNANCE', access: { state: 'LOCKED' } });
+    expect(all.body[2].item).toBeNull();
     const searches = await app
       .http()
       .get('/v1/me/activity')
       .query({ kind: 'SEARCH' })
       .set(auth)
       .expect(200);
-    expect(searches.body).toMatchObject([{ queryText: 'clairance', targetId: null }]);
+    expect(searches.body).toMatchObject([{ queryText: 'clairance', targetId: null, item: null }]);
 
     await app
       .http()

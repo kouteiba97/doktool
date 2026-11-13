@@ -5,7 +5,14 @@ import { ErrorResponse } from '../../common/errors/error-response.js';
 import { Client, type ClientInfo } from '../../common/http/client-info.js';
 import { ADMIN_API_PREFIX } from '../../http/api-prefix.js';
 import { ADMIN_SESSION_COOKIE } from './admin-auth.policy.js';
-import { AdminMeDto, AdminSignInDto, AdminSignInStepDto, AdminTotpDto } from './admin-auth.dto.js';
+import { AdminAccountsService } from './admin-accounts.service.js';
+import {
+  AdminChangePasswordDto,
+  AdminMeDto,
+  AdminSignInDto,
+  AdminSignInStepDto,
+  AdminTotpDto,
+} from './admin-auth.dto.js';
 import { type AdminPrincipal, AdminAuthService } from './admin-auth.service.js';
 import { AdminBoundaryGuard, CurrentAdmin, RequireGrants } from './admin-guards.js';
 
@@ -18,7 +25,10 @@ const errors = ApiResponse({
 @ApiTags('admin-auth')
 @Controller(`${ADMIN_API_PREFIX}`)
 export class AdminAuthController {
-  constructor(private readonly auth: AdminAuthService) {}
+  constructor(
+    private readonly auth: AdminAuthService,
+    private readonly accounts: AdminAccountsService,
+  ) {}
 
   /** Step 1: e-mail + password. Never creates a session; answers with the TOTP step. */
   @Post('auth/sign-in')
@@ -58,6 +68,7 @@ export class AdminAuthController {
     return AdminMeDto.from(principal);
   }
 
+  /** POST /admin/v1/auth/sign-out: ends the session and deletes the cookie. */
   @Post('auth/sign-out')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants()
@@ -75,6 +86,23 @@ export class AdminAuthController {
       sameSite: 'strict',
       path: '/',
     });
+  }
+
+  /**
+   * POST /admin/v1/auth/password: the signed-in admin changes their own password. The current
+   * password is required; this session stays open and every other one ends.
+   */
+  @Post('auth/password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RequireGrants()
+  @ApiNoContentResponse()
+  @errors
+  async changePassword(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Body() body: AdminChangePasswordDto,
+    @Client() client: ClientInfo,
+  ): Promise<void> {
+    await this.accounts.changeOwnPassword(admin, body, client);
   }
 
   /** The signed-in admin and effective grants; Admin Web renders its navigation from these. */

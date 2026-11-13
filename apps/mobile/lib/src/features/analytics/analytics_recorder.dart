@@ -25,6 +25,7 @@ typedef AnalyticsSender = Future<void> Function(AnalyticsBatchDto batch);
 /// demo included, buffered offline up to 5 000 events with their original time, sent on the next
 /// connection. An event belongs to the session that recorded it — a later account never sends it.
 class AnalyticsRecorder {
+  /// Everything is injected so tests can run it without a phone or server.
   AnalyticsRecorder({
     required this._database,
     required this._session,
@@ -102,8 +103,10 @@ class AnalyticsRecorder {
     return key == null ? 0 : _waiting(key);
   }
 
+  /// Stops the pending send timer.
   void dispose() => _timer?.cancel();
 
+  /// Sends the queued events of the current session in batches; keeps them when offline.
   Future<void> _flush() async {
     _timer?.cancel();
     _timer = null;
@@ -135,6 +138,7 @@ class AnalyticsRecorder {
     }
   }
 
+  /// One batch as the API expects it: platform, app version, data version and the events.
   AnalyticsBatchDto _batchOf(List<QueuedAnalyticsEvent> rows) {
     final appVersion = _appVersion;
     final dataVersion = _dataVersion();
@@ -169,6 +173,7 @@ class AnalyticsRecorder {
     await (_database.delete(_database.analyticsQueue)..where((row) => row.id.isIn(oldest.map((row) => row.id)))).go();
   }
 
+  /// How many events of this session are still waiting.
   Future<int> _waiting(String key) async {
     final total = _database.analyticsQueue.id.count();
     return (_database.selectOnly(_database.analyticsQueue)
@@ -178,6 +183,7 @@ class AnalyticsRecorder {
         .getSingle();
   }
 
+  /// Which session the events belong to (an account, a demo, or none when signed out).
   static String? _keyOf(Session? session) => switch (session) {
     UserSession(:final sessionId) => 'user:$sessionId',
     DemoSession(:final demoSessionId) => 'demo:$demoSessionId',
@@ -200,5 +206,6 @@ final analyticsRecorderProvider = Provider<AnalyticsRecorder>((ref) {
 
 /// Records an event without waiting; analytics never interrupt what the person is doing.
 extension AnalyticsTracking on AnalyticsRecorder {
+  /// Records an event without waiting and without ever failing the screen that called it.
   void record(AnalyticsEvent event) => unawaited(track(event).catchError((Object _) {}));
 }

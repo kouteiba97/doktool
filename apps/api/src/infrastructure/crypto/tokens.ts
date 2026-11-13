@@ -10,6 +10,10 @@ export function sha256Hex(value: string): string {
   return createHash('sha256').update(value, 'utf8').digest('hex');
 }
 
+/**
+ * Hex HMAC-SHA-256 of `value` with `key` (OTP codes, analytics subjects): unlike a plain hash it
+ * cannot be recomputed without the secret.
+ */
 export function hmacSha256Hex(key: string, value: string): string {
   return createHmac('sha256', key).update(value, 'utf8').digest('hex');
 }

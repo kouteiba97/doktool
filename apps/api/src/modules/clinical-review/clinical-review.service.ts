@@ -16,6 +16,7 @@ const REVIEW_GRANTS: Record<ClinicalContentKind, readonly Grant[]> = {
   PREGNANCY_PROFILE: ['pregnancy.review'],
 };
 
+/** The sign-off rule of one kind of clinical content, as Admin Web shows it. */
 export interface ReviewPolicy {
   content: ClinicalContentKind;
   requiredSignOffs: SignOffs;
@@ -45,11 +46,13 @@ export class ClinicalReviewService {
     private readonly audit: AuditService,
   ) {}
 
+  /** The number of sign-offs this kind of content needs now (1 unless set to 2). */
   async required(content: ClinicalContentKind): Promise<SignOffs> {
     const row = await this.prisma.clinicalReviewPolicy.findUnique({ where: { content } });
     return row?.requiredSignOffs === 2 ? 2 : 1;
   }
 
+  /** Both policies with how many admins could approve. */
   async policies(): Promise<ReviewPolicy[]> {
     const rows = await this.prisma.clinicalReviewPolicy.findMany({
       include: { updatedBy: { select: { id: true, fullName: true } } },
@@ -141,6 +144,7 @@ export class ClinicalReviewService {
     };
   }
 
+  /** Active admins holding every grant needed to approve this content. */
   private eligibleReviewers(content: ClinicalContentKind): Promise<number> {
     const now = new Date();
     return this.prisma.adminAccount.count({

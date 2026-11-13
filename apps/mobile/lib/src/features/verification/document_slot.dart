@@ -22,10 +22,13 @@ import 'verification_repository.dart';
 
 const _contentTypes = {'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'pdf': 'application/pdf'};
 
+/// Where the slot is: empty, checking, uploading, quality warning, done, failed.
 enum _Phase { idle, checking, uploading, quality, done, failed }
 
+/// Why a photo looks wrong.
 enum _Quality { illegible, nameMismatch }
 
+/// A file picked or photographed, waiting to be sent.
 class _Picked {
   const _Picked({required this.path, required this.contentType, required this.fromCamera});
 
@@ -61,6 +64,7 @@ class DocumentSlot extends ConsumerStatefulWidget {
   ConsumerState<DocumentSlot> createState() => _DocumentSlotState();
 }
 
+/// The phase, the warning, the pending file, the upload progress and error.
 class _DocumentSlotState extends ConsumerState<DocumentSlot> {
   _Phase _phase = _Phase.idle;
   _Quality? _quality;
@@ -72,11 +76,13 @@ class _DocumentSlotState extends ConsumerState<DocumentSlot> {
   String? _nameRead;
   bool _checkedLegible = false;
 
+  /// « Prendre une photo ».
   Future<void> _fromCamera() async {
     final path = await DocumentCameraScreen.capture(context, widget.label);
     if (path != null) await _accept(_Picked(path: path, contentType: 'image/jpeg', fromCamera: true));
   }
 
+  /// « Choisir un fichier »: a PDF, JPG or PNG.
   Future<void> _fromFiles() async {
     final l10n = AppLocalizations.of(context);
     final picked = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: _contentTypes.keys.toList());
@@ -93,6 +99,7 @@ class _DocumentSlotState extends ConsumerState<DocumentSlot> {
     await _accept(_Picked(path: file.path!, contentType: contentType, fromCamera: false));
   }
 
+  /// Checks size and (for photos) readability and name; warns before sending a doubtful photo.
   Future<void> _accept(_Picked picked) async {
     final l10n = AppLocalizations.of(context);
     final size = await File(picked.path).length();
@@ -148,6 +155,7 @@ class _DocumentSlotState extends ConsumerState<DocumentSlot> {
   bool get _isIdentityStep =>
       widget.stepType == VerificationStepType.identityFront || widget.stepType == VerificationStepType.identityBack;
 
+  /// Uploads the file with a signed URL, then registers it on the case.
   Future<void> _upload(_Picked picked) async {
     final l10n = AppLocalizations.of(context);
     setState(() {
@@ -194,6 +202,7 @@ class _DocumentSlotState extends ConsumerState<DocumentSlot> {
     }
   }
 
+  /// « Retirer » a document sent to the case.
   Future<void> _remove(VerificationDocumentDto document) async {
     try {
       final updated = await ref.read(verificationRepositoryProvider).removeDocument(widget.caseId, document.id);
@@ -238,6 +247,7 @@ class _DocumentSlotState extends ConsumerState<DocumentSlot> {
           spacing: DtSpace.s2,
           runSpacing: DtSpace.s2,
           children: [
+            // « Reprendre »: discards the doubtful photo and opens the camera again.
             DtButton(
               label: l10n.verificationDocumentRetake,
               size: DtButtonSize.md,
@@ -249,6 +259,7 @@ class _DocumentSlotState extends ConsumerState<DocumentSlot> {
                 await _fromCamera();
               },
             ),
+            // « Envoyer quand même »: the reviewer will judge.
             DtButton(
               label: l10n.verificationDocumentSendAnyway,
               variant: DtButtonVariant.secondary,
@@ -276,6 +287,7 @@ class _DocumentSlotState extends ConsumerState<DocumentSlot> {
         subtitle: line,
         actions: widget.enabled
             ? [
+                // « Remplacer » the document sent.
                 DtButton(
                   label: l10n.verificationDocumentReplace,
                   variant: DtButtonVariant.ghost,
@@ -284,6 +296,7 @@ class _DocumentSlotState extends ConsumerState<DocumentSlot> {
                   onPressed: _fromCamera,
                 ),
                 if (widget.requiredMark == null)
+                  // « Retirer » the document sent.
                   DtButton(
                     label: l10n.verificationDocumentRemove,
                     variant: DtButtonVariant.ghost,
@@ -314,6 +327,7 @@ class _DocumentSlotState extends ConsumerState<DocumentSlot> {
               style: DtType.body.copyWith(color: colors.inkSecondary),
             ),
             const SizedBox(height: DtSpace.s3),
+            // « Prendre une photo ».
             DtButton(
               label: l10n.verificationDocumentCapture,
               icon: LucideIcons.camera,
@@ -321,6 +335,7 @@ class _DocumentSlotState extends ConsumerState<DocumentSlot> {
               onPressed: widget.enabled ? _fromCamera : null,
             ),
             const SizedBox(height: DtSpace.s2),
+            // « Importer un fichier ».
             DtButton(
               label: l10n.verificationDocumentImport,
               icon: LucideIcons.upload,
@@ -360,6 +375,7 @@ class _DocumentSlotState extends ConsumerState<DocumentSlot> {
             body: _error!,
             action: _pending == null
                 ? null
+                // « Réessayer » the upload.
                 : DtButton(
                     label: l10n.commonRetry,
                     size: DtButtonSize.md,
@@ -372,6 +388,7 @@ class _DocumentSlotState extends ConsumerState<DocumentSlot> {
     );
   }
 
+  /// A file type as PDF, PNG or JPG.
   String _typeLabel(String contentType) => switch (contentType) {
     'application/pdf' => 'PDF',
     'image/png' => 'PNG',
@@ -379,6 +396,7 @@ class _DocumentSlotState extends ConsumerState<DocumentSlot> {
   };
 }
 
+/// One row of the slot: icon, title, subtitle and action.
 class _Row extends StatelessWidget {
   const _Row({
     required this.icon,

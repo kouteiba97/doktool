@@ -85,3 +85,49 @@ describe('search ranking (section 12)', () => {
     expect(suggestions('zz', entries)).toEqual([]);
   });
 });
+
+/** The original full-matrix optimal-string-alignment distance, kept as the reference. */
+function referenceDistance(a: string, b: string, max: number): number {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  const d = Array.from({ length: a.length + 1 }, (_, i) =>
+    Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)),
+  );
+  for (let i = 1; i <= a.length; i++) {
+    let rowMin = Number.POSITIVE_INFINITY;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      let value = Math.min(d[i - 1]![j]! + 1, d[i]![j - 1]! + 1, d[i - 1]![j - 1]! + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1])
+        value = Math.min(value, d[i - 2]![j - 2]! + 1);
+      d[i]![j] = value;
+      rowMin = Math.min(rowMin, value);
+    }
+    if (rowMin > max) return max + 1;
+  }
+  return d[a.length]![b.length]!;
+}
+
+describe('edit distance (rolling rows, ADR-025)', () => {
+  it('matches the full-matrix reference on 20 000 random word pairs', () => {
+    let seed = 42;
+    const random = () => (seed = (seed * 1103515245 + 12345) % 2 ** 31) / 2 ** 31;
+    const letters = 'abceilnorstué';
+    const word = () =>
+      Array.from(
+        { length: Math.floor(random() * 10) },
+        () => letters[Math.floor(random() * letters.length)],
+      ).join('');
+    for (let n = 0; n < 20_000; n++) {
+      const a = word();
+      // Half the pairs are near misses (a swap or a change), the others unrelated.
+      let b = word();
+      if (random() < 0.5 && a.length > 1) {
+        const i = Math.floor(random() * (a.length - 1));
+        b = a.slice(0, i) + a[i + 1] + a[i] + a.slice(i + 2);
+        if (random() < 0.5) b = b.slice(0, -1) + 'x';
+      }
+      const max = Math.floor(random() * 3);
+      expect(editDistance(a, b, max), `${a} / ${b} / ${max}`).toBe(referenceDistance(a, b, max));
+    }
+  });
+});

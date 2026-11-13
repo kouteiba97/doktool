@@ -25,6 +25,7 @@ enum AppLanguage {
       deviceLocale.languageCode == 'en' ? AppLanguage.en : AppLanguage.fr;
 }
 
+/// The device settings: appearance (light, dark, system) and language.
 @immutable
 class AppSettings {
   const AppSettings({required this.appearance, required this.language});
@@ -32,6 +33,7 @@ class AppSettings {
   final AppearancePreference appearance;
   final AppLanguage language;
 
+  /// A copy with some settings changed.
   AppSettings copyWith({AppearancePreference? appearance, AppLanguage? language}) =>
       AppSettings(appearance: appearance ?? this.appearance, language: language ?? this.language);
 

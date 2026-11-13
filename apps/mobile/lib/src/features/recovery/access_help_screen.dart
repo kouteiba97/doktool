@@ -22,6 +22,7 @@ class AccessHelpScreen extends StatelessWidget {
       title: l10n.accessHelpTitle,
       intro: l10n.accessHelpIntro,
       children: [
+        // « Mot de passe oublié » → reset with a code.
         _Choice(
           icon: LucideIcons.keyRound,
           title: l10n.accessHelpForgotTitle,
@@ -29,6 +30,7 @@ class AccessHelpScreen extends StatelessWidget {
           onTap: () => context.push(Routes.resetRequest),
         ),
         const SizedBox(height: DtSpace.s3),
+        // « J'ai changé de contact » → sign in with the other contact.
         _Choice(
           icon: LucideIcons.arrowLeftRight,
           title: l10n.accessHelpContactTitle,
@@ -36,6 +38,7 @@ class AccessHelpScreen extends StatelessWidget {
           onTap: () => context.pushReplacement(Routes.signIn),
         ),
         const SizedBox(height: DtSpace.s3),
+        // « J'ai perdu l'accès aux deux » → assisted recovery.
         _Choice(
           icon: LucideIcons.shieldQuestion,
           title: l10n.accessHelpLostTitle,
@@ -49,6 +52,7 @@ class AccessHelpScreen extends StatelessWidget {
   }
 }
 
+/// One way out: an icon, a title, a line, and where it leads.
 class _Choice extends StatelessWidget {
   const _Choice({required this.icon, required this.title, required this.body, required this.onTap});
 

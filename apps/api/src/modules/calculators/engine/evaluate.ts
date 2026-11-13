@@ -13,9 +13,12 @@ import type {
 
 export const ENGINE_VERSION = 'ts-1.0.0';
 
+/** One value typed or chosen by the person, with its unit for numbers. */
 export type InputValue = { value: number | string | boolean | null; unit?: string };
+/** All values, by input key. */
 export type EvaluationInputs = Record<string, InputValue | null | undefined>;
 
+/** Why a calculation gives no result. */
 export type IssueCode =
   | 'UNKNOWN_INPUT'
   | 'REQUIRED'
@@ -29,6 +32,7 @@ export type IssueCode =
   | 'MISSING_INPUT'
   | 'NON_FINITE_RESULT';
 
+/** One reason, pointing at the input, range or rule involved. */
 export interface Issue {
   code: IssueCode;
   input?: string;
@@ -38,17 +42,20 @@ export interface Issue {
   message?: LocalizedText;
 }
 
+/** A value converted to the input's canonical unit (shown to the person). */
 export interface Conversion {
   input: string;
   from: { value: number; unit: string };
   to: { value: number; unit: string };
 }
 
+/** A value outside the usual range: shown, never blocking. */
 export interface PlausibilityNote {
   input: string;
   range: Range & { unit: string };
 }
 
+/** What the engine answers: a result with its band, or why there is none. */
 export type Evaluation =
   | {
       outcome: 'RESULT';
@@ -61,19 +68,27 @@ export type Evaluation =
     }
   | { outcome: 'INVALID' | 'OUT_OF_VALIDATED_RANGE'; issues: Issue[]; conversions: Conversion[] };
 
+/** A value during evaluation. */
 type Value = number | string | boolean;
 
+/** Thrown inside the formula when an optional input it needs was left empty. */
 class MissingInput extends Error {
   constructor(readonly input: string) {
     super(`missing input ${input}`);
   }
 }
 
+/** True when a value lies in a range (missing bounds are open). */
 const inRange = (value: number, range: Range | undefined) =>
   !range ||
   ((range.min === undefined || value >= range.min) &&
     (range.max === undefined || value <= range.max));
 
+/**
+ * Runs a calculator: presence and types, hard ranges, cross-field rules, validated ranges,
+ * plausibility notes, then the formula and its band. Never returns a result for invalid or out-of-
+ * range inputs.
+ */
 export function evaluate(definition: CalculatorDefinition, raw: EvaluationInputs): Evaluation {
   const declared = new Map(definition.inputs.map((input) => [input.key, input]));
   const invalid: Issue[] = [];
@@ -194,12 +209,14 @@ export function evaluate(definition: CalculatorDefinition, raw: EvaluationInputs
   };
 }
 
+/** The NUMBER and INTEGER inputs. */
 function numericInputs(definition: CalculatorDefinition): NumericInput[] {
   return definition.inputs.filter(
     (input): input is NumericInput => input.kind === 'NUMBER' || input.kind === 'INTEGER',
   );
 }
 
+/** Checks one value against its input and converts numbers to the canonical unit. */
 function acceptValue(
   input: CalculatorInput,
   given: InputValue,
@@ -236,6 +253,7 @@ function acceptValue(
   }
 }
 
+/** Evaluates one node of the formula tree recursively. */
 function run(node: Expr, values: Map<string, Value>, definition: CalculatorDefinition): Value {
   const num = (expr: Expr) => run(expr, values, definition) as number;
   const bool = (expr: Expr) => run(expr, values, definition) as boolean;

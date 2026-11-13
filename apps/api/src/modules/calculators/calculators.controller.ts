@@ -45,6 +45,7 @@ const errors = ApiResponse({
 export class CalculatorsController {
   constructor(private readonly calculators: CalculatorsService) {}
 
+  /** GET /v1/calculators: the catalogue (optional search words). */
   @Get()
   @ApiOkResponse({ type: [CalculatorSummaryDto] })
   @errors

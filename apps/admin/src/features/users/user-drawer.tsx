@@ -27,7 +27,9 @@ import {
 } from './labels';
 import { usersKey } from './labels';
 
+/** The user drawer data. */
 type Detail = Schemas['AdminUserDetailDto'];
+/** Which confirmation dialog is open. */
 type Action = 'suspend' | 'reinstate' | 'signOut' | null;
 
 /** User drawer: Profil · Accès · Abonnement · Activité · Historique (section 07); no documents. */
@@ -47,6 +49,7 @@ export function UserDrawer({ userId, onClose }: { userId: string | null; onClose
   });
   const user = detail.data;
 
+  // After an action: reload the drawer and the list, then confirm with a toast.
   const refresh = async (message: string) => {
     await queryClient.invalidateQueries({ queryKey: key });
     void queryClient.invalidateQueries({ queryKey: usersKey });
@@ -178,6 +181,7 @@ export function UserDrawer({ userId, onClose }: { userId: string | null; onClose
   );
 }
 
+/** « Profil » tab: contacts, wilaya, profession and its details. */
 function Profile({ user }: { user: Detail }) {
   const { t, locale } = useI18n();
   return (
@@ -324,6 +328,10 @@ function Access({ user }: { user: Detail }) {
   );
 }
 
+/**
+ * « Abonnement » tab: every subscription with its period and last payment (needs
+ * subscriptions.read).
+ */
 function Subscriptions({ user }: { user: Detail }) {
   const { t, locale } = useI18n();
   if (user.subscriptions === undefined)

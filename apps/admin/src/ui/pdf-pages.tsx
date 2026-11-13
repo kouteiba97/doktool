@@ -2,6 +2,7 @@
 
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 
+/** Whether the PDF could be drawn. */
 type Outcome = 'ready' | 'error';
 
 /** CSS pixels of a rendered page width; the canvas is drawn at device resolution. */

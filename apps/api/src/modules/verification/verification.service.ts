@@ -31,17 +31,20 @@ import {
   stepsFor,
 } from './verification.policy.js';
 
+/** The three kinds of case, in the order the app lists them. */
 const TYPES: VerificationType[] = ['IDENTITY', 'PROFESSIONAL_STATUS', 'STUDENT_STATUS'];
 const OPEN = new Set(['NOT_STARTED', 'SUBMITTED', 'IN_REVIEW', 'APPEALED']);
 const DECIDED = new Set(['VERIFIED', 'REJECTED', 'EXPIRED']);
 /** Upload requests per person and hour (ADR-009 style limit on signed-URL issuance). */
 const UPLOAD_RATE = { name: 'verification.upload', limit: 30, windowSeconds: 3600 };
 
+/** A case and whether the person may appeal its decision. */
 export interface CaseState {
   record: CaseRecord;
   canAppeal: boolean;
 }
 
+/** The latest case of one type and whether a new one may start. */
 export interface TypeState {
   type: VerificationType;
   /** Whether a new case of this type may be started now (for the person's current type). */
@@ -49,11 +52,13 @@ export interface TypeState {
   latest: CaseState | null;
 }
 
+/** What the verification screen shows. */
 export interface VerificationOverview {
   professionalType: ProfessionalType | null;
   types: TypeState[];
 }
 
+/** Declared details the person types or picks (which ones depend on the case). */
 export interface DetailsInput {
   documentKind?: string;
   orderNumber?: string;
@@ -64,6 +69,7 @@ export interface DetailsInput {
   academicYear?: number;
 }
 
+/** What the app declares before uploading a file: its step, type, size and checksum. */
 export interface UploadRequest {
   stepType: StepType;
   contentType: string;
@@ -86,6 +92,7 @@ export class VerificationService {
     private readonly limiter: RateLimiter,
   ) {}
 
+  /** The person's latest case of each type, with whether they may start a new one or appeal. */
   async overview(userId: string): Promise<VerificationOverview> {
     const professionalType = await this.users.professionalTypeOf(userId);
     const types: TypeState[] = [];
@@ -108,6 +115,10 @@ export class VerificationService {
     return { professionalType, types };
   }
 
+  /**
+   * Starts a new case of one type (and, for a status case, the role it proves); refused while one
+   * is open or when already verified.
+   */
   async start(
     userId: string,
     type: VerificationType,
@@ -222,6 +233,7 @@ export class VerificationService {
     return { record: await this.load(caseId), canAppeal: false };
   }
 
+  /** Removes one file from a case being prepared. */
   async removeDocument(userId: string, caseId: string, documentId: string): Promise<CaseState> {
     const record = await this.preparing(userId, caseId);
     const document = record.documents.find((candidate) => candidate.id === documentId);
@@ -313,6 +325,7 @@ export class VerificationService {
 
   // ───────────────────────────────── helpers ─────────────────────────────────
 
+  /** The most recent case of one type. */
   private latest(userId: string, type: VerificationType): Promise<CaseRecord | null> {
     return this.prisma.verificationCase.findFirst({
       where: { userId, type },
@@ -321,6 +334,7 @@ export class VerificationService {
     });
   }
 
+  /** Reloads a case after a change. */
   private load(caseId: string): Promise<CaseRecord> {
     return this.prisma.verificationCase.findUniqueOrThrow({
       where: { id: caseId },
@@ -328,6 +342,7 @@ export class VerificationService {
     });
   }
 
+  /** A case of this person (another person's case is "not found"). */
   private async owned(userId: string, caseId: string): Promise<CaseRecord> {
     const record = await this.prisma.verificationCase.findUnique({
       where: { id: caseId },
@@ -337,6 +352,7 @@ export class VerificationService {
     return record;
   }
 
+  /** A case of this person still being prepared (not yet sent). */
   private async preparing(userId: string, caseId: string): Promise<CaseRecord> {
     const record = await this.owned(userId, caseId);
     if (record.status !== 'NOT_STARTED') {
@@ -354,6 +370,7 @@ export class VerificationService {
     if (count !== 1) throw new DomainError('INVALID_STATE', 'This case was already sent.');
   }
 
+  /** Refuses a step that does not belong to this case. */
   private assertStep(record: CaseRecord, stepType: StepType): void {
     if (!stepsFor(record.type, caseTarget(record)).some((rule) => rule.stepType === stepType)) {
       throw new DomainError('VALIDATION_FAILED', 'This step does not belong to this case.', {
@@ -362,6 +379,10 @@ export class VerificationService {
     }
   }
 
+  /**
+   * Checks declared details: the schema of the case, a student card only for students, and that
+   * every picker id exists.
+   */
   private async assertDetails(
     userId: string,
     record: CaseRecord,
@@ -389,6 +410,7 @@ export class VerificationService {
     }
   }
 
+  /** The role a status case proves by default: the person's current role. */
   private defaultTarget(
     type: VerificationType,
     current: ProfessionalType,
@@ -396,6 +418,10 @@ export class VerificationService {
     return type === 'IDENTITY' ? null : current;
   }
 
+  /**
+   * The role a new status case proves: students prove STUDENT; others DOCTOR or RESIDENT, never a
+   * lower role than today.
+   */
   private resolveTarget(
     type: VerificationType,
     current: ProfessionalType,
@@ -444,6 +470,10 @@ export class VerificationService {
       : 'Already verified.';
   }
 
+  /**
+   * True for the latest case of its type, rejected by a reviewer, with documents, after enough
+   * rejections, and not appealed yet.
+   */
   private async canAppeal(record: CaseRecord): Promise<boolean> {
     if (record.status !== 'REJECTED' || record.appealedAt || !record.reviewerId) return false;
     if (record.documents.length === 0) return false;
@@ -457,6 +487,7 @@ export class VerificationService {
     return rejections >= REJECTIONS_BEFORE_APPEAL;
   }
 
+  /** Audit entry of an action of the person on their case. */
   private record(
     userId: string,
     client: ClientInfo,

@@ -7,9 +7,11 @@ import { AccessService, type ItemAccess } from '../access/index.js';
 import { SIGNED_READ_TTL, StorageService } from '../storage/index.js';
 import { compareFrench, matchesAllWords } from '../../common/text/search-text.js';
 
+/** French A–Z order by title. */
 const byTitle = (a: { titleFr: string }, b: { titleFr: string }) =>
   compareFrench(a.titleFr, b.titleFr);
 
+/** A reference model as the app shows it. */
 export interface ReferenceItem {
   id: string;
   type: ReferenceDocumentType;
@@ -24,6 +26,7 @@ export interface ReferenceItem {
   access: ItemAccess;
 }
 
+/** Columns read for a published model. */
 const PUBLISHED_SELECT = {
   id: true,
   type: true,
@@ -43,6 +46,7 @@ const PUBLISHED_SELECT = {
   },
 } as const;
 
+/** A model row with its current file, as read here. */
 type PublishedRow = {
   id: string;
   type: ReferenceDocumentType;
@@ -73,7 +77,6 @@ export class ReferenceDocumentsService {
     private readonly storage: StorageService,
   ) {}
 
-  /** A–Z list of one type, optionally filtered by title (accent- and case-insensitive). */
   /** Titles and type of reference models by id (admin read models; status does not matter). */
   async labels(
     ids: string[],
@@ -104,6 +107,7 @@ export class ReferenceDocumentsService {
     });
   }
 
+  /** A–Z list of one type, optionally filtered by title (accent- and case-insensitive). */
   async list(
     viewer: Viewer,
     type: ReferenceDocumentType,
@@ -117,6 +121,7 @@ export class ReferenceDocumentsService {
     return (await this.withAccess(viewer, matching)).sort(byTitle);
   }
 
+  /** One model; CONTENT_UNAVAILABLE once disabled or archived. */
   async get(viewer: Viewer, id: string): Promise<ReferenceItem> {
     const row = await this.prisma.referenceDocument.findUnique({
       where: { id },
@@ -166,18 +171,30 @@ export class ReferenceDocumentsService {
     return items.filter((item) => item.access.state === 'AVAILABLE').sort(byTitle);
   }
 
-  private async published(filter: { type?: ReferenceDocumentType }): Promise<PublishedRow[]> {
+  /** The published models among `ids` (favorites), with access; unknown or hidden ids are left out. */
+  async byIds(viewer: Viewer, ids: readonly string[]): Promise<ReferenceItem[]> {
+    if (ids.length === 0) return [];
+    return this.withAccess(viewer, await this.published({ ids }));
+  }
+
+  /** Enabled models whose current file is processed. */
+  private async published(filter: {
+    type?: ReferenceDocumentType;
+    ids?: readonly string[];
+  }): Promise<PublishedRow[]> {
     const rows = await this.prisma.referenceDocument.findMany({
       where: {
         status: 'ENABLED',
         currentFileId: { not: null },
         ...(filter.type ? { type: filter.type } : {}),
+        ...(filter.ids ? { id: { in: [...filter.ids] } } : {}),
       },
       select: PUBLISHED_SELECT,
     });
     return rows.filter(isPublished);
   }
 
+  /** Adds the viewer's access decision to each model. */
   private async withAccess(viewer: Viewer, rows: PublishedRow[]): Promise<ReferenceItem[]> {
     const { decisions } = await this.access.decideItems(
       viewer,
@@ -201,6 +218,7 @@ export class ReferenceDocumentsService {
   }
 }
 
+/** True when the model's current file has been processed (checksum, page count, date). */
 function isPublished(row: PublishedRow): boolean {
   const file = row.currentFile;
   return (

@@ -27,12 +27,14 @@ class SignInScreen extends ConsumerStatefulWidget {
   ConsumerState<SignInScreen> createState() => _SignInScreenState();
 }
 
+/// The identifier and password typed, progress and error.
 class _SignInScreenState extends ConsumerState<SignInScreen> {
   final _identifier = TextEditingController();
   final _password = TextEditingController();
   bool _submitting = false;
   ApiError? _error;
 
+  /// Pre-fills the e-mail or phone last used on this device.
   @override
   void initState() {
     super.initState();
@@ -40,6 +42,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     if (last != null) _identifier.text = last;
   }
 
+  /// Frees the text controllers.
   @override
   void dispose() {
     _identifier.dispose();
@@ -49,6 +52,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   bool get _valid => isValidIdentifier(_identifier.text) && _password.text.isNotEmpty;
 
+  /// « Se connecter »: signs in; an unconfirmed sign-up goes to the code screen.
   Future<void> _submit() async {
     if (!_valid || _submitting) return;
     setState(() {
@@ -79,6 +83,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     }
   }
 
+  /// The message for each sign-in refusal (wrong password, locked until…, not confirmed, suspended).
   String _errorText(AppLocalizations l10n, ApiError error) => switch (error.code) {
     'INVALID_CREDENTIALS' => l10n.signInInvalid,
     'ACCOUNT_LOCKED' => l10n.signInLocked(timeText(context, error.retryAt)),
@@ -94,7 +99,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       title: l10n.signInTitle,
       actions: [
         if (_error != null) DtAlert(severity: DtAlertSeverity.critical, body: _errorText(l10n, _error!)),
+        // « Se connecter »: needs an identifier and a password.
         DtButton(label: l10n.signInSubmit, loading: _submitting, onPressed: _valid ? _submit : null),
+        // « Pas encore de compte ? »: role choice, then sign-up.
         DtButton(
           label: l10n.signInNoAccount,
           variant: DtButtonVariant.ghost,
@@ -128,6 +135,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           crossAxisAlignment: WrapCrossAlignment.center,
           spacing: DtSpace.s2,
           children: [
+            // « Accès perdu ? »: the access help screen.
             DtButton(
               label: l10n.signInLostAccess,
               variant: DtButtonVariant.ghost,
@@ -135,6 +143,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               expand: false,
               onPressed: () => context.push(Routes.accessHelp),
             ),
+            // « Mot de passe oublié ? ».
             DtButton(
               label: l10n.signInForgot,
               variant: DtButtonVariant.ghost,

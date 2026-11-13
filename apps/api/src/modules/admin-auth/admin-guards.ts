@@ -17,6 +17,7 @@ import { ADMIN_SESSION_COOKIE } from './admin-auth.policy.js';
 import { type AdminPrincipal, AdminAuthService } from './admin-auth.service.js';
 import type { Grant } from './grants.js';
 
+/** An Express request after AdminSessionGuard ran. */
 type AdminRequest = Request & { admin?: AdminPrincipal };
 
 /** cookie-parser types `request.cookies` as `any`; read it as the string map it is. */
@@ -34,6 +35,9 @@ const REQUIRED_GRANTS = 'doktool:required-grants';
 export class AdminBoundaryGuard implements CanActivate {
   constructor(@Inject(ENV) private readonly env: Env) {}
 
+  /**
+   * Refuses bearer tokens and, for anything but GET/HEAD/OPTIONS, an Origin other than Admin Web.
+   */
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<AdminRequest>();
     if (request.get('authorization')) {
@@ -54,6 +58,10 @@ export class AdminSessionGuard implements CanActivate {
     private readonly reflector: Reflector,
   ) {}
 
+  /**
+   * Resolves the session cookie, checks the grants the route requires and stores the admin on the
+   * request.
+   */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AdminRequest>();
     const token = cookieOf(request, ADMIN_SESSION_COOKIE);
@@ -82,6 +90,7 @@ export function RequireGrants(...grants: Grant[]) {
   );
 }
 
+/** Route parameter decorator returning the admin set by AdminSessionGuard. */
 export const CurrentAdmin = createParamDecorator((_: unknown, context: ExecutionContext) => {
   const admin = context.switchToHttp().getRequest<AdminRequest>().admin;
   if (!admin)

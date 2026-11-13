@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CircleAlert, Plus } from 'lucide-react';
+import { CircleAlert, Plus, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { api, call } from '@/api/client';
@@ -13,6 +13,7 @@ import { Button } from '@/ui/button';
 import { type Column, DataTable } from '@/ui/data-table';
 import { useErrorText } from '@/ui/errors';
 import { EmptyState, PageHeader } from '@/ui/feedback';
+import { TextInput } from '@/ui/field';
 import { useToast } from '@/ui/toast';
 import { CalculatorFormDialog } from './calculator-form-dialog';
 import {
@@ -35,11 +36,26 @@ export function CalculatorsPage() {
   const queryClient = useQueryClient();
   const { has } = useGrants();
   const [creating, setCreating] = useState(false);
+  const [search, setSearch] = useState('');
+  // Every calculator with its versions.
   const list = useQuery({
     queryKey: calculatorsKey,
     queryFn: () => call(api.GET('/admin/v1/calculators')),
   });
 
+  // The rows matching every word typed, in the name (either language), the slug or the category.
+  const rows = useMemo(() => {
+    const all = list.data ?? [];
+    const words = foldForSearch(search).split(' ').filter(Boolean);
+    if (words.length === 0) return all;
+    return all.filter((row) => {
+      const text = foldForSearch(`${row.nameFr} ${row.nameEn} ${row.slug} ${row.category ?? ''}`);
+      return words.every((word) => text.includes(word));
+    });
+  }, [list.data, search]);
+
+  // The table's columns: name, category, access, published and open version, primary source, review
+  // date, status.
   const columns = useMemo<Column<Calculator>[]>(
     () => [
       {
@@ -129,6 +145,7 @@ export function CalculatorsPage() {
         caption={t('admin.calculators.caption')}
         actions={
           has('calculators.draft') ? (
+            // « Nouveau calculateur »: opens the creation dialog.
             <Button variant="primary" onClick={() => setCreating(true)}>
               <Plus size={16} aria-hidden />
               {t('admin.calculators.add')}
@@ -144,10 +161,23 @@ export function CalculatorsPage() {
         <DataTable
           label={t('admin.calculators.title')}
           columns={columns}
-          rows={list.data ?? []}
+          rows={rows}
           rowId={(row) => row.id}
           loading={list.isPending}
           onOpen={(row) => router.push(`/admin/calculators/${row.id}`)}
+          toolbar={
+            // Filters the rows already loaded: no request is sent while typing.
+            <div className="w-sidebar">
+              <TextInput
+                type="search"
+                aria-label={t('admin.calculators.search')}
+                placeholder={t('admin.calculators.search')}
+                value={search}
+                unit={<Search size={14} aria-hidden />}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </div>
+          }
         />
       )}
       <CalculatorFormDialog
@@ -162,4 +192,14 @@ export function CalculatorsPage() {
       />
     </>
   );
+}
+
+/** Lower case without accents, so « creatinine » finds « Créatinine ». */
+export function foldForSearch(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
 }

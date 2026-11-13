@@ -1,0 +1,62 @@
+<section class="chapter">
+<h2 id="ch6">6. Access: who may open what</h2>
+<p class="lead">This is the most important chapter for understanding DokTool's behaviour. One table decides what each kind of person can open; one pure function applies it; every endpoint re-checks it; the apps only draw the answer. If you understand <code>modules/access</code>, you understand why a screen shows a lock, an explanation or a « Voir les offres » button.</p>
+
+<h3 id="ch6-inputs">6.1 The inputs</h3>
+<p>For a demo session, the only input is "this is a demo" (and which profession it previews). For a real account, <code>AccessService</code> gathers three facts in parallel, each from the module that owns it:</p>
+<table>
+  <tr><th>Fact</th><th>Asked from</th><th>Contains</th></tr>
+  <tr><td>Account facts</td><td><code>UsersService.getAccessFacts</code></td><td>status (ACTIVE, SUSPENDED, DELETED), professional type (DOCTOR, RESIDENT, STUDENT or not chosen yet)</td></tr>
+  <tr><td>Verification snapshot</td><td><code>VerificationStatusService.accessSnapshot</code></td><td>for IDENTITY, STUDENT_STATUS and PROFESSIONAL_STATUS: status, submission date, expiry, <code>renewalPending</code></td></tr>
+  <tr><td>Subscription</td><td><code>SubscriptionStatusService.current</code></td><td>status (ACTIVE, CANCELED, GRACE…), period end, grace end</td></tr>
+</table>
+
+<h3 id="ch6-table">6.2 The policy table</h3>
+<p>The whole V1 policy is data. Read it as a grid: one block per tier; in each, which content items open (<code>content</code>) and the state of each feature (<code>features</code>):</p>
+[[code apps/api/src/modules/access/access-policy.config.ts | export const ACCESS_POLICY | block]]
+<p>The content rules use three scopes: <code>ALL</code> (everything opens), <code>STUDENT_TIER</code> (items marked for students, plus samples), <code>DEMO_SAMPLE</code> (only items flagged <code>demoSample</code>), and <code>NONE</code> for a restricted account. A locked item always carries its <code>lockReason</code> and, when one exists, its <code>unlockPath</code> — the single screen that can help (sign up, see plans, start verification…). Students get explanations without an unlock path: no upsell (Lock L38).</p>
+
+<h3 id="ch6-place">6.3 Placing a person in one tier</h3>
+<p><code>placeInTier</code> reads like the specification. Follow it from top to bottom with an example in mind — a verified doctor whose subscription ended last week:</p>
+[[code apps/api/src/modules/access/access-policy.ts | export function placeInTier | block]]
+<ol>
+  <li>Not a demo. Account ACTIVE. Professional type chosen (DOCTOR). Identity not rejected.</li>
+  <li>Not a student, so look at <code>PROFESSIONAL_STATUS</code>: VERIFIED.</li>
+  <li><code>isSubscriptionLive</code>: ACTIVE subscriptions stay live 7 days past their end while billing moves them to GRACE; GRACE stays live until its end. Last week → still live → <b>PROFESSIONAL</b>.</li>
+  <li>After grace: not live. Verified, so <code>purchase = 'OPEN'</code> → <b>PROFESSIONAL_UNPAID</b> with « Renouveler » available.</li>
+</ol>
+[[code apps/api/src/modules/access/access-policy.ts | export function isSubscriptionLive | block]]
+
+<h3 id="ch6-renewal">6.4 Re-verification never interrupts access</h3>
+<p>A verification expires (professional status after a set period; see chapter 8). Renewing it opens a new case of the same type. Before the October 2026 audit, the newest case — still undecided — replaced the verified one, and a paying doctor fell to PROFESSIONAL_UNPAID the moment they tapped « Renouveler ». <code>accessSnapshot</code> now keeps the earlier decision counting while the new case is undecided, and flags <code>renewalPending</code> so purchase shows « vérification en cours »:</p>
+[[code apps/api/src/modules/verification/verification-status.service.ts | async accessSnapshot( | block]]
+
+<h3 id="ch6-evaluate">6.5 From tier to profile, and from profile to items</h3>
+[[code apps/api/src/modules/access/access-policy.ts | export function evaluateAccess | block]]
+<p>The result, <code>AccessProfile</code>, is what <code>GET /v1/me/access</code> returns to the app. Lists and detail endpoints then decide each item with <code>decideItem</code>:</p>
+[[code apps/api/src/modules/access/access-policy.ts | export function decideItem | block]]
+<div class="rule"><b>Pure and tested as a matrix.</b> <code>access-policy.ts</code> does no input/output at all: same inputs and time, same answer. <code>test/unit/access-policy.matrix.spec.ts</code> checks every tier against every feature and content rule. To change the policy: edit the table, bump <code>version</code>, update the matrix test.</div>
+
+<h3 id="ch6-guards">6.6 Re-checking on every endpoint</h3>
+<p>Two mechanisms enforce the profile on the server:</p>
+<ul>
+  <li><code>@RequireFeature('…')</code> on a route (chapter 4.7) refuses a locked feature before the handler runs.</li>
+  <li>Content services call <code>AccessService.decideItems(viewer, items)</code> and only return a PDF URL, a calculator definition or a profile's content when the item is <code>AVAILABLE</code>; a locked item is still listed, with its lock.</li>
+</ul>
+
+<h3 id="ch6-viewer">6.7 Viewers: user or demo</h3>
+[[code apps/api/src/infrastructure/security/viewer-auth.guard.ts | export type Viewer | 5]]
+[[code apps/api/src/infrastructure/security/viewer-auth.guard.ts | export class ViewerAuthGuard | block]]
+<p>Read routes accept both kinds of token; write routes (favorites, history, verification, payments) use <code>UserAuthGuard</code>, which refuses demo tokens. Demo and user tokens are signed with the same key but have different <i>audiences</i>, so one can never pass for the other.</p>
+
+<h3 id="ch6-demo">6.8 The demo</h3>
+[[code apps/api/src/modules/demo/demo.service.ts | export class DemoService | 12]]
+[[code apps/api/src/modules/demo/demo.service.ts | async start( | block]]
+<p>One device keeps one active demo session, identified by the phone's installation id. Nothing a demo does is written to user tables: its favorites live in the phone's memory only. When the same phone confirms a new account, <code>markConverted</code> closes the demo as CONVERTED, so the « Démo » analytics funnel can count conversions (another audit fix).</p>
+
+<h3 id="ch6-app">6.9 What the apps do with the profile</h3>
+<ul>
+  <li><b>Mobile:</b> <code>AccessController</code> loads the profile at launch, on resume and after verification or payment. Rows draw a <code>LockLabel</code>; tapping a locked row opens <code>showLockSheet</code> with the explanation and, if there is one, the single unlock action. Locks are never red.</li>
+  <li><b>Admin Web:</b> the user drawer's « Accès » tab shows an account's profile and the inputs it came from (<code>AccessService.explainForUser</code>), so support can answer "why can't I open this?".</li>
+</ul>
+</section>

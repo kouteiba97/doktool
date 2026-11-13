@@ -43,6 +43,7 @@ const errors = ApiResponse({
 export class AnalyticsController {
   constructor(private readonly analytics: AnalyticsService) {}
 
+  /** POST /v1/analytics/events: a batch of up to 100 events from the app or a demo session. */
   @Post('events')
   @HttpCode(HttpStatus.OK)
   @UseGuards(ViewerAuthGuard)
@@ -67,6 +68,7 @@ export class AnalyticsController {
 export class AnalyticsAdminController {
   constructor(private readonly analytics: AnalyticsService) {}
 
+  /** GET /admin/v1/analytics/freshness: when the latest event arrived. */
   @Get('freshness')
   @RequireGrants('analytics.read')
   @ApiOkResponse({ type: FreshnessDto })
@@ -74,6 +76,7 @@ export class AnalyticsAdminController {
     return { latestEventAt: (await this.analytics.freshness())?.toISOString() ?? null };
   }
 
+  /** GET /admin/v1/analytics/usage: active people. */
   @Get('usage')
   @RequireGrants('analytics.read')
   @ApiOkResponse({ type: UsageDashboardDto })
@@ -81,6 +84,7 @@ export class AnalyticsAdminController {
     return this.analytics.usage(query);
   }
 
+  /** GET /admin/v1/analytics/library: searches and reference model use. */
   @Get('library')
   @RequireGrants('analytics.read')
   @ApiOkResponse({ type: LibraryDashboardDto })
@@ -88,6 +92,7 @@ export class AnalyticsAdminController {
     return this.analytics.library(query);
   }
 
+  /** GET /admin/v1/analytics/calculators: starts and completions per calculator version. */
   @Get('calculators')
   @RequireGrants('analytics.read')
   @ApiOkResponse({ type: CalculatorsDashboardDto })
@@ -95,6 +100,7 @@ export class AnalyticsAdminController {
     return this.analytics.calculatorUse(query);
   }
 
+  /** GET /admin/v1/analytics/users: sign-ups and verification funnel. */
   @Get('users')
   @RequireGrants('analytics.read')
   @ApiOkResponse({ type: OnboardingDashboardDto })
@@ -102,6 +108,7 @@ export class AnalyticsAdminController {
     return this.analytics.onboarding(query);
   }
 
+  /** GET /admin/v1/analytics/subscriptions: plan views, starts and renewals. */
   @Get('subscriptions')
   @RequireGrants('analytics.read')
   @ApiOkResponse({ type: SubscriptionsDashboardDto })
@@ -109,6 +116,7 @@ export class AnalyticsAdminController {
     return this.analytics.subscriptionActivity(query);
   }
 
+  /** GET /admin/v1/analytics/demo: the demo funnel. */
   @Get('demo')
   @RequireGrants('analytics.read')
   @ApiOkResponse({ type: DemoDashboardDto })

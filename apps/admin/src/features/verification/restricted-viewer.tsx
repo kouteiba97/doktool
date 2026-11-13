@@ -12,8 +12,10 @@ import { useErrorText } from '@/ui/errors';
 import { EmptyState, Skeleton } from '@/ui/feedback';
 import { PdfPages } from '@/ui/pdf-pages';
 
+/** A document of the case. */
 type Document = Schemas['AdminVerificationDocumentDto'];
 
+/** How many times the watermark text is repeated over the document. */
 const WATERMARK_TILES = 12;
 
 /**
@@ -100,6 +102,7 @@ export function RestrictedViewer({
         <div className="dt-restricted">
           <TimerOff aria-hidden />
           <b>{t('admin.verification.viewerExpired')}</b>
+          {/* « Rouvrir »: asks for a new 60-second link (a new audit entry). */}
           <Button size="sm" onClick={() => void view.refetch()}>
             {t('admin.verification.viewerReopen')}
           </Button>

@@ -19,8 +19,8 @@ import '../../ui/pill_tabs.dart';
 import '../../ui/skeleton.dart';
 import '../../ui/text_match.dart';
 import '../../ui/tokens.dart';
-import '../../core/api/generated/models/substance_item_dto.dart';
 import 'library_data.dart';
+import '../pregnancy/pregnancy_search.dart';
 import '../../core/api/generated/models/favorite_target_type.dart';
 import '../activity/activity_screen.dart';
 import '../activity/favorites_controller.dart';
@@ -31,20 +31,25 @@ import '../analytics/analytics_recorder.dart';
 /// scoped to the section, an A–Z list. A row has one action; a locked row keeps its place with the
 /// lock and its reason word. No « new », editor or floating button (Lock L31); no categories (Q8).
 class LibraryScreen extends ConsumerStatefulWidget {
-  const LibraryScreen({required this.section, super.key});
+  const LibraryScreen({required this.section, this.focusSearch = false, super.key});
 
   final LibrarySection section;
+
+  /// Opened from a search shortcut: the keyboard comes up at once.
+  final bool focusSearch;
 
   @override
   ConsumerState<LibraryScreen> createState() => _LibraryScreenState();
 }
 
+/// The filter text of the section, and the timer that reports a library search once typing pauses.
 class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   final _query = TextEditingController();
 
   /// A library search counts once the typing has paused, not per keystroke.
   Timer? _report;
 
+  /// Another section was chosen: clears the filter.
   @override
   void didUpdateWidget(LibraryScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -54,6 +59,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     }
   }
 
+  /// Frees the timer and the text controller.
   @override
   void dispose() {
     _report?.cancel();
@@ -61,6 +67,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     super.dispose();
   }
 
+  /// The filter changed: redraws, and reports the search after a pause (two characters at least).
   void _changed(String value) {
     setState(() {});
     _report?.cancel();
@@ -99,6 +106,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: DtSpace.s3),
+            // Section tabs: ordonnances, certificates, calculators, pregnancy.
             child: DtPillTabs<LibrarySection>(
               semanticLabel: l10n.librarySections,
               selected: section,
@@ -121,8 +129,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(DtSpace.s4, 0, DtSpace.s4, DtSpace.s2),
+            // The filter field of the section.
             child: TextField(
               controller: _query,
+              autofocus: widget.focusSearch,
               onChanged: _changed,
               textInputAction: TextInputAction.search,
               style: DtType.body.copyWith(color: colors.ink),
@@ -142,7 +152,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           Expanded(
             child: switch (section) {
               LibrarySection.calculators => _CalculatorList(query: _query.text),
-              LibrarySection.pregnancy => _SubstanceList(query: _query.text),
+              LibrarySection.pregnancy => SubstanceSearch(query: _query.text),
               _ => _ReferenceList(section: section, query: _query.text),
             },
           ),
@@ -152,6 +162,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   }
 }
 
+/// The ordonnances or certificates of the section, filtered, with locks and loading / error states.
 class _ReferenceList extends ConsumerWidget {
   const _ReferenceList({required this.section, required this.query});
 
@@ -194,6 +205,7 @@ class _ReferenceList extends ConsumerWidget {
   }
 }
 
+/// The calculators, filtered by name.
 class _CalculatorList extends ConsumerWidget {
   const _CalculatorList({required this.query});
 
@@ -235,40 +247,7 @@ class _CalculatorList extends ConsumerWidget {
   }
 }
 
-/// « Grossesse · Allaitement »: substances A–Z, found by name or synonym (ADR-019).
-class _SubstanceList extends ConsumerWidget {
-  const _SubstanceList({required this.query});
-
-  final String query;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final items = ref.watch(substanceListProvider);
-    return _ListState(
-      loading: items.isLoading && !items.hasValue,
-      error: items.hasError && !items.hasValue ? ApiError.from(items.error!) : null,
-      onRetry: () => ref.invalidate(substanceListProvider),
-      onRefresh: () => ref.refresh(substanceListProvider.future),
-      emptyText: l10n.libraryEmptyPregnancy,
-      query: query,
-      rows: [
-        for (final item in items.value ?? const <SubstanceItemDto>[])
-          if (matchesAllWords(query, [item.nameFr, item.nameEn, ...item.synonyms]))
-            ContentRow(
-              icon: LucideIcons.baby,
-              title: localizedTitle(context, item.nameFr, item.nameEn),
-              access: item.access,
-              actionLabel: l10n.libraryOpen,
-              highlight: query,
-              onOpen: () => context.push(Routes.substance(item.id)),
-            ),
-      ],
-      total: items.value?.length ?? 0,
-    );
-  }
-}
-
+/// Loading, error (« Réessayer ») or empty state of a list, with pull-to-refresh.
 class _ListState extends StatelessWidget {
   const _ListState({
     required this.loading,
@@ -302,6 +281,7 @@ class _ListState extends StatelessWidget {
           children: [
             DtAlert(severity: DtAlertSeverity.neutral, body: commonErrorText(context, error!)),
             const SizedBox(height: DtSpace.s3),
+            // « Réessayer ».
             DtButton(label: l10n.commonRetry, variant: DtButtonVariant.secondary, onPressed: onRetry),
           ],
         ),

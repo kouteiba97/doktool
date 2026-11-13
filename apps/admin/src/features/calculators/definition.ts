@@ -3,9 +3,11 @@
 import { z } from 'zod';
 import type { Locale } from '@/i18n/messages';
 
+/** Schemas used only to read a definition for display (the API owns the real checks). */
 const localized = z.object({ fr: z.string(), en: z.string() });
 const range = z.object({ min: z.number().optional(), max: z.number().optional() });
 
+/** A formula node, as displayed. */
 export type Expr =
   | { num: number }
   | { bool: boolean }
@@ -99,6 +101,7 @@ export function readDefinition(raw: unknown): DefinitionView | null {
   return parsed.success ? parsed.data : null;
 }
 
+/** Operators written between their two operands. */
 const INFIX: Record<string, string> = {
   add: '+',
   sub: '−',
@@ -160,10 +163,12 @@ export function rangeText(value: Range | undefined): string {
   return value.min !== undefined ? `≥ ${value.min}` : `≤ ${value.max}`;
 }
 
+/** A text in the UI language. */
 export function localizedOf(text: { fr: string; en: string }, locale: Locale): string {
   return text[locale];
 }
 
+/** One result of a stored test run. */
 const testCaseResult = z.object({
   testCaseId: z.string(),
   passed: z.boolean(),
@@ -176,6 +181,7 @@ const testCaseResult = z.object({
   failure: z.string().nullable(),
 });
 
+/** A stored test run and the definition checksum it ran on. */
 export const storedTestRun = z.object({
   passed: z.boolean(),
   ranAt: z.string(),

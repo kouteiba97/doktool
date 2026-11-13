@@ -10,6 +10,7 @@ import {
 import { AccessProfileDto } from './access.dto.js';
 import { AccessService } from './access.service.js';
 
+/** GET /v1/me/access. */
 @ApiTags('access')
 @Controller(USER_API_PREFIX)
 export class AccessController {

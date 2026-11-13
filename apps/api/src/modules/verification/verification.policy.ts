@@ -16,6 +16,7 @@ export const ABANDONED_CASE_DAYS = 90;
 /** An appeal is possible after this many rejections of the same type (section 06). */
 export const REJECTIONS_BEFORE_APPEAL = 2;
 
+/** Reasons a reviewer can choose when rejecting. */
 export const REJECTION_REASONS = [
   'ILLEGIBLE',
   'DOCUMENT_EXPIRED',
@@ -26,6 +27,7 @@ export const REJECTION_REASONS = [
 ] as const;
 export type RejectionReason = (typeof REJECTION_REASONS)[number];
 
+/** The documents a case can ask for. */
 export const STEP_TYPES = [
   'IDENTITY_FRONT',
   'IDENTITY_BACK',
@@ -35,9 +37,11 @@ export const STEP_TYPES = [
 ] as const;
 export type StepType = (typeof STEP_TYPES)[number];
 
+/** Documents accepted to prove identity. */
 export const IDENTITY_DOCUMENT_KINDS = ['NATIONAL_ID', 'PASSPORT', 'STUDENT_CARD'] as const;
 export type IdentityDocumentKind = (typeof IDENTITY_DOCUMENT_KINDS)[number];
 
+/** One step of a case and whether it is required. */
 export interface StepRule {
   stepType: StepType;
   required: boolean;
@@ -46,6 +50,7 @@ export interface StepRule {
 /** DOCTOR ranks above RESIDENT above STUDENT; a status case never moves a person down. */
 const RANK: Record<ProfessionalType, number> = { STUDENT: 0, RESIDENT: 1, DOCTOR: 2 };
 
+/** True when moving from `current` to `target` is not a step down. */
 export function canTarget(current: ProfessionalType, target: ProfessionalType): boolean {
   return RANK[target] >= RANK[current];
 }
@@ -60,6 +65,10 @@ export function targetOf(
   return details.professionalType === 'RESIDENT' ? 'RESIDENT' : 'DOCTOR';
 }
 
+/**
+ * The steps a case needs: identity front (+ optional back), student proof, residency attestation
+ * or Ordre proof.
+ */
 export function stepsFor(type: VerificationType, target: ProfessionalType | null): StepRule[] {
   switch (type) {
     case 'IDENTITY':
@@ -77,6 +86,7 @@ export function stepsFor(type: VerificationType, target: ProfessionalType | null
 }
 
 const uuid = z.uuid();
+/** Ordre number: letters, digits, "/" and "-". */
 const ORDER_NUMBER = /^[A-Za-z0-9][A-Za-z0-9/-]{0,29}$/;
 
 const identitySchema = z.strictObject({ documentKind: z.enum(IDENTITY_DOCUMENT_KINDS) });
@@ -97,18 +107,21 @@ const studentSchema = z.strictObject({
   academicYear: z.int().min(1).max(7),
 });
 
+/** Valid declared details of any case. */
 export type DeclaredDetails =
   | z.infer<typeof identitySchema>
   | z.infer<typeof doctorSchema>
   | z.infer<typeof residentSchema>
   | z.infer<typeof studentSchema>;
 
+/** The schema of the details for a case and role. */
 function schemaFor(type: VerificationType, target: ProfessionalType | null) {
   if (type === 'IDENTITY') return identitySchema;
   if (type === 'STUDENT_STATUS') return studentSchema;
   return target === 'RESIDENT' ? residentSchema : doctorSchema;
 }
 
+/** Result of checkDetails: the parsed details, or the field errors. */
 export type DetailsCheck =
   { ok: true; details: DeclaredDetails } | { ok: false; fields: Record<string, string[]> };
 
@@ -133,12 +146,14 @@ export function maskOrderNumber(orderNumber: string): string {
   return `${'•'.repeat(Math.max(0, orderNumber.length - 3))}${orderNumber.slice(-3)}`;
 }
 
+/** Adds months in UTC (negative values go back). */
 export function addMonths(date: Date, months: number): Date {
   const result = new Date(date);
   result.setUTCMonth(result.getUTCMonth() + months);
   return result;
 }
 
+/** File types accepted for verification documents. */
 export const EXTENSIONS: Record<string, 'jpg' | 'png' | 'pdf'> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',

@@ -9,6 +9,7 @@ import { PublishedTestCaseDto, PublishedVersionDto } from '../calculators/index.
 import { SubstanceProfileDto } from '../pregnancy/index.js';
 import { OfflineService } from './offline.service.js';
 
+/** A reference PDF of the manifest. */
 export class ManifestReferenceDto {
   @ApiProperty({ format: 'uuid' })
   id!: string;
@@ -38,6 +39,7 @@ export class ManifestReferenceDto {
   updatedAt!: string;
 }
 
+/** A calculator of the manifest. */
 export class ManifestCalculatorDto {
   @ApiProperty({ format: 'uuid' })
   id!: string;
@@ -61,6 +63,7 @@ export class ManifestCalculatorDto {
   testCases!: PublishedTestCaseDto[];
 }
 
+/** GET /v1/offline/manifest response. */
 export class OfflineManifestDto {
   @ApiProperty({ format: 'date-time' })
   generatedAt!: string;
@@ -77,6 +80,7 @@ export class OfflineManifestDto {
   substances!: SubstanceProfileDto[];
 }
 
+/** The offline manifest endpoint. */
 @ApiTags('offline')
 @Controller(`${USER_API_PREFIX}/offline`)
 export class OfflineController {

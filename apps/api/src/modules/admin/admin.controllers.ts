@@ -21,6 +21,7 @@ import {
 import type { Response } from 'express';
 import { ErrorResponse } from '../../common/errors/error-response.js';
 import { Client, type ClientInfo } from '../../common/http/client-info.js';
+import { csvCell } from '../../common/text/csv.js';
 import { ADMIN_API_PREFIX } from '../../http/api-prefix.js';
 import { type AdminPrincipal, CurrentAdmin, RequireGrants } from '../admin-auth/index.js';
 import { AUDIT_EXPORT_MAX, AuditService } from '../audit/index.js';
@@ -48,6 +49,7 @@ const id = new ParseUUIDPipe();
 export class OverviewController {
   constructor(private readonly reads: AdminReadService) {}
 
+  /** GET /admin/v1/overview: the blocks of the home page the admin's grants allow. */
   @Get()
   @RequireGrants()
   @ApiOkResponse({ type: OverviewDto })
@@ -64,6 +66,7 @@ export class OverviewController {
 export class AdminUsersController {
   constructor(private readonly reads: AdminReadService) {}
 
+  /** GET /admin/v1/users: search and list user accounts. */
   @Get()
   @RequireGrants('users.read')
   @ApiOkResponse({ type: [AdminUserDto] })
@@ -71,6 +74,10 @@ export class AdminUsersController {
     return this.reads.userList(query);
   }
 
+  /**
+   * GET /admin/v1/users/:id: one account with its derived access, subscriptions, activity counts
+   * and history.
+   */
   @Get(':id')
   @RequireGrants('users.read')
   @ApiOkResponse({ type: AdminUserDetailDto })
@@ -81,6 +88,7 @@ export class AdminUsersController {
     return this.reads.userDetail(admin, userId);
   }
 
+  /** POST /admin/v1/users/:id/suspend: suspends the account and signs it out everywhere. */
   @Post(':id/suspend')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants('users.suspend')
@@ -94,6 +102,7 @@ export class AdminUsersController {
     await this.reads.setUserStatus(admin, userId, 'SUSPENDED', body.reason, client);
   }
 
+  /** POST /admin/v1/users/:id/reinstate: lifts a suspension. */
   @Post(':id/reinstate')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants('users.suspend')
@@ -107,6 +116,7 @@ export class AdminUsersController {
     await this.reads.setUserStatus(admin, userId, 'ACTIVE', body.reason, client);
   }
 
+  /** POST /admin/v1/users/:id/sign-out: ends every session of the account. */
   @Post(':id/sign-out')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants('users.write')
@@ -131,6 +141,7 @@ export class AuditLogController {
     private readonly reads: AdminReadService,
   ) {}
 
+  /** GET /admin/v1/audit: one page of the audit log, newest first. */
   @Get()
   @RequireGrants('audit.read')
   @ApiOkResponse({ type: [AuditEntryDto] })
@@ -172,11 +183,11 @@ export class AuditLogController {
       ip: client.ip,
       userAgent: client.userAgent,
     });
-    const cell = (value: unknown) => {
-      if (value === null || value === undefined) return '';
-      const text = typeof value === 'string' ? value : JSON.stringify(value);
-      return /[";\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
-    };
+    /** One CSV cell: objects as JSON, then quoted and guarded against formulas by csvCell. */
+    const cell = (value: unknown) =>
+      value === null || value === undefined
+        ? ''
+        : csvCell(typeof value === 'string' ? value : JSON.stringify(value));
     const header = [
       'occurredAt',
       'actorType',

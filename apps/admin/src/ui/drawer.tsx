@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { useI18n } from '@/i18n/i18n-provider';
 import { Button } from './button';
 
+/** What a drawer shows and how it behaves. */
 interface DrawerProps {
   open: boolean;
   onClose: () => void;
@@ -33,6 +34,7 @@ export function Drawer({
   children,
 }: DrawerProps) {
   const { t } = useI18n();
+  // Closing a drawer with unsaved changes asks for confirmation first.
   const close = () => {
     if (dirty && !window.confirm(t('admin.common.discardChanges'))) return;
     onClose();

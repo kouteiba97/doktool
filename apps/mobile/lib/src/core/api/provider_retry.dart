@@ -18,4 +18,5 @@ Duration? providerRetry(int retryCount, Object error) {
   return transient ? _delay(retryCount) : null;
 }
 
+/// Waits a little longer before each new attempt (0.4 s, 0.8 s, 1.2 s…).
 Duration _delay(int retryCount) => Duration(milliseconds: 400 * (retryCount + 1));

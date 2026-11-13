@@ -29,6 +29,7 @@ export class UsersModule implements OnModuleInit {
     private readonly users: UsersService,
   ) {}
 
+  /** Schedules the hourly deletion of sign-ups never confirmed. */
   onModuleInit(): void {
     this.jobs.register('users.purge-unconfirmed', '23 * * * *', async () => {
       await this.users.purgeUnconfirmedAccounts();

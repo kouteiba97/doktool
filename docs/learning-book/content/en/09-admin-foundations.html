@@ -1,0 +1,66 @@
+<section class="chapter">
+<h2 id="ch9">9. How Admin Web is built — Next.js, React and the console kit</h2>
+<p class="lead">Admin Web is a Next.js application written in React and TypeScript. It has no database and no business rule of its own: every screen reads and writes through the API, and every button it hides is also refused by the API. Its job is to make the team's work fast, clear and safe.</p>
+
+<h3 id="ch9-layers">9.1 The layers</h3>
+<div class="diagram">src/app/                     URLs. A folder = a route; page.tsx = the page. Thin: grant check + feature component.
+  admin/layout.tsx           every console page inside ConsoleShell (top bar + navigation)
+  admin/users/page.tsx       /admin/users  →  &lt;RequireGrant grant="users.read"&gt;&lt;UsersPage/&gt;
+  sign-in/                   the two-step sign-in (password, then authenticator code)
+src/features/&lt;section&gt;/      the screens: pages, drawers, dialogs, labels, small helpers
+src/ui/                      the console kit: Button, Badge, DataTable, Dialog, Drawer, Field, Tabs, Toast…
+src/api/client.ts            typed calls: api.GET('/admin/v1/users', …) checked against schema.d.ts
+src/session/session.ts       who is signed in (useMe) and what they may do (useGrants)
+src/i18n/                    FR/EN messages from packages/i18n, formatting of dates, money, bytes
+src/shell/                   ConsoleShell, the navigation list, RequireGrant
+src/proxy.ts                 no session cookie → straight to /sign-in</div>
+
+<h3 id="ch9-origin">9.2 One origin: the API behind Admin Web</h3>
+<p>The browser never calls the API's domain. Next.js forwards <code>/admin/v1/*</code> to the API, so the session cookie (<code>__Host-doktool_admin</code>, HTTP-only) belongs to Admin Web's own origin and every write carries Admin Web's <code>Origin</code> header — which the API's boundary guard checks. A strict Content-Security-Policy allows scripts only from the console itself.</p>
+[[code apps/admin/next.config.ts | async rewrites() | 6]]
+[[file apps/admin/src/proxy.ts]]
+
+<h3 id="ch9-client">9.3 Calling the API</h3>
+<p><code>openapi-fetch</code> is typed by <code>schema.d.ts</code>, generated from the API contract: a wrong path, a missing parameter or a misspelled field is a compile error. <code>call()</code> turns any failure into an <code>ApiFailure</code> carrying the API's error code:</p>
+[[code apps/admin/src/api/client.ts | export async function call | block]]
+[[code apps/admin/src/api/client.ts | export function fieldErrors | block]]
+<p>Errors are shown with <code>useErrorText()</code> (<code>src/ui/errors.ts</code>), which maps codes to catalogue sentences — never the server's developer message. If a call answers "session ended", the provider reloads the sign-in page and remembers where the admin was.</p>
+
+<h3 id="ch9-query">9.4 Server state with TanStack Query</h3>
+<p>Every list and detail is a <code>useQuery</code> (or <code>useInfiniteQuery</code> for paged lists) with a <i>query key</i>. Every change is a <code>useMutation</code>; on success it invalidates or updates the keys it affects, so every screen showing that data refreshes. Read the users page's list as the model for all lists:</p>
+[[code apps/admin/src/features/users/users-page.tsx | const users = useInfiniteQuery({ | 22]]
+<p><code>useDebounced</code> waits 300 ms after the last key before asking the server (an audit fix: it used to ask at every key).</p>
+[[file apps/admin/src/ui/use-debounced.ts]]
+
+<h3 id="ch9-grants">9.5 Who sees what: grants in the UI</h3>
+[[code apps/admin/src/session/session.ts | export function useGrants | block]]
+<ul>
+  <li>The navigation (<code>shell/nav.ts</code>) lists each section with the grant it needs; sections the admin lacks are not shown.</li>
+  <li>A page wraps its content in <code>&lt;RequireGrant&gt;</code>: typing the URL without the grant shows a clear message instead of failing API calls.</li>
+  <li>Buttons check <code>has('…')</code>. This is only comfort: the API refuses anyway.</li>
+</ul>
+[[file apps/admin/src/app/admin/users/page.tsx]]
+
+<h3 id="ch9-kit">9.6 The console kit (src/ui)</h3>
+<table>
+  <tr><th>Component</th><th>Role</th></tr>
+  <tr><td><code>Button</code></td><td>Variants primary · secondary · ghost · danger · teal; <code>busy</code> shows a spinner and blocks double clicks.</td></tr>
+  <tr><td><code>DataTable</code></td><td>Sortable table with keyboard navigation; a row can open a drawer. Clicks on controls inside a row no longer also open the row (audit fix A2).</td></tr>
+  <tr><td><code>Drawer</code> / <code>Dialog</code></td><td>Side panel for a record's detail; centred dialog for a decision. Both trap focus and close with Escape.</td></tr>
+  <tr><td><code>ReasonDialog</code></td><td>Every admin change asks for a reason (3–500 characters) that goes into the audit log.</td></tr>
+  <tr><td><code>Field</code>, <code>TextInput</code>, <code>Select</code>, <code>Switch</code></td><td>Labelled, accessible form controls; errors under the field with an icon.</td></tr>
+  <tr><td><code>Badge</code>, <code>Alert</code>, <code>EmptyState</code>, <code>Skeleton</code>, <code>PageHeader</code></td><td>Status words with colour (never colour alone), messages, empty and loading states.</td></tr>
+  <tr><td><code>PeriodPicker</code>, charts, <code>MetricTile</code></td><td>Finance and analytics periods, bar/line charts with a table fallback, ledger figures.</td></tr>
+  <tr><td><code>PdfPages</code></td><td>Draws a PDF on canvases from a signed URL — preview without download or print.</td></tr>
+</table>
+[[code apps/admin/src/ui/data-table.tsx | function fromControl | block]]
+
+<h3 id="ch9-forms">9.7 Forms</h3>
+<p>Forms use React Hook Form with a Zod schema holding the same limits as the API (lengths, patterns). The API stays the judge: its <code>VALIDATION_FAILED</code> field errors are put back under the matching fields with <code>fieldErrors()</code>.</p>
+
+<h3 id="ch9-signin">9.8 Signing in</h3>
+<p><code>app/sign-in/sign-in-form.tsx</code> has two steps. The password step answers with a challenge: <b>ENROL</b> the first time (a QR code drawn from the <code>otpauth://</code> link, to scan with an authenticator app) or <b>VERIFY</b> afterwards. The six-digit code then creates the session cookie. If the 5-minute challenge expires or locks, the form now says why before starting again (audit fix A5).</p>
+
+<h3 id="ch9-i18n">9.9 Languages and formatting</h3>
+<p>Messages come from the same catalogue as the app (<code>packages/i18n</code>), under <code>admin.*</code> keys: <code>t('admin.users.title')</code>. A key that does not exist is a compile error (<code>MessageKey</code> type). <code>src/i18n/format.ts</code> formats dates, numbers, money (DZD), file sizes and ages in the chosen language.</p>
+</section>

@@ -26,6 +26,7 @@ export class AdminAuthModule implements OnModuleInit {
     private readonly auth: AdminAuthService,
   ) {}
 
+  /** Schedules the hourly clean-up of expired challenges and old sessions. */
   onModuleInit(): void {
     this.jobs.register('admin-auth.purge-expired', '13 * * * *', async () => {
       await this.auth.purge();

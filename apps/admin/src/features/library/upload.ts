@@ -15,6 +15,7 @@ export function suggestTitle(fileName: string): string {
     .slice(0, 200);
 }
 
+/** Why a file is refused before uploading. */
 export type PdfProblem = 'type' | 'size' | 'empty';
 
 /** Why a picked file cannot be uploaded as a reference model, or null. */
@@ -32,6 +33,7 @@ export async function sha256Hex(file: Blob): Promise<string> {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+/** The PUT to the signed URL failed (shown as « Envoi impossible »). */
 export class UploadFailed extends Error {
   constructor(readonly status: number) {
     super(`Upload failed with HTTP ${status}`);

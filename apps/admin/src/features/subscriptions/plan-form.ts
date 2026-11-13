@@ -85,6 +85,7 @@ export function planFormValues(plan: Plan | null): PlanFormInput {
   };
 }
 
+/** The form's values as the API expects them (prices in centimes, lists without empty lines). */
 export function toPublishBody(values: PlanFormOutput): Schemas['PublishPlanDto'] {
   return {
     code: values.code.trim(),

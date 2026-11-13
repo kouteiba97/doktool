@@ -4,6 +4,7 @@ import type { PaymentMethod, PaymentProvider } from '../../../generated/prisma/e
 
 export type GatewayId = (typeof GATEWAY_IDS)[number];
 
+/** What is sent to a gateway to open its payment page. */
 export interface RegisterOrder {
   /** Our public transaction id (DT-YYYY-NNNNNN), kept by the gateway as order metadata. */
   transactionId: string;
@@ -21,6 +22,7 @@ export interface RegisterOrder {
   webhookUrl: string;
 }
 
+/** What a gateway answers when the order is created. */
 export interface RegisteredOrder {
   /** The gateway's order id, kept as the transaction's provider reference. */
   providerReference: string;
@@ -28,6 +30,7 @@ export interface RegisteredOrder {
   redirectUrl: string;
 }
 
+/** The gateway's verdict on an order: paid (with amount and fee), still pending, or failed. */
 export type OrderOutcome =
   | {
       status: 'PAID';
@@ -67,6 +70,7 @@ export abstract class PaymentGateway {
   /** The channel recorded on a transaction for each method this gateway accepts. */
   abstract readonly channels: Readonly<Partial<Record<PaymentMethod, PaymentProvider>>>;
 
+  /** Creates the order at the gateway and returns its payment page. */
   abstract register(order: RegisterOrder): Promise<RegisteredOrder>;
 
   /** The gateway's authoritative status of an order. */

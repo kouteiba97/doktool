@@ -1,6 +1,7 @@
 import { CircleAlert, CircleCheck, Info, TriangleAlert } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+/** Kinds of alert. */
 type AlertTone = 'critical' | 'warning' | 'info' | 'success' | 'neutral';
 
 const ICONS = {
@@ -11,6 +12,7 @@ const ICONS = {
   neutral: Info,
 } as const;
 
+/** A coloured message box with an icon; critical ones are announced to screen readers. */
 export function Alert({
   tone,
   title,
@@ -35,6 +37,7 @@ export function Alert({
   );
 }
 
+/** What a page shows when it has nothing (or failed to load). */
 export function EmptyState({
   icon: Icon,
   title,
@@ -58,6 +61,7 @@ export function EmptyState({
   );
 }
 
+/** Grey placeholder lines while data loads. */
 export function Skeleton({ lines = 3 }: { lines?: number }) {
   return (
     <div className="dt-stack" aria-hidden>
@@ -68,6 +72,7 @@ export function Skeleton({ lines = 3 }: { lines?: number }) {
   );
 }
 
+/** Page title, caption and the page's action buttons. */
 export function PageHeader({
   title,
   caption,

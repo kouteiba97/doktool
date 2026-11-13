@@ -5,6 +5,8 @@ import { AuditModule } from '../audit/index.js';
 import { ClinicalReviewModule } from '../clinical-review/index.js';
 import { PregnancyAdminController } from './pregnancy-admin.controller.js';
 import { PregnancyAdminService } from './pregnancy-admin.service.js';
+import { PregnancyImportController } from './pregnancy-import.controller.js';
+import { PregnancyImportService } from './pregnancy-import.service.js';
 import { PregnancyController } from './pregnancy.controller.js';
 import { PregnancyService } from './pregnancy.service.js';
 
@@ -14,13 +16,13 @@ import { PregnancyService } from './pregnancy.service.js';
  * Not a drug database: no posology, products or interactions.
  *
  * Owns: `substances`, `substance_profile_versions`, `clinical_sources`, `profile_version_sources`,
- * `content_reports`.
+ * `content_reports`, `pregnancy_import_batches`, `pregnancy_import_rows` (ADR-025).
  * Other modules reach it only through ./index.ts.
  */
 @Module({
   imports: [AccessModule, AdminAuthModule, AuditModule, ClinicalReviewModule],
-  controllers: [PregnancyController, PregnancyAdminController],
-  providers: [PregnancyService, PregnancyAdminService],
+  controllers: [PregnancyController, PregnancyAdminController, PregnancyImportController],
+  providers: [PregnancyService, PregnancyAdminService, PregnancyImportService],
   exports: [PregnancyService, PregnancyAdminService],
 })
 export class PregnancyModule {}

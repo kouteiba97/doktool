@@ -5,6 +5,7 @@ import { formatDateTime } from '@/i18n/format';
 import { useI18n } from '@/i18n/i18n-provider';
 import { actionLabel } from './audit-labels';
 
+/** An audit entry as the « Historique » tabs show it. */
 type Entry = Pick<Schemas['AuditEntryDto'], 'id' | 'action' | 'occurredAt' | 'reason'> & {
   actorName?: string | null;
 };

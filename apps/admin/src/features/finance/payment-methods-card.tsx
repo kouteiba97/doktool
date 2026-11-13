@@ -15,6 +15,7 @@ import { ReasonDialog } from '@/ui/reason-dialog';
 import { useToast } from '@/ui/toast';
 import { PROVIDER_LABELS } from '../subscriptions/labels';
 
+/** A payment method, its gateway and its switch. */
 type Route = Schemas['PaymentMethodRouteDto'];
 
 export const METHOD_LABELS: Record<Schemas['PaymentMethod'], MessageKey> = {
@@ -35,6 +36,7 @@ export function PaymentMethodsCard() {
   const canSwitch = has('subscriptions.plans.write');
   const [switching, setSwitching] = useState<Route | null>(null);
 
+  // Every method with the gateway that takes it.
   const routes = useQuery({
     queryKey: ['admin', 'payment-methods'],
     queryFn: () => call(api.GET('/admin/v1/payment-methods')),
@@ -68,6 +70,7 @@ export function PaymentMethodsCard() {
                 )}
               </span>
               {canSwitch && route.gateway ? (
+                // « Suspendre » / « Reprendre » this payment method (an outage), with a reason.
                 <Button size="sm" variant="ghost" onClick={() => setSwitching(route)}>
                   {route.enabled
                     ? t('admin.paymentMethods.pause')

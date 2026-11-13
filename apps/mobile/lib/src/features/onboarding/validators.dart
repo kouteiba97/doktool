@@ -22,6 +22,7 @@ bool isValidIdentifier(String raw) {
 /// Minimum length accepted by the API.
 const passwordMinLength = 8;
 
+/// How strong a password looks (guidance shown under the field).
 enum PasswordStrength { tooShort, weak, fair, strong }
 
 /// Guidance only: the API requires 8 characters; « Solide » asks for 10 with digits and symbols.

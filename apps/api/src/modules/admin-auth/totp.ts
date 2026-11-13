@@ -7,11 +7,13 @@ const ALGORITHM = 'SHA1';
 /** Accept the previous and next 30-second step to absorb clock drift. */
 const WINDOW = 1;
 
+/** A new authenticator secret and its otpauth:// link. */
 export interface TotpEnrollment {
   secretBase32: string;
   otpauthUri: string;
 }
 
+/** A new random TOTP secret and the otpauth:// link an authenticator app scans as a QR code. */
 export function newTotpEnrollment(accountEmail: string): TotpEnrollment {
   const secret = new Secret({ size: 20 });
   const totp = new TOTP({

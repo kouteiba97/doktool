@@ -3,6 +3,7 @@ import { IsEnum, IsString, MaxLength, MinLength } from 'class-validator';
 import { DemoContext } from '../../generated/prisma/enums.js';
 import type { DemoSessionGrant } from './demo.service.js';
 
+/** Body of « Essayer la démo »: the profession to preview and the device id. */
 export class StartDemoDto {
   @ApiProperty({ enum: DemoContext, enumName: 'DemoContext', description: 'Médecin or Résident.' })
   @IsEnum(DemoContext)
@@ -15,6 +16,7 @@ export class StartDemoDto {
   deviceId!: string;
 }
 
+/** Body of a demo token renewal. */
 export class RenewDemoTokenDto {
   @ApiProperty()
   @IsString()
@@ -29,6 +31,7 @@ export class RenewDemoTokenDto {
   deviceId!: string;
 }
 
+/** A demo access token and its expiry. */
 export class DemoTokenDto {
   @ApiProperty({ description: 'Demo access token (audience doktool-demo), valid 1 hour.' })
   accessToken!: string;
@@ -37,6 +40,7 @@ export class DemoTokenDto {
   accessTokenExpiresAt!: string;
 }
 
+/** A started demo session. */
 export class DemoSessionDto extends DemoTokenDto {
   @ApiProperty({ format: 'uuid' })
   demoSessionId!: string;

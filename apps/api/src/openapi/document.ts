@@ -1,6 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, type OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 
+/** Title and version written into the published OpenAPI contract. */
 export const OPENAPI_TITLE = 'DokTool API';
 export const OPENAPI_VERSION = '1.0.0';
 

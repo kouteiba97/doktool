@@ -10,10 +10,16 @@ export const ADMIN_SESSION_TOUCH_SECONDS = 60;
 export const ADMIN_CHALLENGE_TTL_MINUTES = 5;
 export const ADMIN_CHALLENGE_MAX_ATTEMPTS = 5;
 
+/** An admin's own password: longer than a user's, as it guards the console. */
+export const ADMIN_PASSWORD_MIN_LENGTH = 12;
+export const ADMIN_PASSWORD_MAX_LENGTH = 128;
+
 export const ADMIN_SIGN_IN_MAX_FAILURES = 5;
 export const ADMIN_SIGN_IN_LOCK_MINUTES = 15;
 
 export const ADMIN_RATE_LIMITS = {
   signInPerIp: { name: 'admin-sign-in:ip', limit: 10, windowSeconds: 600 },
   totpPerIp: { name: 'admin-totp:ip', limit: 20, windowSeconds: 600 },
+  /** Checks of the current password when an admin changes it. */
+  passwordChangePerAdmin: { name: 'admin-password-change:admin', limit: 5, windowSeconds: 3600 },
 } as const satisfies Record<string, RateLimitRule>;

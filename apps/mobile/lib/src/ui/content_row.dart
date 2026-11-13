@@ -24,6 +24,8 @@ class ContentRow extends StatelessWidget {
     required this.onOpen,
     this.subtitle,
     this.highlight,
+    this.detail,
+    this.detailLabel,
     super.key,
   });
 
@@ -37,6 +39,12 @@ class ContentRow extends StatelessWidget {
   /// Query words to emphasise by weight, never by colour (section 12).
   final String? highlight;
 
+  /// Extra line under the title (e.g. a period's conduct badge in « Grossesse » search).
+  final Widget? detail;
+
+  /// What [detail] says, read with the title (the row's semantics are merged into one label).
+  final String? detailLabel;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -44,7 +52,9 @@ class ContentRow extends StatelessWidget {
     final VoidCallback open = locked ? () => showLockSheet(context, access, title: title) : onOpen;
     return Semantics(
       button: true,
-      label: locked ? '$title, ${lockWord(AppLocalizations.of(context), access.lockReason)}' : '$title, $actionLabel',
+      label: locked
+          ? '$title, ${lockWord(AppLocalizations.of(context), access.lockReason)}'
+          : [title, ?detailLabel, actionLabel].join(', '),
       onTap: open,
       excludeSemantics: true,
       child: InkWell(
@@ -73,6 +83,7 @@ class ContentRow extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: DtType.caption.copyWith(color: colors.inkMuted),
                         ),
+                      if (detail != null && !locked) ...[const SizedBox(height: DtSpace.s1), detail!],
                     ],
                   ),
                 ),
@@ -96,6 +107,7 @@ class ContentRow extends StatelessWidget {
   }
 }
 
+/// A title with the searched letters in bold.
 class _Highlighted extends StatelessWidget {
   const _Highlighted({required this.text, required this.style, this.query});
 
@@ -103,6 +115,7 @@ class _Highlighted extends StatelessWidget {
   final String? query;
   final TextStyle style;
 
+  /// Lower case without accents, so « hepar » finds « Héparine ».
   static String _fold(String value) => value
       .toLowerCase()
       .replaceAll(RegExp('[àâäá]'), 'a')

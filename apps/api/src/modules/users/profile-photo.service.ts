@@ -33,6 +33,7 @@ export class ProfilePhotoService {
     private readonly limiter: RateLimiter,
   ) {}
 
+  /** Signs a direct upload of the original photo (JPEG or PNG). */
   async requestUpload(
     userId: string,
     input: { contentType: string; sizeBytes: number; sha256: string },
@@ -91,6 +92,7 @@ export class ProfilePhotoService {
     if (previous) await this.deleteObject(previous);
   }
 
+  /** Removes the profile photo. */
   async remove(userId: string): Promise<void> {
     const previous = await this.replaceKey(userId, null);
     if (previous) await this.deleteObject(previous);
@@ -104,6 +106,7 @@ export class ProfilePhotoService {
     });
   }
 
+  /** Points the account at a new photo key and returns the previous one (to delete it). */
   private async replaceKey(userId: string, key: string | null): Promise<string | null> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },

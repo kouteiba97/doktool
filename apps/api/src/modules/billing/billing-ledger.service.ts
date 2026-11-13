@@ -13,6 +13,7 @@ import { UsersService } from '../users/index.js';
 
 const PAGE = 50;
 
+/** Filters of the transactions page. */
 export interface TransactionFilter {
   status?: TransactionStatus;
   provider?: PaymentProvider;
@@ -27,6 +28,7 @@ export interface TransactionFilter {
   cursor?: string;
 }
 
+/** Filters of the subscriptions page. */
 export interface SubscriptionFilter {
   status?: SubscriptionStatus;
   planCode?: string;
@@ -34,6 +36,7 @@ export interface SubscriptionFilter {
   cursor?: string;
 }
 
+/** The plan fields the ledgers need. */
 type PlanRef = Pick<
   SubscriptionPlan,
   'id' | 'code' | 'version' | 'nameFr' | 'nameEn' | 'durationDays' | 'priceMinor' | 'currency'
@@ -49,11 +52,13 @@ const PLAN_SELECT = {
   currency: true,
 } satisfies Prisma.SubscriptionPlanSelect;
 
+/** A transaction with its plan and the person's name. */
 export type LedgerTransaction = Transaction & {
   plan: PlanRef;
   user: { id: string; firstName: string; lastName: string };
 };
 
+/** A subscription with its plan, the person's name and its latest transaction. */
 export type LedgerSubscription = Subscription & {
   plan: PlanRef;
   user: { id: string; firstName: string; lastName: string };
@@ -78,6 +83,7 @@ export interface RevenueRow {
   firstOfSubscription: boolean;
 }
 
+/** Subscription figures for finance and the overview. */
 export interface SubscriptionMetrics {
   /** Normalised monthly value of live subscriptions at `at` (an annual plan counts ÷ 12). */
   mrrMinor: number;
@@ -88,6 +94,7 @@ export interface SubscriptionMetrics {
   ended: number;
 }
 
+/** What happened to one line of a fee settlement. */
 export type FeeSettlementOutcome = 'SETTLED' | 'NOT_FOUND' | 'NOT_SUCCEEDED' | 'FEES_ABOVE_AMOUNT';
 
 /** Months a plan covers, for MRR: 30 days → 1, 90 → 3, 365 → 12. */
@@ -113,6 +120,7 @@ export class BillingLedgerService {
     private readonly users: UsersService,
   ) {}
 
+  /** One page of transactions, newest first. */
   async transactions(filter: TransactionFilter): Promise<LedgerTransaction[]> {
     const search = filter.search?.trim();
     const rows = await this.prisma.transaction.findMany({
@@ -141,6 +149,7 @@ export class BillingLedgerService {
     return this.withUsers(rows);
   }
 
+  /** One transaction with its plan and person. */
   async transaction(id: string): Promise<LedgerTransaction | null> {
     const row = await this.prisma.transaction.findUnique({
       where: { id },
@@ -149,6 +158,7 @@ export class BillingLedgerService {
     return row ? (await this.withUsers([row]))[0]! : null;
   }
 
+  /** One page of subscriptions, newest first. */
   async subscriptions(filter: SubscriptionFilter): Promise<LedgerSubscription[]> {
     const rows = await this.prisma.subscription.findMany({
       where: {
@@ -329,6 +339,7 @@ export class BillingLedgerService {
     return { subscriptions, transactions };
   }
 
+  /** Adds the person's first and last name to each row. */
   private async withUsers<T extends { userId: string }>(
     rows: T[],
   ): Promise<(T & { user: { id: string; firstName: string; lastName: string } })[]> {

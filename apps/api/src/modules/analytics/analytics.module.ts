@@ -40,6 +40,7 @@ export class AnalyticsModule implements OnModuleInit {
     private readonly analytics: AnalyticsService,
   ) {}
 
+  /** Registers the worker that stores subscription events published by billing. */
   onModuleInit(): void {
     this.jobs.registerWorker(ANALYTICS_SERVER_EVENT_JOB, async (data) => {
       await this.analytics.recordServerEvent(data as ServerAnalyticsEvent);

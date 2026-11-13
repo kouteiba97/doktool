@@ -31,6 +31,7 @@ const DAY_MS = 86_400_000;
 const WORK_LIST = 5;
 const CONTENT_ACTIONS = ['reference.', 'calculator.'] as const;
 
+/** An account row as UsersService returns it to admins. */
 type AdminUserRow = NonNullable<Awaited<ReturnType<UsersService['adminDetail']>>>;
 
 /**
@@ -57,11 +58,18 @@ export class AdminReadService {
 
   // ─────────────────────────────── users ───────────────────────────────
 
+  /**
+   * The « Utilisateurs » list: one row per account with its verification and subscription state.
+   */
   async userList(query: UserQuery): Promise<AdminUserDto[]> {
     const rows = await this.users.adminList(query);
     return Promise.all(rows.map((row) => this.userRow(row)));
   }
 
+  /**
+   * The user drawer: the row, the access profile and the facts it was computed from, subscriptions
+   * (with `subscriptions.read`), activity counts and audit history.
+   */
   async userDetail(admin: AdminPrincipal, userId: string): Promise<AdminUserDetailDto> {
     const row = await this.users.adminDetail(userId);
     if (!row || row.status === 'DELETED') throw new DomainError('NOT_FOUND', 'User not found.');
@@ -165,6 +173,10 @@ export class AdminReadService {
     });
   }
 
+  /**
+   * Builds one list row: identity, profession, verification state of the case that matters for the
+   * profession, subscription status.
+   */
   private async userRow(row: AdminUserRow): Promise<AdminUserDto> {
     const [snapshot, subscription] = await Promise.all([
       this.verification.snapshot(row.id),
@@ -202,6 +214,7 @@ export class AdminReadService {
 
   // ─────────────────────────────── audit ───────────────────────────────
 
+  /** Turns audit rows into the response shape, adding the admin's name to each admin action. */
   async presentAudit(entries: AuditLogEntry[]): Promise<AuditEntryDto[]> {
     const names = await this.admins.names(
       entries.flatMap((entry) =>

@@ -4,7 +4,6 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_error.dart';
@@ -20,11 +19,13 @@ import '../../ui/dt_button.dart';
 import '../../ui/error_text.dart';
 import '../../ui/hero.dart';
 import '../../ui/locks.dart';
+import '../../ui/choice_list.dart';
 import '../../ui/segmented_control.dart';
 import '../../ui/skeleton.dart';
 import '../../ui/tokens.dart';
 import 'calculator_runtime.dart';
 import 'engine/definition.dart';
+import 'engine/display_number.dart';
 import 'engine/evaluate.dart';
 import 'engine/formula_text.dart';
 import '../../core/api/generated/models/favorite_target_type.dart';
@@ -63,6 +64,7 @@ class CalculatorScreen extends ConsumerWidget {
                 ),
                 if (!gone) ...[
                   const SizedBox(height: DtSpace.s3),
+                  // « Réessayer ».
                   DtButton(
                     label: l10n.commonRetry,
                     variant: DtButtonVariant.secondary,
@@ -97,6 +99,7 @@ class CalculatorScreen extends ConsumerWidget {
   }
 }
 
+/// A full-screen message instead of the form (locked, unsupported, self-test failed).
 class _Message extends StatelessWidget {
   const _Message({required this.detail, required this.severity, required this.body, this.title});
 
@@ -121,6 +124,7 @@ class _Message extends StatelessWidget {
 
 /// What the person typed in one field, before it is committed to the engine.
 class _Field {
+  /// One input on screen: its text controller, focus, chosen unit (the default of the UI language) and choice.
   _Field(this.input, String languageCode)
     : unit = (languageCode == 'en' ? input.defaultUnitEn : input.defaultUnitFr) ?? input.canonicalUnit;
 
@@ -134,6 +138,7 @@ class _Field {
   bool unreadable = false;
 }
 
+/// The calculator form with its result, for a ready runtime.
 class _Calculator extends ConsumerStatefulWidget {
   const _Calculator({required this.runtime});
 
@@ -143,6 +148,7 @@ class _Calculator extends ConsumerStatefulWidget {
   ConsumerState<_Calculator> createState() => _CalculatorState();
 }
 
+/// Fields, committed values, the latest evaluation and the idle timer.
 class _CalculatorState extends ConsumerState<_Calculator> {
   late final CalculatorDefinition _definition = widget.runtime.definition!;
   final Map<String, _Field> _fields = {};
@@ -163,6 +169,7 @@ class _CalculatorState extends ConsumerState<_Calculator> {
 
   int get _version => _detail.published!.version.toInt();
 
+  /// Records « calculator started » for analytics (no inputs are ever sent).
   @override
   void initState() {
     super.initState();
@@ -171,6 +178,7 @@ class _CalculatorState extends ConsumerState<_Calculator> {
         .record(AnalyticsEvent.calculatorStarted(id: widget.runtime.detail.id, version: _version));
   }
 
+  /// Creates one field per input (once), then restores the last values typed.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -186,6 +194,7 @@ class _CalculatorState extends ConsumerState<_Calculator> {
     _restore();
   }
 
+  /// Puts back the values last typed in this calculator on this device.
   Future<void> _restore() async {
     final last = await ref.read(lastInputsProvider).read(_detail.slug);
     if (!mounted || last.isEmpty) return;
@@ -207,6 +216,7 @@ class _CalculatorState extends ConsumerState<_Calculator> {
     });
   }
 
+  /// Frees the timer, text controllers and focus nodes.
   @override
   void dispose() {
     _idle?.cancel();
@@ -217,17 +227,20 @@ class _CalculatorState extends ConsumerState<_Calculator> {
     super.dispose();
   }
 
+  /// A number as typed in the fields (decimal comma in French).
   String _formatInput(num value) {
     final text = value.toString();
     final plain = text.endsWith('.0') ? text.substring(0, text.length - 2) : text;
     return Localizations.localeOf(context).languageCode == 'fr' ? plain.replaceAll('.', ',') : plain;
   }
 
+  /// A key was typed: commits the field after 400 ms without typing.
   void _typed(_Field field) {
     _idle?.cancel();
     _idle = Timer(const Duration(milliseconds: 400), () => _commit(field));
   }
 
+  /// Reads the field's value (number in its unit, or the choice), stores it and re-evaluates.
   void _commit(_Field field) {
     if (!mounted) return;
     final input = field.input;
@@ -254,6 +267,7 @@ class _CalculatorState extends ConsumerState<_Calculator> {
     unawaited(ref.read(lastInputsProvider).write(_detail.slug, _committed));
   }
 
+  /// Runs the device engine on the committed values and saves them locally.
   void _evaluate() {
     final given = {
       for (final entry in _committed.entries)
@@ -280,6 +294,7 @@ class _CalculatorState extends ConsumerState<_Calculator> {
     }
   }
 
+  /// « Réinitialiser »: clears every field, the result and the saved values.
   void _reset() {
     _idle?.cancel();
     setState(() {
@@ -300,20 +315,14 @@ class _CalculatorState extends ConsumerState<_Calculator> {
 
   String get _locale => Localizations.localeOf(context).toLanguageTag();
 
-  String _number(num value, {int? decimals}) {
-    final format = NumberFormat.decimalPattern(_locale);
-    if (decimals != null) {
-      format
-        ..minimumFractionDigits = decimals
-        ..maximumFractionDigits = decimals;
-    } else {
-      format.maximumFractionDigits = 6;
-    }
-    return format.format(value);
-  }
+  /// A number in the UI language, with a fixed number of decimals when given.
+  String _number(num value, {int? decimals}) => displayNumber(value, _locale, decimals: decimals);
 
-  String _range(AppLocalizations l10n, Range? range, String unit) {
+  /// A range as text: « entre 1 et 10 kg », « ≥ 1 kg » or « ≤ 10 kg ».
+  String _range(AppLocalizations l10n, Range? range, String rawUnit) {
     if (range == null) return '';
+    // « 1 » is the unit of a plain number (a count, a value whose unit is chosen beside it).
+    final unit = rawUnit == '1' ? '' : rawUnit;
     if (range.min != null && range.max != null) {
       return l10n.calculatorRangeBetween(_number(range.min!), _number(range.max!), unit).trim();
     }
@@ -321,6 +330,7 @@ class _CalculatorState extends ConsumerState<_Calculator> {
     return l10n.calculatorRangeMax(_number(range.max!), unit).trim();
   }
 
+  /// An input's label in the UI language.
   String _label(CalculatorInput input) => input.label.of(Localizations.localeOf(context).languageCode);
 
   /// The error under a field, only once the person has committed it (never per keystroke).
@@ -341,6 +351,7 @@ class _CalculatorState extends ConsumerState<_Calculator> {
     };
   }
 
+  /// The note under a field: « vérifiez la valeur » outside the plausible range, or the unit conversion.
   String? _fieldNote(AppLocalizations l10n, _Field field) {
     final evaluation = _evaluation;
     if (evaluation == null || evaluation.outcome != Outcome.result) return null;
@@ -392,6 +403,7 @@ class _CalculatorState extends ConsumerState<_Calculator> {
         ),
         actions: [
           FavoriteButton(type: FavoriteTargetType.calculator, id: _detail.id, onHero: true),
+          // « Source »: version, sources, reviewers and limitations.
           IconButton(
             tooltip: l10n.calculatorSourceSheet,
             icon: Icon(LucideIcons.bookOpenText, color: colors.onHero),
@@ -455,6 +467,11 @@ class _CalculatorState extends ConsumerState<_Calculator> {
                             ),
                       },
                       labelOf: (key) => _fields[key] == null ? key : _label(_fields[key]!.input),
+                      choiceLabelOf: (key, value) => _fields[key]?.input.choices
+                          .where((choice) => choice.value == value)
+                          .firstOrNull
+                          ?.label
+                          .of(language),
                     ),
                     style: DtType.mono.copyWith(color: colors.ink),
                   ),
@@ -522,6 +539,7 @@ class _CalculatorState extends ConsumerState<_Calculator> {
     );
   }
 
+  /// Why no result is shown, as a sentence (outside the validated range, cross-field rule, missing input…).
   String _describeIssue(AppLocalizations l10n, Issue issue, String language) {
     final input = issue.input == null ? null : _fields[issue.input!]?.input;
     return switch (issue.code) {
@@ -538,6 +556,7 @@ class _CalculatorState extends ConsumerState<_Calculator> {
     };
   }
 
+  /// A source as one line: authors, title, publisher, edition, year, where the formula is.
   String _citation(SourceDto source) => [
     source.authors,
     source.title,
@@ -545,6 +564,7 @@ class _CalculatorState extends ConsumerState<_Calculator> {
     source.formulaLocation,
   ].join('. ');
 
+  /// « Source »: a sheet with the version, its sources, reviewers and limitations.
   void _showSourceSheet(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.colors;
@@ -617,6 +637,7 @@ class _CalculatorState extends ConsumerState<_Calculator> {
   }
 }
 
+/// One input: a number with its unit picker, a list of answers, or a yes/no switch, with help and error.
 class _InputField extends StatelessWidget {
   const _InputField({
     required this.field,
@@ -662,6 +683,7 @@ class _InputField extends StatelessWidget {
             width: hasError ? DtBorder.focus : DtBorder.control,
           ),
         );
+        // A number field: commits on « suivant », on leaving it, or after a pause.
         control = TextField(
           controller: field.text,
           focusNode: field.focus,
@@ -691,6 +713,7 @@ class _InputField extends StatelessWidget {
                 : Padding(
                     padding: const EdgeInsetsDirectional.only(end: DtSpace.s2),
                     child: DropdownButtonHideUnderline(
+                      // The unit picker of a number field (converted exactly to the canonical unit).
                       child: DropdownButton<String>(
                         value: field.unit,
                         hint: Text(unitLabel),
@@ -721,35 +744,31 @@ class _InputField extends StatelessWidget {
           },
         );
       case InputKind.choice:
-        if (input.choices.length <= 4) {
-          control = DtSegmentedControl<Object?>(
-            semanticLabel: label,
-            selected: field.choice,
-            segments: [
-              for (final choice in input.choices) DtSegment(value: choice.value, label: choice.label.of(language)),
-            ],
-            onChanged: (value) {
-              field.choice = value;
-              onCommit();
-            },
-          );
-        } else {
-          control = DropdownButtonFormField<String>(
-            initialValue: field.choice as String?,
-            isExpanded: true,
-            items: [
-              for (final choice in input.choices)
-                DropdownMenuItem(
-                  value: choice.value,
-                  child: Text(choice.label.of(language), overflow: TextOverflow.ellipsis),
-                ),
-            ],
-            onChanged: (value) {
-              field.choice = value;
-              onCommit();
-            },
-          );
+        final segments = [
+          for (final choice in input.choices) DtSegment<Object?>(value: choice.value, label: choice.label.of(language)),
+        ];
+        void choose(Object? value) {
+          field.choice = value;
+          onCommit();
         }
+        // Short answers (up to four) stay a segmented control; long ones, or more than four, become a
+        // list of full rows so no answer is ever cut (ADR-026).
+        control = LayoutBuilder(
+          builder: (context, constraints) =>
+              segmentsFit(context, [for (final segment in segments) segment.label], constraints.maxWidth)
+              ? DtSegmentedControl<Object?>(
+                  semanticLabel: label,
+                  selected: field.choice,
+                  segments: segments,
+                  onChanged: choose,
+                )
+              : DtChoiceList<Object?>(
+                  semanticLabel: label,
+                  selected: field.choice,
+                  segments: segments,
+                  onChanged: choose,
+                ),
+        );
     }
 
     return Column(
@@ -797,6 +816,7 @@ class _InputField extends StatelessWidget {
   }
 }
 
+/// The result: value, unit, interpretation band, formula with the values, and the version.
 class _ResultBlock extends StatelessWidget {
   const _ResultBlock({
     required this.name,
@@ -901,6 +921,7 @@ class _ResultBlock extends StatelessWidget {
   }
 }
 
+/// A titled block under the result.
 class _Detail extends StatelessWidget {
   const _Detail({required this.title, required this.child});
 
@@ -968,6 +989,7 @@ class _ResultBar extends StatelessWidget {
                       ),
                     ),
                   ),
+                  // « Copier le résultat » (value, unit and band; never the inputs).
                   DtButton(
                     label: l10n.calculatorCopy,
                     icon: LucideIcons.copy,
@@ -977,6 +999,7 @@ class _ResultBar extends StatelessWidget {
                     onPressed: onCopy,
                   ),
                   const SizedBox(width: DtSpace.s2),
+                  // « Réinitialiser ».
                   DtButton(
                     label: l10n.calculatorReset,
                     variant: DtButtonVariant.ghost,

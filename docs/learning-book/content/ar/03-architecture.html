@@ -1,0 +1,91 @@
+<section class="chapter">
+<h2 id="ch3">3. البنية في فصل واحد</h2>
+<p class="lead">قبل قراءة الوحدات واحدة واحدة، يفيدك أن تتبع طلبًا واحدًا من الهاتف إلى قاعدة البيانات ثم العودة، وأن تعرف الآليات القليلة التي تعيد كل ميزة استعمالها: الرموز، قرار الوصول، غلاف الأخطاء، تخزين الملفات، المهام الخلفية، الرسائل، والنسخ دون اتصال.</p>
+
+<h3 id="ch3-request">3.1 حياة طلب واحد</h3>
+<p>لنأخذ طبيبًا يفتح نموذج وصفة على الهاتف. هذا ما يحدث، ملفًا بملف:</p>
+<div class="diagram">PHONE                                       API                                              DATABASE / R2
+reference_viewer_screen.dart
+  └ openedReferenceProvider
+     └ ReferenceFiles.download(id)
+        └ generated client  GET /v1/reference-documents/{id}/file-url
+           └ AuthInterceptor adds "Authorization: Bearer &lt;access token&gt;"
+                                   ─────────►  ViewerAuthGuard: token valid? session live?
+                                               ReferenceLibraryController.fileUrl()
+                                                 └ ReferenceDocumentsService.fileUrl()   reads the published row ──► PostgreSQL
+                                                 └ AccessService.decideItems()           policy evaluated again: AVAILABLE or LOCKED?
+                                                 └ StorageService.getSignedReadUrl()     10-minute signed URL
+                                   ◄─────────  { url, sha256, … }  (or { error: { code: "FEATURE_LOCKED" … } })
+        └ dio GET signed url (no token) ───────────────────────────────────────────────────────► R2 bucket
+        └ SHA-256 of the bytes == published sha256 ?  else refuse to show
+  └ pdfrx draws the pages (no download, print or share button)</div>
+<p>تظهر في هذا المثال الواحد ثلاث أفكار تتكرر في كل مكان:</p>
+<ol>
+  <li><b>الحارس (guard) يثبت هوية المتصل</b> (رمز مستخدم، أو رمز عرض تجريبي، أو كعكة مشرف).</li>
+  <li><b>سياسة الوصول تقرّر ما يُسمح له به</b>، من جديد، في هذا الطلب بالذات.</li>
+  <li><b>الملفات لا تمر عبر الخادم أبدًا</b>: يمنح الخادم رابطًا موقّعًا قصيرًا، ويتحقق العميل من بصمة الملف.</li>
+</ol>
+
+<h3 id="ch3-tokens">3.2 ثلاثة أنواع من الهوية</h3>
+<table>
+  <tr><th>من</th><th>الإثبات</th><th>المدة</th><th>أين في الشيفرة</th></tr>
+  <tr><td>مستخدم مسجَّل (الهاتف)</td><td>رمز وصول JWT في <code>Authorization: Bearer</code>، مع رمز تحديث دوّار محفوظ في Keychain/Keystore الهاتف</td><td>الوصول 15 دقيقة؛ رمز التحديث يتبدّل عند كل استعمال ومرتبط بمعرّف تثبيت الجهاز</td><td><code>infrastructure/security/user-tokens.ts</code>، <code>modules/auth/sessions.service.ts</code>، و<code>core/auth/</code> في الهاتف</td></tr>
+  <tr><td>زائر العرض التجريبي (الهاتف)</td><td>رمز وصول تجريبي + رمز تجديد</td><td>ساعة، يتجدد بصمت</td><td><code>infrastructure/security/demo-tokens.ts</code>، <code>modules/demo/</code></td></tr>
+  <tr><td>مشرف (لوحة الإدارة)</td><td>كعكة جلسة HTTP-only بعد كلمة المرور <i>و</i>رمز TOTP</td><td>حدود خمول وحد مطلق</td><td><code>modules/admin-auth/</code></td></tr>
+</table>
+<p>حارس المستخدم قصير بما يكفي لقراءته كاملًا. لاحظ أنه يثبت الهوية فقط — ولا يقرّر الوصول:</p>
+[[code apps/api/src/infrastructure/security/user-auth.guard.ts | export class UserAuthGuard | block]]
+<p>والتحقق من الرمز يسأل قاعدة البيانات أيضًا هل الجلسة ما زالت حية، فيسري الخروج أو تغيير كلمة المرور أو الإيقاف من الطلب التالي مباشرة، لا عند انتهاء الرمز ذي الـ15 دقيقة:</p>
+[[code apps/api/src/infrastructure/security/user-tokens.ts | export class UserTokens | 22]]
+<p>رموز التحديث تُستعمل مرة واحدة. استعمال أحدها مرتين، أو من جهاز آخر، يلغي الجلسة كلها — هكذا يُكتشف رمز تحديث مسروق:</p>
+[[code apps/api/src/modules/auth/sessions.service.ts | async refresh(refreshToken | 40]]
+
+<h3 id="ch3-access">3.3 قرار الوصول</h3>
+<p>الوصول يُحسَب ولا يُخزَّن أبدًا. تجمع الدالة <code>AccessService.profileFor(viewer)</code> ثلاث حقائق — الحساب (الحالة، الصفة المهنية)، ملفات التحقق، والاشتراك الحالي — وتعطيها لـ<b>دالة نقية</b> اسمها <code>evaluateAccess</code> مع جدول السياسة. الفصل 6 يقرأ هذا الجدول سطرًا سطرًا. المهم هنا: كل نقطة نهاية للمحتوى تستدعيها، وتطبيق الهاتف يتلقى النتيجة من <code>GET /v1/me/access</code> فقط لكي <i>يرسم</i> الأقفال.</p>
+[[code apps/api/src/modules/access/access.service.ts | export class AccessService | block]]
+
+<h3 id="ch3-errors">3.4 صيغة واحدة للأخطاء</h3>
+<p>كل رفض هو <code>DomainError</code> بكود ثابت (<code>FEATURE_LOCKED</code>، <code>OTP_INVALID</code>، <code>SESSION_INVALID</code>…). المرشّح العام <code>ErrorFilter</code> يحوّل أي استثناء إلى JSON نفسه:</p>
+<div class="diagram">HTTP 403
+{ "error": { "code": "FEATURE_LOCKED", "message": "for developers only", "details": { "lockReason": "…" } } }</div>
+<p>التطبيقات لا تعرض <code>message</code> أبدًا؛ بل تترجم <code>code</code> بكتالوجها الخاص (في الهاتف <code>ApiError</code> و<code>commonErrorText</code>، وفي لوحة الإدارة <code>useErrorText</code>).</p>
+[[code apps/api/src/common/errors/error.filter.ts | export class ErrorFilter | 12]]
+
+<h3 id="ch3-storage">3.5 الملفات: R2، الروابط الموقّعة، ونوايا الرفع</h3>
+<p>كل الملفات (ملفات PDF المرجعية، صور الملف الشخصي، وثائق التحقق، صور الاسترجاع) موجودة في Cloudflare R2، ولا يُوصَل إليها إلا عبر <code>StorageService</code>. يوجد دلوان: <code>doktool-content</code> (ملفات PDF المرجعية والصور) و<code>doktool-private</code> (وثائق الهوية). لا شيء عام. الرفع يتبع الخطوات الثلاث نفسها في كل مكان:</p>
+<ol>
+  <li>يصرّح العميل بالملف (الغرض، الحجم، النوع، SHA-256). يسجّل الخادم <b>نية رفع</b> ويجيب برابط PUT موقّع صالح 15 دقيقة.</li>
+  <li>يرسل العميل البايتات مباشرة إلى R2.</li>
+  <li>يؤكّد العميل؛ فيتحقق الخادم من الحجم والنوع وتوقيع البايتات الأولى (ملف PDF يجب أن يبدأ بـ<code>%PDF</code>)، ثم يربط الملف بسجله.</li>
+</ol>
+[[code apps/api/src/modules/storage/storage.policy.ts | export const SIGNED_READ_TTL | 10]]
+
+<h3 id="ch3-jobs">3.6 المهام الخلفية</h3>
+<p>العمل الذي يجب أن يحدث لاحقًا أو بانتظام يعمل في <b>pg-boss</b>، وهو طابور مهام مخزّن في PostgreSQL نفسها (لا Redis، ADR-007). كل وحدة تسجّل جداولها الزمنية عند بدئها:</p>
+<table>
+  <tr><th>المهمة</th><th>التوقيت</th><th>ماذا تفعل</th></tr>
+  <tr><td>مسح <code>reference-library</code></td><td>كل دقيقة</td><td>تعالج ملفات PDF المرفوعة: عدد الصفحات، البصمة، حالة الملف.</td></tr>
+  <tr><td><code>auth.account-recovery</code></td><td>كل 10 دقائق</td><td>تطبّق عمليات الاسترجاع المقبولة بعد انقضاء مهلة الـ24 ساعة.</td></tr>
+  <tr><td><code>billing.reconcile-checkouts</code></td><td>كل 10 دقائق</td><td>تسأل البوابة عن المدفوعات التي ما زالت معلّقة.</td></tr>
+  <tr><td><code>billing.advance-subscriptions</code></td><td>يوميًا 02:30</td><td>التذكيرات، فترة السماح، نهاية الاشتراكات.</td></tr>
+  <tr><td><code>verification.expire-and-remind</code></td><td>يوميًا 06:17</td><td>تذكيرات انتهاء التحقق وانتهاؤه.</td></tr>
+  <tr><td><code>verification.purge-documents</code>، <code>storage.purge-expired-uploads</code>، <code>auth.purge-expired</code>، <code>users.purge-unconfirmed</code>، <code>notifications.purge-old</code>…</td><td>كل ساعة / يوميًا</td><td>تحذف ما تقول قواعد الاحتفاظ إنه لا يجوز إبقاؤه.</td></tr>
+</table>
+[[code apps/api/src/modules/notifications/notifications.module.ts | export class NotificationsModule | block]]
+
+<h3 id="ch3-messages">3.7 الرسائل إلى الناس</h3>
+<p>الرموز وتنبيهات الأمان تُرسَل بالبريد الإلكتروني (SMTP) أو برسالة قصيرة (Infobip أو Twilio مع بديل احتياطي، ADR-022) عبر <code>MessageDelivery</code>. نصوصها تأتي من مفاتيح كتالوج الخادم (<code>server.security.…</code>) بلغة الحساب. الإشعارات داخل التطبيق صفوف في جدول <code>notifications</code> تحمل مفتاح كتالوج ومعاملات — وليس نصًا حرًا أبدًا.</p>
+
+<h3 id="ch3-offline">3.8 العمل دون اتصال</h3>
+<p>كل حساب حقيقي (بما في ذلك الطلبة) يستطيع أن يحفظ على الهاتف ملفات PDF المرجعية التي يحق له فتحها، وإصدارات الحاسبات المنشورة، وملفات الحمل التي فتحها. ينشر الخادم <b>بيان العمل دون اتصال</b> (<code>GET /v1/offline/manifest</code>): ما يحق لهذا الشخص حفظه، مع إصدار وبصمة SHA-256 لكل عنصر. متحكم التطبيق <code>OfflineSyncController</code> ينزّل الناقص أو المتغيّر ويحذف الباقي، ويعرض دائمًا إصدار البيانات وهل ما تراه حيّ أم محفوظ.</p>
+
+<h3 id="ch3-modules">3.9 كيف يُسمح للوحدات أن تعتمد على بعضها</h3>
+<div class="rule"><b>الكتلة الواحدة المقسّمة إلى وحدات (ADR-001).</b> خادم واحد، لكن كل وحدة تملك جداولها. لا يجوز لوحدة أخرى استعمالها إلا عبر ما يصدّره ملف <code>index.ts</code> الخاص بها — عادة خدمة ببضع دوال قراءة. لهذا، مثلًا، تسأل <code>AccessService</code> الدالة <code>UsersService.getAccessFacts()</code> بدل قراءة جدول المستخدمين بنفسها. اختبار وحدة يتحقق من أن كل نموذج Prisma يقع في قسم الوحدة التي تملكه.</div>
+<div class="diagram">            auth ──► users ◄── verification ◄── access ──► billing
+              │                     ▲              ▲  ▲         │
+              ▼                     │              │  │         ▼
+            demo                  admin ───────────┘  │      finance
+                                                      │
+ reference-library, calculators, pregnancy, search, activity, offline ── all ask access for decisions
+ storage, audit, notifications, analytics ── used by many, depend on nobody's tables</div>
+</section>

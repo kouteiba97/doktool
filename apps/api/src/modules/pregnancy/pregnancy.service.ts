@@ -7,9 +7,46 @@ import type {
   ProfileSection,
 } from '../../generated/prisma/enums.js';
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
+import { RateLimiter } from '../../infrastructure/rate-limit/rate-limiter.js';
 import type { Viewer } from '../../infrastructure/security/viewer-auth.guard.js';
 import { AccessService, type ItemAccess } from '../access/index.js';
-import { alternativeIds, type ProfileContent, profileContentSchema } from './pregnancy.content.js';
+import { Prisma } from '../../generated/prisma/client.js';
+import {
+  alternativeIds,
+  type Conduct,
+  type ProfileContent,
+  profileContentSchema,
+} from './pregnancy.content.js';
+import { likeWords } from './pregnancy.search.js';
+
+export const SUMMARY_TARGETS = ['T1', 'T2', 'T3', 'PERIPARTUM', 'LACTATION'] as const;
+export type SummaryTarget = (typeof SUMMARY_TARGETS)[number];
+
+/** What a search result shows for one period of a published profile. */
+export interface PeriodSummary {
+  conduct: Conduct | null;
+  evidenceLevel: number | null;
+}
+
+/** A search result with a per-period summary. */
+export interface SubstanceHit extends SubstanceItem {
+  /** Per period of the published profile; null while locked (no content for a locked item). */
+  periods: Record<SummaryTarget, PeriodSummary | null> | null;
+}
+
+/** The conduct and evidence level of each period, for search results. */
+function summaries(content: ProfileContent): Record<SummaryTarget, PeriodSummary | null> {
+  const of = (
+    period: { conduct: Conduct | null; evidence: { level: number | null } } | null | undefined,
+  ) => (period ? { conduct: period.conduct, evidenceLevel: period.evidence.level } : null);
+  return {
+    T1: of(content.pregnancy?.periods.T1),
+    T2: of(content.pregnancy?.periods.T2),
+    T3: of(content.pregnancy?.periods.T3),
+    PERIPARTUM: of(content.pregnancy?.periods.PERIPARTUM),
+    LACTATION: of(content.lactation),
+  };
+}
 
 /** A substance as the app lists it: published profiles only, each with the server's decision. */
 export interface SubstanceItem {
@@ -22,6 +59,7 @@ export interface SubstanceItem {
   access: ItemAccess;
 }
 
+/** A source as the app shows it. */
 export interface SourceView {
   id: string;
   title: string;
@@ -42,6 +80,12 @@ export interface SubstanceProfile extends SubstanceItem {
   /** A newer version is in review: the published one remains the reference (info Alert). */
   underReview: boolean;
 }
+
+/**
+ * « Signaler une erreur »: reports one person or one demo session may send per hour. A reader
+ * rarely finds more than a few errors; the limit keeps the clinical team's queue usable.
+ */
+export const REPORT_RATE = { name: 'content-report', limit: 10, windowSeconds: 3600 };
 
 const PUBLISHED = {
   where: { status: 'PUBLISHED' },
@@ -65,6 +109,7 @@ export class PregnancyService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly access: AccessService,
+    private readonly limiter: RateLimiter,
   ) {}
 
   /** A–Z list, optionally filtered by name or synonym (accent- and case-insensitive). */
@@ -77,6 +122,10 @@ export class PregnancyService {
     return items.sort((a, b) => compareFrench(a.nameFr, b.nameFr));
   }
 
+  /**
+   * One profile (a merged duplicate opens the substance kept); the content only when the viewer
+   * may open it.
+   */
   async get(viewer: Viewer, id: string): Promise<SubstanceProfile> {
     const row = await this.prisma.substance.findUnique({
       where: { id },
@@ -86,6 +135,9 @@ export class PregnancyService {
       },
     });
     if (!row) throw new DomainError('NOT_FOUND', 'Substance not found.');
+    // A duplicate merged into another substance opens that one (favorites, links, history keep
+    // working). Merges never chain (ADR-027), so this is one step.
+    if (row.mergedIntoId) return this.get(viewer, row.mergedIntoId);
     const published = row.versions[0];
     if (!row.enabled || !published) {
       throw new DomainError('CONTENT_UNAVAILABLE', 'This profile is no longer available.', {
@@ -96,7 +148,9 @@ export class PregnancyService {
     const [item] = await this.withAccess(viewer, [{ ...row, published }]);
     const open = item!.access.state === 'AVAILABLE';
     const content = open ? profileContentSchema.parse(published.content) : null;
-    const alternatives = content ? await this.names(alternativeIds(content)) : [];
+    const alternatives = content
+      ? (await this.nameIndex(alternativeIds(content)))(alternativeIds(content), row.id)
+      : [];
     return {
       ...item!,
       content,
@@ -108,10 +162,79 @@ export class PregnancyService {
     };
   }
 
-  /** The profiles this viewer may open, in full, for the offline store (Lock L44). */
+  /**
+   * The profiles this viewer may open, in full, for the offline store (Lock L44). Built in bulk —
+   * one read of the published profiles, one access decision, one lookup of the alternatives'
+   * names — so the cost does not grow with a query per substance.
+   */
   async openable(viewer: Viewer): Promise<SubstanceProfile[]> {
-    const items = (await this.list(viewer)).filter((item) => item.access.state === 'AVAILABLE');
-    return Promise.all(items.map((item) => this.get(viewer, item.id)));
+    const rows = await this.published();
+    const items = await this.withAccess(viewer, rows);
+    const open = rows.flatMap((row, index) =>
+      items[index]!.access.state === 'AVAILABLE'
+        ? [{ row, item: items[index]!, content: profileContentSchema.parse(row.published.content) }]
+        : [],
+    );
+    const [names, inReview] = await Promise.all([
+      this.nameIndex(open.flatMap(({ content }) => alternativeIds(content))),
+      this.prisma.substanceProfileVersion.groupBy({
+        by: ['substanceId'],
+        where: { status: 'IN_REVIEW', substanceId: { in: open.map(({ row }) => row.id) } },
+        _count: { _all: true },
+      }),
+    ]);
+    const reviewing = new Set(inReview.map((entry) => entry.substanceId));
+    return open
+      .map(({ row, item, content }) => ({
+        ...item,
+        content,
+        alternatives: names(alternativeIds(content), row.id),
+        sources: row.published.sources.map(({ source }) => sourceView(source)),
+        reviewedAt: row.published.reviewedAt!,
+        reviewerName: row.published.reviewedBy!.fullName,
+        underReview: reviewing.has(row.id),
+      }))
+      .sort((a, b) => compareFrench(a.nameFr, b.nameFr));
+  }
+
+  /**
+   * The listed substances among `ids` (favorites), keyed by the id asked for. A duplicate merged
+   * into another substance is answered with the substance kept (ADR-027), so its favorite keeps
+   * working; disabled or unpublished ones are left out.
+   */
+  async itemsByIds(viewer: Viewer, ids: readonly string[]): Promise<Map<string, SubstanceItem>> {
+    if (ids.length === 0) return new Map();
+    const asked = await this.prisma.substance.findMany({
+      where: { id: { in: [...ids] } },
+      select: { id: true, mergedIntoId: true },
+    });
+    const resolved = new Map(asked.map((row) => [row.id, row.mergedIntoId ?? row.id]));
+    const rows = await this.prisma.substance.findMany({
+      where: {
+        id: { in: [...new Set(resolved.values())] },
+        enabled: true,
+        versions: { some: { status: 'PUBLISHED' } },
+      },
+      select: {
+        id: true,
+        nameFr: true,
+        nameEn: true,
+        synonyms: true,
+        demoSample: true,
+        versions: { where: { status: 'PUBLISHED' }, select: { version: true, publishedAt: true } },
+      },
+    });
+    const items = await this.withAccess(
+      viewer,
+      rows.map((row) => ({ ...row, published: row.versions[0]! })),
+    );
+    const byId = new Map(items.map((item) => [item.id, item]));
+    const found = new Map<string, SubstanceItem>();
+    for (const [id, target] of resolved) {
+      const item = byId.get(target);
+      if (item) found.set(id, item);
+    }
+    return found;
   }
 
   /** « Signaler une erreur »: kept for the clinical team; a demo report has no account. */
@@ -127,6 +250,10 @@ export class PregnancyService {
         unlockPath: profile.access.unlockPath,
       });
     }
+    await this.limiter.hit(
+      REPORT_RATE,
+      viewer.accessContext === 'DEMO' ? `demo:${viewer.demoSessionId}` : `user:${viewer.userId}`,
+    );
     const version = await this.prisma.substanceProfileVersion.findFirst({
       where: { substanceId, status: 'PUBLISHED' },
       select: { id: true },
@@ -143,9 +270,74 @@ export class PregnancyService {
     });
   }
 
-  /** Every substance the viewer can see listed, for global search. */
+  /**
+   * Server-side search for the app (ADR-025): every word of the query must appear in the name or a
+   * synonym (accent- and case-insensitive, partial words), names starting with the first word
+   * first, then A–Z. Bounded pages; only published profiles of enabled substances.
+   */
+  async search(
+    viewer: Viewer,
+    input: { q: string; limit: number; offset: number },
+  ): Promise<{ items: SubstanceHit[]; total: number }> {
+    const words = likeWords(input.q);
+    const matching = words.length
+      ? Prisma.join(
+          words.map((word) => Prisma.sql`s."search_text" LIKE ${`%${word}%`}`),
+          ' AND ',
+        )
+      : Prisma.sql`TRUE`;
+    const where = Prisma.sql`s."enabled" AND ${matching} AND EXISTS (
+      SELECT 1 FROM "substance_profile_versions" v
+      WHERE v."substance_id" = s."id" AND v."status" = 'PUBLISHED')`;
+    const prefix = words[0] ? `${words[0]}%` : '%';
+    const [page, counted] = await Promise.all([
+      this.prisma.$queryRaw<{ id: string }[]>`
+        SELECT s."id" FROM "substances" s WHERE ${where}
+        ORDER BY (s."search_text" LIKE ${prefix}) DESC, lower(s."name_fr"), s."id"
+        LIMIT ${input.limit} OFFSET ${input.offset}`,
+      this.prisma.$queryRaw<{ total: bigint }[]>`
+        SELECT count(*) AS "total" FROM "substances" s WHERE ${where}`,
+    ]);
+    const ids = page.map((row) => row.id);
+    const rows = await this.prisma.substance.findMany({
+      where: { id: { in: ids } },
+      include: { versions: PUBLISHED },
+    });
+    const byId = new Map(rows.map((row) => [row.id, { ...row, published: row.versions[0]! }]));
+    const ordered = ids.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
+    const items = await this.withAccess(viewer, ordered);
+    return {
+      total: Number(counted[0]?.total ?? 0),
+      items: items.map((item, index) => ({
+        ...item,
+        periods:
+          item.access.state === 'AVAILABLE'
+            ? summaries(profileContentSchema.parse(ordered[index]!.published.content))
+            : null,
+      })),
+    };
+  }
+
+  /**
+   * Every substance the viewer can see listed, for global search. Names, synonyms and access only:
+   * profile content and sources are not loaded (ADR-025, measured on 5 000 substances).
+   */
   async searchable(viewer: Viewer): Promise<SubstanceItem[]> {
-    return this.withAccess(viewer, await this.published());
+    const rows = await this.prisma.substance.findMany({
+      where: { enabled: true, versions: { some: { status: 'PUBLISHED' } } },
+      select: {
+        id: true,
+        nameFr: true,
+        nameEn: true,
+        synonyms: true,
+        demoSample: true,
+        versions: { where: { status: 'PUBLISHED' }, select: { version: true, publishedAt: true } },
+      },
+    });
+    return this.withAccess(
+      viewer,
+      rows.map((row) => ({ ...row, published: row.versions[0]! })),
+    );
   }
 
   /** Account deletion: the person's reports stay for the clinical team, without their account. */
@@ -153,6 +345,7 @@ export class PregnancyService {
     await this.prisma.contentReport.updateMany({ where: { userId }, data: { userId: null } });
   }
 
+  /** Enabled substances with their published version. */
   private async published() {
     const rows = await this.prisma.substance.findMany({
       where: { enabled: true, versions: { some: { status: 'PUBLISHED' } } },
@@ -161,6 +354,7 @@ export class PregnancyService {
     return rows.map((row) => ({ ...row, published: row.versions[0]! }));
   }
 
+  /** Adds the viewer's access decision to each substance. */
   private async withAccess(
     viewer: Viewer,
     rows: {
@@ -187,18 +381,45 @@ export class PregnancyService {
     }));
   }
 
-  /** Names of the alternatives that are still enabled; a disabled one is left out. */
-  private async names(ids: string[]) {
-    if (ids.length === 0) return [];
-    const rows = await this.prisma.substance.findMany({
-      where: { id: { in: ids }, enabled: true },
-      select: { id: true, nameFr: true, nameEn: true },
-    });
+  /**
+   * Looks up, in two queries, the names of every alternative among `ids`, and returns how to list
+   * the alternatives of one profile: still-enabled substances only, each once; an alternative
+   * merged into another substance is shown as that one (ADR-027), never as the profile itself.
+   */
+  private async nameIndex(
+    ids: string[],
+  ): Promise<(ids: string[], selfId: string) => SubstanceProfile['alternatives']> {
+    const unique = [...new Set(ids)];
+    const merged = unique.length
+      ? await this.prisma.substance.findMany({
+          where: { id: { in: unique }, mergedIntoId: { not: null } },
+          select: { id: true, mergedIntoId: true },
+        })
+      : [];
+    const target = new Map(merged.map((row) => [row.id, row.mergedIntoId!]));
+    const rows = unique.length
+      ? await this.prisma.substance.findMany({
+          where: { id: { in: unique.map((id) => target.get(id) ?? id) }, enabled: true },
+          select: { id: true, nameFr: true, nameEn: true },
+        })
+      : [];
     const byId = new Map(rows.map((row) => [row.id, row]));
-    return ids.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
+    // The content keeps the original id (the app matches it, and opening it redirects); the name
+    // shown is the substance it now stands for.
+    return (profileIds, selfId) => {
+      const seen = new Set<string>();
+      return profileIds.flatMap((id) => {
+        const resolved = target.get(id) ?? id;
+        const row = byId.get(resolved);
+        if (!row || resolved === selfId || seen.has(resolved)) return [];
+        seen.add(resolved);
+        return [{ id, nameFr: row.nameFr, nameEn: row.nameEn }];
+      });
+    };
   }
 }
 
+/** The public fields of a source. */
 export function sourceView(source: {
   id: string;
   title: string;

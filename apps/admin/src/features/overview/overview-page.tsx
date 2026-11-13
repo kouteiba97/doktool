@@ -34,6 +34,7 @@ export function OverviewPage() {
     );
   }
   const data = overview.data;
+  // The ledger strip: only the figures this admin's grants allow (the API leaves the others out).
   const strip: ReactNode[] = [];
   if ('activeUsers30d' in data) {
     strip.push(
@@ -76,6 +77,7 @@ export function OverviewPage() {
     );
   }
 
+  // Number of incidents shown in the middle column.
   const incidents =
     (data.fileFailures?.length ?? 0) +
     (data.failedPayments30d ?? 0) +
@@ -163,7 +165,7 @@ export function OverviewPage() {
           {data.fileFailures?.map((file) => (
             <Link
               key={`${file.documentId}-${file.version}`}
-              href="/admin/library/ordonnances"
+              href={`/admin/library/${file.type === 'CERTIFICATE' ? 'certificates' : 'ordonnances'}`}
               className="dt-row-flex"
             >
               <Badge tone="critical">{t('admin.library.fileFailed')}</Badge>

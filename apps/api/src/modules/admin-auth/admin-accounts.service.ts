@@ -5,7 +5,9 @@ import type { ClientInfo } from '../../common/http/client-info.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { PasswordHasher } from '../../infrastructure/crypto/password-hasher.js';
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
+import { RateLimiter } from '../../infrastructure/rate-limit/rate-limiter.js';
 import { AuditService } from '../audit/index.js';
+import { ADMIN_RATE_LIMITS } from './admin-auth.policy.js';
 import type { AdminPrincipal } from './admin-auth.service.js';
 import {
   GRANTS,
@@ -21,6 +23,7 @@ export const TEMPORARY_GRANTS = ['verification.documents.view'] as const;
 export type TemporaryGrant = (typeof TEMPORARY_GRANTS)[number];
 export const TEMPORARY_GRANT_HOURS = { default: 2, max: 8 } as const;
 
+/** What is needed to create an admin account. */
 export interface NewAdminAccount {
   email: string;
   fullName: string;
@@ -37,8 +40,13 @@ export class AdminAccountsService {
     private readonly prisma: PrismaService,
     private readonly hasher: PasswordHasher,
     private readonly audit: AuditService,
+    private readonly limiter: RateLimiter,
   ) {}
 
+  /**
+   * Creates an admin with the grants of a preset; refuses presets that break the separation of
+   * duties, and duplicate e-mails.
+   */
   async create(input: NewAdminAccount): Promise<{ id: string }> {
     const grants: readonly Grant[] = PRESETS[input.preset];
     const violations = separationOfDutiesViolations(grants, input.preset === 'SUPER_ADMIN');
@@ -247,6 +255,82 @@ export class AdminAccountsService {
     await this.record(actor, client, 'admin.totp.reset', adminId, { reason });
   }
 
+  /**
+   * A signed-in admin replaces their own password (the one handed over at creation is known to
+   * whoever created the account). The current password is required, every other session of the
+   * admin ends, and the change is audited.
+   */
+  async changeOwnPassword(
+    actor: AdminPrincipal,
+    input: { currentPassword: string; newPassword: string },
+    client: ClientInfo,
+  ): Promise<void> {
+    // A borrowed, unlocked console cannot be used to guess the password.
+    await this.limiter.hit(ADMIN_RATE_LIMITS.passwordChangePerAdmin, actor.adminId);
+    const admin = await this.prisma.adminAccount.findUniqueOrThrow({
+      where: { id: actor.adminId },
+      select: { passwordHash: true, email: true },
+    });
+    if (!(await this.hasher.verify(admin.passwordHash, input.currentPassword))) {
+      await this.record(actor, client, 'admin.password.change_rejected', actor.adminId, {});
+      throw new DomainError('INVALID_CREDENTIALS', 'Wrong current password.');
+    }
+    const refused: string[] = [];
+    if (input.newPassword === input.currentPassword) {
+      refused.push('The new password must differ from the current one.');
+    }
+    if (input.newPassword.trim().toLowerCase() === admin.email) {
+      refused.push('The password cannot be the e-mail address.');
+    }
+    if (refused.length > 0) {
+      throw new DomainError('VALIDATION_FAILED', refused.join(' '), {
+        fields: { newPassword: refused },
+      });
+    }
+    await this.prisma.$transaction([
+      this.prisma.adminAccount.update({
+        where: { id: actor.adminId },
+        data: {
+          passwordHash: await this.hasher.hash(input.newPassword),
+          failedSignInCount: 0,
+          lockedUntil: null,
+        },
+      }),
+      this.prisma.adminSession.updateMany({
+        where: { adminId: actor.adminId, revokedAt: null, id: { not: actor.sessionId } },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+    await this.record(actor, client, 'admin.password.changed', actor.adminId, {});
+  }
+
+  /**
+   * Forgotten or exposed password: another admin issues a new one-time password, returned once
+   * and never stored. Every session of the admin ends; their authenticator is unchanged, so the
+   * new password alone opens nothing.
+   */
+  async resetPassword(
+    actor: AdminPrincipal,
+    adminId: string,
+    reason: string,
+    client: ClientInfo,
+  ): Promise<string> {
+    await this.assertOther(actor, adminId);
+    const password = randomBytes(18).toString('base64url');
+    await this.prisma.adminAccount.update({
+      where: { id: adminId },
+      data: {
+        passwordHash: await this.hasher.hash(password),
+        failedSignInCount: 0,
+        lockedUntil: null,
+      },
+    });
+    await this.endSessions(adminId);
+    await this.record(actor, client, 'admin.password.reset', adminId, { reason });
+    return password;
+  }
+
+  /** Refuses changes to one's own account, and unknown admins. */
   private async assertOther(actor: AdminPrincipal, adminId: string): Promise<void> {
     if (actor.adminId === adminId) {
       throw new DomainError('FORBIDDEN', 'Another Super Admin changes your own access.');
@@ -255,6 +339,7 @@ export class AdminAccountsService {
     if (exists === 0) throw new DomainError('NOT_FOUND', 'Admin not found.');
   }
 
+  /** Revokes every open session of an admin. */
   private async endSessions(adminId: string): Promise<void> {
     await this.prisma.adminSession.updateMany({
       where: { adminId, revokedAt: null },
@@ -262,6 +347,7 @@ export class AdminAccountsService {
     });
   }
 
+  /** Writes the audit entry of a change to an admin account. */
   private record(
     actor: AdminPrincipal,
     client: ClientInfo,

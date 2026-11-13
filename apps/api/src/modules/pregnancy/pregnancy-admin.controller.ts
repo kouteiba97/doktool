@@ -18,11 +18,16 @@ import { Client, type ClientInfo } from '../../common/http/client-info.js';
 import { ADMIN_API_PREFIX } from '../../http/api-prefix.js';
 import { type AdminPrincipal, CurrentAdmin, RequireGrants } from '../admin-auth/index.js';
 import { PregnancyAdminService } from './pregnancy-admin.service.js';
+import { BulkResultDto, BulkVersionsDto } from './pregnancy-import.dto.js';
 import {
   AdminContentReportDto,
   AdminProfileVersionDto,
   AdminSubstanceDetailDto,
   AdminSubstanceDto,
+  AdminSubstancesQuery,
+  MergePreviewDto,
+  MergePreviewQuery,
+  MergeSubstanceDto,
   ClinicalSourceDto,
   CreateSubstanceDto,
   PregnancyReasonDto,
@@ -51,13 +56,15 @@ export class PregnancyAdminController {
 
   // ─────────────────────────────── substances ───────────────────────────────
 
+  /** GET /admin/v1/pregnancy/substances. */
   @Get('substances')
   @RequireGrants('pregnancy.read')
   @ApiOkResponse({ type: [AdminSubstanceDto] })
-  async list(): Promise<AdminSubstanceDto[]> {
-    return (await this.pregnancy.listSubstances()).map((row) => AdminSubstanceDto.from(row));
+  async list(@Query() query: AdminSubstancesQuery): Promise<AdminSubstanceDto[]> {
+    return (await this.pregnancy.listSubstances(query)).map((row) => AdminSubstanceDto.from(row));
   }
 
+  /** GET /admin/v1/pregnancy/substances/:id. */
   @Get('substances/:id')
   @RequireGrants('pregnancy.read')
   @ApiOkResponse({ type: AdminSubstanceDetailDto })
@@ -65,6 +72,7 @@ export class PregnancyAdminController {
     return this.detailDto(id);
   }
 
+  /** POST /admin/v1/pregnancy/substances. */
   @Post('substances')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('pregnancy.draft')
@@ -108,6 +116,7 @@ export class PregnancyAdminController {
 
   // ──────────────────────────────── versions ────────────────────────────────
 
+  /** POST …/substances/:id/versions: a new draft profile. */
   @Post('substances/:id/versions')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('pregnancy.draft')
@@ -123,6 +132,82 @@ export class PregnancyAdminController {
     );
   }
 
+  /** What merging this duplicate into another substance would change, and what prevents it. */
+  @Get('substances/:id/merge-preview')
+  @RequireGrants('pregnancy.review')
+  @ApiOkResponse({ type: MergePreviewDto })
+  async mergePreview(
+    @Param('id', uuid) id: string,
+    @Query() query: MergePreviewQuery,
+  ): Promise<MergePreviewDto> {
+    return this.pregnancy.mergePreview(id, query.into);
+  }
+
+  /** Merges a duplicate into the substance to keep (ADR-027). */
+  @Post('substances/:id/merge')
+  @HttpCode(HttpStatus.OK)
+  @RequireGrants('pregnancy.review')
+  @ApiOkResponse({ type: AdminSubstanceDetailDto })
+  async merge(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Param('id', uuid) id: string,
+    @Body() body: MergeSubstanceDto,
+    @Client() client: ClientInfo,
+  ): Promise<AdminSubstanceDetailDto> {
+    await this.pregnancy.merge(admin, id, body, client);
+    return this.detailDto(id);
+  }
+
+  /** Undoes a merge; the duplicate stays archived until a reviewer shows it again. */
+  @Post('substances/:id/unmerge')
+  @HttpCode(HttpStatus.OK)
+  @RequireGrants('pregnancy.review')
+  @ApiOkResponse({ type: AdminSubstanceDetailDto })
+  async unmerge(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Param('id', uuid) id: string,
+    @Body() body: PregnancyReasonDto,
+    @Client() client: ClientInfo,
+  ): Promise<AdminSubstanceDetailDto> {
+    await this.pregnancy.unmerge(admin, id, body.reason, client);
+    return this.detailDto(id);
+  }
+
+  /** Submits several drafts for review (e.g. after an import); each is checked on its own. */
+  @Post('versions/submit-many')
+  @HttpCode(HttpStatus.OK)
+  @RequireGrants('pregnancy.draft')
+  @ApiOkResponse({ type: BulkResultDto })
+  async submitMany(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Body() body: BulkVersionsDto,
+    @Client() client: ClientInfo,
+  ): Promise<BulkResultDto> {
+    return {
+      results: await this.pregnancy.many(body.versionIds, (id) =>
+        this.pregnancy.submit(admin, id, body.text, client),
+      ),
+    };
+  }
+
+  /** Approves several versions in review; author ≠ reviewer and sign-offs apply to each. */
+  @Post('versions/approve-many')
+  @HttpCode(HttpStatus.OK)
+  @RequireGrants('pregnancy.review')
+  @ApiOkResponse({ type: BulkResultDto })
+  async approveMany(
+    @CurrentAdmin() admin: AdminPrincipal,
+    @Body() body: BulkVersionsDto,
+    @Client() client: ClientInfo,
+  ): Promise<BulkResultDto> {
+    return {
+      results: await this.pregnancy.many(body.versionIds, (id) =>
+        this.pregnancy.approve(admin, id, body.text, client),
+      ),
+    };
+  }
+
+  /** GET /admin/v1/pregnancy/versions/:versionId. */
   @Get('versions/:versionId')
   @RequireGrants('pregnancy.read')
   @ApiOkResponse({ type: AdminProfileVersionDto })
@@ -130,6 +215,7 @@ export class PregnancyAdminController {
     return AdminProfileVersionDto.fromVersion(await this.pregnancy.version(versionId));
   }
 
+  /** PUT …/versions/:versionId: saves the draft's content and sources. */
   @Put('versions/:versionId')
   @RequireGrants('pregnancy.draft')
   @ApiOkResponse({ type: AdminProfileVersionDto })
@@ -144,6 +230,7 @@ export class PregnancyAdminController {
     );
   }
 
+  /** POST …/versions/:versionId/submit. */
   @Post('versions/:versionId/submit')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('pregnancy.draft')
@@ -175,6 +262,7 @@ export class PregnancyAdminController {
     );
   }
 
+  /** POST …/versions/:versionId/request-changes. */
   @Post('versions/:versionId/request-changes')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('pregnancy.review')
@@ -190,6 +278,7 @@ export class PregnancyAdminController {
     );
   }
 
+  /** DELETE …/versions/:versionId: deletes a draft. */
   @Delete('versions/:versionId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants('pregnancy.draft')
@@ -205,6 +294,7 @@ export class PregnancyAdminController {
 
   // ───────────────────────────────── sources ─────────────────────────────────
 
+  /** GET /admin/v1/pregnancy/sources. */
   @Get('sources')
   @RequireGrants('pregnancy.read')
   @ApiOkResponse({ type: [ClinicalSourceDto] })
@@ -212,6 +302,7 @@ export class PregnancyAdminController {
     return (await this.pregnancy.listSources()).map((source) => ClinicalSourceDto.from(source));
   }
 
+  /** POST /admin/v1/pregnancy/sources. */
   @Post('sources')
   @HttpCode(HttpStatus.OK)
   @RequireGrants('pregnancy.draft')
@@ -224,6 +315,7 @@ export class PregnancyAdminController {
     return ClinicalSourceDto.from(await this.pregnancy.createSource(admin, body, client));
   }
 
+  /** PATCH /admin/v1/pregnancy/sources/:id. */
   @Put('sources/:id')
   @RequireGrants('pregnancy.draft')
   @ApiOkResponse({ type: ClinicalSourceDto })
@@ -238,6 +330,7 @@ export class PregnancyAdminController {
 
   // ───────────────────────────────── reports ─────────────────────────────────
 
+  /** GET /admin/v1/pregnancy/reports. */
   @Get('reports')
   @RequireGrants('pregnancy.read')
   @ApiOkResponse({ type: [AdminContentReportDto] })
@@ -249,6 +342,7 @@ export class PregnancyAdminController {
     return rows.map((row) => AdminContentReportDto.from(row));
   }
 
+  /** POST /admin/v1/pregnancy/reports/:id/resolve. */
   @Post('reports/:id/resolve')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequireGrants('pregnancy.draft')
@@ -262,6 +356,7 @@ export class PregnancyAdminController {
     await this.pregnancy.resolveReport(admin, id, body.resolution, client);
   }
 
+  /** The substance drawer response. */
   private async detailDto(id: string): Promise<AdminSubstanceDetailDto> {
     const row = await this.pregnancy.substance(id);
     const published = row.versions.find((version) => version.status === 'PUBLISHED') ?? null;

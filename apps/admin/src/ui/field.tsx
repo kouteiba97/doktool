@@ -10,6 +10,9 @@ import {
 } from 'react';
 import { useI18n } from '@/i18n/i18n-provider';
 
+/**
+ * A form field: label, required mark, help or error text, and the control (given the ids to wire).
+ */
 interface FieldProps {
   label: ReactNode;
   required?: boolean;
@@ -54,8 +57,10 @@ export function Field({ label, required, help, error, children }: FieldProps) {
   );
 }
 
+/** Extra options of the inputs below. */
 type Invalid = { invalid?: boolean; unit?: ReactNode; mono?: boolean };
 
+/** A text input with an optional unit at its end. */
 export const TextInput = forwardRef<
   HTMLInputElement,
   InputHTMLAttributes<HTMLInputElement> & Invalid
@@ -74,6 +79,7 @@ export const TextInput = forwardRef<
   );
 });
 
+/** A multi-line input (monospace for JSON). */
 export const TextArea = forwardRef<
   HTMLTextAreaElement,
   TextareaHTMLAttributes<HTMLTextAreaElement> & Invalid
@@ -85,6 +91,7 @@ export const TextArea = forwardRef<
   );
 });
 
+/** A drop-down list. */
 export const Select = forwardRef<
   HTMLSelectElement,
   SelectHTMLAttributes<HTMLSelectElement> & Invalid
@@ -98,6 +105,7 @@ export const Select = forwardRef<
   );
 });
 
+/** An on/off switch (role="switch", readable by screen readers). */
 export function Switch({
   checked,
   onChange,

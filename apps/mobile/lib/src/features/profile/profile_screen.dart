@@ -137,6 +137,7 @@ class ProfileScreen extends ConsumerWidget {
                                 radius: DtRadius.full,
                                 child: Material(
                                   type: MaterialType.transparency,
+                                  // « Modifier le profil ».
                                   child: InkWell(
                                     customBorder: const StadiumBorder(),
                                     onTap: () => context.push(Routes.profileEdit),
@@ -214,9 +215,11 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  /// The initials shown when there is no photo.
   static String _initials(String first, String last) =>
       '${first.characters.firstOrNull ?? ''}${last.characters.firstOrNull ?? ''}'.toUpperCase();
 
+  /// The profession's name in the UI language.
   static String _roleName(AppLocalizations l10n, ProfessionalType type) => switch (type) {
     ProfessionalType.doctor => l10n.roleDoctor,
     ProfessionalType.resident => l10n.roleResident,

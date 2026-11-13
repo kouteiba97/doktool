@@ -23,6 +23,10 @@ import {
 import type { Grant } from './grants.js';
 import { matchTotpStep, newTotpEnrollment, type TotpEnrollment } from './totp.js';
 
+/**
+ * What the password step answers: the next step (enrol or verify TOTP) and a short-lived challenge
+ * token.
+ */
 export interface AdminSignInStep {
   next: AdminChallengeKind;
   challengeToken: string;
@@ -31,6 +35,7 @@ export interface AdminSignInStep {
   enrollment: TotpEnrollment | null;
 }
 
+/** The signed-in admin, with the grants in force now. */
 export interface AdminPrincipal {
   adminId: string;
   sessionId: string;
@@ -39,6 +44,7 @@ export interface AdminPrincipal {
   grants: Grant[];
 }
 
+/** Rate-limit key: the caller's IP. */
 const clientKey = (client: ClientInfo) => client.ip ?? 'unknown';
 
 /**
@@ -60,6 +66,11 @@ export class AdminAuthService {
     this.secretBox = new SecretBox(env.ADMIN_TOTP_ENCRYPTION_KEY);
   }
 
+  /**
+   * Step 1: checks the password (with lockout after repeated failures) and opens a 5-minute TOTP
+   * challenge. An unknown e-mail costs the same time as a wrong password. Wrong passwords and
+   * wrong TOTP codes share one counter per account, cleared by a complete sign-in.
+   */
   async signIn(rawEmail: string, password: string, client: ClientInfo): Promise<AdminSignInStep> {
     await this.limiter.hit(ADMIN_RATE_LIMITS.signInPerIp, clientKey(client));
     const email = rawEmail.trim().toLowerCase();
@@ -112,10 +123,8 @@ export class AdminAuthService {
         expiresAt,
       },
     });
-    await this.prisma.adminAccount.update({
-      where: { id: admin.id },
-      data: { failedSignInCount: 0, lockedUntil: null },
-    });
+    // The failure counter is cleared only once the TOTP step succeeds: a correct password alone
+    // must not give someone who knows it a fresh set of TOTP guesses.
     return { next: kind, challengeToken, expiresAt, enrollment };
   }
 
@@ -135,6 +144,11 @@ export class AdminAuthService {
       throw new DomainError('CHALLENGE_INVALID', 'Sign in again.');
     }
     const { admin } = challenge;
+    if (admin.lockedUntil && admin.lockedUntil > now) {
+      throw new DomainError('ACCOUNT_LOCKED', 'Too many wrong codes or passwords.', {
+        retryAt: admin.lockedUntil.toISOString(),
+      });
+    }
     const sealedSecret =
       challenge.kind === 'TOTP_ENROLL'
         ? challenge.pendingSecretEncrypted
@@ -148,22 +162,30 @@ export class AdminAuthService {
       step !== null && admin.totpLastUsedStep !== null && BigInt(step) <= admin.totpLastUsedStep;
     if (step === null || replay) {
       const attempts = challenge.failedAttempts + 1;
+      // Wrong codes count on the account as wrong passwords do: opening a new challenge (or
+      // coming from another address) does not give more guesses.
+      const lockedUntil = await this.registerFailedSignIn(admin.id);
       await this.prisma.adminAuthChallenge.update({
         where: { id: challenge.id },
         data: {
           failedAttempts: attempts,
-          consumedAt: attempts >= ADMIN_CHALLENGE_MAX_ATTEMPTS ? now : null,
+          consumedAt: lockedUntil || attempts >= ADMIN_CHALLENGE_MAX_ATTEMPTS ? now : null,
         },
       });
       await this.audit.record({
         actorType: 'ADMIN',
         actorId: admin.id,
-        action: 'admin.totp.rejected',
+        action: lockedUntil ? 'admin.sign_in.locked' : 'admin.totp.rejected',
         entityType: 'AdminAccount',
         entityId: admin.id,
         ip: client.ip,
         userAgent: client.userAgent,
       });
+      if (lockedUntil) {
+        throw new DomainError('ACCOUNT_LOCKED', 'Too many wrong codes or passwords.', {
+          retryAt: lockedUntil.toISOString(),
+        });
+      }
       if (attempts >= ADMIN_CHALLENGE_MAX_ATTEMPTS) {
         throw new DomainError('CHALLENGE_INVALID', 'Too many wrong codes. Sign in again.');
       }
@@ -187,6 +209,8 @@ export class AdminAuthService {
         data: {
           totpLastUsedStep: BigInt(step),
           lastLoginAt: now,
+          failedSignInCount: 0,
+          lockedUntil: null,
           ...(challenge.kind === 'TOTP_ENROLL' ? { totpSecretEncrypted: sealedSecret } : {}),
         },
       });
@@ -266,6 +290,7 @@ export class AdminAuthService {
     };
   }
 
+  /** Revokes the current admin session. */
   async signOut(principal: AdminPrincipal, client: ClientInfo): Promise<void> {
     await this.prisma.adminSession.updateMany({
       where: { id: principal.sessionId, revokedAt: null },
@@ -291,6 +316,10 @@ export class AdminAuthService {
     });
   }
 
+  /**
+   * Counts a wrong password or a wrong TOTP code in one atomic update; the fifth in a row locks
+   * the account for 15 minutes. Returns the lock end when this failure locked it.
+   */
   private async registerFailedSignIn(adminId: string): Promise<Date | null> {
     const [row] = await this.prisma.$queryRaw<{ locked_until: Date | null; locked_now: boolean }[]>`
       UPDATE admin_accounts SET

@@ -7,8 +7,10 @@ import { Field, Select, TextArea, TextInput } from '@/ui/field';
 import { ReasonDialog } from '@/ui/reason-dialog';
 import { REJECTION_LABELS, REJECTION_REASONS, type RejectionReason } from './labels';
 
+/** The case a decision is about. */
 type Case = Schemas['AdminVerificationCaseDto'];
 
+/** What every decision dialog receives. */
 interface DecisionProps {
   record: Case;
   open: boolean;
@@ -16,6 +18,7 @@ interface DecisionProps {
   onDone: (next: Case) => void;
 }
 
+/** URL parameters of the case. */
 const path = (record: Case) => ({ params: { path: { id: record.id } } });
 
 /** « Approuver »: optional end of validity (the document's own expiry), and the reason. */

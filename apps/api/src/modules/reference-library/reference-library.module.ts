@@ -33,6 +33,7 @@ export class ReferenceLibraryModule implements OnModuleInit {
     private readonly processing: ReferenceProcessingService,
   ) {}
 
+  /** Registers the processing worker and the minute sweep of pending files. */
   onModuleInit(): void {
     this.jobs.registerWorker(PROCESS_FILE_JOB, async (data) => {
       if (typeof data.fileId === 'string') await this.processing.process(data.fileId);

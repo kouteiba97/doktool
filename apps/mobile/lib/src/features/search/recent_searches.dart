@@ -10,6 +10,7 @@ class RecentSearches extends AsyncNotifier<List<String>> {
   static const _key = 'search.recent';
   static const _max = 10;
 
+  /// Reads the recent searches kept on this device.
   @override
   Future<List<String>> build() async {
     final raw = await ref.watch(appDatabaseProvider).readSetting(_key);
@@ -18,6 +19,7 @@ class RecentSearches extends AsyncNotifier<List<String>> {
     return decoded is List ? [for (final item in decoded) '$item'] : const [];
   }
 
+  /// Puts a search first in the list (no duplicates, at most a few).
   Future<void> add(String query) async {
     final trimmed = query.trim();
     if (trimmed.length < 2) return;
@@ -25,10 +27,13 @@ class RecentSearches extends AsyncNotifier<List<String>> {
     await _save([trimmed, ...current.where((item) => item.toLowerCase() != trimmed.toLowerCase())].take(_max).toList());
   }
 
+  /// Removes one recent search.
   Future<void> remove(String query) async => _save((await future).where((item) => item != query).toList());
 
+  /// « Effacer »: removes every recent search.
   Future<void> clear() => _save(const []);
 
+  /// Shows the new list at once and saves it.
   Future<void> _save(List<String> items) async {
     state = AsyncData(items);
     await ref.read(appDatabaseProvider).writeSetting(_key, jsonEncode(items));

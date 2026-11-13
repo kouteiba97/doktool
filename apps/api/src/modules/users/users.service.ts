@@ -17,6 +17,7 @@ export const SIGN_IN_LOCK_MINUTES = 15;
 /** Accounts never confirmed are deleted after this many days. */
 export const UNCONFIRMED_ACCOUNT_TTL_DAYS = 7;
 
+/** What sign-up stores before the contact is confirmed. */
 export interface PendingAccountInput {
   identifier: Identifier;
   passwordHash: string;
@@ -38,6 +39,7 @@ export interface AccountContacts {
   status: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
 }
 
+/** What sign-in needs to know about the account an identifier opens. */
 export interface SignInCandidate {
   id: string;
   passwordHash: string;
@@ -73,12 +75,14 @@ const ADMIN_USER_SELECT = {
   },
 } as const satisfies Prisma.UserSelect;
 
+/** What the access policy needs to know about an account. */
 export interface AccessFacts {
   status: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
   professionalType: ProfessionalType | null;
   academicYear: number | null;
 }
 
+/** « Qui êtes-vous ? »: the profession and its details (pickers only). */
 export interface ProfessionalProfileInput {
   professionalType: ProfessionalType;
   specialtyId?: string;
@@ -88,15 +92,18 @@ export interface ProfessionalProfileInput {
   residencyYear?: number;
 }
 
+/** App preferences synced to the account. */
 export interface PreferencesInput {
   language?: Language;
   theme?: ThemePreference;
   weightUnitDefault?: WeightUnit | null;
 }
 
+/** Database lookup of an account by e-mail or by phone. */
 const identifierWhere = (identifier: Identifier): Prisma.UserWhereUniqueInput =>
   identifier.channel === 'EMAIL' ? { email: identifier.value } : { phone: identifier.value };
 
+/** Columns returned by GET /v1/me. */
 const ME_SELECT = {
   id: true,
   firstName: true,
@@ -123,6 +130,7 @@ const ME_SELECT = {
   preference: { select: { language: true, theme: true, weightUnitDefault: true } },
 } satisfies Prisma.UserSelect;
 
+/** Shape of an account as read for GET /v1/me. */
 export type MeRecord = Prisma.UserGetPayload<{ select: typeof ME_SELECT }>;
 
 /** Owner of `users`, `professional_profiles`, `user_preferences` and the reference pickers. */
@@ -189,6 +197,7 @@ export class UsersService {
     }
   }
 
+  /** Marks the e-mail or phone as confirmed (after the sign-up code). */
   async markIdentifierConfirmed(userId: string, channel: Identifier['channel']): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },
@@ -197,6 +206,7 @@ export class UsersService {
     });
   }
 
+  /** The account an identifier opens, with what sign-in checks (null when none). */
   async findSignInCandidate(identifier: Identifier): Promise<SignInCandidate | null> {
     const user = await this.prisma.user.findUnique({
       where: identifierWhere(identifier),
@@ -268,6 +278,7 @@ export class UsersService {
     return row?.locked_now ? row.locked_until : null;
   }
 
+  /** Resets the wrong-password counter and records the sign-in as activity. */
   async clearSignInFailures(userId: string): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },
@@ -275,7 +286,7 @@ export class UsersService {
     });
   }
 
-  /** Sets a new password and lifts any lockout (password reset). */
+  /** The account's contacts and language (for notices and contact changes). */
   async contactsOf(userId: string): Promise<AccountContacts | null> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -426,6 +437,7 @@ export class UsersService {
     throw new DomainError('ACCOUNT_EXISTS', 'Another account already uses this contact.');
   }
 
+  /** Stores a new password hash and lifts any lockout. */
   async setPassword(userId: string, passwordHash: string): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },
@@ -433,6 +445,7 @@ export class UsersService {
     });
   }
 
+  /** The signed-in account (GET /v1/me); a deleted account counts as signed out. */
   async getMe(userId: string): Promise<MeRecord> {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: ME_SELECT });
     if (!user || user.status === 'DELETED')
@@ -456,6 +469,7 @@ export class UsersService {
     return this.getMe(userId);
   }
 
+  /** Saves language, theme or default weight unit. */
   async updatePreferences(userId: string, input: PreferencesInput): Promise<MeRecord> {
     await this.prisma.userPreference.upsert({
       where: { userId },
@@ -686,6 +700,7 @@ export class UsersService {
     });
   }
 
+  /** One account as Admin Web shows it. */
   adminDetail(userId: string) {
     return this.prisma.user.findUnique({ where: { id: userId }, select: ADMIN_USER_SELECT });
   }
@@ -775,6 +790,7 @@ export class UsersService {
 
   // ─────────────── reference pickers (specialties, institutions, universities) ───────────────
 
+  /** Medical specialties, A–Z (picker). */
   listSpecialties() {
     return this.prisma.specialty.findMany({
       orderBy: { nameFr: 'asc' },
@@ -782,6 +798,7 @@ export class UsersService {
     });
   }
 
+  /** Hospitals and institutions, optionally of one wilaya (picker). */
   listInstitutions(wilayaCode?: number) {
     return this.prisma.institution.findMany({
       where: wilayaCode ? { wilayaCode } : {},
@@ -790,6 +807,7 @@ export class UsersService {
     });
   }
 
+  /** Universities (picker). */
   listUniversities() {
     return this.prisma.university.findMany({
       orderBy: { name: 'asc' },
@@ -797,6 +815,7 @@ export class UsersService {
     });
   }
 
+  /** Admin: adds a specialty; a duplicate code is refused. */
   async createSpecialty(input: { code: string; nameFr: string; nameEn: string }) {
     try {
       return await this.prisma.specialty.create({
@@ -808,6 +827,7 @@ export class UsersService {
     }
   }
 
+  /** Admin: adds an institution in a wilaya. */
   async createInstitution(input: { name: string; wilayaCode: number }) {
     await this.assertWilaya(input.wilayaCode);
     try {
@@ -820,6 +840,7 @@ export class UsersService {
     }
   }
 
+  /** Admin: adds a university in a wilaya. */
   async createUniversity(input: { name: string; wilayaCode: number }) {
     await this.assertWilaya(input.wilayaCode);
     try {
@@ -832,12 +853,14 @@ export class UsersService {
     }
   }
 
+  /** Turns a unique-constraint violation into a readable conflict error. */
   private conflict(error: unknown, message: string): unknown {
     return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002'
       ? new DomainError('VERSION_CONFLICT', message)
       : error;
   }
 
+  /** The 58 wilayas, by code. */
   listWilayas(): Promise<{ code: number; name: string }[]> {
     return this.prisma.wilaya.findMany({
       orderBy: { code: 'asc' },
@@ -859,6 +882,7 @@ export class UsersService {
     return count;
   }
 
+  /** Refuses an unknown wilaya code. */
   private async assertWilaya(code: number): Promise<void> {
     const exists = await this.prisma.wilaya.count({ where: { code } });
     if (!exists) {
@@ -868,6 +892,7 @@ export class UsersService {
     }
   }
 
+  /** Adds a field error for each picker id that does not exist. */
   private async assertReferencesExist(
     input: ProfessionalProfileInput,
     fields: Record<string, string[]>,

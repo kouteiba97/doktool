@@ -77,6 +77,7 @@ class ReferenceViewerScreen extends ConsumerStatefulWidget {
   ConsumerState<ReferenceViewerScreen> createState() => _ReferenceViewerScreenState();
 }
 
+/// The PDF controller, the page shown and whether the view was counted.
 class _ReferenceViewerScreenState extends ConsumerState<ReferenceViewerScreen> {
   final _controller = PdfViewerController();
   int _page = 1;
@@ -85,6 +86,7 @@ class _ReferenceViewerScreenState extends ConsumerState<ReferenceViewerScreen> {
   /// REFERENCE_VIEWED is counted once, when the PDF has rendered.
   bool _viewRecorded = false;
 
+  /// Records the visit in the person's history.
   @override
   void initState() {
     super.initState();
@@ -215,6 +217,7 @@ class _ReferenceViewerScreenState extends ConsumerState<ReferenceViewerScreen> {
   }
 }
 
+/// The floating control: page « 2 / 5 », zoom out and zoom in.
 class _ZoomControl extends StatelessWidget {
   const _ZoomControl({
     required this.page,
@@ -248,8 +251,11 @@ class _ZoomControl extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Zoom out.
               IconButton(tooltip: l10n.viewerZoomOut, icon: const Icon(LucideIcons.zoomOut), onPressed: onZoomOut),
+              // Fit the page to the width.
               IconButton(tooltip: l10n.viewerFit, icon: const Icon(LucideIcons.scan), onPressed: onFit),
+              // Zoom in.
               IconButton(tooltip: l10n.viewerZoomIn, icon: const Icon(LucideIcons.zoomIn), onPressed: onZoomIn),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: DtSpace.s2),
@@ -271,6 +277,7 @@ class _ZoomControl extends StatelessWidget {
   }
 }
 
+/// A grey page while the PDF loads.
 class _PaperSkeleton extends StatelessWidget {
   const _PaperSkeleton();
 
@@ -291,6 +298,7 @@ class _PaperSkeleton extends StatelessWidget {
   }
 }
 
+/// Error state with « Réessayer ».
 class _Failure extends StatelessWidget {
   const _Failure({required this.error, required this.onRetry});
 
@@ -319,6 +327,7 @@ class _Failure extends StatelessWidget {
           DtAlert(severity: DtAlertSeverity.neutral, body: message),
           if (!gone) ...[
             const SizedBox(height: DtSpace.s3),
+            // « Réessayer ».
             DtButton(label: l10n.commonRetry, variant: DtButtonVariant.secondary, onPressed: onRetry),
           ],
         ],

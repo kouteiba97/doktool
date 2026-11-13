@@ -39,6 +39,10 @@ export class AccountDeletionService {
     private readonly limiter: RateLimiter,
   ) {}
 
+  /**
+   * Deletes the account after checking the password: ends subscriptions, erases each module's
+   * data, anonymises the account, ends every session and writes an audit entry.
+   */
   async delete(userId: string, password: string, client: ClientInfo): Promise<void> {
     await this.limiter.hit(RATE_LIMITS.deleteAccountPerUser, userId);
     const passwordHash = await this.users.passwordHashOf(userId);

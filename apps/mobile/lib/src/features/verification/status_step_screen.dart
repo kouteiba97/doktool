@@ -45,6 +45,7 @@ class StatusStepScreen extends ConsumerWidget {
   }
 }
 
+/// The professional status step: order number, specialty, institution or university, year.
 class _StatusStep extends ConsumerStatefulWidget {
   const _StatusStep({required this.draft, required this.role});
 
@@ -55,6 +56,7 @@ class _StatusStep extends ConsumerStatefulWidget {
   ConsumerState<_StatusStep> createState() => _StatusStepState();
 }
 
+/// The details being typed, progress and error.
 class _StatusStepState extends ConsumerState<_StatusStep> {
   late final _orderNumber = TextEditingController(text: widget.draft.details.orderNumber ?? '');
   late String? _specialtyId = widget.draft.details.specialtyId;
@@ -66,6 +68,7 @@ class _StatusStepState extends ConsumerState<_StatusStep> {
   bool _saving = false;
   ApiError? _error;
 
+  /// Frees the text controller.
   @override
   void dispose() {
     _orderNumber.dispose();
@@ -98,6 +101,7 @@ class _StatusStepState extends ConsumerState<_StatusStep> {
     _ => VerificationDetailsDto(orderNumber: _orderNumber.text.trim(), specialtyId: _specialtyId),
   };
 
+  /// « Continuer »: saves the details and goes to the summary.
   Future<void> _continue() async {
     setState(() {
       _saving = true;
@@ -229,12 +233,14 @@ class _StatusStepState extends ConsumerState<_StatusStep> {
       eyebrow: '${l10n.commonStepOf('2', '3')} · ${l10n.verificationStatusStep}',
       title: title,
       intro: intro,
+      // « Plus tard »: back to Home, the draft is kept.
       trailing: TextButton(
         onPressed: () => context.go(Routes.home),
         child: Text(l10n.commonLater, style: DtType.bodyStrong.copyWith(color: colors.onHero)),
       ),
       actions: [
         if (_error != null) DtAlert(severity: DtAlertSeverity.critical, body: commonErrorText(context, _error!)),
+        // « Continuer »: needs the details and the proof document.
         DtButton(
           label: l10n.commonContinue,
           loading: _saving,

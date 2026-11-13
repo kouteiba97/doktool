@@ -28,8 +28,10 @@ import {
 import { RestrictedViewer } from './restricted-viewer';
 import { caseKey, queueKey } from './keys';
 
+/** A case as the review drawer shows it. */
 type Case = Schemas['AdminVerificationCaseDto'];
 
+/** Which decision dialog is open. */
 type Decision = 'approve' | 'reject' | 'release' | null;
 
 /** Review drawer: Résumé · Documents (restricted) · Historique, and the decisions (section 07). */
@@ -51,12 +53,14 @@ export function CaseDrawer({ caseId, onClose }: { caseId: string | null; onClose
   });
   const record = detail.data;
 
+  // After a decision: put the new case in the cache, refresh the queue, confirm with a toast.
   const updated = (next: Case, message: string) => {
     queryClient.setQueryData(caseKey(next.id), next);
     void queryClient.invalidateQueries({ queryKey: queueKey });
     toast(message);
   };
 
+  // « Prendre le dossier »: the case becomes IN_REVIEW for this reviewer.
   const claim = useMutation({
     mutationFn: (id: string) =>
       call(api.POST('/admin/v1/verification/cases/{id}/claim', { params: { path: { id } } })),
@@ -67,6 +71,7 @@ export function CaseDrawer({ caseId, onClose }: { caseId: string | null; onClose
     },
   });
 
+  // Who may act: reviewers; the case must be waiting (claim) or claimed by this admin (decide).
   const canReview = has('verification.review');
   const mine = record?.status === 'IN_REVIEW' && record.reviewer?.id === me?.id;
   const claimable = record?.status === 'SUBMITTED' || record?.status === 'APPEALED';
@@ -75,17 +80,21 @@ export function CaseDrawer({ caseId, onClose }: { caseId: string | null; onClose
     record && canReview ? (
       claimable ? (
         <div className="end">
+          {/* « Prendre le dossier ». */}
           <Button variant="primary" busy={claim.isPending} onClick={() => claim.mutate(record.id)}>
             {t('admin.verification.claim')}
           </Button>
         </div>
       ) : mine ? (
         <>
+          {/* « Libérer »: gives the case back to the queue. */}
           <Button onClick={() => setDecision('release')}>{t('admin.verification.release')}</Button>
           <div className="end">
+            {/* « Rejeter »: opens the rejection dialog. */}
             <Button variant="danger" onClick={() => setDecision('reject')}>
               {t('admin.verification.reject')}
             </Button>
+            {/* « Approuver »: opens the approval dialog. */}
             <Button variant="primary" onClick={() => setDecision('approve')}>
               <Check size={16} aria-hidden />
               {t('admin.verification.approve')}
@@ -173,6 +182,7 @@ export function CaseDrawer({ caseId, onClose }: { caseId: string | null; onClose
   );
 }
 
+/** « Résumé » tab: the person, the declared details, the dates and which steps were provided. */
 function Summary({ record }: { record: Case }) {
   const { t, locale } = useI18n();
   const details = record.details;
@@ -281,6 +291,10 @@ function Summary({ record }: { record: Case }) {
   );
 }
 
+/**
+ * « Documents » tab: listed only with the time-limited documents grant; opened only by the
+ * reviewer holding the case.
+ */
 function Documents({ record, mine }: { record: Case; mine: boolean }) {
   const { t, locale } = useI18n();
   const { has } = useGrants();
@@ -314,6 +328,7 @@ function Documents({ record, mine }: { record: Case; mine: boolean }) {
                 {formatBytes(locale, document.sizeBytes)}
               </span>
             </span>
+            {/* « Ouvrir »: shows the document in the restricted viewer (audited). */}
             <Button size="sm" disabled={!mine} onClick={() => setOpen(document)}>
               {t('admin.verification.openDocument')}
             </Button>
@@ -333,6 +348,7 @@ function Documents({ record, mine }: { record: Case; mine: boolean }) {
   );
 }
 
+/** « Historique » tab: the person's earlier cases of this type. */
 function History({ record }: { record: Case }) {
   const { t, locale } = useI18n();
   if (record.history.length === 0)

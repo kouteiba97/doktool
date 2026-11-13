@@ -9,6 +9,7 @@ import 'definition.dart';
 
 const engineVersion = 'dart-1.0.0';
 
+/// What an evaluation gives: a result, invalid inputs, or values outside the validated range.
 enum Outcome { result, invalid, outOfValidatedRange }
 
 /// A value typed by the person; [unit] defaults to the input's canonical unit.
@@ -21,6 +22,7 @@ class InputValue {
   final String? unit;
 }
 
+/// Why there is no result, with the input, rule or range concerned.
 @immutable
 class Issue {
   const Issue(this.code, {this.input, this.ruleId, this.range, this.rangeUnit, this.message});
@@ -40,6 +42,7 @@ class Issue {
   String get key => [code, ?(ruleId ?? input)].join(':');
 }
 
+/// A unit conversion applied to an input, shown to the person.
 @immutable
 class Conversion {
   const Conversion({
@@ -57,6 +60,7 @@ class Conversion {
   final String toUnit;
 }
 
+/// An input outside its plausible range: the result is shown with « vérifiez la valeur ».
 @immutable
 class PlausibilityNote {
   const PlausibilityNote({required this.input, required this.range, required this.unit});
@@ -66,6 +70,7 @@ class PlausibilityNote {
   final String unit;
 }
 
+/// The engine's answer: a result (value, band, notes, conversions) or the issues.
 @immutable
 class Evaluation {
   const Evaluation.result({
@@ -95,6 +100,7 @@ class Evaluation {
   final List<Conversion> conversions;
 }
 
+/// A formula reached an optional input that was not given.
 class _MissingInput implements Exception {
   const _MissingInput(this.input);
   final String input;
@@ -246,7 +252,9 @@ Object _accept(CalculatorInput input, InputValue given, List<Conversion> convers
   }
 }
 
+/// Computes one formula node (a number or a boolean) from the converted input values.
 Object _run(Expr node, Map<String, Object> values, CalculatorDefinition definition) {
+  // Helpers: a child node's value as a number or a boolean.
   double numOf(Expr expr) => _run(expr, values, definition) as double;
   bool boolOf(Expr expr) => _run(expr, values, definition) as bool;
 
@@ -350,6 +358,7 @@ double roundHalfAwayFromZero(double value, int digits) {
   return sign * _shiftDecimal(shifted, -digits);
 }
 
+/// Multiplies by a power of ten exactly (through the decimal text), for correct rounding.
 double _shiftDecimal(double value, int places) {
   final text = _shortest(value);
   final parts = text.split('e');

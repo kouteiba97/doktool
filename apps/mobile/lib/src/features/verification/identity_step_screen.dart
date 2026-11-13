@@ -36,6 +36,7 @@ class IdentityStepScreen extends StatelessWidget {
   );
 }
 
+/// The identity step: document kind, then front (and back for a card).
 class _IdentityStep extends ConsumerStatefulWidget {
   const _IdentityStep({required this.draft});
 
@@ -45,6 +46,7 @@ class _IdentityStep extends ConsumerStatefulWidget {
   ConsumerState<_IdentityStep> createState() => _IdentityStepState();
 }
 
+/// The document kind chosen, progress and error.
 class _IdentityStepState extends ConsumerState<_IdentityStep> {
   late VerificationDetailsDtoDocumentKind _kind = switch (widget.draft.details.documentKind) {
     VerificationDeclaredDetailsDtoDocumentKind.passport => VerificationDetailsDtoDocumentKind.passport,
@@ -54,8 +56,10 @@ class _IdentityStepState extends ConsumerState<_IdentityStep> {
   bool _saving = false;
   ApiError? _error;
 
+  /// True when a document was sent for this step.
   bool _provided(VerificationStepType step) => widget.draft.documents.any((document) => document.stepType == step);
 
+  /// Changes the document kind; a passport removes a back side sent earlier.
   Future<void> _changeKind(VerificationDetailsDtoDocumentKind kind) async {
     setState(() => _kind = kind);
     if (kind != VerificationDetailsDtoDocumentKind.passport) return;
@@ -66,6 +70,7 @@ class _IdentityStepState extends ConsumerState<_IdentityStep> {
     ref.read(verificationControllerProvider.notifier).replace(updated);
   }
 
+  /// « Continuer »: saves the document kind and goes to the next step.
   Future<void> _continue() async {
     setState(() {
       _saving = true;
@@ -102,12 +107,14 @@ class _IdentityStepState extends ConsumerState<_IdentityStep> {
       eyebrow: '${l10n.commonStepOf('1', '3')} · ${l10n.verificationIdentityStep}',
       title: l10n.verificationIdentityTitle,
       intro: student ? l10n.verificationIdentityIntroStudent : l10n.verificationIdentityIntro,
+      // « Plus tard »: back to Home, the draft is kept.
       trailing: TextButton(
         onPressed: () => context.go(Routes.home),
         child: Text(l10n.commonLater, style: DtType.bodyStrong.copyWith(color: colors.onHero)),
       ),
       actions: [
         if (_error != null) DtAlert(severity: DtAlertSeverity.critical, body: commonErrorText(context, _error!)),
+        // « Continuer »: possible once the front (or passport page) is sent.
         DtButton(
           label: l10n.commonContinue,
           loading: _saving,
@@ -115,6 +122,7 @@ class _IdentityStepState extends ConsumerState<_IdentityStep> {
         ),
       ],
       children: [
+        // Document kind: national ID card, passport or student card.
         DtSegmentedControl<VerificationDetailsDtoDocumentKind>(
           semanticLabel: l10n.verificationIdentityKind,
           selected: _kind,

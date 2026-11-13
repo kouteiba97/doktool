@@ -24,12 +24,14 @@ import {
 const QUEUE_DEFAULT: VerificationStatus[] = ['SUBMITTED', 'APPEALED', 'IN_REVIEW'];
 const QUEUE_PAGE = 50;
 
+/** Filters of the review queue. */
 export interface QueueFilter {
   status?: VerificationStatus;
   type?: VerificationType;
   cursor?: string;
 }
 
+/** Columns read for each queue row. */
 const QUEUE_SELECT = {
   id: true,
   type: true,
@@ -41,6 +43,7 @@ const QUEUE_SELECT = {
   userId: true,
 } satisfies Prisma.VerificationCaseSelect;
 
+/** One queue row with the names the table shows. */
 export type QueueRecord = Prisma.VerificationCaseGetPayload<{ select: typeof QUEUE_SELECT }> & {
   reviewer: { id: string; fullName: string } | null;
   user: { id: string; firstName: string; lastName: string };
@@ -49,6 +52,10 @@ export type QueueRecord = Prisma.VerificationCaseGetPayload<{ select: typeof QUE
   university: string | null;
 };
 
+/**
+ * Everything the review drawer shows: the case, who handles it, the person, their picker names and
+ * earlier cases.
+ */
 export interface ReviewRecord {
   record: CaseRecord;
   reviewer: { id: string; fullName: string } | null;
@@ -64,6 +71,7 @@ export interface ReviewRecord {
   }[];
 }
 
+/** A short-lived link to one document and the watermark the viewer draws over it. */
 export interface DocumentView {
   url: string;
   expiresAt: Date;
@@ -132,6 +140,7 @@ export class VerificationReviewService {
     });
   }
 
+  /** The review drawer of one submitted case. */
   async detail(caseId: string): Promise<ReviewRecord> {
     const record = await this.find(caseId);
     if (record.status === 'NOT_STARTED') throw new DomainError('NOT_FOUND', 'Case not found.');
@@ -163,6 +172,7 @@ export class VerificationReviewService {
     return { record, reviewer, rejectedBy, person, references, history };
   }
 
+  /** Takes a waiting case: it becomes IN_REVIEW for this reviewer only. */
   async claim(admin: AdminPrincipal, caseId: string, client: ClientInfo): Promise<ReviewRecord> {
     const record = await this.find(caseId);
     if (record.status !== 'SUBMITTED' && record.status !== 'APPEALED') {
@@ -211,6 +221,10 @@ export class VerificationReviewService {
     return this.detail(caseId);
   }
 
+  /**
+   * Approves the case: VERIFIED (with an optional expiry), the proved role and details are copied
+   * to the profile, the person is notified, the documents get their deletion date.
+   */
   async approve(
     admin: AdminPrincipal,
     caseId: string,
@@ -267,6 +281,10 @@ export class VerificationReviewService {
     return this.detail(caseId);
   }
 
+  /**
+   * Rejects the case with a reason code; the person is notified and may start again (or appeal
+   * after enough rejections).
+   */
   async reject(
     admin: AdminPrincipal,
     caseId: string,
@@ -341,6 +359,7 @@ export class VerificationReviewService {
 
   // ───────────────────────────────── helpers ─────────────────────────────────
 
+  /** Loads a case or answers NOT_FOUND. */
   private async find(caseId: string): Promise<CaseRecord> {
     const record = await this.prisma.verificationCase.findUnique({
       where: { id: caseId },
@@ -350,6 +369,7 @@ export class VerificationReviewService {
     return record;
   }
 
+  /** A case this admin has claimed (and may decide). */
   private async claimedBy(admin: AdminPrincipal, caseId: string): Promise<CaseRecord> {
     const record = await this.find(caseId);
     if (record.status !== 'IN_REVIEW' || record.reviewerId !== admin.adminId) {
@@ -373,6 +393,10 @@ export class VerificationReviewService {
     }
   }
 
+  /**
+   * Writes the decision if the case is still claimed by this admin, and schedules its documents'
+   * deletion.
+   */
   private async decide(
     tx: Prisma.TransactionClient,
     admin: AdminPrincipal,
@@ -396,11 +420,13 @@ export class VerificationReviewService {
     });
   }
 
+  /** Name of an admin, for the drawer. */
   private async adminName(id: string): Promise<{ id: string; fullName: string } | null> {
     const fullName = (await this.admins.names([id])).get(id);
     return fullName ? { id, fullName } : null;
   }
 
+  /** Audit entry of a reviewer action. */
   private record(
     admin: AdminPrincipal,
     client: ClientInfo,

@@ -630,6 +630,10 @@
   "@homeSearchHint": {
     "description": "mobile.home.searchHint"
   },
+  "homeSearchPregnancy": "Médicament : grossesse · allaitement",
+  "@homeSearchPregnancy": {
+    "description": "mobile.home.searchPregnancy"
+  },
   "homeStartCalculators": "Ouvrir un calculateur",
   "@homeStartCalculators": {
     "description": "mobile.home.startCalculators"
@@ -1426,6 +1430,10 @@
   "@pregnancyPeriodMissing": {
     "description": "mobile.pregnancy.periodMissing"
   },
+  "pregnancyPeriodSources": "Sources de cette période",
+  "@pregnancyPeriodSources": {
+    "description": "mobile.pregnancy.periodSources"
+  },
   "pregnancyPeriods": "Périodes de la grossesse",
   "@pregnancyPeriods": {
     "description": "mobile.pregnancy.periods"
@@ -1501,6 +1509,40 @@
   "pregnancyRiskContext": "Contexte de risque",
   "@pregnancyRiskContext": {
     "description": "mobile.pregnancy.riskContext"
+  },
+  "pregnancySearchAllPeriods": "Toutes",
+  "@pregnancySearchAllPeriods": {
+    "description": "mobile.pregnancy.searchAllPeriods"
+  },
+  "pregnancySearchMore": "Afficher plus ({count} restants)",
+  "@pregnancySearchMore": {
+    "description": "mobile.pregnancy.searchMore",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "pregnancySearchNoBadge": "Sans consigne particulière",
+  "@pregnancySearchNoBadge": {
+    "description": "mobile.pregnancy.searchNoBadge"
+  },
+  "pregnancySearchNoData": "{period} : aucune information validée",
+  "@pregnancySearchNoData": {
+    "description": "mobile.pregnancy.searchNoData",
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "pregnancySearchOffline": "Hors connexion : la recherche porte seulement sur les profils gardés sur cet appareil.",
+  "@pregnancySearchOffline": {
+    "description": "mobile.pregnancy.searchOffline"
+  },
+  "pregnancySearchPeriod": "Période recherchée",
+  "@pregnancySearchPeriod": {
+    "description": "mobile.pregnancy.searchPeriod"
   },
   "pregnancySectionLactation": "Allaitement",
   "@pregnancySectionLactation": {
@@ -2927,6 +2969,14 @@
   "welcomeDemoNote": "La démo ne demande aucune inscription.",
   "@welcomeDemoNote": {
     "description": "mobile.welcome.demoNote"
+  },
+  "welcomeOpenedElsewhereBody": "Un compte DokTool s’utilise sur un seul appareil à la fois. Vous avez été déconnecté ici. Si ce n’était pas vous, connectez-vous puis changez votre mot de passe.",
+  "@welcomeOpenedElsewhereBody": {
+    "description": "mobile.welcome.openedElsewhereBody"
+  },
+  "welcomeOpenedElsewhereTitle": "Compte ouvert sur un autre appareil",
+  "@welcomeOpenedElsewhereTitle": {
+    "description": "mobile.welcome.openedElsewhereTitle"
   },
   "welcomePromise": "Les outils essentiels du médecin, au même endroit.",
   "@welcomePromise": {
