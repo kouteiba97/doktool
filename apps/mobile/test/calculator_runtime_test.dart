@@ -102,6 +102,30 @@ void main() {
     expect(formulaText(_definition.formula, values: const {}, labelOf: (key) => 'Côté'), '(Côté × Côté)');
   });
 
+  test('writes a chosen answer by its label, never by its internal code', () {
+    final formula = Expr.parse({
+      'op': 'if',
+      'args': [
+        {
+          'op': 'eq',
+          'args': [
+            {'input': 'sexe'},
+            {'str': 'o2'},
+          ],
+        },
+        {'num': 1.04},
+        {'num': 1.23},
+      ],
+    }, 'formula');
+    String? labels(String key, String value) => key == 'sexe' && value == 'o2' ? 'Femme' : null;
+    expect(
+      formulaText(formula, values: const {}, labelOf: (key) => 'Sexe', choiceLabelOf: labels),
+      'if((Sexe = « Femme »), 1.04, 1.23)',
+    );
+    // Without a label for the answer, the code is shown as before.
+    expect(formulaText(formula, values: const {}, labelOf: (key) => 'Sexe'), 'if((Sexe = "o2"), 1.04, 1.23)');
+  });
+
   test('never shows a number outside the validated range', () {
     final evaluation = evaluate(_definition, {'side': const InputValue(500)});
     expect(evaluation.outcome, Outcome.outOfValidatedRange);

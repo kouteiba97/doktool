@@ -467,6 +467,11 @@ class _CalculatorState extends ConsumerState<_Calculator> {
                             ),
                       },
                       labelOf: (key) => _fields[key] == null ? key : _label(_fields[key]!.input),
+                      choiceLabelOf: (key, value) => _fields[key]?.input.choices
+                          .where((choice) => choice.value == value)
+                          .firstOrNull
+                          ?.label
+                          .of(language),
                     ),
                     style: DtType.mono.copyWith(color: colors.ink),
                   ),
