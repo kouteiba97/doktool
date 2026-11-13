@@ -20,6 +20,12 @@ export class ErrorDetailsBody {
 
   @ApiPropertyOptional({ type: String, nullable: true, description: 'FEATURE_LOCKED only.' })
   unlockPath?: string | null;
+
+  @ApiPropertyOptional({
+    enum: ['SIGNED_IN_ELSEWHERE'],
+    description: 'SESSION_INVALID only: the account was opened on another device.',
+  })
+  sessionEnd?: 'SIGNED_IN_ELSEWHERE';
 }
 
 /** The `error` object: a stable code clients translate, a developer message and details. */

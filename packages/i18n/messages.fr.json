@@ -2082,6 +2082,8 @@
   "mobile.welcome.createAccount": "Créer un compte",
   "mobile.welcome.demo": "Explorer la démo",
   "mobile.welcome.demoNote": "La démo ne demande aucune inscription.",
+  "mobile.welcome.openedElsewhereBody": "Un compte DokTool s’utilise sur un seul appareil à la fois. Vous avez été déconnecté ici. Si ce n’était pas vous, connectez-vous puis changez votre mot de passe.",
+  "mobile.welcome.openedElsewhereTitle": "Compte ouvert sur un autre appareil",
   "mobile.welcome.promise": "Les outils essentiels du médecin, au même endroit.",
   "mobile.welcome.signIn": "Se connecter",
   "server.finance.colFees": "Frais de paiement",

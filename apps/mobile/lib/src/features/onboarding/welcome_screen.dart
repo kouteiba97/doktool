@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../router/app_router.dart';
+import '../../core/auth/session_controller.dart';
 import '../../theme/doktool_tokens.dart';
+import '../../ui/dt_alert.dart';
 import '../../ui/dt_button.dart';
 import '../../ui/dt_logo.dart';
 import '../../ui/glass.dart';
@@ -24,6 +26,15 @@ class WelcomeScreen extends ConsumerWidget {
     final colors = context.colors;
     final returning = ref.watch(lastIdentifierProvider).value != null;
     final choices = [
+      // This phone was signed out because the account was opened on another one.
+      if (ref.watch(openedElsewhereProvider)) ...[
+        DtAlert(
+          severity: DtAlertSeverity.info,
+          title: l10n.welcomeOpenedElsewhereTitle,
+          body: l10n.welcomeOpenedElsewhereBody,
+        ),
+        const SizedBox(height: DtSpace.s3),
+      ],
       // « Créer un compte ».
       DtButton(
         label: l10n.welcomeCreateAccount,

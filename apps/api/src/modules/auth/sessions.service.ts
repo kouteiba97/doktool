@@ -41,7 +41,7 @@ export interface SessionView {
 /** What the refresh transaction decided. */
 type RefreshOutcome =
   | { kind: 'rotated'; userId: string; sessionId: string; refreshToken: string; expiresAt: Date }
-  | { kind: 'rejected'; message: string };
+  | { kind: 'rejected'; message: string; endedBy?: SessionRevocationReason | null };
 
 /** The refresh token and its session, read together and locked. */
 interface RefreshRow {
@@ -52,7 +52,18 @@ interface RefreshRow {
   user_id: string;
   device_id: string;
   revoked_at: Date | null;
+  revoked_reason: SessionRevocationReason | null;
   session_expires_at: Date;
+}
+
+/**
+ * What a signed-out device may be told about why: only that the account was opened elsewhere
+ * (ADR-029). Other reasons stay on the server.
+ */
+export function sessionEndDetails(reason: SessionRevocationReason | null | undefined): {
+  sessionEnd?: 'SIGNED_IN_ELSEWHERE';
+} {
+  return reason === 'SIGNED_IN_ELSEWHERE' ? { sessionEnd: 'SIGNED_IN_ELSEWHERE' } : {};
 }
 
 /** Device sessions and rotating refresh tokens (ADR-009). */
@@ -66,20 +77,29 @@ export class SessionsService {
 
   /**
    * Opens a device session: a 180-day session, a 30-day refresh token and a 15-minute access
-   * token.
+   * token. An account is open on one device at a time (ADR-029): the sessions it had elsewhere
+   * end here, and those devices are signed out at their next request.
    */
   async open(userId: string, device: DeviceInput, client: ClientInfo): Promise<AuthTokens> {
     const now = Date.now();
-    const session = await this.prisma.userSession.create({
-      data: {
-        userId,
-        deviceId: device.id,
-        deviceName: device.name ?? null,
-        platform: device.platform,
-        ip: client.ip,
-        userAgent: client.userAgent,
-        expiresAt: new Date(now + SESSION_MAX_AGE_DAYS * DAY_MS),
-      },
+    const session = await this.prisma.$transaction(async (tx) => {
+      // Two sign-ins at the same moment take turns, so only the last one stays open.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${'session.open:' + userId}))`;
+      await tx.userSession.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date(now), revokedReason: 'SIGNED_IN_ELSEWHERE' },
+      });
+      return tx.userSession.create({
+        data: {
+          userId,
+          deviceId: device.id,
+          deviceName: device.name ?? null,
+          platform: device.platform,
+          ip: client.ip,
+          userAgent: client.userAgent,
+          expiresAt: new Date(now + SESSION_MAX_AGE_DAYS * DAY_MS),
+        },
+      });
     });
     const refreshToken = randomToken();
     const refreshExpiresAt = new Date(
@@ -103,7 +123,7 @@ export class SessionsService {
     const outcome = await this.prisma.$transaction(async (tx): Promise<RefreshOutcome> => {
       const [row] = await tx.$queryRaw<RefreshRow[]>`
         SELECT rt.id AS token_id, rt.session_id, rt.expires_at AS token_expires_at, rt.used_at,
-               s.user_id, s.device_id, s.revoked_at, s.expires_at AS session_expires_at
+               s.user_id, s.device_id, s.revoked_at, s.revoked_reason, s.expires_at AS session_expires_at
         FROM refresh_tokens rt JOIN user_sessions s ON s.id = rt.session_id
         WHERE rt.token_hash = ${sha256Hex(refreshToken)}
         FOR UPDATE OF rt, s`;
@@ -123,7 +143,8 @@ export class SessionsService {
       };
 
       const now = new Date();
-      if (row.revoked_at) return { kind: 'rejected', message: 'Session revoked.' };
+      if (row.revoked_at)
+        return { kind: 'rejected', message: 'Session revoked.', endedBy: row.revoked_reason };
       if (row.used_at) return revoke('REFRESH_REUSE', 'Refresh token reused; session revoked.');
       if (row.device_id !== deviceId)
         return revoke('DEVICE_MISMATCH', 'Refresh token used from another device.');
@@ -155,7 +176,9 @@ export class SessionsService {
       };
     });
 
-    if (outcome.kind === 'rejected') throw new DomainError('SESSION_INVALID', outcome.message);
+    if (outcome.kind === 'rejected') {
+      throw new DomainError('SESSION_INVALID', outcome.message, sessionEndDetails(outcome.endedBy));
+    }
     await this.users.touchLastSeen(outcome.userId);
     return this.tokensFor(
       outcome.userId,

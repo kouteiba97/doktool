@@ -4,7 +4,14 @@ import 'package:dio/dio.dart';
 ///
 /// Screens translate [code]; they never show [message], which is for developers and logs.
 class ApiError implements Exception {
-  const ApiError({required this.code, this.statusCode, this.fields = const {}, this.retryAt, this.attemptsRemaining});
+  const ApiError({
+    required this.code,
+    this.statusCode,
+    this.fields = const {},
+    this.retryAt,
+    this.attemptsRemaining,
+    this.openedElsewhere = false,
+  });
 
   /// No response reached the app (offline, timeout, DNS…).
   const ApiError.network() : this(code: networkCode);
@@ -19,6 +26,9 @@ class ApiError implements Exception {
   final Map<String, List<String>> fields;
   final DateTime? retryAt;
   final int? attemptsRemaining;
+
+  /// SESSION_INVALID because the account was opened on another device (one device at a time).
+  final bool openedElsewhere;
 
   bool get isNetwork => code == networkCode;
 
@@ -58,6 +68,7 @@ class ApiError implements Exception {
       attemptsRemaining: details is Map && details['attemptsRemaining'] is num
           ? (details['attemptsRemaining'] as num).toInt()
           : null,
+      openedElsewhere: details is Map && details['sessionEnd'] == 'SIGNED_IN_ELSEWHERE',
     );
   }
 

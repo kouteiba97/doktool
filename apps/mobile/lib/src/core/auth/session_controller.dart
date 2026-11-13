@@ -18,6 +18,18 @@ import '../storage/secure_store.dart';
 import 'session.dart';
 import 'session_vault.dart';
 
+/// True after this device was signed out because the account was opened on another one: Welcome
+/// says so until the person signs in or starts the demo.
+class OpenedElsewhere extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  // ignore: use_setters_to_change_properties
+  void set(bool value) => state = value;
+}
+
+final openedElsewhereProvider = NotifierProvider<OpenedElsewhere, bool>(OpenedElsewhere.new);
+
 /// The current [Session], restored from secure storage at launch. The router follows it.
 class SessionController extends AsyncNotifier<Session> {
   SessionVault get _vault => ref.read(sessionVaultProvider);
@@ -26,8 +38,9 @@ class SessionController extends AsyncNotifier<Session> {
   @override
   Future<Session> build() async {
     final vault = ref.watch(sessionVaultProvider);
-    vault.onSessionEnded = () {
+    vault.onSessionEnded = ({required openedElsewhere}) {
       unawaited(_forgetPersonalData());
+      ref.read(openedElsewhereProvider.notifier).set(openedElsewhere);
       state = const AsyncData(SignedOut());
     };
     return vault.restore();
@@ -38,7 +51,10 @@ class SessionController extends AsyncNotifier<Session> {
   Future<UserSession> store(AuthTokensDto tokens) => _vault.saveUser(tokens);
 
   /// Switches the app to the stored session.
-  void enter() => state = AsyncData(_vault.session);
+  void enter() {
+    ref.read(openedElsewhereProvider.notifier).set(false);
+    state = AsyncData(_vault.session);
+  }
 
   /// « Essayer la démo »: asks the API for a short-lived demo token for this device, no sign-up.
   Future<void> startDemo(DemoContext context) async {
@@ -49,6 +65,7 @@ class SessionController extends AsyncNotifier<Session> {
         .demoControllerStart(
           body: StartDemoDto(demoContext: context, deviceId: deviceId),
         );
+    ref.read(openedElsewhereProvider.notifier).set(false);
     state = AsyncData(await _vault.saveDemo(demo));
   }
 

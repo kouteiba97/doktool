@@ -19,7 +19,7 @@ Values marked *(spec)* come from the design system. The others are engineering d
 | Access token | JWT HS256, 15 min *(spec)*. Claims: `sub` (user), `sid` (session), `aud`, `iss`, `jti`. Stateless; revocation takes effect at the next refresh (≤ 15 min). |
 | Refresh token | 256-bit random, stored as SHA-256 *(spec: hashed)*. Bound to the session's device id *(spec: device-bound)*. Rotated on every use *(spec)*. Sliding lifetime 30 days; session absolute lifetime 180 days. |
 | Reuse detection | Presenting an already-used refresh token, or a token from another device, revokes the whole session. The app must therefore serialise refresh calls (single-flight). |
-| Sessions | One row per device sign-in. Listable and revocable by the user. A password reset revokes all sessions. |
+| Sessions | One row per device sign-in. Listable and revocable by the user. A password reset revokes all sessions. **One live session per account: a sign-in ends the others (ADR-029).** |
 | Password reset | `request` always answers 202 with a challenge id, whether or not the account exists. `confirm` verifies the OTP, sets the password, clears the lockout and revokes every session. |
 | 2FA for users | Optional in the spec — not in V1. |
 

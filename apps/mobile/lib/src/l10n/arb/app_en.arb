@@ -2970,6 +2970,14 @@
   "@welcomeDemoNote": {
     "description": "mobile.welcome.demoNote"
   },
+  "welcomeOpenedElsewhereBody": "A DokTool account is used on one device at a time. You have been signed out here. If this was not you, sign in and change your password.",
+  "@welcomeOpenedElsewhereBody": {
+    "description": "mobile.welcome.openedElsewhereBody"
+  },
+  "welcomeOpenedElsewhereTitle": "Account opened on another device",
+  "@welcomeOpenedElsewhereTitle": {
+    "description": "mobile.welcome.openedElsewhereTitle"
+  },
   "welcomePromise": "A doctor’s essential tools, in one place.",
   "@welcomePromise": {
     "description": "mobile.welcome.promise"

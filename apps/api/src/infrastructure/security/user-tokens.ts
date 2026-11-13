@@ -63,8 +63,13 @@ export class UserTokens {
       if (typeof payload.sub !== 'string' || typeof payload.sid !== 'string') {
         throw new DomainError('UNAUTHENTICATED', 'Malformed access token.');
       }
-      if (!(await this.sessionIsLive(payload.sid, payload.sub))) {
-        throw new DomainError('SESSION_INVALID', 'This session has ended.');
+      const session = await this.sessionState(payload.sid, payload.sub);
+      if (!session.live) {
+        throw new DomainError(
+          'SESSION_INVALID',
+          'This session has ended.',
+          session.endedElsewhere ? { sessionEnd: 'SIGNED_IN_ELSEWHERE' } : {},
+        );
       }
       return { userId: payload.sub, sessionId: payload.sid };
     } catch (error) {
@@ -79,15 +84,19 @@ export class UserTokens {
   }
 
   /**
-   * True when the session exists for this user, is not revoked and has not expired (one indexed
-   * lookup per request).
+   * Whether the session exists for this user, is not revoked and has not expired, and whether it
+   * ended because the account was opened on another device (one indexed lookup per request).
    */
-  private async sessionIsLive(sessionId: string, userId: string): Promise<boolean> {
+  private async sessionState(
+    sessionId: string,
+    userId: string,
+  ): Promise<{ live: boolean; endedElsewhere: boolean }> {
     const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuid.test(sessionId) || !uuid.test(userId)) return false;
-    const [row] = await this.prisma.$queryRaw<{ live: boolean }[]>`
-      SELECT (revoked_at IS NULL AND expires_at > now()) AS live
+    if (!uuid.test(sessionId) || !uuid.test(userId)) return { live: false, endedElsewhere: false };
+    const [row] = await this.prisma.$queryRaw<{ live: boolean; elsewhere: boolean }[]>`
+      SELECT (revoked_at IS NULL AND expires_at > now()) AS live,
+             (revoked_reason = 'SIGNED_IN_ELSEWHERE') IS TRUE AS elsewhere
       FROM user_sessions WHERE id = ${sessionId}::uuid AND user_id = ${userId}::uuid`;
-    return row?.live === true;
+    return { live: row?.live === true, endedElsewhere: row?.elsewhere === true };
   }
 }

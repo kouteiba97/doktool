@@ -44,7 +44,8 @@ class SessionVault {
   Future<String?>? _inFlight;
 
   /// Called when the server ends the session (revoked, expired, reused refresh token).
-  void Function()? onSessionEnded;
+  /// `openedElsewhere` is true when the account was opened on another device.
+  void Function({required bool openedElsewhere})? onSessionEnded;
 
   Session get session => _session;
 
@@ -137,14 +138,14 @@ class SessionVault {
       final apiError = ApiError.from(error);
       final status = apiError.statusCode ?? 0;
       if (apiError.isNetwork || status >= 500 || apiError.code == 'RATE_LIMITED') throw apiError;
-      return _end();
+      return _end(openedElsewhere: apiError.openedElsewhere);
     }
   }
 
   /// The session is over (revoked, expired): clears it and tells the app to show the welcome screen.
-  Future<String?> _end() async {
+  Future<String?> _end({bool openedElsewhere = false}) async {
     await clear();
-    onSessionEnded?.call();
+    onSessionEnded?.call(openedElsewhere: openedElsewhere);
     return null;
   }
 

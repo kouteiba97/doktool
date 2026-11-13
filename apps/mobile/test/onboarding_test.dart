@@ -22,6 +22,9 @@ class _RefreshAdapter implements HttpClientAdapter {
   int calls = 0;
   int status = 200;
 
+  /// Details of the refusal, as the API sends them.
+  Map<String, Object> details = const {};
+
   @override
   Future<ResponseBody> fetch(
     RequestOptions options,
@@ -33,7 +36,7 @@ class _RefreshAdapter implements HttpClientAdapter {
     if (status != 200) {
       return ResponseBody.fromString(
         jsonEncode({
-          'error': {'code': 'SESSION_INVALID', 'message': 'revoked', 'details': <String, Object>{}},
+          'error': {'code': 'SESSION_INVALID', 'message': 'revoked', 'details': details},
         }),
         status,
         headers: {
@@ -101,12 +104,24 @@ void main() {
     test('ends the session when the refresh is refused', () async {
       await vault.saveUser(_tokens(expiresIn: Duration.zero));
       adapter.status = 401;
-      var ended = false;
-      vault.onSessionEnded = () => ended = true;
+      bool? elsewhere;
+      vault.onSessionEnded = ({required openedElsewhere}) => elsewhere = openedElsewhere;
       expect(await vault.accessToken(), isNull);
-      expect(ended, isTrue);
+      expect(elsewhere, isFalse);
       expect(vault.session, isA<SignedOut>());
       expect(await vault.store.read('user.refresh_token'), isNull);
+    });
+
+    test('says so when the session ended because the account was opened on another device', () async {
+      await vault.saveUser(_tokens(expiresIn: Duration.zero));
+      adapter
+        ..status = 401
+        ..details = const {'sessionEnd': 'SIGNED_IN_ELSEWHERE'};
+      bool? elsewhere;
+      vault.onSessionEnded = ({required openedElsewhere}) => elsewhere = openedElsewhere;
+      expect(await vault.accessToken(), isNull);
+      expect(elsewhere, isTrue);
+      expect(vault.session, isA<SignedOut>());
     });
   });
 

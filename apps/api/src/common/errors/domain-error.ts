@@ -45,6 +45,8 @@ export interface ErrorDetails {
   /** FEATURE_LOCKED: the entitlement lock to render (ADR-010). */
   lockReason?: string;
   unlockPath?: string | null;
+  /** SESSION_INVALID: the account was opened on another device (ADR-029). */
+  sessionEnd?: 'SIGNED_IN_ELSEWHERE';
 }
 
 /** An expected, client-facing failure. Anything else is a 500. */

@@ -386,6 +386,8 @@ enum SessionRevocationReason {
   PASSWORD_CHANGED
   /// An approved assisted recovery replaced the contacts (ADR-023).
   ACCOUNT_RECOVERED
+  /// The account was opened on another device: one account, one device at a time (ADR-029).
+  SIGNED_IN_ELSEWHERE
 
   @@map("session_revocation_reason")
 }
@@ -1195,7 +1197,8 @@ model RecentActivity {
 
 // ───────────────────────────────── [auth] ─────────────────────────────────
 
-/// One device sign-in. Revoked on sign-out, user revocation, password reset or refresh-token reuse.
+/// One device sign-in. Revoked on sign-out, user revocation, password reset, refresh-token reuse,
+/// or when the account is opened on another device (ADR-029: one live session per account).
 model UserSession {
   id            String                   @id @default(uuid(7)) @db.Uuid
   userId        String                   @map("user_id") @db.Uuid

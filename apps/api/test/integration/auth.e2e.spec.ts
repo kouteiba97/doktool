@@ -257,19 +257,57 @@ describe('refresh tokens and sessions', () => {
     await refresh(tokens.refreshToken!).expect(401);
   });
 
-  it('lists sessions, revokes another device and signs out', async () => {
+  it('keeps an account open on one device: a new sign-in ends the session elsewhere', async () => {
     const { identifier, tokens } = await registeredUser();
+    const first = { Authorization: `Bearer ${tokens.accessToken}` };
+    await app.http().get('/v1/me/sessions').set(first).expect(200);
+
     const second = await signIn(identifier, PASSWORD, 'device-bbbb-0002').expect(200);
+
+    // The first phone is refused at its next request, and told why.
+    const refused = await app.http().get('/v1/me/sessions').set(first).expect(401);
+    expect(refused.body.error).toMatchObject({
+      code: 'SESSION_INVALID',
+      details: { sessionEnd: 'SIGNED_IN_ELSEWHERE' },
+    });
+    const refreshed = await refresh(tokens.refreshToken!).expect(401);
+    expect(refreshed.body.error.details).toEqual({ sessionEnd: 'SIGNED_IN_ELSEWHERE' });
+
+    // The second phone is the only one listed.
+    const list = await app
+      .http()
+      .get('/v1/me/sessions')
+      .set({ Authorization: `Bearer ${second.body.accessToken}` })
+      .expect(200);
+    expect(list.body).toHaveLength(1);
+    expect(list.body[0]).toMatchObject({ id: second.body.sessionId, current: true });
+  });
+
+  it('keeps one session when the same account signs in several times at once', async () => {
+    const { identifier } = await registeredUser();
+    const answers = await Promise.all(
+      ['device-cccc-0003', 'device-dddd-0004', 'device-eeee-0005'].map((id) =>
+        signIn(identifier, PASSWORD, id).expect(200),
+      ),
+    );
+    const live = await Promise.all(
+      answers.map((answer) =>
+        app
+          .http()
+          .get('/v1/me/sessions')
+          .set({ Authorization: `Bearer ${answer.body.accessToken}` }),
+      ),
+    );
+    expect(live.filter((response) => response.status === 200)).toHaveLength(1);
+    expect(live.filter((response) => response.status === 401)).toHaveLength(2);
+  });
+
+  it('does not say why a session ended for any other reason', async () => {
+    const { tokens } = await registeredUser();
     const auth = { Authorization: `Bearer ${tokens.accessToken}` };
-
-    const list = await app.http().get('/v1/me/sessions').set(auth).expect(200);
-    expect(list.body).toHaveLength(2);
-    expect(list.body.filter((s: { current: boolean }) => s.current)).toHaveLength(1);
-
-    await app.http().delete(`/v1/me/sessions/${second.body.sessionId}`).set(auth).expect(204);
-    await refresh(second.body.refreshToken as string, 'device-bbbb-0002').expect(401);
-
     await app.http().post('/v1/auth/sign-out').set(auth).expect(204);
+    const refused = await app.http().get('/v1/me/sessions').set(auth).expect(401);
+    expect(refused.body.error.details).toEqual({});
     await refresh(tokens.refreshToken!).expect(401);
   });
 

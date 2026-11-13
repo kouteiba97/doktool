@@ -32,5 +32,6 @@ One file per decision, numbered, never rewritten after acceptance — a changed 
 | [026](ADR-026-calculator-choice-rows.md) | Calculator answers shown whole: choice rows | Accepted |
 | [027](ADR-027-merge-duplicate-substances.md) | Grossesse · Allaitement: merging duplicate substances | Accepted |
 | [028](ADR-028-publish-medicalcul-formats.md) | Publishing the Medicalcul calculation formats | Accepted |
+| [029](ADR-029-one-device-per-account.md) | One account, one device at a time | Accepted |
 
 Source of the architecture: [`docs/ARCHITECTURE-AUDIT.md`](../ARCHITECTURE-AUDIT.md). Where an ADR and the design system disagree, the ADR wins; where ADR-006 and the audit disagree, ADR-006 wins.

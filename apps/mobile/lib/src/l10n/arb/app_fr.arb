@@ -2970,6 +2970,14 @@
   "@welcomeDemoNote": {
     "description": "mobile.welcome.demoNote"
   },
+  "welcomeOpenedElsewhereBody": "Un compte DokTool s’utilise sur un seul appareil à la fois. Vous avez été déconnecté ici. Si ce n’était pas vous, connectez-vous puis changez votre mot de passe.",
+  "@welcomeOpenedElsewhereBody": {
+    "description": "mobile.welcome.openedElsewhereBody"
+  },
+  "welcomeOpenedElsewhereTitle": "Compte ouvert sur un autre appareil",
+  "@welcomeOpenedElsewhereTitle": {
+    "description": "mobile.welcome.openedElsewhereTitle"
+  },
   "welcomePromise": "Les outils essentiels du médecin, au même endroit.",
   "@welcomePromise": {
     "description": "mobile.welcome.promise"

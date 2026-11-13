@@ -4125,6 +4125,13 @@
             "format": "date-time",
             "type": "string"
           },
+          "sessionEnd": {
+            "description": "SESSION_INVALID only: the account was opened on another device.",
+            "enum": [
+              "SIGNED_IN_ELSEWHERE"
+            ],
+            "type": "string"
+          },
           "unlockPath": {
             "description": "FEATURE_LOCKED only.",
             "nullable": true,

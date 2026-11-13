@@ -3920,6 +3920,11 @@ export type components = {
             lockReason?: string;
             /** Format: date-time */
             retryAt?: string;
+            /**
+             * @description SESSION_INVALID only: the account was opened on another device.
+             * @enum {string}
+             */
+            sessionEnd?: "SIGNED_IN_ELSEWHERE";
             /** @description FEATURE_LOCKED only. */
             unlockPath?: string | null;
         };
